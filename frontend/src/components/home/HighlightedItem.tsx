@@ -30,7 +30,11 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ items }) => {
     <div className="card lg:card-side bg-base-100 shadow-xl border overflow-hidden">
       <figure className="w-full lg:w-1/2 h-64 lg:h-auto">
         <Image
-          src={highlighted.image}
+          src={
+            highlighted.image && highlighted.image.startsWith("http")
+              ? highlighted.image
+              : "/images/default.jpg"
+          }
           alt={highlighted.title}
           fill
           className="object-cover"
