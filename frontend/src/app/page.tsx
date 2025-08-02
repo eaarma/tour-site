@@ -1,53 +1,58 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import SearchBar from "@/components/common/SearchBar";
 import HighlightedItem from "@/components/home/HighlightedItem";
 import ItemListHorizontal from "@/components/home/ItemListHorizontal";
-import { Item } from "@/types/types";
-import { useState } from "react";
+import { TourService } from "@/lib/tourService";
+import { Item } from "@/types";
 
-// ✅ Example default data
-const DEFAULT_ITEMS: Item[] = [
-  {
-    id: "1",
-    title: "City Exploration Tour",
-    description: "Discover the city's hidden gems",
-    image: "/images/tour1.jpg",
-    price: "$50",
-    timeRequired: "3 hours",
-    intensity: "Low",
-    participants: "Up to 10",
-    category: "Urban",
-    language: "English",
-    location: "Athens",
-  },
-  {
-    id: "2",
-    title: "Mountain Hiking",
-    description: "Explore the scenic mountain trails",
-    image: "/images/tour2.jpg",
-    price: "$70",
-    timeRequired: "6 hours",
-    intensity: "High",
-    participants: "Up to 8",
-    category: "Adventure",
-    language: "English",
-    location: "Meteora",
-  },
-  // Add more items as needed...
-];
 export default function Home() {
-  const [items, setItems] = useState<Item[]>(DEFAULT_ITEMS);
+  const [items, setItems] = useState<Item[]>([]);
+  const [allItems, setAllItems] = useState<Item[]>([]); // keep full list for filtering
 
-  // 🔍 Search handler that filters items by keyword
+  // 🔄 Fetch tours from backend
+  useEffect(() => {
+    const fetchTours = async () => {
+      try {
+        const tours: Item[] = await TourService.getAll();
+
+        // ✅ Map backend TourResponseDto to Item
+        const mapped: Item[] = tours.map((tour) => ({
+          id: tour.id,
+          title: tour.title,
+          description: tour.description,
+          image: tour.image ?? "/images/default.jpg", // fallback if null
+          price: tour.price,
+          timeRequired: tour.timeRequired,
+          intensity: tour.intensity,
+          type: tour.type,
+          status: tour.status,
+          participants: tour.participants,
+          category: tour.category,
+          language: tour.language,
+          location: tour.location,
+        }));
+
+        setItems(mapped);
+        setAllItems(mapped);
+      } catch (err) {
+        console.error("Failed to fetch tours:", err);
+      }
+    };
+
+    fetchTours();
+  }, []);
+
+  // 🔍 Search handler
   const handleSearch = (keyword: string) => {
     if (!keyword) {
-      setItems(DEFAULT_ITEMS);
+      setItems(allItems);
       return;
     }
 
     const lowerKeyword = keyword.toLowerCase();
-    const filtered = DEFAULT_ITEMS.filter(
+    const filtered = allItems.filter(
       (item) =>
         item.title.toLowerCase().includes(lowerKeyword) ||
         item.description.toLowerCase().includes(lowerKeyword)

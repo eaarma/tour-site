@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Item } from "@/types/types";
 import Image from "next/image";
+import { Item } from "@/types";
 
 interface HighlightedItemProps {
   items: Item[];

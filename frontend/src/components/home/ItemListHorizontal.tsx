@@ -1,6 +1,6 @@
 "use client";
 
-import { Item } from "@/types/types";
+import { Item } from "@/types";
 import ItemCard from "../items/ItemCard";
 
 interface ItemListHorizontalProps {
