@@ -1,6 +1,6 @@
-import { Item } from "@/types/types";
 import React from "react";
 import ItemCard from "./ItemCard";
+import { Item } from "@/types";
 
 interface ItemListProps {
   items: Item[];

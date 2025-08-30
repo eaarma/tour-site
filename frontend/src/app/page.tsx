@@ -11,7 +11,7 @@ export default function Home() {
   const [items, setItems] = useState<Item[]>([]);
   const [allItems, setAllItems] = useState<Item[]>([]); // keep full list for filtering
 
-  // 🔄 Fetch tours from backend
+  // Fetch tours from backend
   useEffect(() => {
     const fetchTours = async () => {
       try {
@@ -44,7 +44,7 @@ export default function Home() {
     fetchTours();
   }, []);
 
-  // 🔍 Search handler
+  // Search handler
   const handleSearch = (keyword: string) => {
     if (!keyword) {
       setItems(allItems);

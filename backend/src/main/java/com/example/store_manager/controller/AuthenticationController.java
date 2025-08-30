@@ -1,142 +1,166 @@
 package com.example.store_manager.controller;
 
-
 import java.util.Collections;
 import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.example.store_manager.dto.auth.JwtResponseDto;
 import com.example.store_manager.dto.user.AdminRegisterRequestDto;
 import com.example.store_manager.dto.user.LoginRequestDto;
 import com.example.store_manager.dto.user.UserRegisterRequestDto;
 import com.example.store_manager.dto.user.UserResponseDto;
-import com.example.store_manager.security.JwtService;
-
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
-
 import com.example.store_manager.model.Role;
 import com.example.store_manager.model.User;
 import com.example.store_manager.repository.UserRepository;
+import com.example.store_manager.security.JwtService;
+
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthenticationController {
+        private final AuthenticationManager authManager;
+        private final JwtService jwtService;
+        private final PasswordEncoder passwordEncoder;
+        private final UserRepository userRepository;
 
-    private final AuthenticationManager authManager;
-    private final JwtService jwtService;
-    private final PasswordEncoder passwordEncoder;
-    private final UserRepository userRepository;
+        @PostMapping("/register/user")
+        public ResponseEntity<UserResponseDto> registerUser(@RequestBody @Valid UserRegisterRequestDto request) {
+                User newUser = User.builder()
+                                .email(request.getEmail())
+                                .password(passwordEncoder.encode(request.getPassword()))
+                                .name(request.getName())
+                                .phone(request.getPhone())
+                                .nationality(request.getNationality())
+                                .role(Role.USER)
+                                .build();
 
-   @PostMapping("/register/user")
-public ResponseEntity<UserResponseDto> registerUser(@RequestBody @Valid UserRegisterRequestDto request) {
-    User newUser = User.builder()
-            .email(request.getEmail())
-            .password(passwordEncoder.encode(request.getPassword()))
-            .name(request.getName())
-            .phone(request.getPhone())
-            .nationality(request.getNationality())
-            .role(Role.USER)
-            .build();
+                User savedUser = userRepository.save(newUser);
 
-    User savedUser = userRepository.save(newUser);
+                return ResponseEntity.ok(UserResponseDto.builder()
+                                .id(savedUser.getId())
+                                .name(savedUser.getName())
+                                .email(savedUser.getEmail())
+                                .role(savedUser.getRole().name())
+                                .build());
+        }
 
-    return ResponseEntity.ok(UserResponseDto.builder()
-            .id(savedUser.getId())
-            .name(savedUser.getName())
-            .email(savedUser.getEmail())
-            .role(savedUser.getRole().name())
-            .build());
-}
+        @PostMapping("/register/admin")
+        public ResponseEntity<UserResponseDto> registerAdmin(@RequestBody @Valid AdminRegisterRequestDto request) {
+                User newAdmin = User.builder()
+                                .email(request.getEmail())
+                                .password(passwordEncoder.encode(request.getPassword()))
+                                .name(request.getName())
+                                .phone(request.getPhone())
+                                .role(Role.ADMIN)
+                                .bio(request.getBio())
+                                .experience(request.getExperience())
+                                .languages(request.getLanguages())
+                                .build();
 
-@PostMapping("/register/admin")
-public ResponseEntity<UserResponseDto> registerAdmin(@RequestBody @Valid AdminRegisterRequestDto request) {
-    User newAdmin = User.builder()
-            .email(request.getEmail())
-            .password(passwordEncoder.encode(request.getPassword()))
-            .name(request.getName())
-            .phone(request.getPhone())
-            .role(Role.ADMIN)
-            .bio(request.getBio())
-            .experience(request.getExperience())
-            .languages(request.getLanguages())
-            .build();
+                User savedAdmin = userRepository.save(newAdmin);
 
-    User savedAdmin = userRepository.save(newAdmin);
+                return ResponseEntity.ok(UserResponseDto.builder()
+                                .id(savedAdmin.getId())
+                                .name(savedAdmin.getName())
+                                .email(savedAdmin.getEmail())
+                                .role(savedAdmin.getRole().name())
+                                .build());
+        }
 
-    return ResponseEntity.ok(UserResponseDto.builder()
-            .id(savedAdmin.getId())
-            .name(savedAdmin.getName())
-            .email(savedAdmin.getEmail())
-            .role(savedAdmin.getRole().name())
-            .build());
-}
+        @PostMapping("/login")
+        public ResponseEntity<?> login(@RequestBody LoginRequestDto loginDto, HttpServletResponse response,
+                        @Value("${spring.profiles.active:dev}") String activeProfile) {
+                Authentication authentication = authManager.authenticate(
+                                new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword()));
 
-@PostMapping("/login")
-public JwtResponseDto login(@RequestBody LoginRequestDto loginDto) {
-    Authentication authentication = authManager.authenticate(
-            new UsernamePasswordAuthenticationToken(
-                    loginDto.getEmail(),
-                    loginDto.getPassword()
-            )
-    );
+                User user = userRepository.findByEmail(loginDto.getEmail()).orElseThrow();
 
-    User user = userRepository.findByEmail(loginDto.getEmail()).orElseThrow();
+                String accessToken = jwtService.generateToken(authentication);
 
-    String accessToken = jwtService.generateToken(authentication);
-    String refreshToken = jwtService.generateRefreshToken(user); // 👈 We'll implement this next
+                // Determine if cookie should be secure
+                boolean isSecure = "prod".equals(activeProfile);
 
-    UserResponseDto userResponse = UserResponseDto.builder()
-            .id(user.getId())
-            .name(user.getName())
-            .email(user.getEmail())
-            .role(user.getRole().name())
-            .build();
+                ResponseCookie cookie = ResponseCookie.from("accessToken", accessToken)
+                                .httpOnly(true)
+                                .secure(isSecure)
+                                .path("/")
+                                .maxAge(24 * 60 * 60) // 1 day
+                                .sameSite("Strict")
+                                .build();
 
-    return JwtResponseDto.builder()
-            .token(accessToken)
-            .refreshToken(refreshToken)
-            .user(userResponse)
-            .build();
-}
+                response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
-@PostMapping("/refresh")
-public ResponseEntity<JwtResponseDto> refresh(@RequestBody Map<String, String> request) {
-    String refreshToken = request.get("refreshToken");
+                return ResponseEntity.ok(UserResponseDto.builder()
+                                .id(user.getId())
+                                .name(user.getName())
+                                .email(user.getEmail())
+                                .role(user.getRole().name())
+                                .build());
+        }
 
-    if (refreshToken == null || !jwtService.validateToken(refreshToken)) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-    }
+        @PostMapping("/logout")
+        public ResponseEntity<?> logout(HttpServletResponse response,
+                        @Value("${spring.profiles.active:dev}") String activeProfile) {
 
-    String email = jwtService.getUsernameFromToken(refreshToken);
-    User user = userRepository.findByEmail(email).orElseThrow();
+                boolean isSecure = "prod".equals(activeProfile);
 
-    String newAccessToken = jwtService.generateToken(
-        new UsernamePasswordAuthenticationToken(email, null, Collections.emptyList())
-    );
+                ResponseCookie deleteCookie = ResponseCookie.from("accessToken", "")
+                                .httpOnly(true)
+                                .secure(isSecure)
+                                .path("/")
+                                .maxAge(0) // expire immediately
+                                .sameSite("Strict")
+                                .build();
 
-    UserResponseDto userResponse = UserResponseDto.builder()
-            .id(user.getId())
-            .name(user.getName())
-            .email(user.getEmail())
-            .role(user.getRole().name())
-            .build();
+                response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
+                return ResponseEntity.ok().build();
+        }
 
-    JwtResponseDto response = JwtResponseDto.builder()
-            .token(newAccessToken)
-            .refreshToken(refreshToken) // You can return the same one or issue a new one
-            .user(userResponse)
-            .build();
+        @PostMapping("/refresh")
+        public ResponseEntity<JwtResponseDto> refresh(@RequestBody Map<String, String> request) {
+                String refreshToken = request.get("refreshToken");
 
-    return ResponseEntity.ok(response);
-}
-    
+                if (refreshToken == null || !jwtService.validateToken(refreshToken)) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                }
+
+                String email = jwtService.getUsernameFromToken(refreshToken);
+                User user = userRepository.findByEmail(email).orElseThrow();
+
+                String newAccessToken = jwtService.generateToken(
+                                new UsernamePasswordAuthenticationToken(email, null, Collections.emptyList()));
+
+                UserResponseDto userResponse = UserResponseDto.builder()
+                                .id(user.getId())
+                                .name(user.getName())
+                                .email(user.getEmail())
+                                .role(user.getRole().name())
+                                .build();
+
+                JwtResponseDto response = JwtResponseDto.builder()
+                                .token(newAccessToken)
+                                .refreshToken(refreshToken) // You can return the same one or issue a new one
+                                .user(userResponse)
+                                .build();
+
+                return ResponseEntity.ok(response);
+        }
+
 }

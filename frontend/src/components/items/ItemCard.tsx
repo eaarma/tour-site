@@ -1,7 +1,8 @@
 "use client";
 
-import { Item } from "@/types/types";
+import { Item } from "@/types";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface ItemCardProps {
   item: Item;
@@ -10,10 +11,19 @@ interface ItemCardProps {
 }
 
 const ItemCard: React.FC<ItemCardProps> = ({ item, href, onClick }) => {
+  const router = useRouter();
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else {
+      router.push(`/items/${item.id}`);
+    }
+  };
+
   const CardContent = (
     <div
       className="card w-full bg-base-100 shadow-md hover:shadow-lg transition duration-300 border cursor-pointer"
-      onClick={onClick}
+      onClick={handleClick}
     >
       <figure>
         <img
@@ -60,7 +70,7 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, href, onClick }) => {
     );
   }
 
-  // Else, render as standalone div with onClick
+  // Else, render as standalone div with navigation
   return CardContent;
 };
 

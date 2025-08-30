@@ -1,49 +1,29 @@
 "use client";
 
+import { Item } from "@/types";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-interface Item {
-  id: string;
-  title: string;
-  description: string;
-  image: string;
-  price: string;
-  timeRequired: string;
-  participants: string;
-  intensity: string;
-  category: string;
-  language: string;
-  location: string;
-}
+import { TourService } from "@/lib/tourService";
+import Image from "next/image";
 
 export default function ItemPage() {
-  const { id } = useParams();
+  const { itemId } = useParams<{ itemId: string }>();
   const router = useRouter();
   const [item, setItem] = useState<Item | null>(null);
+  console.log("ItemPage useParams id:", itemId);
 
   useEffect(() => {
     const fetchItem = async () => {
-      const dummyItem: Item = {
-        id: "1",
-        title: "Acropolis Tour",
-        description:
-          "A guided tour through the historic Acropolis site with stunning views of Athens.",
-        image: "/images/acropolis.jpg",
-        price: "€50",
-        timeRequired: "2 hours",
-        participants: "2-10",
-        intensity: "Medium",
-        category: "History",
-        language: "English",
-        location: "Athens, Greece",
-      };
-
-      setItem(dummyItem); // Replace with real data fetching
+      try {
+        const data = await TourService.getById(Number(itemId));
+        setItem(data);
+      } catch (error) {
+        console.error("Error fetching item:", error);
+        setItem(null);
+      }
     };
-
-    fetchItem();
-  }, [id]);
+    if (itemId) fetchItem();
+  }, [itemId]);
 
   if (!item) {
     return <div className="text-center mt-10 text-lg">Loading...</div>;
@@ -63,9 +43,11 @@ export default function ItemPage() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Image */}
           <div className="lg:w-1/2">
-            <img
+            <Image
               src={item.image}
               alt={item.title}
+              width={800}
+              height={400}
               className="rounded-xl w-full object-cover h-72 lg:h-full"
             />
           </div>

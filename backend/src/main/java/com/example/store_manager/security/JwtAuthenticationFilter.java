@@ -1,20 +1,22 @@
 package com.example.store_manager.security;
 
-
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import java.io.IOException;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
+import com.example.store_manager.security.CustomUserDetailsService;
+import com.example.store_manager.security.JwtService;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
@@ -25,40 +27,50 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
+            HttpServletResponse response,
+            FilterChain filterChain)
             throws ServletException, IOException {
-                    System.out.println(">>> JwtAuthenticationFilter called for " + request.getRequestURI());
 
-        String authHeader = request.getHeader("Authorization");
+        System.out.println(">>> JwtAuthenticationFilter called for " + request.getRequestURI());
+
         String jwt = null;
         String username = null;
 
+        // 1) Try Authorization header
+        String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             jwt = authHeader.substring(7);
             username = jwtService.getUsernameFromToken(jwt);
         }
 
-        System.out.println(">>> Authorization header: " + authHeader);
-if (jwt != null) {
-    System.out.println(">>> JWT token extracted: " + jwt);
-}
-System.out.println(">>> Username from token: " + username);
+        // 2) If not found, try cookies
+        if (jwt == null) {
+            if (request.getCookies() != null) {
+                for (Cookie cookie : request.getCookies()) {
+                    if ("accessToken".equals(cookie.getName())) {
+                        jwt = cookie.getValue();
+                        username = jwtService.getUsernameFromToken(jwt);
+                        System.out.println(">>> JWT token extracted from cookie: " + jwt);
+                        break;
+                    }
+                }
+            }
+        }
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        System.out.println(">>> Username from token: " + username);
+
+        // 3) Authenticate
+        if (jwt != null && username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
             if (jwtService.validateToken(jwt)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities()
-                );
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities());
 
                 SecurityContextHolder.getContext().setAuthentication(authToken);
                 System.out.println(">>>>> Authenticated user: " + username);
-System.out.println(">>>>> Authorities: " + userDetails.getAuthorities());
-for (GrantedAuthority authority : userDetails.getAuthorities()) {
-    System.out.println(">>>>> ROLE check: " + authority.getAuthority());
-}
             }
         }
 

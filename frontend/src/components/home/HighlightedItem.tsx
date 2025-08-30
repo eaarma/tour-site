@@ -28,7 +28,7 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ items }) => {
 
   return (
     <div className="card lg:card-side bg-base-100 shadow-xl border overflow-hidden">
-      <figure className="w-full lg:w-1/2 h-64 lg:h-auto">
+      <figure className="w-full lg:w-1/2 relative h-64 lg:h-auto min-h-[300px]">
         <Image
           src={
             highlighted.image && highlighted.image.startsWith("http")
@@ -38,7 +38,7 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ items }) => {
           alt={highlighted.title}
           fill
           className="object-cover"
-          sizes="(max-width: 768px) 100vw, 50vw"
+          sizes="(max-width: 1024px) 100vw, 50vw"
         />
       </figure>
 

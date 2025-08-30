@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SearchBar from "@/components/common/SearchBar";
-import { FilterCategory, Item } from "@/types/types";
+import { FilterCategory } from "@/types/types";
 import FilterMenu from "@/components/items/FilterMenu";
 import ItemList from "@/components/items/ItemList";
+import { Item } from "@/types";
+import { TourService } from "@/lib/tourService";
 
 export const FILTER_CATEGORIES: FilterCategory[] = [
   {
@@ -24,88 +26,50 @@ export const FILTER_CATEGORIES: FilterCategory[] = [
   },
 ];
 
-const DEFAULT_ITEMS: Item[] = [
-  {
-    id: "1",
-    title: "Athens Walking Tour",
-    description: "Historical sites and local culture",
-    image: "/images/athens.jpg",
-    price: "$40",
-    timeRequired: "2 hours",
-    intensity: "Low",
-    participants: "Max 10",
-    category: "Culture",
-    language: "English",
-    type: "Tour",
-    location: "Athens",
-  },
-  {
-    id: "2",
-    title: "Santorini Wine Tasting",
-    description: "Taste local wines with a sunset view",
-    image: "/images/santorini.jpg",
-    price: "$65",
-    timeRequired: "3 hours",
-    intensity: "Low",
-    participants: "Max 12",
-    category: "Food & Drink",
-    language: "English",
-    type: "Workshop",
-    location: "Santorini",
-  },
-  {
-    id: "3",
-    title: "Meteora Hiking Adventure",
-    description: "Breathtaking views and active trekking",
-    image: "/images/meteora.jpg",
-    price: "$75",
-    timeRequired: "5 hours",
-    intensity: "High",
-    participants: "Max 6",
-    category: "Adventure",
-    language: "English",
-    type: "Tour",
-    location: "Kalambaka",
-  },
-  {
-    id: "4",
-    title: "Thessaloniki Bike Tour",
-    description: "Explore the city on two wheels",
-    image: "/images/thessaloniki.jpg",
-    price: "$50",
-    timeRequired: "2.5 hours",
-    intensity: "Medium",
-    participants: "Max 8",
-    category: "Urban",
-    language: "English",
-    type: "Tour",
-    location: "Thessaloniki",
-  },
-  {
-    id: "5",
-    title: "Crete Farm Visit",
-    description: "Experience authentic rural life and food",
-    image: "/images/crete.jpg",
-    price: "$55",
-    timeRequired: "4 hours",
-    intensity: "Low",
-    participants: "Max 10",
-    category: "Nature",
-    language: "English",
-    type: "Event",
-    location: "Crete",
-  },
-];
-
 export default function ItemsPage() {
-  const [allItems] = useState<Item[]>(DEFAULT_ITEMS);
-  const [filteredItems, setFilteredItems] = useState<Item[]>(DEFAULT_ITEMS);
+  const [allItems, setAllItems] = useState<Item[]>([]);
+  const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [searchKeyword, setSearchKeyword] = useState("");
 
+  // 🔹 Fetch tours on mount
+  useEffect(() => {
+    const fetchTours = async () => {
+      try {
+        const tours: Item[] = await TourService.getAll();
+
+        // ✅ Map backend TourResponseDto to Item
+        const mapped: Item[] = tours.map((tour) => ({
+          id: tour.id,
+          title: tour.title,
+          description: tour.description,
+          image: tour.image ?? "/images/default.jpg",
+          price: tour.price,
+          timeRequired: tour.timeRequired,
+          intensity: tour.intensity,
+          type: tour.type,
+          status: tour.status,
+          participants: tour.participants,
+          category: tour.category,
+          language: tour.language,
+          location: tour.location,
+        }));
+
+        setAllItems(mapped);
+        setFilteredItems(mapped); // start with all
+      } catch (err) {
+        console.error("Failed to fetch tours:", err);
+      }
+    };
+
+    fetchTours();
+  }, []);
+
+  // 🔎 Search handler
   const handleSearch = (keyword: string) => {
     setSearchKeyword(keyword.toLowerCase());
   };
 
+  // 🔎 Filter handler
   const handleFilter = (filteredByFilterMenu: Item[]) => {
     if (searchKeyword) {
       const searchFiltered = filteredByFilterMenu.filter(
