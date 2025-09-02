@@ -12,13 +12,15 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.store_manager.dto.auth.JwtResponseDto;
-import com.example.store_manager.dto.user.AdminRegisterRequestDto;
+import com.example.store_manager.dto.user.ManagerRegisterRequestDto;
 import com.example.store_manager.dto.user.LoginRequestDto;
 import com.example.store_manager.dto.user.UserRegisterRequestDto;
 import com.example.store_manager.dto.user.UserResponseDto;
@@ -61,8 +63,8 @@ public class AuthenticationController {
                                 .build());
         }
 
-        @PostMapping("/register/admin")
-        public ResponseEntity<UserResponseDto> registerAdmin(@RequestBody @Valid AdminRegisterRequestDto request) {
+        @PostMapping("/register/manager")
+        public ResponseEntity<UserResponseDto> registerAdmin(@RequestBody @Valid ManagerRegisterRequestDto request) {
                 User newAdmin = User.builder()
                                 .email(request.getEmail())
                                 .password(passwordEncoder.encode(request.getPassword()))
@@ -161,6 +163,26 @@ public class AuthenticationController {
                                 .build();
 
                 return ResponseEntity.ok(response);
+        }
+
+        @GetMapping("/me")
+        public ResponseEntity<UserResponseDto> getCurrentUser(
+                        @CookieValue(name = "accessToken", required = false) String token) {
+                if (token == null || !jwtService.validateToken(token)) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                }
+
+                String email = jwtService.getUsernameFromToken(token);
+                User user = userRepository.findByEmail(email).orElseThrow();
+
+                UserResponseDto dto = UserResponseDto.builder()
+                                .id(user.getId())
+                                .name(user.getName())
+                                .email(user.getEmail())
+                                .role(user.getRole().name())
+                                .build();
+
+                return ResponseEntity.ok(dto);
         }
 
 }

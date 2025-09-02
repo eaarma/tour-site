@@ -1,5 +1,5 @@
 // For admin registration
-export interface AdminRegisterRequestDto {
+export interface ManagerRegisterRequestDto {
   email: string;
   password: string;
   name: string;

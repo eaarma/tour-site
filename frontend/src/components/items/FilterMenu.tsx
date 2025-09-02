@@ -77,13 +77,13 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
             >
               <div className="relative">
                 {/* Button */}
-                <Listbox.Button className="w-full rounded border px-3 py-2 text-left bg-gray-800 text-sm shadow flex justify-between items-center">
+                <Listbox.Button className="w-full rounded border px-3 py-2 text-left bg-base-100 text-sm shadow flex justify-between items-center">
                   <span className="truncate font-semibold">{filter.label}</span>
-                  <ChevronUpDownIcon className="h-4 w-4 text-gray-500 ml-2" />
+                  <ChevronUpDownIcon className="h-4 w-4 text-neutral ml-2" />
                 </Listbox.Button>
 
                 {/* Options */}
-                <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-gray-800 shadow-lg border text-sm">
+                <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-base-100 text-neutral shadow-lg border text-sm">
                   {filter.options.map((option) => (
                     <Listbox.Option
                       key={option}

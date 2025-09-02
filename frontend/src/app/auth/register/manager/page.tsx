@@ -114,11 +114,8 @@ export default function ManagerRegisterPage() {
             >
               Register as user
             </button>
-            <button
-              className="link"
-              onClick={() => router.push("/auth/login/manager")}
-            >
-              Manager login
+            <button className="link" onClick={() => router.push("/auth/login")}>
+              Go to login
             </button>
           </div>
         </div>

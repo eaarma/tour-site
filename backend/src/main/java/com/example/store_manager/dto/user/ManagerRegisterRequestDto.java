@@ -1,6 +1,5 @@
 package com.example.store_manager.dto.user;
 
-
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -8,7 +7,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AdminRegisterRequestDto {
+public class ManagerRegisterRequestDto {
 
     @Email(message = "Invalid email format")
     @NotBlank(message = "Email is required")

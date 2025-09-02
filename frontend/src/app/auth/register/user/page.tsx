@@ -82,7 +82,7 @@ export default function UserRegisterPage() {
         <div className="mt-4 flex justify-between text-sm">
           <button
             className="link link-primary"
-            onClick={() => router.push("/auth/login/user")}
+            onClick={() => router.push("/auth/login")}
           >
             Already have an account?
           </button>

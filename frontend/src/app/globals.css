@@ -1,4 +1,43 @@
 @import "tailwindcss";
+
 @plugin "daisyui" {
   themes: light --default, dark --prefersdark, night, customtheme;
+
+  darktheme: "night";
+  base: false; /* Disable daisyUI's base styles to avoid conflicts */
+}
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+
+  /* Core colors */
+  --color-primary: #4f46e5; /* Indigo, calm and modern */
+  --color-secondary: #10b981; /* Soft teal, fresh */
+  --color-accent: #f59e0b; /* Warm amber, for highlights/buttons */
+  --color-neutral: #374151; /* Dark gray for text and borders */
+  --color-base-100: #f9fafb; /* Slightly off-white background */
+
+  /* Feedback colors */
+  --color-info: #3b82f6; /* Blue info messages */
+  --color-success: #16a34a; /* Green success messages */
+  --color-warning: #facc15; /* Golden warning */
+  --color-error: #ef4444; /* Red error messages */
+
+  /* Rounded corners */
+  --rounded-box: 0.75rem; /* softer, modern rounded container */
+  --rounded-btn: 0.5rem;
+  --rounded-badge: 1.5rem;
+
+  /* Animations */
+  --animation-btn: 0.2s;
+  --animation-input: 0.15s;
+
+  /* Button text style */
+  --btn-text-case: none;
+  --btn-focus-scale: 0.97;
+
+  /* Borders & Tabs */
+  --border-btn: 1px;
+  --tab-border: 1px;
+  --tab-radius: 0.5rem;
 }

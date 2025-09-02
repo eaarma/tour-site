@@ -5,6 +5,7 @@ import { ReduxProvider } from "@/providers/ReduxProvider";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import MarginContainer from "@/components/common/MarginContainer";
+import AuthProvider from "@/providers/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,16 +30,18 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      data-theme="night"
+      data-theme="light"
       className={`${geistSans.variable} ${geistMono.variable}`}
     >
       <body>
         <ReduxProvider>
-          <Header />
-          <main>
-            <MarginContainer>{children}</MarginContainer>
-          </main>
-          <Footer />
+          <AuthProvider>
+            <Header />
+            <main>
+              <MarginContainer>{children}</MarginContainer>
+            </main>
+            <Footer />
+          </AuthProvider>
         </ReduxProvider>
       </body>
     </html>
