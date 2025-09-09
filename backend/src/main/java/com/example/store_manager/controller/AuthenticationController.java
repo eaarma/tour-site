@@ -1,5 +1,6 @@
 package com.example.store_manager.controller;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Map;
 
@@ -25,9 +26,15 @@ import com.example.store_manager.dto.user.LoginRequestDto;
 import com.example.store_manager.dto.user.UserRegisterRequestDto;
 import com.example.store_manager.dto.user.UserResponseDto;
 import com.example.store_manager.model.Role;
+import com.example.store_manager.model.Shop;
+import com.example.store_manager.model.ShopUser;
+import com.example.store_manager.model.ShopUserRole;
+import com.example.store_manager.model.ShopUserStatus;
 import com.example.store_manager.model.User;
+import com.example.store_manager.repository.ShopUserRepository;
 import com.example.store_manager.repository.UserRepository;
 import com.example.store_manager.security.JwtService;
+import com.example.store_manager.utility.ShopAssignmentUtil;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -41,6 +48,8 @@ public class AuthenticationController {
         private final JwtService jwtService;
         private final PasswordEncoder passwordEncoder;
         private final UserRepository userRepository;
+        private final ShopAssignmentUtil shopAssignmentUtil;
+        private final ShopUserRepository shopUserRepository;
 
         @PostMapping("/register/user")
         public ResponseEntity<UserResponseDto> registerUser(@RequestBody @Valid UserRegisterRequestDto request) {
@@ -50,6 +59,7 @@ public class AuthenticationController {
                                 .name(request.getName())
                                 .phone(request.getPhone())
                                 .nationality(request.getNationality())
+                                .createdAt(LocalDateTime.now())
                                 .role(Role.USER)
                                 .build();
 
@@ -70,13 +80,25 @@ public class AuthenticationController {
                                 .password(passwordEncoder.encode(request.getPassword()))
                                 .name(request.getName())
                                 .phone(request.getPhone())
-                                .role(Role.ADMIN)
+                                .role(Role.MANAGER)
                                 .bio(request.getBio())
                                 .experience(request.getExperience())
                                 .languages(request.getLanguages())
+                                .createdAt(LocalDateTime.now())
                                 .build();
 
                 User savedAdmin = userRepository.save(newAdmin);
+
+                Shop shop = shopAssignmentUtil.assignRandomShopToManager();
+                ShopUser shopUser = ShopUser.builder()
+                                .shop(shop)
+                                .user(savedAdmin)
+                                .role(ShopUserRole.MANAGER)
+                                .status(ShopUserStatus.ACTIVE)
+                                .createdAt(LocalDateTime.now())
+                                .build();
+
+                shopUserRepository.save(shopUser);
 
                 return ResponseEntity.ok(UserResponseDto.builder()
                                 .id(savedAdmin.getId())

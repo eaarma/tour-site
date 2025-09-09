@@ -2,104 +2,91 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import OrderDetailsModal from "./OrderDetailsModal";
+import { OrderResponseDto } from "@/types";
+import { Item } from "@/types";
 
-type OrderStatus = "Pending" | "Confirmed" | "Cancelled";
-
-interface Order {
-  id: number;
-  imageUrl: string;
-  title: string;
-  date: string;
-  time: string;
-  status: OrderStatus;
+interface ManagerOrderSectionProps {
+  orders: OrderResponseDto[];
+  tours: Item[];
 }
 
-const activeOrders: Order[] = [
-  {
-    id: 1,
-    imageUrl: "/images/tour1.jpg",
-    title: "Santorini Sunset Tour",
-    date: "2025-07-04",
-    time: "18:00",
-    status: "Pending",
-  },
-  {
-    id: 2,
-    imageUrl: "/images/tour2.jpg",
-    title: "Athens Historical Walk",
-    date: "2025-07-06",
-    time: "10:00",
-    status: "Confirmed",
-  },
-];
-
-const pastOrders: Order[] = [
-  {
-    id: 3,
-    imageUrl: "/images/tour3.jpg",
-    title: "Crete Hiking Experience",
-    date: "2025-05-15",
-    time: "08:00",
-    status: "Confirmed",
-  },
-];
-
-export default function ManagerOrderSection() {
+export default function ManagerOrderSection({
+  orders,
+  tours,
+}: ManagerOrderSectionProps) {
   const [activeTab, setActiveTab] = useState<"active" | "past">("active");
-  const [orders, setOrders] = useState(activeOrders);
+  const [selectedOrder, setSelectedOrder] = useState<OrderResponseDto | null>(
+    null
+  );
 
-  const handleConfirm = (id: number) => {
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === id ? { ...order, status: "Confirmed" } : order
-      )
+  const handleConfirm = (id: string) => {
+    // Optionally implement API call to confirm order here
+  };
+
+  const renderOrderCard = (order: OrderResponseDto) => {
+    const tour = tours.find((t) => t.id === order.tourId);
+
+    return (
+      <div
+        key={order.id}
+        className="card bg-base-100 shadow-md border flex flex-col md:flex-row gap-4 p-4 items-center cursor-pointer hover:shadow-lg transition"
+        onClick={() => setSelectedOrder(order)}
+      >
+        {tour && (
+          <div className="relative w-24 h-24 rounded-md overflow-hidden">
+            {/* <Image
+              src={tour.imageUrl}
+              alt={tour.title}
+              fill
+              className="object-cover"
+            /> */}
+          </div>
+        )}
+
+        <div className="flex-1 w-full">
+          <h3 className="text-lg font-semibold">Order #{order.id}</h3>
+          {tour && <p className="text-sm">{tour.title}</p>}
+          <p className="text-sm text-base-content/70">
+            {new Date(order.scheduledAt).toLocaleString()}
+          </p>
+          <p className="mt-1 text-sm font-medium">
+            Status:{" "}
+            <span
+              className={`badge ${
+                order.status === "CONFIRMED"
+                  ? "badge-success"
+                  : order.status === "PENDING"
+                  ? "badge-warning"
+                  : "badge-error"
+              }`}
+            >
+              {order.status}
+            </span>
+          </p>
+        </div>
+
+        {order.status !== "CONFIRMED" && (
+          <button
+            className="btn btn-sm btn-primary mt-2 md:mt-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleConfirm(order.id);
+            }}
+          >
+            Confirm
+          </button>
+        )}
+      </div>
     );
   };
 
-  const renderOrderCard = (order: Order) => (
-    <div
-      key={order.id}
-      className="card bg-base-100 shadow-md border flex flex-col md:flex-row gap-4 p-4 items-center"
-    >
-      <div className="relative w-24 h-24 rounded-md overflow-hidden">
-        <Image
-          src={order.imageUrl}
-          alt={order.title}
-          layout="fill"
-          objectFit="cover"
-        />
-      </div>
+  const selectedTour = selectedOrder
+    ? tours.find((t) => t.id === selectedOrder.tourId) || null
+    : null;
 
-      <div className="flex-1 w-full">
-        <h3 className="text-lg font-semibold">{order.title}</h3>
-        <p className="text-sm text-base-content/70">
-          {order.date} at {order.time}
-        </p>
-        <p className="mt-1 text-sm font-medium">
-          Status:{" "}
-          <span
-            className={`badge ${
-              order.status === "Confirmed"
-                ? "badge-success"
-                : order.status === "Pending"
-                ? "badge-warning"
-                : "badge-error"
-            }`}
-          >
-            {order.status}
-          </span>
-        </p>
-      </div>
-
-      {order.status !== "Confirmed" && (
-        <button
-          className="btn btn-sm btn-primary mt-2 md:mt-0"
-          onClick={() => handleConfirm(order.id)}
-        >
-          Confirm
-        </button>
-      )}
-    </div>
+  const filteredOrders = orders.filter((o) =>
+    activeTab === "active" ? o.status !== "COMPLETED" : o.status === "COMPLETED"
   );
 
   return (
@@ -123,11 +110,15 @@ export default function ManagerOrderSection() {
         </button>
       </div>
 
-      <div className="space-y-4">
-        {activeTab === "active"
-          ? orders.map(renderOrderCard)
-          : pastOrders.map(renderOrderCard)}
-      </div>
+      <div className="space-y-4">{filteredOrders.map(renderOrderCard)}</div>
+
+      {/* Modal */}
+      <OrderDetailsModal
+        isOpen={!!selectedOrder}
+        onClose={() => setSelectedOrder(null)}
+        order={selectedOrder}
+        tour={selectedTour}
+      />
     </section>
   );
 }

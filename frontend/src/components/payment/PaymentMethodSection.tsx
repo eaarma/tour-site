@@ -4,20 +4,22 @@ import { useState } from "react";
 
 type PaymentMethod = "credit-card" | "pay-link";
 
-type PaymentMethodSectionProps = {
-  onChange: (method: PaymentMethod, cardInfo?: CardInfo) => void;
-};
-
 type CardInfo = {
   cardNumber: string;
   expiry: string;
   cvc: string;
 };
 
+type PaymentMethodSectionProps = {
+  selected: PaymentMethod;
+  onSelect: (method: PaymentMethod, cardInfo?: CardInfo) => void;
+};
+
 export default function PaymentMethodSection({
-  onChange,
+  selected,
+  onSelect,
 }: PaymentMethodSectionProps) {
-  const [method, setMethod] = useState<PaymentMethod>("credit-card");
+  const [method, setMethod] = useState<PaymentMethod>(selected);
   const [cardInfo, setCardInfo] = useState<CardInfo>({
     cardNumber: "",
     expiry: "",
@@ -26,26 +28,24 @@ export default function PaymentMethodSection({
 
   const handleMethodChange = (newMethod: PaymentMethod) => {
     setMethod(newMethod);
-    onChange(newMethod, cardInfo);
+    onSelect(newMethod, cardInfo);
   };
 
   const handleCardChange = (field: keyof CardInfo, value: string) => {
     const updated = { ...cardInfo, [field]: value };
     setCardInfo(updated);
-    if (method === "credit-card") {
-      onChange(method, updated);
-    }
+    if (method === "credit-card") onSelect(method, updated);
   };
 
   return (
-    <div className="bg-base-100 p-4 rounded-lg shadow-md w-full max-w-2xl mt-6">
+    <div className="bg-base-100 p-6 rounded-lg shadow-md w-full max-w-2xl">
       <h2 className="text-2xl font-semibold mb-4">Select Payment Method</h2>
 
       {/* Toggle Buttons */}
       <div className="flex gap-4 mb-4">
         <button
           type="button"
-          className={`btn w-1/2 ${
+          className={`btn flex-1 ${
             method === "credit-card" ? "btn-primary" : "btn-outline"
           }`}
           onClick={() => handleMethodChange("credit-card")}
@@ -54,7 +54,7 @@ export default function PaymentMethodSection({
         </button>
         <button
           type="button"
-          className={`btn w-1/2 ${
+          className={`btn flex-1 ${
             method === "pay-link" ? "btn-primary" : "btn-outline"
           }`}
           onClick={() => handleMethodChange("pay-link")}
@@ -108,7 +108,7 @@ export default function PaymentMethodSection({
         </div>
       )}
 
-      {/* Pay through Link Message */}
+      {/* Pay through Link Info */}
       {method === "pay-link" && (
         <div className="alert alert-info mt-4">
           A secure payment link will open on the next page.

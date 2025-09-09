@@ -30,6 +30,6 @@ public class UserRegisterRequestDto {
     @Pattern(regexp = "\\+?[0-9. ()-]{7,25}", message = "Invalid phone number")
     private String phone;
 
-    @NotBlank(message = "Nationality is required")
+    // Optional
     private String nationality;
 }

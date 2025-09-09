@@ -20,4 +20,4 @@ export interface OrderResponseDto {
   createdAt: string;
 }
 
-export type OrderStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED"; // extend based on enum
+export type OrderStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";

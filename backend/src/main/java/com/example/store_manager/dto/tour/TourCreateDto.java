@@ -48,6 +48,6 @@ public class TourCreateDto {
     @NotBlank(message = "Status is required")
     private String status;
 
-     @NotNull(message = "Shop ID is required")
+    @NotNull(message = "Shop ID is required")
     private Long shopId;
 }

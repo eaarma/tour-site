@@ -1,5 +1,5 @@
+import { ShopUserDto, ShopUserStatusDto } from "@/types";
 import api from "./axios";
-import { ShopUserDto, ShopUserStatusDto } from "@/types/shopUser";
 
 const BASE_URL = "/api/shop-users";
 

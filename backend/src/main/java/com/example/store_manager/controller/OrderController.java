@@ -1,5 +1,6 @@
 package com.example.store_manager.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
@@ -28,21 +29,21 @@ public class OrderController {
 
     private final OrderService orderService;
 
-@PostMapping
-public ResponseEntity<OrderResponseDto> createOrder(
-        @RequestBody @Valid OrderCreateRequestDto dto) {
+    @PostMapping
+    public ResponseEntity<OrderResponseDto> createOrder(
+            @RequestBody @Valid OrderCreateRequestDto dto) {
 
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-    UUID userId = null;
+        UUID userId = null;
 
-    if (authentication != null && authentication.isAuthenticated()
-            && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
-        userId = userDetails.getId(); // Authenticated user
+        if (authentication != null && authentication.isAuthenticated()
+                && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
+            userId = userDetails.getId(); // Authenticated user
+        }
+
+        return ResponseEntity.ok(orderService.createOrder(dto, userId));
     }
-
-    return ResponseEntity.ok(orderService.createOrder(dto, userId));
-}
 
     @GetMapping("/{id}")
     public ResponseEntity<OrderResponseDto> getOrderById(@PathVariable UUID id) {
@@ -54,5 +55,10 @@ public ResponseEntity<OrderResponseDto> createOrder(
             @PathVariable UUID id,
             @RequestBody @Valid OrderCreateRequestDto dto) {
         return ResponseEntity.ok(orderService.updateOrder(id, dto));
+    }
+
+    @GetMapping("/shop/{shopId}")
+    public ResponseEntity<List<OrderResponseDto>> getOrdersByShop(@PathVariable Long shopId) {
+        return ResponseEntity.ok(orderService.getOrdersByShopId(shopId));
     }
 }

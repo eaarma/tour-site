@@ -5,7 +5,7 @@ import { FaUserCircle, FaShoppingCart } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/store";
 import { clearUser } from "@/store/authSlice";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import TitleText from "../common/TitleText";
 import HorizontalMenu from "../common/HorizontalMenu";
 import MarginContainer from "../common/MarginContainer";
@@ -21,6 +21,7 @@ const Header: React.FC = () => {
   const user = useSelector((state: RootState) => state.auth.user);
   const dispatch = useDispatch();
   const router = useRouter();
+  const pathname = usePathname();
 
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -31,10 +32,7 @@ const Header: React.FC = () => {
       method: "POST",
       credentials: "include",
     }).finally(() => {
-      if (
-        router.pathname?.startsWith("/user") ||
-        router.pathname?.startsWith("/manager")
-      ) {
+      if (pathname?.startsWith("/user") || pathname?.startsWith("/manager")) {
         router.push("/");
       } else {
         router.refresh();
@@ -77,6 +75,7 @@ const Header: React.FC = () => {
             {user ? (
               <div className="relative" ref={dropdownRef}>
                 <button
+                  type="button"
                   className="flex items-center gap-2 text-primary hover:text-primary-focus active:text-primary-content transition-colors duration-150"
                   onClick={() => setOpen((prev) => !prev)}
                 >

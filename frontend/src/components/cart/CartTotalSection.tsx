@@ -10,7 +10,7 @@ const CartTotalSection: React.FC<CartTotalSectionProps> = ({
   onCheckout,
 }) => {
   return (
-    <div className="w-full md:w-1/3 p-4 bg-base-200 rounded shadow-md">
+    <div className="w-full md:w-1/3 p-4 bg-base-200 rounded shadow-md mt-10">
       <h2 className="text-xl font-bold mb-4">Cart Summary</h2>
       <div className="flex justify-between text-lg mb-4">
         <span>Total</span>

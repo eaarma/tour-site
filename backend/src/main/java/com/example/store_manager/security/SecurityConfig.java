@@ -37,23 +37,26 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
 
+                        .requestMatchers("/error").permitAll()
                         // Anyone can view tours
+                        .requestMatchers(HttpMethod.GET, "/tours").permitAll()
                         .requestMatchers(HttpMethod.GET, "/tours/**").permitAll()
-
-                        // Only ADMIN can create, update tours
-                        .requestMatchers(HttpMethod.POST, "/tours/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/tours/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/tours/**").hasRole("ADMIN")
+                        // Only MANAGER can create, update tours
+                        .requestMatchers(HttpMethod.POST, "/tours/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.PUT, "/tours/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/tours/**").hasRole("MANAGER")
 
                         // Allow guests to create orders
                         .requestMatchers(HttpMethod.POST, "/orders/**").permitAll()
 
-                        // Only admin or managers can modify/delete orders
-                        .requestMatchers(HttpMethod.PUT, "/orders/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/orders/**").hasRole("ADMIN")
+                        // Only MANAGER or managers can modify/delete orders
+                        .requestMatchers(HttpMethod.PUT, "/orders/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/orders/**").hasRole("MANAGER")
+
+                        .requestMatchers(HttpMethod.POST, "/shops/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/shop-users/**").permitAll()
 
                         .requestMatchers(HttpMethod.PUT, "/shops/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/shop-users/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/shop-users/**").authenticated()
 
                         // All other requests require authentication

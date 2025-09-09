@@ -28,4 +28,6 @@ export interface Item {
   type: string;
   location: string;
   status: string;
+  madeBy: string;
+  shopId: number;
 }

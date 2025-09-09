@@ -1,31 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { countryDialCodes } from "@/utils/countryDialCodes";
+import { useDispatch, useSelector } from "react-redux";
+import { setCheckoutInfo, updateCheckoutInfo } from "@/store/checkoutSlice";
+import { RootState } from "@/store"; // Adjust path if needed
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
+  const checkout = useSelector((state: RootState) => state.checkout);
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [countryCode, setCountryCode] = useState("+30");
   const [query, setQuery] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [phone, setPhone] = useState("");
-  const [nationality, setNationality] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+
+  const [phoneNumber, setPhoneNumber] = useState(
+    checkout.phone.replace(/^\+\d+/, "") // Remove country code initially
+  );
+
+  useEffect(() => {
+    // Sync Redux value when countryCode or phoneNumber changes
+    dispatch(
+      updateCheckoutInfo({
+        phone: `${countryCode}${phoneNumber}`,
+      })
+    );
+  }, [countryCode, phoneNumber, dispatch]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const fullPhone = `${countryCode}${phone}`;
-    const contactInfo = {
-      name,
-      email,
-      phone: fullPhone,
-      nationality,
-    };
-    console.log("Checkout contact info:", contactInfo);
+    const fullPhone = `${countryCode}${checkout.phone.replace(
+      countryCode,
+      ""
+    )}`;
+
+    dispatch(
+      setCheckoutInfo({
+        name: checkout.name,
+        email: checkout.email,
+        phone: fullPhone,
+        nationality: checkout.nationality,
+      })
+    );
+
     router.push("/payment");
   };
 
@@ -53,8 +73,10 @@ export default function CheckoutPage() {
             <input
               type="text"
               className="input input-bordered w-full"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={checkout.name}
+              onChange={(e) =>
+                dispatch(updateCheckoutInfo({ name: e.target.value }))
+              }
               required
             />
           </div>
@@ -67,8 +89,10 @@ export default function CheckoutPage() {
             <input
               type="email"
               className="input input-bordered w-full"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={checkout.email}
+              onChange={(e) =>
+                dispatch(updateCheckoutInfo({ email: e.target.value }))
+              }
               required
             />
           </div>
@@ -93,7 +117,7 @@ export default function CheckoutPage() {
                   }}
                   onFocus={() => {
                     setIsFocused(true);
-                    setQuery(""); // clear on focus for fresh typing
+                    setQuery("");
                     setDropdownOpen(true);
                   }}
                   onBlur={() => {
@@ -110,10 +134,7 @@ export default function CheckoutPage() {
                       <li
                         key={country.code}
                         className="px-3 py-2 cursor-pointer hover:bg-base-200"
-                        onMouseDown={() => {
-                          handleSelect(country.dial_code);
-                          setIsFocused(false); // collapse view
-                        }}
+                        onMouseDown={() => handleSelect(country.dial_code)}
                       >
                         {country.name} ({country.dial_code})
                       </li>
@@ -132,8 +153,8 @@ export default function CheckoutPage() {
                 type="tel"
                 className="input input-bordered flex-1"
                 placeholder="1234567890"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
                 required
               />
             </div>
@@ -147,8 +168,10 @@ export default function CheckoutPage() {
             <input
               type="text"
               className="input input-bordered w-full"
-              value={nationality}
-              onChange={(e) => setNationality(e.target.value)}
+              value={checkout.nationality}
+              onChange={(e) =>
+                dispatch(updateCheckoutInfo({ nationality: e.target.value }))
+              }
             />
           </div>
 

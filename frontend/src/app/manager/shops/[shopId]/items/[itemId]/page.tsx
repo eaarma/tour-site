@@ -2,50 +2,35 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-interface Item {
-  id: string;
-  title: string;
-  description: string;
-  image: string;
-  price: string;
-  timeRequired: string;
-  participants: string;
-  intensity: string;
-  category: string;
-  language: string;
-  location: string;
-}
+import { TourService } from "@/lib/tourService";
+import { Item } from "@/types";
 
 export default function ManagerItemPage() {
-  const { id } = useParams();
+  const { shopId, itemId } = useParams();
   const router = useRouter();
   const [item, setItem] = useState<Item | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchItem = async () => {
-      const dummyItem: Item = {
-        id: "1",
-        title: "Sunset Sailing Tour",
-        description: "Enjoy a relaxing sunset sail along the Aegean coast.",
-        image: "/images/sailing.jpg",
-        price: "€120",
-        timeRequired: "3 hours",
-        participants: "4-12",
-        intensity: "Low",
-        category: "Leisure",
-        language: "English",
-        location: "Santorini, Greece",
-      };
-
-      setItem(dummyItem); // Replace with real data fetching
+      try {
+        const data = await TourService.getById(Number(itemId));
+        setItem(data);
+      } catch (err) {
+        console.error("Failed to load item", err);
+      } finally {
+        setLoading(false);
+      }
     };
-
     fetchItem();
-  }, [id]);
+  }, [itemId]);
+
+  if (loading) {
+    return <div className="text-center mt-10 text-lg">Loading...</div>;
+  }
 
   if (!item) {
-    return <div className="text-center mt-10 text-lg">Loading...</div>;
+    return <div className="text-center mt-10 text-lg">Item not found</div>;
   }
 
   return (
@@ -57,7 +42,9 @@ export default function ManagerItemPage() {
         </button>
         <button
           className="btn btn-sm btn-outline btn-secondary"
-          onClick={() => router.push(`/manager/edit/${item.id}`)}
+          onClick={() =>
+            router.push(`/manager/shops/${shopId}/items/${item.id}/edit`)
+          }
         >
           Edit
         </button>

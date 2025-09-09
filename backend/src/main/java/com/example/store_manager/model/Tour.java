@@ -1,6 +1,5 @@
 package com.example.store_manager.model;
 
-
 import java.math.BigDecimal;
 
 import jakarta.persistence.Entity;
@@ -39,6 +38,7 @@ public class Tour {
     private String type;
     private String location;
     private String status;
+    private String madeBy;
     @ManyToOne
     @JoinColumn(name = "shop_id", nullable = false)
     private Shop shop;

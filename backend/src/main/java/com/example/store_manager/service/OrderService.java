@@ -1,5 +1,6 @@
 package com.example.store_manager.service;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -23,37 +24,37 @@ import lombok.RequiredArgsConstructor;
 @Transactional
 public class OrderService {
     private final ObjectMapper objectMapper;
-    private final OrderRepository  orderRepository;
-    private final TourRepository   tourRepository;
-    private final UserRepository   userRepository;
-    private final OrderMapper      orderMapper;
+    private final OrderRepository orderRepository;
+    private final TourRepository tourRepository;
+    private final UserRepository userRepository;
+    private final OrderMapper orderMapper;
 
- public OrderResponseDto createOrder(OrderCreateRequestDto dto, UUID userId) {
-    User user = null;
-    if (userId != null) {
-        user = userRepository.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+    public OrderResponseDto createOrder(OrderCreateRequestDto dto, UUID userId) {
+        User user = null;
+        if (userId != null) {
+            user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+        }
+
+        Tour tour = tourRepository.findById(dto.getTourId())
+                .orElseThrow(() -> new RuntimeException("Tour not found"));
+
+        Order order = orderMapper.toEntity(dto, user, tour);
+        Order saved = orderRepository.save(order);
+        return orderMapper.toDto(saved);
     }
-
-    Tour tour = tourRepository.findById(dto.getTourId())
-        .orElseThrow(() -> new RuntimeException("Tour not found"));
-
-    Order order = orderMapper.toEntity(dto, user, tour);
-    Order saved = orderRepository.save(order);
-    return orderMapper.toDto(saved);
-}
 
     public OrderResponseDto getOrderById(UUID id) {
         Order order = orderRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new RuntimeException("Order not found"));
         return orderMapper.toDto(order);
     }
 
     public OrderResponseDto updateOrder(UUID id, OrderCreateRequestDto dto) {
         Order order = orderRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new RuntimeException("Order not found"));
         Tour tour = tourRepository.findById(dto.getTourId())
-            .orElseThrow(() -> new RuntimeException("Tour not found"));
+                .orElseThrow(() -> new RuntimeException("Tour not found"));
 
         // update mutable fields
         order.setTour(tour);
@@ -62,10 +63,17 @@ public class OrderService {
         order.setPaymentMethod(dto.getPaymentMethod());
         order.setPricePaid(tour.getPrice());
         order.setTourSnapshot(orderMapper.toJson(tour));
-order.setName(dto.getCheckoutDetails().getName());
-order.setEmail(dto.getCheckoutDetails().getEmail());
-order.setPhone(dto.getCheckoutDetails().getPhone());
-order.setNationality(dto.getCheckoutDetails().getNationality());
+        order.setName(dto.getCheckoutDetails().getName());
+        order.setEmail(dto.getCheckoutDetails().getEmail());
+        order.setPhone(dto.getCheckoutDetails().getPhone());
+        order.setNationality(dto.getCheckoutDetails().getNationality());
         return orderMapper.toDto(orderRepository.save(order));
+    }
+
+    public List<OrderResponseDto> getOrdersByShopId(Long shopId) {
+        return orderRepository.findByTourShopId(shopId)
+                .stream()
+                .map(orderMapper::toDto)
+                .toList();
     }
 }

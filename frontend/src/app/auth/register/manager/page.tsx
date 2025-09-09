@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AuthService } from "@/lib/AuthService";
+import { ManagerRegisterRequestDto } from "@/types/user";
 
 export default function ManagerRegisterPage() {
   const [email, setEmail] = useState("");
@@ -12,25 +14,82 @@ export default function ManagerRegisterPage() {
   const [experience, setExperience] = useState("");
   const [languages, setLanguages] = useState("");
   const [bio, setBio] = useState("");
+  const [errors, setErrors] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const router = useRouter();
+
+  // 🔹 Validation function
+  const validate = () => {
+    const newErrors: string[] = [];
+
+    if (!email.includes("@")) {
+      newErrors.push("Email must be valid.");
+    }
+    if (password.length < 6) {
+      newErrors.push("Password must be at least 6 characters.");
+    }
+    if (fullName.trim().length < 2) {
+      newErrors.push("Full name must be at least 2 characters.");
+    }
+    if (!/^\+?\d{7,15}$/.test(phone)) {
+      newErrors.push("Phone number must be valid.");
+    }
+    if (experience && Number(experience) < 0) {
+      newErrors.push("Experience must be a positive number.");
+    }
+
+    setErrors(newErrors);
+    return newErrors.length === 0;
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-    const registerData = {
+    if (!validate()) {
+      setLoading(false);
+      return;
+    }
+
+    const registerData: ManagerRegisterRequestDto = {
       email,
       password,
-      fullName,
+      name: fullName,
       phone,
       nationality,
-      experience: experience ? Number(experience) : undefined,
+      experience: experience ? String(experience) : "undefined",
       languages,
       bio,
     };
 
-    console.log("Registering manager:", registerData);
+    try {
+      const user = await AuthService.registerManager(registerData);
+      console.log("Manager registered:", user);
+      router.push("/auth/login"); // redirect to login
+    } catch (err: any) {
+      console.error(err);
 
-    // TODO: Add your registration API call here
+      // Extract validation errors from backend response
+      const responseData = err.response?.data;
+
+      if (responseData?.errors && Array.isArray(responseData.errors)) {
+        // Case: backend returned a list of errors
+        setErrors(responseData.errors);
+      } else if (responseData?.details) {
+        // Case: backend returned a field->error map
+        setErrors(Object.values(responseData.details));
+      } else if (responseData?.message) {
+        // Case: single message
+        setErrors([responseData.message]);
+      } else {
+        setErrors(["Registration failed"]);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -38,6 +97,20 @@ export default function ManagerRegisterPage() {
       <div className="flex justify-center pt-20">
         <div className="card w-full max-w-lg shadow-lg bg-base-100 p-6">
           <h2 className="text-2xl font-bold mb-4">Manager Register</h2>
+
+          {/* 🔹 Show validation errors */}
+          {errors.length > 0 && (
+            <div className="alert alert-error mb-4">
+              <ul className="list-disc list-inside text-sm">
+                {errors.map((err, idx) => (
+                  <li key={idx}>{err}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* 🔹 Show backend error */}
+          {error && <div className="alert alert-error mb-4">{error}</div>}
 
           <form onSubmit={handleRegister} className="flex flex-col gap-4">
             <input
@@ -102,8 +175,12 @@ export default function ManagerRegisterPage() {
               onChange={(e) => setBio(e.target.value)}
             ></textarea>
 
-            <button className="btn btn-primary" type="submit">
-              Register
+            <button
+              className="btn btn-primary"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? "Registering..." : "Register"}
             </button>
           </form>
 

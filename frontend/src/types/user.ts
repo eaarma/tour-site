@@ -4,6 +4,7 @@ export interface ManagerRegisterRequestDto {
   password: string;
   name: string;
   phone: string;
+  nationality: string;
   experience: string;
   languages: string;
   bio: string;

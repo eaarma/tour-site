@@ -1,14 +1,8 @@
+import { UserResponseDto } from "@/types";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
-
 interface AuthState {
-  user: User | null;
+  user: UserResponseDto | null;
 }
 
 const initialState: AuthState = {
@@ -19,7 +13,7 @@ const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-    setUser: (state, action: PayloadAction<User>) => {
+    setUser: (state, action: PayloadAction<UserResponseDto>) => {
       state.user = action.payload;
     },
     clearUser: (state) => {

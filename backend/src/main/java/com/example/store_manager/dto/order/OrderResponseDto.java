@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 public class OrderResponseDto {
     private UUID id;
     private Long tourId;
+
     private Integer participants;
     private Instant scheduledAt;
     private CheckoutDetailsDto checkoutDetails;

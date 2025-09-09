@@ -6,6 +6,7 @@ type CheckoutItem = {
   id: string;
   title: string;
   date: string;
+  time: string;
   quantity: number;
   price: number;
 };
@@ -32,22 +33,26 @@ export default function PaymentSummarySection({
   );
 
   return (
-    <div className="bg-base-100 p-4 rounded-lg shadow-md w-full max-w-2xl">
-      <h2 className="text-2xl font-semibold mb-4">Order Summary</h2>
+    <div className="bg-base-100 p-6 rounded-lg shadow-md w-full max-w-2xl">
+      <h2 className="text-2xl font-semibold mb-6">Order Summary</h2>
 
       {/* Item List */}
-      <ul className="space-y-3 mb-6">
+      <ul className="space-y-4 mb-6">
         {items.map((item) => (
           <li
             key={item.id}
-            className="flex justify-between items-start border-b pb-2"
+            className="flex justify-between items-start border-b pb-4"
           >
-            <div>
-              <p className="font-medium">{item.title}</p>
-              <p className="text-sm text-gray-500">Date: {item.date}</p>
-              <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+            <div className="space-y-1">
+              <p className="font-medium text-lg">{item.title}</p>
+              <p className="text-sm text-gray-500">
+                {item.date} at {item.time}
+              </p>
+              <p className="text-sm text-gray-500">
+                Quantity: {item.quantity} × €{item.price.toFixed(2)}
+              </p>
             </div>
-            <div className="text-right font-medium">
+            <div className="text-right font-medium text-lg">
               €{(item.price * item.quantity).toFixed(2)}
             </div>
           </li>
@@ -55,7 +60,7 @@ export default function PaymentSummarySection({
       </ul>
 
       {/* Contact Info */}
-      <div className="bg-base-200 p-4 rounded-lg">
+      <div className="bg-base-200 p-4 rounded-lg space-y-1">
         <h3 className="text-lg font-semibold mb-2">Contact Details</h3>
         <p>
           <span className="font-medium">Name:</span> {contact.name}
@@ -74,8 +79,8 @@ export default function PaymentSummarySection({
         )}
       </div>
 
-      {/* Optional: Display total here if needed */}
-      <div className="mt-4 text-right text-lg font-bold">
+      {/* Total */}
+      <div className="mt-6 text-right text-xl font-bold">
         Total: €{total.toFixed(2)}
       </div>
     </div>

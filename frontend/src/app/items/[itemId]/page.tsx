@@ -5,12 +5,13 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { TourService } from "@/lib/tourService";
 import Image from "next/image";
+import BookingModal from "@/components/items/BookingModal";
 
 export default function ItemPage() {
   const { itemId } = useParams<{ itemId: string }>();
   const router = useRouter();
   const [item, setItem] = useState<Item | null>(null);
-  console.log("ItemPage useParams id:", itemId);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -43,13 +44,13 @@ export default function ItemPage() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Image */}
           <div className="lg:w-1/2">
-            <Image
+            {/* <Image
               src={item.image}
               alt={item.title}
               width={800}
               height={400}
               className="rounded-xl w-full object-cover h-72 lg:h-full"
-            />
+            /> */}
           </div>
 
           {/* Details */}
@@ -89,18 +90,23 @@ export default function ItemPage() {
               </div>
             </div>
 
-            {/* ✅ Add to Cart button */}
-            <button className="btn btn-secondary w-full lg:w-auto">
-              Add to Cart
-            </button>
-
-            {/* ✅ Book Now button */}
-            <button className="btn btn-primary w-full lg:w-auto">
+            {/* ✅ Single button to open booking modal */}
+            <button
+              className="btn btn-primary w-full lg:w-auto"
+              onClick={() => setIsModalOpen(true)}
+            >
               Book Now
             </button>
           </div>
         </div>
       </div>
+
+      {/* ✅ Booking Modal */}
+      <BookingModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        item={item}
+      />
     </main>
   );
 }

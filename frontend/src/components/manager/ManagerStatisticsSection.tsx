@@ -1,32 +1,42 @@
 "use client";
 
 import { Briefcase, CalendarCheck, MapPin } from "lucide-react";
+import { Item } from "@/types";
+import { OrderResponseDto } from "@/types/order";
 
-interface Statistic {
-  title: string;
-  value: number | string;
-  icon: React.ReactNode;
+interface ManagerStatisticsSectionProps {
+  tours: Item[];
+  orders: OrderResponseDto[];
 }
 
-const statistics: Statistic[] = [
-  {
-    title: "Total Tours Offered",
-    value: 42,
-    icon: <Briefcase className="w-6 h-6 text-primary" />,
-  },
-  {
-    title: "Upcoming Tours",
-    value: 12,
-    icon: <CalendarCheck className="w-6 h-6 text-success" />,
-  },
-  {
-    title: "Available Tours",
-    value: 5,
-    icon: <MapPin className="w-6 h-6 text-accent" />,
-  },
-];
+export default function ManagerStatisticsSection({
+  tours,
+  orders,
+}: ManagerStatisticsSectionProps) {
+  const totalTours = tours.length;
+  const upcomingTours = tours.filter(
+    (t) => new Date(t.scheduledAt) > new Date()
+  ).length;
+  const availableTours = tours.filter((t) => t.availableSeats > 0).length; // if you have availableSeats
 
-export default function ManagerStatisticsSection() {
+  const statistics = [
+    {
+      title: "Total Tours Offered",
+      value: totalTours,
+      icon: <Briefcase className="w-6 h-6 text-primary" />,
+    },
+    {
+      title: "Upcoming Tours",
+      value: upcomingTours,
+      icon: <CalendarCheck className="w-6 h-6 text-success" />,
+    },
+    {
+      title: "Available Tours",
+      value: availableTours,
+      icon: <MapPin className="w-6 h-6 text-accent" />,
+    },
+  ];
+
   return (
     <section className="mb-8">
       <h2 className="text-2xl font-bold mb-4">Statistics Overview</h2>

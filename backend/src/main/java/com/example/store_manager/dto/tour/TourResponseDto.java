@@ -1,6 +1,5 @@
 package com.example.store_manager.dto.tour;
 
-
 import java.math.BigDecimal;
 
 import lombok.*;
@@ -23,4 +22,6 @@ public class TourResponseDto {
     private String type;
     private String location;
     private String status;
+    private String madeBy;
+    private Long shopId;
 }

@@ -21,4 +21,10 @@ export const OrderService = {
     const res = await api.put(`${BASE_URL}/${id}`, data);
     return res.data;
   },
+
+  // get orders by shop
+  getByShopId: async (shopId: number): Promise<OrderResponseDto[]> => {
+    const res = await api.get(`${BASE_URL}/shop/${shopId}`);
+    return res.data;
+  },
 };
