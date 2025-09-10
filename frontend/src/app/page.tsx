@@ -63,8 +63,8 @@ export default function Home() {
 
   return (
     <main className="flex flex-col items-center justify-start min-h-screen p-4 max-w-7xl mx-auto">
-      <div className="w-full space-y-6">
-        <SearchBar onSearch={handleSearch} />
+      <div className="w-full space-y-6 mt-5">
+        <SearchBar redirectOnSearch />
         <ItemListHorizontal title="Available Tours" items={items} />
         <HighlightedItem items={items} />
       </div>

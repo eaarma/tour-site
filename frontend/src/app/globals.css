@@ -1,9 +1,8 @@
 @import "tailwindcss";
-
 @plugin "daisyui" {
   themes: light --default, dark --prefersdark, night, customtheme;
 
-  darktheme: "night";
+  darktheme: "light";
   base: false; /* Disable daisyUI's base styles to avoid conflicts */
 }
 @plugin "daisyui/theme" {

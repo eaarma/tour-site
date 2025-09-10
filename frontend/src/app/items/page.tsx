@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import SearchBar from "@/components/common/SearchBar";
 import { FilterCategory } from "@/types/types";
 import FilterMenu from "@/components/items/FilterMenu";
@@ -30,14 +31,15 @@ export default function ItemsPage() {
   const [allItems, setAllItems] = useState<Item[]>([]);
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [searchDate, setSearchDate] = useState("");
 
-  // 🔹 Fetch tours on mount
+  const params = useSearchParams();
+
+  // Fetch tours
   useEffect(() => {
     const fetchTours = async () => {
       try {
         const tours: Item[] = await TourService.getAll();
-
-        // ✅ Map backend TourResponseDto to Item
         const mapped: Item[] = tours.map((tour) => ({
           id: tour.id,
           title: tour.title,
@@ -55,7 +57,7 @@ export default function ItemsPage() {
         }));
 
         setAllItems(mapped);
-        setFilteredItems(mapped); // start with all
+        setFilteredItems(mapped);
       } catch (err) {
         console.error("Failed to fetch tours:", err);
       }
@@ -64,23 +66,46 @@ export default function ItemsPage() {
     fetchTours();
   }, []);
 
-  // 🔎 Search handler
-  const handleSearch = (keyword: string) => {
+  // Apply query params from homepage search
+  useEffect(() => {
+    const keyword = params.get("keyword") || "";
+    const date = params.get("date") || "";
+    if (keyword || date) {
+      handleSearch(keyword, date);
+    }
+  }, [params]);
+
+  // Search handler
+  const handleSearch = (keyword: string, date: string) => {
     setSearchKeyword(keyword.toLowerCase());
+    setSearchDate(date);
+
+    let results = allItems;
+
+    if (keyword) {
+      results = results.filter(
+        (item) =>
+          item.title.toLowerCase().includes(keyword) ||
+          item.description.toLowerCase().includes(keyword) ||
+          item.location.toLowerCase().includes(keyword)
+      );
+    }
+
+    // 🔹 Later: also filter by available schedules for given date
+    setFilteredItems(results);
   };
 
-  // 🔎 Filter handler
+  // Filter handler
   const handleFilter = (filteredByFilterMenu: Item[]) => {
+    let results = filteredByFilterMenu;
     if (searchKeyword) {
-      const searchFiltered = filteredByFilterMenu.filter(
+      results = results.filter(
         (item) =>
           item.title.toLowerCase().includes(searchKeyword) ||
           item.description.toLowerCase().includes(searchKeyword)
       );
-      setFilteredItems(searchFiltered);
-    } else {
-      setFilteredItems(filteredByFilterMenu);
     }
+    setFilteredItems(results);
   };
 
   return (
