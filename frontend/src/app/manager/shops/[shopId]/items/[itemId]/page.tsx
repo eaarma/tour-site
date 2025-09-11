@@ -17,8 +17,9 @@ export default function ManagerItemPage() {
   const shopId = Number(params.shopId); //number
   const itemId = params.itemId;
   const router = useRouter();
+  const [currentItemId, setCurrentItemId] = useState(itemId);
+  const isNew = currentItemId === "new";
 
-  const isNew = itemId === "new";
   const [item, setItem] = useState<Item | null>(null);
   const [loading, setLoading] = useState(!isNew);
   const [isEditing, setIsEditing] = useState(isNew); // in add mode, editing by default
@@ -26,7 +27,7 @@ export default function ManagerItemPage() {
     isNew
       ? {
           shopId,
-          status: "ACTIVE",
+          status: "ON HOLD",
           category: CATEGORY_OPTIONS[0],
           type: TYPE_OPTIONS[0],
           intensity: INTENSITY_OPTIONS[0],
@@ -58,16 +59,25 @@ export default function ManagerItemPage() {
   const handleSave = async () => {
     try {
       if (isNew) {
-        // Create new
+        // Create new tour
         const dto: TourCreateDto = form as TourCreateDto;
         const created = await TourService.create(dto);
-        router.replace(`/manager/shops/${shopId}/items/${created.id}`);
+
+        // Instead of navigating, switch to edit mode
+        setItem(created);
+        setForm(created);
+        setIsEditing(true);
+        setCurrentItemId(String(created.id));
+
+        // Optional: show a popup/notification
+        alert("Tour created! You can now add schedules.");
+
+        // The page stays on the same route (itemId is still "new")
+        // Optionally, you could update URL with actual id if you want
+        // router.replace(`/manager/shops/${shopId}/items/${created.id}`);
       } else if (item) {
-        // Update existing
-        const dto: TourCreateDto = {
-          ...form,
-          shopId: item.shopId,
-        } as TourCreateDto;
+        // Update existing tour
+        const dto: TourCreateDto = { ...form, shopId: item.shopId };
         const updated = await TourService.update(item.id, dto);
         setItem(updated);
         setIsEditing(false);
@@ -234,8 +244,8 @@ export default function ManagerItemPage() {
               )}
 
               {/* Status */}
-              <div className="mb-2">
-                <span className="font-semibold">Status: </span>
+              <div className="mb-2 mt-3">
+                <span className="font-semibold mr-2">Status: </span>
                 {isEditing || isNew ? (
                   <select
                     className="select select-bordered"
@@ -265,7 +275,7 @@ export default function ManagerItemPage() {
                 )}
               </div>
               {/* Grid */}
-              <div className="grid grid-cols-2 gap-2 text-sm">
+              <div className="grid grid-cols-2 gap-3 text-sm">
                 {/* Price */}
                 <div>
                   <span className="font-semibold">Price:</span>{" "}
@@ -439,7 +449,7 @@ export default function ManagerItemPage() {
                 </div>
 
                 {/* Schedules */}
-                {!isNew && (
+                {isEditing && item && (
                   <div className="col-span-2 mt-4">
                     <EditableSchedules
                       tourId={item!.id}
