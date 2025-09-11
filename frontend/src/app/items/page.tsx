@@ -35,6 +35,10 @@ export default function ItemsPage() {
 
   const params = useSearchParams();
 
+  // ✅ Store params in local state so we can use them after fetch finishes
+  const keywordParam = params.get("keyword") || "";
+  const dateParam = params.get("date") || "";
+
   // Fetch tours
   useEffect(() => {
     const fetchTours = async () => {
@@ -57,41 +61,43 @@ export default function ItemsPage() {
         }));
 
         setAllItems(mapped);
-        setFilteredItems(mapped);
+
+        // ✅ run initial search immediately after data load
+        if (keywordParam || dateParam) {
+          handleSearch(keywordParam, dateParam, mapped);
+        } else {
+          setFilteredItems(mapped);
+        }
       } catch (err) {
         console.error("Failed to fetch tours:", err);
       }
     };
 
     fetchTours();
-  }, []);
-
-  // Apply query params from homepage search
-  useEffect(() => {
-    const keyword = params.get("keyword") || "";
-    const date = params.get("date") || "";
-    if (keyword || date) {
-      handleSearch(keyword, date);
-    }
-  }, [params]);
+  }, [keywordParam, dateParam]);
 
   // Search handler
-  const handleSearch = (keyword: string, date: string) => {
-    setSearchKeyword(keyword.toLowerCase());
+  const handleSearch = (
+    keyword: string,
+    date: string,
+    items: Item[] = allItems
+  ) => {
+    const lowerKeyword = keyword.toLowerCase();
+    setSearchKeyword(lowerKeyword);
     setSearchDate(date);
 
-    let results = allItems;
+    let results = items;
 
-    if (keyword) {
+    if (lowerKeyword) {
       results = results.filter(
         (item) =>
-          item.title.toLowerCase().includes(keyword) ||
-          item.description.toLowerCase().includes(keyword) ||
-          item.location.toLowerCase().includes(keyword)
+          item.title.toLowerCase().includes(lowerKeyword) ||
+          item.description.toLowerCase().includes(lowerKeyword) ||
+          item.location.toLowerCase().includes(lowerKeyword)
       );
     }
 
-    // 🔹 Later: also filter by available schedules for given date
+    // 🔹 date filtering could be added here
     setFilteredItems(results);
   };
 
@@ -110,8 +116,12 @@ export default function ItemsPage() {
 
   return (
     <main className="flex flex-col items-center justify-start min-h-screen p-4 max-w-7xl mx-auto">
-      <div className="w-full space-y-6">
-        <SearchBar onSearch={handleSearch} />
+      <div className="w-full space-y-6 mt-5">
+        <SearchBar
+          onSearch={handleSearch}
+          initialKeywords={keywordParam}
+          initialDate={dateParam}
+        />
         <FilterMenu
           filters={FILTER_CATEGORIES}
           items={allItems}

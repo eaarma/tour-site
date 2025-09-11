@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { TourService } from "@/lib/tourService";
 import { Item, TourCreateDto } from "@/types";
@@ -9,18 +9,38 @@ import EditableLanguages from "@/components/manager/item/EditableLanguages";
 
 const INTENSITY_OPTIONS = ["Easy", "Moderate", "Hard"];
 const CATEGORY_OPTIONS = ["Nature", "History", "Culture"];
-const STATUS_OPTIONS = ["Active", "Cancelled"];
+const STATUS_OPTIONS = ["ACTIVE", "ON HOLD", "CANCELLED"];
 const TYPE_OPTIONS = ["Walking", "Bus", "Boat", "Museum"];
 
 export default function ManagerItemPage() {
-  const { itemId } = useParams();
+  const params = useParams();
+  const shopId = Number(params.shopId); //number
+  const itemId = params.itemId;
+  const router = useRouter();
+
+  const isNew = itemId === "new";
   const [item, setItem] = useState<Item | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(!isNew);
+  const [isEditing, setIsEditing] = useState(isNew); // in add mode, editing by default
+  const [form, setForm] = useState<Partial<TourCreateDto>>(
+    isNew
+      ? {
+          shopId,
+          status: "ACTIVE",
+          category: CATEGORY_OPTIONS[0],
+          type: TYPE_OPTIONS[0],
+          intensity: INTENSITY_OPTIONS[0],
+          timeRequired: "5 minutes",
+          price: 0,
+          participants: 1,
+        }
+      : {}
+  );
 
-  const [form, setForm] = useState<Partial<TourCreateDto>>({});
-
+  // ✅ Load item only if editing existing
   useEffect(() => {
+    if (isNew) return;
+
     const fetchItem = async () => {
       try {
         const data = await TourService.getById(Number(itemId));
@@ -33,61 +53,156 @@ export default function ManagerItemPage() {
       }
     };
     fetchItem();
-  }, [itemId]);
+  }, [isNew, itemId]);
 
   const handleSave = async () => {
-    if (!item) return;
-    const dto: TourCreateDto = {
-      ...form,
-      shopId: item.shopId,
-    } as TourCreateDto;
-
     try {
-      const updated = await TourService.update(item.id, dto);
-      setItem(updated);
-      setIsEditing(false);
+      if (isNew) {
+        // Create new
+        const dto: TourCreateDto = form as TourCreateDto;
+        const created = await TourService.create(dto);
+        router.replace(`/manager/shops/${shopId}/items/${created.id}`);
+      } else if (item) {
+        // Update existing
+        const dto: TourCreateDto = {
+          ...form,
+          shopId: item.shopId,
+        } as TourCreateDto;
+        const updated = await TourService.update(item.id, dto);
+        setItem(updated);
+        setIsEditing(false);
+      }
     } catch (err) {
       console.error("Failed to save", err);
     }
   };
 
-  if (loading)
+  if (loading) {
     return <div className="text-center mt-10 text-lg">Loading...</div>;
-  if (!item)
+  }
+
+  if (!isNew && !item) {
     return <div className="text-center mt-10 text-lg">Item not found</div>;
+  }
 
   return (
     <main className="bg-base-200 min-h-screen p-6">
       <div className="max-w-5xl mx-auto mb-4 flex justify-between items-center">
-        <button
-          className="btn btn-md btn-primary"
-          onClick={() => setIsEditing(!isEditing)}
-        >
-          {isEditing ? "Cancel" : "Edit"}
-        </button>
-        {isEditing && (
-          <button className="btn btn-md btn-success" onClick={handleSave}>
-            Save
-          </button>
-        )}
+        <h1 className="text-2xl font-bold">
+          {isNew ? "Add Tour" : isEditing ? "Edit Tour" : "Tour Details"}
+        </h1>
+
+        <div className="flex gap-2">
+          {!isNew && (
+            <button
+              className="btn btn-md btn-primary"
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              {isEditing ? "Cancel" : "Edit"}
+            </button>
+          )}
+          {isEditing && (
+            <button className="btn btn-md btn-success" onClick={handleSave}>
+              Save
+            </button>
+          )}
+        </div>
       </div>
 
+      {/* Main card */}
       <div className="max-w-5xl mx-auto card bg-base-100 shadow-lg p-6">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Image */}
           <div className="lg:w-1/2">
-            {isEditing ? (
-              <input
-                value={form.image || ""}
-                onChange={(e) => setForm({ ...form, image: e.target.value })}
-                className="input input-bordered w-full"
-              />
+            {isEditing || isNew ? (
+              <div className="flex flex-col gap-2">
+                {/* URL input (optional) */}
+                <input
+                  value={form.image || ""}
+                  onChange={(e) => setForm({ ...form, image: e.target.value })}
+                  placeholder="Image URL"
+                  className="input input-bordered w-full"
+                />
+
+                {/* Hidden file input */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  id="imageUpload"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setForm({ ...form, image: reader.result as string });
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+
+                {/* Upload area */}
+                <div
+                  className={`
+    relative cursor-pointer group rounded-xl overflow-hidden
+    border-2 border-dashed border-gray-300
+    hover:border-primary hover:bg-primary/10
+    transition-all duration-200
+  `}
+                  onClick={() =>
+                    document.getElementById("imageUpload")?.click()
+                  }
+                >
+                  <img
+                    src={form.image || "/images/placeholder-tour.jpg"}
+                    alt={form.title || "Tour placeholder"}
+                    className="w-full h-72 object-cover rounded-xl"
+                  />
+
+                  {/* Overlay (always visible, but stronger on hover) */}
+                  <div
+                    className={`
+      absolute inset-0 flex flex-col items-center justify-center gap-2
+      bg-black/30 group-hover:bg-black/50
+      text-white text-center transition-colors duration-200
+    `}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-10 h-10 opacity-80 group-hover:opacity-100"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4-4m0 0l-4 4m4-4v12"
+                      />
+                    </svg>
+                    <span className="font-medium opacity-90 group-hover:opacity-100">
+                      {form.image ? "Change image" : "Click to add image"}
+                    </span>
+                  </div>
+                </div>
+              </div>
             ) : (
-              <img
-                src={item.image}
-                alt={item.title}
-                className="rounded-xl w-full object-cover h-72 lg:h-full"
-              />
+              <div className="relative">
+                <img
+                  src={item.image || "/images/placeholder-tour.jpg"}
+                  alt={item.title}
+                  className="rounded-xl w-full object-cover h-72 lg:h-full"
+                />
+                {!item.image && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-xl">
+                    <span className="text-white text-lg font-semibold">
+                      No image yet
+                    </span>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
@@ -98,51 +213,58 @@ export default function ManagerItemPage() {
                 <input
                   className="input input-bordered w-full text-3xl font-bold"
                   value={form.title || ""}
+                  placeholder="Title"
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                 />
               ) : (
-                <h1 className="text-3xl font-bold mb-2">{item.title}</h1>
+                <h1 className="text-3xl font-bold mb-2">{item?.title}</h1>
               )}
 
               {isEditing ? (
                 <textarea
                   className="textarea textarea-bordered w-full"
                   value={form.description || ""}
+                  placeholder="Description"
                   onChange={(e) =>
                     setForm({ ...form, description: e.target.value })
                   }
                 />
               ) : (
-                <p className="text-gray-600 mb-4">{item.description}</p>
+                <p className="text-gray-600 mb-4">{item?.description}</p>
               )}
 
-              {/* Status (badge in preview) */}
+              {/* Status */}
               <div className="mb-2">
                 <span className="font-semibold">Status: </span>
-                {isEditing ? (
+                {isEditing || isNew ? (
                   <select
                     className="select select-bordered"
-                    value={form.status || ""}
+                    value={form.status || "ACTIVE"}
                     onChange={(e) =>
                       setForm({ ...form, status: e.target.value })
                     }
                   >
                     {STATUS_OPTIONS.map((s) => (
-                      <option key={s}>{s}</option>
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
                     ))}
                   </select>
                 ) : (
                   <span
                     className={`badge ${
-                      item.status === "ACTIVE" ? "badge-success" : "badge-error"
+                      item?.status === "ACTIVE"
+                        ? "badge-success"
+                        : item?.status === "ON HOLD"
+                        ? "badge-warning"
+                        : "badge-error"
                     }`}
                   >
-                    {item.status}
+                    {item?.status}
                   </span>
                 )}
               </div>
-
-              {/* Grid of fields */}
+              {/* Grid */}
               <div className="grid grid-cols-2 gap-2 text-sm">
                 {/* Price */}
                 <div>
@@ -157,7 +279,7 @@ export default function ManagerItemPage() {
                       }
                     />
                   ) : (
-                    item.price
+                    item?.price
                   )}
                 </div>
 
@@ -177,7 +299,7 @@ export default function ManagerItemPage() {
                       ))}
                     </select>
                   ) : (
-                    item.intensity
+                    item?.intensity
                   )}
                 </div>
 
@@ -187,37 +309,43 @@ export default function ManagerItemPage() {
                   {isEditing ? (
                     <select
                       className="select select-bordered w-full"
-                      value={form.category || ""}
+                      value={form.category || CATEGORY_OPTIONS[0]}
                       onChange={(e) =>
                         setForm({ ...form, category: e.target.value })
                       }
                     >
                       {CATEGORY_OPTIONS.map((opt) => (
-                        <option key={opt}>{opt}</option>
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
                       ))}
                     </select>
                   ) : (
-                    item.category
+                    item?.category
                   )}
                 </div>
 
-                {/* Type (edit only) */}
-                {isEditing && (
-                  <div>
-                    <span className="font-semibold">Type:</span>{" "}
+                {/* Type */}
+                <div>
+                  <span className="font-semibold">Type:</span>{" "}
+                  {isEditing ? (
                     <select
                       className="select select-bordered w-full"
-                      value={form.type || ""}
+                      value={form.type || TYPE_OPTIONS[0]}
                       onChange={(e) =>
                         setForm({ ...form, type: e.target.value })
                       }
                     >
                       {TYPE_OPTIONS.map((opt) => (
-                        <option key={opt}>{opt}</option>
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
                       ))}
                     </select>
-                  </div>
-                )}
+                  ) : (
+                    item?.type
+                  )}
+                </div>
 
                 {/* Duration */}
                 <div>
@@ -230,7 +358,6 @@ export default function ManagerItemPage() {
                         setForm({ ...form, timeRequired: e.target.value })
                       }
                     >
-                      {/* Short durations: 5 to 60 minutes in 5-min increments */}
                       {Array.from({ length: 12 }, (_, i) => (i + 1) * 5).map(
                         (min) => (
                           <option key={min} value={`${min} minutes`}>
@@ -238,29 +365,24 @@ export default function ManagerItemPage() {
                           </option>
                         )
                       )}
-
-                      {/* Hourly durations */}
                       {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
                         <option key={h} value={`${h} hour${h > 1 ? "s" : ""}`}>
                           {h} hour{h > 1 ? "s" : ""}
                         </option>
                       ))}
-
                       <option value="Full day">Full day</option>
-
-                      {/* Multiple days */}
                       {Array.from({ length: 5 }, (_, i) => i + 2).map((d) => (
                         <option key={d} value={`${d} days`}>
                           {d} days
                         </option>
                       ))}
-
                       <option value="1 week">1 week</option>
                     </select>
                   ) : (
-                    " " + item.timeRequired
+                    " " + item?.timeRequired
                   )}
                 </div>
+
                 {/* Participants */}
                 <div>
                   <span className="font-semibold">Max participants:</span>{" "}
@@ -277,7 +399,7 @@ export default function ManagerItemPage() {
                       }
                     />
                   ) : (
-                    item.participants
+                    item?.participants
                   )}
                 </div>
 
@@ -293,9 +415,10 @@ export default function ManagerItemPage() {
                       }
                     />
                   ) : (
-                    item.location
+                    item?.location
                   )}
                 </div>
+
                 {/* Languages */}
                 <div className="col-span-2">
                   <span className="font-semibold">Languages:</span>
@@ -311,14 +434,19 @@ export default function ManagerItemPage() {
                       isEditing={isEditing}
                     />
                   ) : (
-                    " " + item.language
+                    " " + item?.language
                   )}
                 </div>
 
                 {/* Schedules */}
-                <div className="col-span-2 mt-4">
-                  <EditableSchedules tourId={item.id} isEditing={isEditing} />{" "}
-                </div>
+                {!isNew && (
+                  <div className="col-span-2 mt-4">
+                    <EditableSchedules
+                      tourId={item!.id}
+                      isEditing={isEditing}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
