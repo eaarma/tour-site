@@ -24,8 +24,8 @@ public class TourCreateDto {
     @DecimalMin(value = "0.0", inclusive = false, message = "Price must be positive")
     private BigDecimal price;
 
-    @NotBlank(message = "Time required is required")
-    private String timeRequired;
+    @NotNull(message = "Time required (minutes) is required")
+    private Integer timeRequired;
 
     @NotBlank(message = "Intensity is required")
     private String intensity;

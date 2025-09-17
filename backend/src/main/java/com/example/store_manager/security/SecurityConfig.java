@@ -33,31 +33,35 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())).csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-
                         .requestMatchers("/error").permitAll()
-                        // Anyone can view tours
+
+                        // Tours
                         .requestMatchers(HttpMethod.GET, "/tours").permitAll()
                         .requestMatchers(HttpMethod.GET, "/tours/**").permitAll()
-                        // Only MANAGER can create, update tours
                         .requestMatchers(HttpMethod.POST, "/tours/**").hasRole("MANAGER")
                         .requestMatchers(HttpMethod.PUT, "/tours/**").hasRole("MANAGER")
                         .requestMatchers(HttpMethod.DELETE, "/tours/**").hasRole("MANAGER")
 
-                        // Allow guests to create orders
+                        // Orders
                         .requestMatchers(HttpMethod.POST, "/orders/**").permitAll()
-
-                        // Only MANAGER or managers can modify/delete orders
                         .requestMatchers(HttpMethod.PUT, "/orders/**").hasRole("MANAGER")
                         .requestMatchers(HttpMethod.DELETE, "/orders/**").hasRole("MANAGER")
 
+                        // Shops & Shop Users
                         .requestMatchers(HttpMethod.POST, "/shops/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/shop-users/**").permitAll()
-
                         .requestMatchers(HttpMethod.PUT, "/shops/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/shop-users/**").authenticated()
+
+                        // Tour Schedules
+                        .requestMatchers(HttpMethod.GET, "/schedules/**").permitAll() // ✅ anyone can view
+                        .requestMatchers(HttpMethod.POST, "/schedules/**").hasRole("MANAGER") // ✅ only MANAGER
+                        .requestMatchers(HttpMethod.PATCH, "/schedules/**").hasRole("MANAGER") // ✅ only MANAGER
+                        .requestMatchers(HttpMethod.DELETE, "/schedules/**").hasRole("MANAGER")// ✅ only MANAGER
 
                         // All other requests require authentication
                         .anyRequest().authenticated())

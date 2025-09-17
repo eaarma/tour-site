@@ -30,7 +30,7 @@ public class Tour {
     private String description;
     private String image;
     private BigDecimal price;
-    private String timeRequired;
+    private Integer timeRequired; // in minutes
     private String intensity;
     private int participants;
     private String category;

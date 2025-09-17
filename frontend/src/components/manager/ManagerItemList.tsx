@@ -36,6 +36,7 @@ export default function ManagerItemList({
             <ItemCard
               key={item.id}
               item={item}
+              showStatus={true}
               onClick={() =>
                 router.push(`/manager/shops/${shopId}/items/${item.id}`)
               }

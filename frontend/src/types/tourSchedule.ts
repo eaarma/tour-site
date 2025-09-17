@@ -11,7 +11,7 @@ export interface TourScheduleResponseDto {
   date: string;
   time?: string;
   maxParticipants: number;
-  remainingParticipants: number;
+  status?: string;
 }
 
 export interface TourScheduleUpdateDto {

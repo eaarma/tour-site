@@ -43,4 +43,9 @@ public class TourScheduleController {
         service.deleteSchedule(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<TourScheduleResponseDto> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getScheduleById(id));
+    }
 }

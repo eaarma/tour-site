@@ -1,7 +1,7 @@
 "use client";
 
 import { FilterCategory, Item } from "@/types/types";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Listbox } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 
@@ -16,15 +16,14 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
   items,
   onFilter,
 }) => {
-  // Initialize once here
   const [selectedFilters, setSelectedFilters] = useState<
     Record<string, Set<string>>
   >(() => {
-    const initialFilters: Record<string, Set<string>> = {};
+    const initial: Record<string, Set<string>> = {};
     filters.forEach((f) => {
-      initialFilters[f.key] = new Set();
+      initial[f.key] = new Set();
     });
-    return initialFilters;
+    return initial;
   });
 
   const toggleFilter = (key: string, value: string) => {
@@ -50,18 +49,42 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
     setSelectedFilters(cleared);
   };
 
+  // ✅ Check if any filter is applied
+  const hasFiltersApplied = useMemo(() => {
+    return Object.values(selectedFilters).some((set) => set.size > 0);
+  }, [selectedFilters]);
+
+  // ✅ Apply filters whenever they change
+  useEffect(() => {
+    if (!items.length) return;
+
+    // Flatten all selected values into groups
+    const activeFilters = Object.entries(selectedFilters).filter(
+      ([, values]) => values.size > 0
+    );
+
+    let results: Item[];
+
+    if (activeFilters.length === 0) {
+      // no filters -> show everything
+      results = items;
+    } else {
+      results = items.filter((item) => {
+        // Item matches if it satisfies at least ONE filter group
+        return activeFilters.some(([key, values]) =>
+          values.has(item[key as keyof Item] as string)
+        );
+      });
+    }
+
+    onFilter(results);
+  }, [selectedFilters, items, onFilter]);
+
   return (
     <div className="w-full max-w-5xl mx-auto px-4 mt-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Filter</h2>
-        <button
-          onClick={clearAllFilters}
-          className="text-sm text-red-600 hover:underline"
-        >
-          Clear All Filters
-        </button>
-      </div>
+      <h2 className="text-lg font-semibold mb-4">Filter</h2>
 
+      {/* Dropdown filters */}
       <div className="flex flex-wrap gap-4">
         {filters.map((filter) => (
           <div key={filter.key} className="w-48">
@@ -76,13 +99,11 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
               multiple
             >
               <div className="relative">
-                {/* Button */}
                 <Listbox.Button className="w-full rounded border px-3 py-2 text-left bg-base-100 text-sm shadow flex justify-between items-center">
                   <span className="truncate font-semibold">{filter.label}</span>
                   <ChevronUpDownIcon className="h-4 w-4 text-neutral ml-2" />
                 </Listbox.Button>
 
-                {/* Options */}
                 <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-base-100 text-neutral shadow-lg border text-sm">
                   {filter.options.map((option) => (
                     <Listbox.Option
@@ -109,36 +130,47 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
         ))}
       </div>
 
-      {/* Selected Filters Display */}
-      <div className="mt-6 flex flex-wrap gap-4">
-        {Object.entries(selectedFilters).map(([key, values]) => {
-          if (!values || values.size === 0) return null;
-          const filterLabel = filters.find((f) => f.key === key)?.label;
-          return (
-            <div key={key} className="flex flex-col">
-              <h4 className="font-semibold text-gray-700">{filterLabel}</h4>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {Array.from(values).map((val) => (
-                  <span
-                    key={val}
-                    className="inline-flex items-center bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full"
-                  >
-                    {val}
-                    <button
-                      onClick={() => toggleFilter(key, val)}
-                      className="ml-4 text-blue-600 hover:text-blue-900 focus:outline-none"
-                      aria-label={`Remove filter ${val}`}
-                      type="button"
+      {/* Selected filters + Clear button */}
+      {(hasFiltersApplied || false) && (
+        <div className="mt-6 flex flex-wrap items-center gap-4">
+          {/* Selected Filters Display */}
+          {Object.entries(selectedFilters).map(([key, values]) => {
+            if (!values || values.size === 0) return null;
+            const filterLabel = filters.find((f) => f.key === key)?.label;
+            return (
+              <div key={key} className="flex flex-col">
+                <h4 className="font-semibold text-gray-700">{filterLabel}</h4>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {Array.from(values).map((val) => (
+                    <span
+                      key={val}
+                      className="inline-flex items-center bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full"
                     >
-                      &#x2715;
-                    </button>
-                  </span>
-                ))}
+                      {val}
+                      <button
+                        onClick={() => toggleFilter(key, val)}
+                        className="ml-2 text-blue-600 hover:text-blue-900 focus:outline-none"
+                        aria-label={`Remove filter ${val}`}
+                        type="button"
+                      >
+                        &#x2715;
+                      </button>
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+
+          {/* Clear All Button */}
+          <button
+            onClick={clearAllFilters}
+            className="ml-2 mt-7 text-sm bg-red-100 text-red-700 px-3 py-1 rounded-full hover:bg-red-200"
+          >
+            Clear All
+          </button>
+        </div>
+      )}
     </div>
   );
 };

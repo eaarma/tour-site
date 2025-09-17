@@ -3,7 +3,7 @@ export interface TourCreateDto {
   description: string;
   image: string;
   price: number; // BigDecimal in Java becomes number in TS
-  timeRequired: string;
+  timeRequired: number;
   intensity: string;
   participants: number;
   category: string;
@@ -20,7 +20,7 @@ export interface Item {
   description: string;
   image: string;
   price: number;
-  timeRequired: string;
+  timeRequired: number;
   intensity: string;
   participants: number;
   category: string;

@@ -14,7 +14,7 @@ public class TourResponseDto {
     private String description;
     private String image;
     private BigDecimal price;
-    private String timeRequired;
+    private Integer timeRequired;
     private String intensity;
     private int participants;
     private String category;

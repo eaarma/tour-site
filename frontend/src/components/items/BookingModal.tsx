@@ -4,120 +4,197 @@ import Modal from "../common/Modal";
 import { useDispatch } from "react-redux";
 import { addItemToCart } from "@/store/cartSlice";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Item } from "@/types";
+import { TourScheduleResponseDto } from "@/types/tourSchedule";
+import toast from "react-hot-toast";
+import { TourScheduleService } from "@/lib/TourScheduleService";
 
 interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   item: Item;
+  selectedSchedule?: TourScheduleResponseDto | null;
+  schedules?: TourScheduleResponseDto[];
 }
 
 export default function BookingModal({
   isOpen,
   onClose,
   item,
+  selectedSchedule,
+  schedules = [],
 }: BookingModalProps) {
   const dispatch = useDispatch();
   const router = useRouter();
 
-  const [selectedDate, setSelectedDate] = useState("");
-  const [selectedTime, setSelectedTime] = useState("");
-  const [participants, setParticipants] = useState(1);
-  const [message, setMessage] = useState("");
+  const [chosenSchedule, setChosenSchedule] =
+    useState<TourScheduleResponseDto | null>(selectedSchedule ?? null);
 
-  const maxParticipants = Number(item.participants) || 20;
+  // local copy of schedules so we can remove unavailable ones
+  const [localSchedules, setLocalSchedules] =
+    useState<TourScheduleResponseDto[]>(schedules);
 
-  const handleAddToCart = () => {
-    if (!selectedDate || !selectedTime) {
-      setMessage("⚠️ Please select a date and time first");
+  // keep chosenSchedule in sync if parent selection changes
+  useEffect(() => {
+    setChosenSchedule(selectedSchedule ?? null);
+  }, [selectedSchedule]);
+
+  // keep local schedules in sync when prop changes
+  useEffect(() => {
+    setLocalSchedules(schedules);
+  }, [schedules]);
+
+  const [participants, setParticipants] = useState<number>(1);
+
+  const handleRemoveUnavailable = (id: number) => {
+    setLocalSchedules((prev) => prev.filter((s) => s.id !== id));
+    if (chosenSchedule?.id === id) {
+      setChosenSchedule(null);
+    }
+  };
+
+  // Check & add to cart
+  const handleAddToCart = async () => {
+    if (!chosenSchedule) {
+      toast.error("Please choose a time first.");
       return;
     }
 
-    dispatch(
-      addItemToCart({
-        id: item.id.toString(),
-        title: item.title,
-        price: Number(item.price),
-        participants,
-        selectedDate,
-        selectedTime,
-      })
-    );
+    if (!participants) {
+      toast.error("Please choose number of participants.");
+      return;
+    }
 
-    setMessage(`${item.title} added to cart ✅`);
-    setTimeout(() => setMessage(""), 2500);
+    try {
+      // Re-fetch the schedule from backend to confirm it's still active
+      const latest = await TourScheduleService.getById(chosenSchedule.id);
+
+      if (!latest || latest.status !== "ACTIVE") {
+        // remove it from the shown list and clear selection
+        handleRemoveUnavailable(chosenSchedule.id);
+
+        toast.error(
+          "Selected time is no longer available. Please pick another."
+        );
+        return;
+      }
+
+      // success -> add to cart
+      dispatch(
+        addItemToCart({
+          id: item.id.toString(),
+          title: item.title,
+          price: Number(item.price),
+          participants,
+          scheduleId: chosenSchedule.id,
+          selectedDate: chosenSchedule.date,
+          selectedTime: chosenSchedule.time || "",
+        })
+      );
+
+      toast.success(`${item.title} added to cart ✅`);
+
+      // close modal after successful add
+      onClose();
+    } catch (err) {
+      console.error("Error checking schedule availability:", err);
+      toast.error("Could not verify schedule availability. Try again.");
+    }
   };
 
-  const handleBookNow = () => {
-    handleAddToCart();
-    if (selectedDate && selectedTime) {
-      onClose();
-      router.push("/cart");
+  const handleBookNow = async () => {
+    if (!chosenSchedule) {
+      toast.error("Please choose a time first.");
+      return;
     }
+    if (!participants) {
+      toast.error("Please choose number of participants.");
+      return;
+    }
+
+    // This will verify availability and add to cart, and close modal on success
+    await handleAddToCart();
+
+    // If added successfully we navigate to cart.
+    // (We assume handleAddToCart closed the modal on success)
+    router.push("/cart");
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <h2 className="text-2xl font-bold mb-4">{item.title}</h2>
+      <h2
+        className="text-2xl font-bold mb-4"
+        id="booking-modal-title"
+        aria-label={`Booking modal for ${item.title}`}
+      >
+        {item.title}
+      </h2>
       <p className="mb-4">Price: {item.price} €</p>
 
-      {/* Message */}
-      {message && <div className="alert alert-info mb-4">{message}</div>}
-
-      {/* Date selection */}
+      {/* Time bubbles */}
       <div className="mb-4">
-        <label className="block font-semibold mb-2">Select Date</label>
-        <select
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          className="select select-bordered w-full"
-        >
-          <option value="">-- Choose a date --</option>
-          <option value="2025-09-15">Sept 15, 2025</option>
-          <option value="2025-09-22">Sept 22, 2025</option>
-        </select>
+        <h3 className="font-semibold mb-2">Select a Time:</h3>
+        <div className="flex flex-wrap gap-2">
+          {localSchedules.length > 0 ? (
+            localSchedules.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                className={`badge p-3 cursor-pointer ${
+                  chosenSchedule?.id === s.id
+                    ? "badge-primary text-white"
+                    : "badge-outline"
+                }`}
+                onClick={() => setChosenSchedule(s)}
+              >
+                {s.date} {s.time ? `• ${s.time}` : ""}
+              </button>
+            ))
+          ) : (
+            <div className="text-gray-500">No times available</div>
+          )}
+        </div>
       </div>
 
-      {/* Time selection */}
+      {/* Participants dropdown */}
       <div className="mb-4">
-        <label className="block font-semibold mb-2">Select Time</label>
-        <select
-          value={selectedTime}
-          onChange={(e) => setSelectedTime(e.target.value)}
-          className="select select-bordered w-full"
+        <label
+          className="block font-semibold mb-2"
+          htmlFor="participants-select"
         >
-          <option value="">-- Choose a time --</option>
-          <option value="10:00">10:00 AM</option>
-          <option value="14:00">2:00 PM</option>
-        </select>
-      </div>
-
-      {/* Participants selection */}
-      <div className="mb-4">
-        <label className="block font-semibold mb-2">Participants</label>
+          Participants
+        </label>
         <select
+          id="participants-select"
+          className="select select-bordered w-32"
           value={participants}
           onChange={(e) => setParticipants(Number(e.target.value))}
-          className="select select-bordered w-full"
         >
-          {Array.from({ length: maxParticipants }, (_, i) => i + 1).map(
-            (num) => (
-              <option key={num} value={num}>
-                {num}
+          {Array.from({ length: item.participants || 1 }, (_, i) => i + 1).map(
+            (n) => (
+              <option key={n} value={n}>
+                {n}
               </option>
             )
           )}
         </select>
       </div>
 
-      {/* Actions */}
       <div className="flex justify-between mt-6">
-        <button className="btn btn-secondary" onClick={handleAddToCart}>
+        <button
+          className="btn btn-secondary"
+          onClick={handleAddToCart}
+          aria-disabled={!chosenSchedule}
+        >
           Add to Cart
         </button>
 
-        <button className="btn btn-primary" onClick={handleBookNow}>
+        <button
+          className="btn btn-primary"
+          onClick={handleBookNow}
+          aria-disabled={!chosenSchedule}
+        >
           Book Now
         </button>
       </div>

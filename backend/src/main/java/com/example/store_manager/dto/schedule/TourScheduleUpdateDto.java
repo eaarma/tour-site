@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Data
 @NoArgsConstructor
@@ -12,9 +14,9 @@ import lombok.NoArgsConstructor;
 @Builder
 public class TourScheduleUpdateDto {
 
-    private String date; // ISO date string, e.g., "2025-09-01"
+    private LocalDate date; // ISO date string, e.g., "2025-09-01"
 
-    private String time; // ISO time string, e.g., "14:00"
+    private LocalTime time; // ISO time string, e.g., "14:00"
 
     @Min(value = 1, message = "Maximum participants must be at least 1")
     private Integer maxParticipants; // optional

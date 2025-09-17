@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import SearchBar from "@/components/common/SearchBar";
 import { FilterCategory } from "@/types/types";
@@ -8,22 +8,36 @@ import FilterMenu from "@/components/items/FilterMenu";
 import ItemList from "@/components/items/ItemList";
 import { Item } from "@/types";
 import { TourService } from "@/lib/tourService";
+import { TourScheduleService } from "@/lib/TourScheduleService";
+import SortMenu from "@/components/items/SortMenu";
 
 export const FILTER_CATEGORIES: FilterCategory[] = [
   {
     key: "category",
     label: "Category",
-    options: ["Culture", "Food & Drink", "Adventure", "Urban", "Nature"],
+    options: ["Culture", "History", "Adventure", "Urban", "Nature"],
   },
   {
     key: "language",
     label: "Language",
-    options: ["English", "Greek", "Spanish"],
+    options: [
+      "English",
+      "Estonian",
+      "Russian",
+      "German",
+      "French",
+      "Spanish",
+      "Italian",
+      "Finnish",
+      "Swedish",
+      "Chinese",
+      "Japanese",
+    ],
   },
   {
     key: "type",
     label: "Type",
-    options: ["Tour", "Workshop", "Event"],
+    options: ["Walking", "Bus", "Boat", "Museum"],
   },
 ];
 
@@ -31,6 +45,8 @@ export default function ItemsPage() {
   const [allItems, setAllItems] = useState<Item[]>([]);
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [sortedItems, setSortedItems] = useState<Item[]>([]);
+  const [sortKey, setSortKey] = useState("az"); // default sorting
   const [searchDate, setSearchDate] = useState("");
 
   const params = useSearchParams();
@@ -39,30 +55,31 @@ export default function ItemsPage() {
   const keywordParam = params.get("keyword") || "";
   const dateParam = params.get("date") || "";
 
-  // Fetch tours
   useEffect(() => {
     const fetchTours = async () => {
       try {
         const tours: Item[] = await TourService.getAll();
-        const mapped: Item[] = tours.map((tour) => ({
-          id: tour.id,
-          title: tour.title,
-          description: tour.description,
-          image: tour.image ?? "/images/default.jpg",
-          price: tour.price,
-          timeRequired: tour.timeRequired,
-          intensity: tour.intensity,
-          type: tour.type,
-          status: tour.status,
-          participants: tour.participants,
-          category: tour.category,
-          language: tour.language,
-          location: tour.location,
-        }));
+        const mapped: Item[] = tours
+          .map((tour) => ({
+            id: tour.id,
+            title: tour.title,
+            description: tour.description,
+            image: tour.image ?? "/images/default.jpg",
+            price: tour.price,
+            timeRequired: tour.timeRequired,
+            intensity: tour.intensity,
+            type: tour.type,
+            status: tour.status,
+            participants: tour.participants,
+            category: tour.category,
+            language: tour.language,
+            location: tour.location,
+          }))
+          // ✅ Only keep ACTIVE items
+          .filter((item) => item.status === "ACTIVE");
 
         setAllItems(mapped);
 
-        // ✅ run initial search immediately after data load
         if (keywordParam || dateParam) {
           handleSearch(keywordParam, dateParam, mapped);
         } else {
@@ -77,7 +94,7 @@ export default function ItemsPage() {
   }, [keywordParam, dateParam]);
 
   // Search handler
-  const handleSearch = (
+  const handleSearch = async (
     keyword: string,
     date: string,
     items: Item[] = allItems
@@ -88,6 +105,7 @@ export default function ItemsPage() {
 
     let results = items;
 
+    // Filter by keyword first (synchronous)
     if (lowerKeyword) {
       results = results.filter(
         (item) =>
@@ -97,22 +115,39 @@ export default function ItemsPage() {
       );
     }
 
-    // 🔹 date filtering could be added here
+    // Filter by date (async)
+    if (date) {
+      const filteredByDate: Item[] = [];
+
+      await Promise.all(
+        results.map(async (item) => {
+          const schedules = await TourScheduleService.getByTourId(item.id);
+          const hasMatchingDate = schedules.some((s) => s.date === date);
+          if (hasMatchingDate) filteredByDate.push(item);
+        })
+      );
+
+      results = filteredByDate;
+    }
+
     setFilteredItems(results);
   };
 
   // Filter handler
-  const handleFilter = (filteredByFilterMenu: Item[]) => {
-    let results = filteredByFilterMenu;
-    if (searchKeyword) {
-      results = results.filter(
-        (item) =>
-          item.title.toLowerCase().includes(searchKeyword) ||
-          item.description.toLowerCase().includes(searchKeyword)
-      );
-    }
-    setFilteredItems(results);
-  };
+  const handleFilter = useCallback(
+    (filteredByFilterMenu: Item[]) => {
+      let results = filteredByFilterMenu;
+      if (searchKeyword) {
+        results = results.filter(
+          (item) =>
+            item.title.toLowerCase().includes(searchKeyword) ||
+            item.description.toLowerCase().includes(searchKeyword)
+        );
+      }
+      setFilteredItems(results);
+    },
+    [searchKeyword]
+  );
 
   return (
     <main className="flex flex-col items-center justify-start min-h-screen p-4 max-w-7xl mx-auto">
@@ -122,12 +157,20 @@ export default function ItemsPage() {
           initialKeywords={keywordParam}
           initialDate={dateParam}
         />
-        <FilterMenu
-          filters={FILTER_CATEGORIES}
-          items={allItems}
-          onFilter={handleFilter}
-        />
-        <ItemList items={filteredItems} />
+        <div className="flex justify-between items-start gap-4">
+          <FilterMenu
+            filters={FILTER_CATEGORIES}
+            items={allItems}
+            onFilter={handleFilter}
+          />
+          <SortMenu
+            sortKey={sortKey}
+            setSortKey={setSortKey}
+            items={filteredItems}
+            onSort={setSortedItems}
+          />
+        </div>
+        <ItemList items={sortedItems} />
       </div>
     </main>
   );

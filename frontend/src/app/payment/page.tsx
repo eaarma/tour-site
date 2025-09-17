@@ -8,10 +8,12 @@ import PaymentSummarySection from "@/components/payment/PaymentSummarySection";
 import PaymentTotalSection from "@/components/payment/PaymentTotalSection";
 import { RootState } from "@/store/store";
 import { OrderService } from "@/lib/orderService";
+import { useRouter } from "next/router";
 
 export default function PaymentPage() {
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const checkoutInfo = useSelector((state: RootState) => state.checkout);
+  const router = useRouter();
 
   const [selectedMethod, setSelectedMethod] = useState<
     "credit-card" | "pay-link"
@@ -65,7 +67,8 @@ export default function PaymentPage() {
       console.log("Created orders:", orders);
 
       // Redirect to success page or clear cart
-      window.location.href = "/order-success"; // or your route
+
+      router.push(`/confirmation/${order.id}`);
     } catch (err: any) {
       console.error("Failed to create order", err);
       toast.error("Failed to create order. Please try again.");

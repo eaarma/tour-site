@@ -1,12 +1,11 @@
 package com.example.store_manager.dto.schedule;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Data
 @NoArgsConstructor
@@ -16,8 +15,8 @@ public class TourScheduleResponseDto {
 
     private Long id;
     private Long tourId;
-    private String date;
-    private String time;
+    private LocalDate date;
+    private LocalTime time;
     private int maxParticipants;
-    private int remainingParticipants;
+    private String status; // e.g. ACTIVE, EXPIRED, BOOKED
 }

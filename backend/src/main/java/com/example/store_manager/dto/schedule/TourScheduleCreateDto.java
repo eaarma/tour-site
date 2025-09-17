@@ -1,5 +1,8 @@
 package com.example.store_manager.dto.schedule;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -13,9 +16,9 @@ public class TourScheduleCreateDto {
     private Long tourId;
 
     @NotNull(message = "Date is required")
-    private String date;
+    private LocalDate date;
 
-    private String time; // optional
+    private LocalTime time; // optional
 
     @Min(value = 1, message = "At least 1 participant is required")
     private int maxParticipants;

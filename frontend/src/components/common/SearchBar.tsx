@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -24,6 +24,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
     initialDate ? new Date(initialDate) : null
   );
   const [initialized, setInitialized] = useState(false);
+  const hasSkippedInitial = useRef(false); // ✅ new flag
   const router = useRouter();
 
   // Handle search
@@ -51,12 +52,20 @@ const SearchBar: React.FC<SearchBarProps> = ({
   useEffect(() => {
     if (!redirectOnSearch && onSearch && initialized) {
       const trimmed = keywords.trim();
+
+      // ✅ Skip auto-search only once if params existed initially
+      if ((initialKeywords || initialDate) && !hasSkippedInitial.current) {
+        hasSkippedInitial.current = true;
+        return;
+      }
+
       if (trimmed.length >= 3 || date) {
         const timeout = setTimeout(() => {
           handleSearch();
         }, 300);
         return () => clearTimeout(timeout);
       }
+
       if (!trimmed && !date) {
         onSearch("", "");
       }
@@ -67,7 +76,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const handleClearAll = () => {
     setKeywords("");
     setDate(null);
-    if (!redirectOnSearch) {
+
+    if (redirectOnSearch) {
+      // ✅ If redirect mode → reset URL params
+      router.push("/items");
+    } else {
+      // ✅ If live search mode → trigger search reset
       onSearch?.("", "");
     }
   };
@@ -86,7 +100,18 @@ const SearchBar: React.FC<SearchBarProps> = ({
         {keywords && (
           <button
             type="button"
-            onClick={() => setKeywords("")}
+            onClick={() => {
+              setKeywords("");
+              if (redirectOnSearch) {
+                // reset URL to remove keyword param
+                const params = new URLSearchParams();
+                if (date)
+                  params.append("date", date.toISOString().split("T")[0]);
+                router.push(`/items?${params.toString()}`);
+              } else {
+                onSearch?.("", date ? date.toISOString().split("T")[0] : "");
+              }
+            }}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800"
           >
             ✕
@@ -100,7 +125,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
           selected={date}
           onChange={(d) => setDate(d)}
           onSelect={() => {
-            // ✅ blur after selecting so ❌ appears immediately
             if (document.activeElement instanceof HTMLElement) {
               document.activeElement.blur();
             }

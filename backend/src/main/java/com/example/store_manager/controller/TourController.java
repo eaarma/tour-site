@@ -53,4 +53,5 @@ public class TourController {
     public ResponseEntity<List<TourResponseDto>> getToursByShop(@PathVariable Long shopId) {
         return ResponseEntity.ok(tourService.getToursByShopId(shopId));
     }
+
 }

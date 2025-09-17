@@ -1,12 +1,11 @@
 "use client";
 
+import { TourScheduleService } from "@/lib/TourScheduleService";
+import { TourScheduleResponseDto } from "@/types/tourSchedule";
 import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import {
-  TourScheduleService,
-  TourScheduleResponseDto,
-} from "@/lib/tourScheduleService";
+import toast from "react-hot-toast";
 
 interface EditableSchedulesProps {
   tourId: number;
@@ -37,12 +36,25 @@ export default function EditableSchedules({
   const handleAdd = async () => {
     if (!newDate || !newTime) return;
 
-    // Format to backend expectations: YYYY-MM-DD and HH:mm
-    const formattedDate = newDate.toISOString().split("T")[0]; // YYYY-MM-DD
+    // Merge date and time into one Date object
+    const combined = new Date(newDate);
+    combined.setHours(newTime.getHours(), newTime.getMinutes(), 0, 0);
+
+    // Check if in the past
+    if (combined < new Date()) {
+      toast.error("Selected time is in the past and cannot be added.");
+      return;
+    }
+
+    // Format date in local time
+    const formattedDate = `${newDate.getFullYear()}-${String(
+      newDate.getMonth() + 1
+    ).padStart(2, "0")}-${String(newDate.getDate()).padStart(2, "0")}`;
+
     const formattedTime = newTime.toLocaleTimeString("en-GB", {
       hour: "2-digit",
       minute: "2-digit",
-    }); // 24h HH:mm
+    });
 
     try {
       const created = await TourScheduleService.create({
@@ -57,6 +69,7 @@ export default function EditableSchedules({
       setNewParticipants(10);
     } catch (err) {
       console.error("Failed to add schedule", err);
+      toast.error("Failed to add schedule.");
     }
   };
 

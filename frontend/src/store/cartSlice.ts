@@ -5,6 +5,7 @@ interface CartItem {
   title: string;
   price: number;
   participants: number;
+  scheduleId: number;
   selectedDate: string;
   selectedTime: string;
 }

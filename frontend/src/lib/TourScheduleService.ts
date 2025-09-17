@@ -1,25 +1,9 @@
+import {
+  TourScheduleCreateDto,
+  TourScheduleResponseDto,
+  TourScheduleUpdateDto,
+} from "@/types/tourSchedule";
 import api from "./axios";
-
-export interface TourScheduleCreateDto {
-  tourId: number;
-  date: string; // format: YYYY-MM-DD
-  time: string; // format: HH:mm
-  maxParticipants: number;
-}
-
-export interface TourScheduleUpdateDto {
-  date?: string;
-  time?: string;
-  maxParticipants?: number;
-}
-
-export interface TourScheduleResponseDto {
-  id: number;
-  date: string;
-  time: string;
-  maxParticipants: number;
-  tourId: number;
-}
 
 const BASE_URL = "/schedules";
 
@@ -35,6 +19,12 @@ export const TourScheduleService = {
   // Get all schedules for a given tour
   getByTourId: async (tourId: number): Promise<TourScheduleResponseDto[]> => {
     const res = await api.get(`${BASE_URL}/tour/${tourId}`);
+    return res.data;
+  },
+
+  // Get schedule by id
+  getById: async (id: number): Promise<TourScheduleResponseDto> => {
+    const res = await api.get(`${BASE_URL}/${id}`);
     return res.data;
   },
 

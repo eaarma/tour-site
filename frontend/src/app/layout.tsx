@@ -6,6 +6,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import MarginContainer from "@/components/common/MarginContainer";
 import AuthProvider from "@/providers/AuthProvider";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({
             <Header />
             <main>
               <MarginContainer>{children}</MarginContainer>
+              <Toaster position="top-center" />
             </main>
             <Footer />
           </AuthProvider>

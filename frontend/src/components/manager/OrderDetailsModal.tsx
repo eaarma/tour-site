@@ -1,11 +1,15 @@
+import { OrderService } from "@/lib/orderService";
 import Modal from "../common/Modal";
 import { Item, OrderResponseDto } from "@/types";
+import { useState } from "react";
+import toast from "react-hot-toast";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   order: OrderResponseDto | null;
   tour: Item | null;
+  onOrderUpdated?: (order: OrderResponseDto) => void; // optional callback to refresh parent
 }
 
 export default function OrderDetailsModal({
@@ -13,10 +17,37 @@ export default function OrderDetailsModal({
   onClose,
   order,
   tour,
+  onOrderUpdated,
 }: Props) {
+  const [loading, setLoading] = useState(false);
+
   if (!order) return null;
 
   const checkout = order.checkoutDetails ?? null;
+
+  const handleConfirm = async () => {
+    if (order.status === "CONFIRMED") {
+      toast("Order is already confirmed ✅");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const updated = await OrderService.update(order.id, {
+        ...order,
+        status: "CONFIRMED",
+      });
+      toast.success("Order confirmed!");
+      if (onOrderUpdated) {
+        onOrderUpdated(updated);
+      }
+    } catch (err) {
+      console.error("Failed to confirm order", err);
+      toast.error("Failed to confirm order");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -74,9 +105,26 @@ export default function OrderDetailsModal({
         )}
       </div>
 
-      <button onClick={onClose} className="mt-6 btn btn-primary w-full">
-        Close
-      </button>
+      <div className="mt-6 flex flex-col gap-2">
+        {order.status === "CONFIRMED" ? (
+          <button onClick={onClose} className="btn btn-primary w-full">
+            Ok
+          </button>
+        ) : (
+          <>
+            <button
+              onClick={handleConfirm}
+              disabled={loading}
+              className="btn btn-success w-full"
+            >
+              {loading ? "Confirming..." : "Confirm"}
+            </button>
+            <button onClick={onClose} className="btn btn-secondary w-full">
+              Close
+            </button>
+          </>
+        )}
+      </div>
     </Modal>
   );
 }

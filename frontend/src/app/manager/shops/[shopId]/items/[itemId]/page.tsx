@@ -6,6 +6,8 @@ import { TourService } from "@/lib/tourService";
 import { Item, TourCreateDto } from "@/types";
 import EditableSchedules from "@/components/manager/item/EditableSchedules";
 import EditableLanguages from "@/components/manager/item/EditableLanguages";
+import { DURATION_OPTIONS } from "@/utils/duration";
+import { formatDuration } from "@/utils/formatDuration";
 
 const INTENSITY_OPTIONS = ["Easy", "Moderate", "Hard"];
 const CATEGORY_OPTIONS = ["Nature", "History", "Culture"];
@@ -31,7 +33,7 @@ export default function ManagerItemPage() {
           category: CATEGORY_OPTIONS[0],
           type: TYPE_OPTIONS[0],
           intensity: INTENSITY_OPTIONS[0],
-          timeRequired: "5 minutes",
+          timeRequired: 5,
           price: 0,
           participants: 1,
         }
@@ -358,38 +360,28 @@ export default function ManagerItemPage() {
                 </div>
 
                 {/* Duration */}
+
                 <div>
                   <span className="font-semibold">Duration:</span>
                   {isEditing ? (
                     <select
                       className="select select-bordered w-full"
-                      value={form.timeRequired || ""}
+                      value={form.timeRequired ?? ""}
                       onChange={(e) =>
-                        setForm({ ...form, timeRequired: e.target.value })
+                        setForm({
+                          ...form,
+                          timeRequired: Number(e.target.value),
+                        })
                       }
                     >
-                      {Array.from({ length: 12 }, (_, i) => (i + 1) * 5).map(
-                        (min) => (
-                          <option key={min} value={`${min} minutes`}>
-                            {min} minutes
-                          </option>
-                        )
-                      )}
-                      {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
-                        <option key={h} value={`${h} hour${h > 1 ? "s" : ""}`}>
-                          {h} hour{h > 1 ? "s" : ""}
+                      {DURATION_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
                         </option>
                       ))}
-                      <option value="Full day">Full day</option>
-                      {Array.from({ length: 5 }, (_, i) => i + 2).map((d) => (
-                        <option key={d} value={`${d} days`}>
-                          {d} days
-                        </option>
-                      ))}
-                      <option value="1 week">1 week</option>
                     </select>
                   ) : (
-                    " " + item?.timeRequired
+                    " " + formatDuration(item?.timeRequired)
                   )}
                 </div>
 
@@ -449,7 +441,7 @@ export default function ManagerItemPage() {
                 </div>
 
                 {/* Schedules */}
-                {isEditing && item && (
+                {item && (
                   <div className="col-span-2 mt-4">
                     <EditableSchedules
                       tourId={item!.id}

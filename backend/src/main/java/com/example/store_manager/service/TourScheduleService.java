@@ -1,5 +1,14 @@
 package com.example.store_manager.service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
+import com.example.store_manager.dto.schedule.TourScheduleCreateDto;
+import com.example.store_manager.dto.schedule.TourScheduleResponseDto;
+import com.example.store_manager.dto.schedule.TourScheduleUpdateDto;
+import com.example.store_manager.mapper.TourScheduleMapper;
 import com.example.store_manager.model.Tour;
 import com.example.store_manager.model.TourSchedule;
 import com.example.store_manager.repository.TourRepository;
@@ -7,44 +16,41 @@ import com.example.store_manager.repository.TourScheduleRepository;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import com.example.store_manager.dto.schedule.TourScheduleCreateDto;
-import com.example.store_manager.dto.schedule.TourScheduleResponseDto;
-import com.example.store_manager.dto.schedule.TourScheduleUpdateDto;
-
 @Service
 @RequiredArgsConstructor
 public class TourScheduleService {
 
     private final TourScheduleRepository scheduleRepository;
     private final TourRepository tourRepository;
+    private final TourScheduleMapper scheduleMapper;
 
     public TourScheduleResponseDto createSchedule(TourScheduleCreateDto dto) {
         Tour tour = tourRepository.findById(dto.getTourId())
                 .orElseThrow(() -> new RuntimeException("Tour not found"));
 
-        TourSchedule schedule = TourSchedule.builder()
-                .tour(tour)
-                .date(dto.getDate())
-                .time(dto.getTime())
-                .maxParticipants(dto.getMaxParticipants())
-                .build();
-
+        TourSchedule schedule = scheduleMapper.fromCreateDto(dto, tour);
         schedule = scheduleRepository.save(schedule);
-        return mapToDto(schedule);
+
+        return scheduleMapper.toDto(schedule);
+    }
+
+    public List<TourScheduleResponseDto> getAllSchedulesForTour(Long tourId) {
+        return scheduleRepository.findByTourId(tourId).stream()
+                .map(scheduleMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     public List<TourScheduleResponseDto> getSchedulesForTour(Long tourId) {
-        return scheduleRepository.findByTourId(tourId)
+        return scheduleRepository.findByTourIdAndStatus(tourId, "ACTIVE")
                 .stream()
-                .map(this::mapToDto)
+                .map(scheduleMapper::toDto)
                 .collect(Collectors.toList());
+    }
+
+    public TourScheduleResponseDto getScheduleById(Long id) {
+        TourSchedule schedule = scheduleRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Schedule not found"));
+        return scheduleMapper.toDto(schedule);
     }
 
     public TourScheduleResponseDto updateSchedule(Long id, TourScheduleUpdateDto dto) {
@@ -62,7 +68,7 @@ public class TourScheduleService {
         }
 
         schedule = scheduleRepository.save(schedule);
-        return mapToDto(schedule);
+        return scheduleMapper.toDto(schedule);
     }
 
     public void deleteSchedule(Long id) {
@@ -70,15 +76,5 @@ public class TourScheduleService {
             throw new RuntimeException("Schedule not found");
         }
         scheduleRepository.deleteById(id);
-    }
-
-    private TourScheduleResponseDto mapToDto(TourSchedule schedule) {
-        return TourScheduleResponseDto.builder()
-                .id(schedule.getId())
-                .date(schedule.getDate().toString())
-                .time(schedule.getTime().toString())
-                .maxParticipants(schedule.getMaxParticipants())
-                .tourId(schedule.getTour().getId())
-                .build();
     }
 }
