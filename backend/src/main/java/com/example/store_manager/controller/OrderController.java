@@ -1,26 +1,20 @@
 package com.example.store_manager.controller;
 
-import java.util.List;
-import java.util.UUID;
+import com.example.store_manager.dto.order.OrderCreateRequestDto;
+import com.example.store_manager.dto.order.OrderResponseDto;
+import com.example.store_manager.service.OrderService;
+
+import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.example.store_manager.dto.order.OrderCreateRequestDto;
-import com.example.store_manager.dto.order.OrderResponseDto;
-import com.example.store_manager.security.CustomUserDetails;
-import com.example.store_manager.service.OrderService;
+import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/orders")
@@ -29,36 +23,46 @@ public class OrderController {
 
     private final OrderService orderService;
 
+    // 1️⃣ Create multi-item order
     @PostMapping
     public ResponseEntity<OrderResponseDto> createOrder(
             @RequestBody @Valid OrderCreateRequestDto dto) {
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         UUID userId = null;
-
-        if (authentication != null && authentication.isAuthenticated()
-                && authentication.getPrincipal() instanceof CustomUserDetails userDetails) {
-            userId = userDetails.getId(); // Authenticated user
+        if (auth != null && auth.isAuthenticated()
+                && auth.getPrincipal() instanceof com.example.store_manager.security.CustomUserDetails userDetails) {
+            userId = userDetails.getId();
         }
 
         return ResponseEntity.ok(orderService.createOrder(dto, userId));
     }
 
+    // 2️⃣ Get single order by ID
     @GetMapping("/{id}")
-    public ResponseEntity<OrderResponseDto> getOrderById(@PathVariable UUID id) {
+    public ResponseEntity<OrderResponseDto> getOrderById(@PathVariable Long id) {
         return ResponseEntity.ok(orderService.getOrderById(id));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<OrderResponseDto> updateOrder(
-            @PathVariable UUID id,
-            @RequestBody @Valid OrderCreateRequestDto dto) {
-        return ResponseEntity.ok(orderService.updateOrder(id, dto));
+    // 3️⃣ Get all orders for authenticated user
+    @GetMapping
+    public ResponseEntity<List<OrderResponseDto>> getUserOrders() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        UUID userId = null;
+        if (auth != null && auth.isAuthenticated()
+                && auth.getPrincipal() instanceof com.example.store_manager.security.CustomUserDetails userDetails) {
+            userId = userDetails.getId();
+        }
+
+        return ResponseEntity.ok(orderService.getOrdersByUser(userId));
     }
 
-    @GetMapping("/shop/{shopId}")
-    public ResponseEntity<List<OrderResponseDto>> getOrdersByShop(@PathVariable Long shopId) {
-        return ResponseEntity.ok(orderService.getOrdersByShopId(shopId));
+    // 4️⃣ Get all order items for a given shop (provider)
+    @GetMapping("/shop/{shopId}/items")
+    public ResponseEntity<List<com.example.store_manager.model.OrderItem>> getOrderItemsByShop(
+            @PathVariable Long shopId) {
+        return ResponseEntity.ok(orderService.getOrderItemsByShop(shopId));
     }
+
 }

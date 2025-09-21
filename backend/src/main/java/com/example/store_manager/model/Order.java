@@ -3,19 +3,26 @@ package com.example.store_manager.model;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
@@ -38,59 +45,33 @@ import lombok.NoArgsConstructor;
 public class Order {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "order_seq")
+    @SequenceGenerator(name = "order_seq", sequenceName = "order_seq", allocationSize = 1, initialValue = 10000000)
+    private Long id;
 
- @ManyToOne(optional = true)
-@JoinColumn(name = "user_id", nullable = true)
-private User user;
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user; // nullable if guest checkout
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "tour_id", nullable = false)
-    @NotNull
-    private Tour tour;
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<OrderItem> orderItems = new ArrayList<>();
 
-    @Column(name = "scheduled_at", nullable = false)
-    @NotNull
-    private LocalDateTime scheduledAt;
+    @Column(name = "total_price", nullable = false, precision = 10, scale = 2)
+    private BigDecimal totalPrice = BigDecimal.ZERO;
 
-    @Column(name = "participants", nullable = false)
-    @Min(1)
-    private Integer participants;
-
-    
-    @Column(name = "tour_snapshot", columnDefinition = "text", nullable = false)
-    private String tourSnapshot;
-
-    @Column(nullable = false)
-    @NotBlank
-    private String name;
-
-    @Email
-    @Column(nullable = false)
-    private String email;
-
-    @Pattern(regexp = "\\+?[0-9\\- ]{7,15}", message = "Invalid phone number")
-    @Column(nullable = false)
-    private String phone;
-
-    @Column
-    private String nationality; // Optional
+    @Column(name = "payment_method", nullable = false)
+    private String paymentMethod; // CARD, PAYPAL, etc.
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    @NotNull
     private OrderStatus status;
-
-    @Column(name = "price_paid", nullable = false, precision = 10, scale = 2)
-    @DecimalMin(value = "0.0", inclusive = false)
-    @Digits(integer = 10, fraction = 2)
-    private BigDecimal pricePaid;
-
-    @Column(name = "payment_method")
-    private String paymentMethod; // Optional: CARD, PAYPAL, etc.
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private Instant updatedAt;
 }

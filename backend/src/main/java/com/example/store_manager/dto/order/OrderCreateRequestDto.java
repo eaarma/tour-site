@@ -1,12 +1,9 @@
 package com.example.store_manager.dto.order;
 
-
-import java.time.LocalDateTime;
-
 import jakarta.validation.constraints.*;
 import lombok.*;
 
-import com.example.store_manager.dto.cart.CheckoutDetailsDto;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -14,19 +11,23 @@ import com.example.store_manager.dto.cart.CheckoutDetailsDto;
 @Builder
 public class OrderCreateRequestDto {
 
-    @NotNull(message = "Tour ID must not be null")
-    private Long tourId;
-
-    @NotNull(message = "Number of participants is required")
-    @Min(value = 1, message = "At least one participant is required")
-    private Integer participants;
-
-    @NotNull(message = "Tour date and time are required")
-    private LocalDateTime scheduledAt;
-
-    @NotNull(message = "Checkout details are required")
-    private CheckoutDetailsDto checkoutDetails;
+    @NotEmpty(message = "At least one item must be included in the order")
+    private List<OrderItemCreateRequestDto> items;
 
     @NotBlank(message = "Payment method is required")
     private String paymentMethod;
+
+    // Contact info copied into each item
+    @NotBlank(message = "Name is required")
+    private String name;
+
+    @Email(message = "Invalid email format")
+    @NotBlank(message = "Email is required")
+    private String email;
+
+    @Pattern(regexp = "\\+?[0-9\\- ]{7,15}", message = "Invalid phone number")
+    @NotBlank(message = "Phone number is required")
+    private String phone;
+
+    private String nationality; // optional
 }

@@ -25,7 +25,7 @@ public class ScheduleCleanupJob {
     /**
      * Runs every minute for testing (adjust cron for production, e.g., daily)
      */
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(fixedRate = 24 * 60 * 60 * 1000) // 24 hour interval
     @Transactional
     public void expirePastSchedules() {
         LocalDate today = LocalDate.now();
