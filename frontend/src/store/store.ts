@@ -1,14 +1,12 @@
 import { configureStore } from "@reduxjs/toolkit";
 
 // Example slice — you will replace this with your actual slices
-import counterReducer from "./counterSlice";
 import authReducer from "./authSlice";
 import cartReducer from "./cartSlice";
 import checkoutReducer from "./checkoutSlice";
 
 export const store = configureStore({
   reducer: {
-    counter: counterReducer,
     auth: authReducer,
     cart: cartReducer,
     checkout: checkoutReducer,

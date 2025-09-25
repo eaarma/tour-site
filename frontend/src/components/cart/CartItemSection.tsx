@@ -1,27 +1,26 @@
+"use client";
+
 import React from "react";
+import CartItem from "./CartItem";
+import { useDispatch } from "react-redux";
+import { removeItemFromCart, toggleItemSelection } from "@/store/cartSlice";
+import { CartItem as CartItemType } from "@/store/cartSlice";
 
-interface CartEntry {
-  id: string;
-  title: string;
-  price: number;
-  participants: number;
-  selectedDate: string;
-  selectedTime: string;
+interface Props {
+  cart: CartItemType[];
+  onView?: (item: CartItemType) => void;
 }
 
-interface CartItemSectionProps {
-  cart: CartEntry[];
-  onRemove: (id: string) => void;
-}
+const CartItemSection: React.FC<Props> = ({ cart, onView }) => {
+  const dispatch = useDispatch();
 
-const CartItemSection: React.FC<CartItemSectionProps> = ({
-  cart,
-  onRemove,
-}) => {
-  const totalPrice = cart.reduce(
-    (acc, entry) => acc + entry.price * entry.participants,
-    0
-  );
+  const handleRemove = (id: string) => {
+    dispatch(removeItemFromCart(id));
+  };
+
+  const handleToggle = (id: string) => {
+    dispatch(toggleItemSelection(id));
+  };
 
   return (
     <div className="w-full md:w-2/3 space-y-4 p-4">
@@ -32,40 +31,14 @@ const CartItemSection: React.FC<CartItemSectionProps> = ({
       ) : (
         <>
           {cart.map((entry) => (
-            <div
+            <CartItem
               key={entry.id}
-              className="flex flex-col md:flex-row justify-between items-start md:items-center border rounded-xl p-4 shadow-sm bg-base-100 hover:shadow-md transition-shadow"
-            >
-              {/* Left info */}
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold">{entry.title}</h3>
-                <div className="flex flex-wrap gap-2 mt-2 text-sm text-gray-600">
-                  <span className="bg-gray-100 rounded-full px-2 py-1">
-                    {entry.participants} participant
-                    {entry.participants > 1 ? "s" : ""}
-                  </span>
-                  <span className="bg-gray-100 rounded-full px-2 py-1">
-                    €{entry.price} each
-                  </span>
-                  <span className="bg-blue-100 text-blue-800 rounded-full px-2 py-1">
-                    {entry.selectedDate} @ {entry.selectedTime}
-                  </span>
-                </div>
-              </div>
-
-              {/* Right remove button */}
-              <button
-                className="btn btn-sm btn-error mt-2 md:mt-0"
-                onClick={() => onRemove(entry.id)}
-              >
-                Remove
-              </button>
-            </div>
+              item={entry}
+              onRemove={handleRemove}
+              onView={onView ? onView : () => {}}
+              onToggle={handleToggle}
+            />
           ))}
-
-          <div className="text-right font-bold text-xl mt-6">
-            Total: €{totalPrice.toFixed(2)}
-          </div>
         </>
       )}
     </div>

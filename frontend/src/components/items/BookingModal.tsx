@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { Item } from "@/types";
 import { TourScheduleResponseDto } from "@/types/tourSchedule";
 import toast from "react-hot-toast";
-import { TourScheduleService } from "@/lib/TourScheduleService";
+import { TourScheduleService } from "@/lib/tourScheduleService";
 
 interface BookingModalProps {
   isOpen: boolean;

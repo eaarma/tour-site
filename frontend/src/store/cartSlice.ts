@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-interface CartItem {
+export interface CartItem {
   id: string;
   title: string;
   price: number;
@@ -8,6 +8,7 @@ interface CartItem {
   scheduleId: number;
   selectedDate: string;
   selectedTime: string;
+  selected: boolean;
 }
 
 interface CartState {
@@ -23,12 +24,12 @@ const cartSlice = createSlice({
   initialState,
   reducers: {
     addItemToCart: (state, action: PayloadAction<CartItem>) => {
-      state.items.push(action.payload);
+      // Ensure newly added item is selected by default
+      state.items.push({ ...action.payload, selected: true });
     },
     removeItemFromCart: (state, action: PayloadAction<string>) => {
       state.items = state.items.filter((item) => item.id !== action.payload);
     },
-
     updateItemInCart: (
       state,
       action: PayloadAction<{ id: string; updatedItem: Partial<CartItem> }>
@@ -43,6 +44,10 @@ const cartSlice = createSlice({
         };
       }
     },
+    toggleItemSelection: (state, action: PayloadAction<string>) => {
+      const item = state.items.find((it) => it.id === action.payload);
+      if (item) item.selected = !item.selected;
+    },
     clearCart: (state) => {
       state.items = [];
     },
@@ -53,6 +58,7 @@ export const {
   addItemToCart,
   removeItemFromCart,
   updateItemInCart,
+  toggleItemSelection,
   clearCart,
 } = cartSlice.actions;
 

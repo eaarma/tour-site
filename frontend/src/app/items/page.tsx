@@ -8,8 +8,8 @@ import FilterMenu from "@/components/items/FilterMenu";
 import ItemList from "@/components/items/ItemList";
 import { Item } from "@/types";
 import { TourService } from "@/lib/tourService";
-import { TourScheduleService } from "@/lib/TourScheduleService";
 import SortMenu from "@/components/items/SortMenu";
+import { TourScheduleService } from "@/lib/TourScheduleService";
 
 export const FILTER_CATEGORIES: FilterCategory[] = [
   {

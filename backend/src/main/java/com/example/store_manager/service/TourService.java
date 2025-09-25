@@ -3,7 +3,11 @@ package com.example.store_manager.service;
 import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import com.example.store_manager.dto.tour.TourCreateDto;
@@ -30,12 +34,9 @@ public class TourService {
 
         Tour tour = tourMapper.toEntity(dto);
         tour.setShop(shop);
+        tour.setMadeBy(principal.getName());
 
-        // Set madeBy from authenticated user
-        tour.setMadeBy(principal.getName()); // or use user id if you prefer
-
-        Tour saved = tourRepository.save(tour);
-        return tourMapper.toDto(saved);
+        return tourMapper.toDto(tourRepository.save(tour));
     }
 
     public TourResponseDto updateTour(Long id, TourCreateDto dto) {
@@ -43,16 +44,31 @@ public class TourService {
                 .orElseThrow(() -> new RuntimeException("Tour not found"));
 
         tourMapper.updateTourFromDto(dto, tour);
-
-        Tour updated = tourRepository.save(tour);
-        return tourMapper.toDto(updated);
+        return tourMapper.toDto(tourRepository.save(tour));
     }
 
+    // ✅ fetch all (no pagination)
     public List<TourResponseDto> getAllTours() {
         return tourRepository.findAll()
                 .stream()
                 .map(tourMapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    // ✅ new: fetch with filters + pagination
+    public Page<TourResponseDto> getAllByQuery(String category,
+            String type,
+            String language,
+            int page,
+            int size,
+            String[] sort) {
+        Sort sortSpec = Sort.by(
+                Sort.Direction.fromString(sort[1]),
+                sort[0]);
+        Pageable pageable = PageRequest.of(page, size, sortSpec);
+
+        Page<Tour> tours = tourRepository.findByFilters(category, type, language, pageable);
+        return tours.map(tourMapper::toDto);
     }
 
     public TourResponseDto getTourById(Long id) {
@@ -65,6 +81,6 @@ public class TourService {
         return tourRepository.findByShopId(shopId)
                 .stream()
                 .map(tourMapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 }

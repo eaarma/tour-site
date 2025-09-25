@@ -1,6 +1,6 @@
 "use client";
 
-import { TourScheduleService } from "@/lib/TourScheduleService";
+import { TourScheduleService } from "@/lib/tourScheduleService";
 import { TourScheduleResponseDto } from "@/types/tourSchedule";
 import { useEffect, useState } from "react";
 import DatePicker from "react-datepicker";

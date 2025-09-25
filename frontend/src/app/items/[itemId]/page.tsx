@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Item } from "@/types";
 import { TourService } from "@/lib/tourService";
-import { TourScheduleService } from "@/lib/TourScheduleService"; // match your import case
+import { TourScheduleService } from "@/lib/tourScheduleService"; // match your import case
 import { TourScheduleResponseDto } from "@/types/tourSchedule";
 import BookingModal from "@/components/items/BookingModal";
 import { formatDuration } from "@/utils/formatDuration";
