@@ -2,7 +2,7 @@
 
 import { TourScheduleService } from "@/lib/tourScheduleService";
 import { TourScheduleResponseDto } from "@/types/tourSchedule";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import toast from "react-hot-toast";
@@ -17,10 +17,27 @@ export default function EditableSchedules({
   isEditing,
 }: EditableSchedulesProps) {
   const [schedules, setSchedules] = useState<TourScheduleResponseDto[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
   const [newDate, setNewDate] = useState<Date | null>(null);
   const [newTime, setNewTime] = useState<Date | null>(null);
   const [newParticipants, setNewParticipants] = useState(10);
 
+  // Group helper
+  const groupByDate = (list: TourScheduleResponseDto[]) =>
+    list.reduce<Record<string, TourScheduleResponseDto[]>>((acc, s) => {
+      (acc[s.date] ||= []).push(s);
+      return acc;
+    }, {});
+
+  // Derived: schedules grouped by date + sorted date keys (asc)
+  const schedulesByDate = useMemo(() => groupByDate(schedules), [schedules]);
+  const dateKeys = useMemo(
+    () => Object.keys(schedulesByDate).sort(),
+    [schedulesByDate]
+  );
+
+  // Initial load
   useEffect(() => {
     const load = async () => {
       try {
@@ -33,20 +50,28 @@ export default function EditableSchedules({
     load();
   }, [tourId]);
 
+  // Keep selectedDate valid whenever schedules change
+  useEffect(() => {
+    if (!dateKeys.length) {
+      setSelectedDate(null);
+      return;
+    }
+    if (!selectedDate || !dateKeys.includes(selectedDate)) {
+      setSelectedDate(dateKeys[0]);
+    }
+  }, [dateKeys, selectedDate]);
+
   const handleAdd = async () => {
     if (!newDate || !newTime) return;
 
-    // Merge date and time into one Date object
     const combined = new Date(newDate);
     combined.setHours(newTime.getHours(), newTime.getMinutes(), 0, 0);
 
-    // Check if in the past
     if (combined < new Date()) {
-      toast.error("Selected time is in the past and cannot be added.");
+      toast.error("Selected time is in the past.");
       return;
     }
 
-    // Format date in local time
     const formattedDate = `${newDate.getFullYear()}-${String(
       newDate.getMonth() + 1
     ).padStart(2, "0")}-${String(newDate.getDate()).padStart(2, "0")}`;
@@ -67,6 +92,7 @@ export default function EditableSchedules({
       setNewDate(null);
       setNewTime(null);
       setNewParticipants(10);
+      setSelectedDate(formattedDate); // focus the date we just added
     } catch (err) {
       console.error("Failed to add schedule", err);
       toast.error("Failed to add schedule.");
@@ -75,45 +101,85 @@ export default function EditableSchedules({
 
   const handleDelete = async (id: number) => {
     try {
+      // Optimistically compute next state to fix selectedDate immediately
+      setSchedules((prev) => {
+        const next = prev.filter((s) => s.id !== id);
+        const nextByDate = groupByDate(next);
+        // If current selectedDate vanished, pick first available or null
+        if (selectedDate && !nextByDate[selectedDate]) {
+          const nextDates = Object.keys(nextByDate).sort();
+          setSelectedDate(nextDates[0] ?? null);
+        }
+        return next;
+      });
+
       await TourScheduleService.delete(id);
-      setSchedules((prev) => prev.filter((s) => s.id !== id));
     } catch (err) {
       console.error("Failed to delete schedule", err);
+      toast.error("Failed to delete schedule.");
+      // (Optional) reload to ensure consistency:
+      // const data = await TourScheduleService.getByTourId(tourId);
+      // setSchedules(data);
     }
   };
 
+  const timesForSelected = selectedDate
+    ? schedulesByDate[selectedDate] ?? []
+    : [];
+
   return (
     <div>
-      <h3 className="font-semibold mb-2">Available Times</h3>
+      <h3 className="font-semibold mb-2">Available Dates</h3>
 
-      {/* Always show bubbles (preview) */}
-      <div className="flex flex-wrap gap-2 mb-3">
-        {schedules.map((s) => (
-          <span
-            key={s.id}
-            className="badge badge-outline flex items-center gap-1"
-          >
-            {s.date} {s.time}
-            {isEditing && (
-              <button
-                type="button"
-                className="ml-1 text-xs text-error"
-                onClick={() => handleDelete(s.id)}
-              >
-                ✕
-              </button>
-            )}
-          </span>
+      {/* Date dropdown */}
+      <select
+        className="select select-bordered w-full max-w-xs mb-4"
+        value={selectedDate ?? ""}
+        onChange={(e) => setSelectedDate(e.target.value || null)}
+      >
+        {!dateKeys.length && <option value="">No dates available</option>}
+        {dateKeys.map((date) => (
+          <option key={date} value={date}>
+            {date}
+          </option>
         ))}
-        {schedules.length === 0 && (
-          <span className="text-gray-500">No schedules yet</span>
-        )}
-      </div>
+      </select>
 
-      {/* Input only in edit mode */}
+      {/* Times for selected date */}
+      {selectedDate && (
+        <>
+          <h4 className="font-medium mb-2">Available Times</h4>
+          {timesForSelected.length ? (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {timesForSelected.map((s) => (
+                <span
+                  key={s.id}
+                  className="badge badge-outline flex items-center gap-1"
+                >
+                  {s.time}
+                  {isEditing && (
+                    <button
+                      type="button"
+                      className="ml-1 text-xs text-error"
+                      onClick={() => handleDelete(s.id)}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <div className="text-sm text-gray-500 mb-4">
+              No times for this date.
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Edit controls */}
       {isEditing && (
         <div className="flex flex-wrap gap-2 items-center">
-          {/* Date Picker */}
           <DatePicker
             selected={newDate}
             onChange={(date) => setNewDate(date)}
@@ -122,13 +188,12 @@ export default function EditableSchedules({
             className="input input-bordered"
           />
 
-          {/* Time Picker */}
           <DatePicker
             selected={newTime}
             onChange={(time) => setNewTime(time)}
             showTimeSelect
             showTimeSelectOnly
-            timeIntervals={15} // pick every 15 minutes
+            timeIntervals={15}
             timeCaption="Time"
             dateFormat="HH:mm"
             placeholderText="Select time"

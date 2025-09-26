@@ -80,19 +80,16 @@ const CartTotalSection: React.FC<Props> = ({ onCheckoutSuccess }) => {
   };
 
   return (
-    <div className="w-full md:w-1/3 p-4 border rounded-xl shadow-sm bg-base-100">
+    <div className="w-full md:w-1/3 lg:w-1/3 p-4 border rounded-xl shadow-sm bg-base-100 space-y-4 mt-25 md:mt-25 sm:mt-0">
       <h3 className="text-xl font-semibold mb-4">Summary</h3>
-
       <div className="flex justify-between">
         <span>Items</span>
         <span>{selectedItems.length}</span>
       </div>
-
       <div className="flex justify-between mt-2">
         <span>Total</span>
         <span className="font-bold">€{totalPrice.toFixed(2)}</span>
       </div>
-
       <button
         className={`btn btn-primary w-full mt-6 ${loading ? "loading" : ""}`}
         onClick={handleProceedToCheckout}

@@ -44,6 +44,27 @@ const cartSlice = createSlice({
         };
       }
     },
+    updateItemSchedule: (
+      state,
+      action: PayloadAction<{
+        id: string;
+        scheduleId: number;
+        date: string;
+        time: string;
+        participants?: number;
+      }>
+    ) => {
+      const it = state.items.find((i) => i.id === action.payload.id);
+      if (it) {
+        it.scheduleId = action.payload.scheduleId;
+        it.selectedDate = action.payload.date;
+        it.selectedTime = action.payload.time;
+        if (typeof action.payload.participants === "number") {
+          it.participants = action.payload.participants;
+        }
+      }
+    },
+
     toggleItemSelection: (state, action: PayloadAction<string>) => {
       const item = state.items.find((it) => it.id === action.payload);
       if (item) item.selected = !item.selected;
@@ -58,6 +79,7 @@ export const {
   addItemToCart,
   removeItemFromCart,
   updateItemInCart,
+  updateItemSchedule,
   toggleItemSelection,
   clearCart,
 } = cartSlice.actions;

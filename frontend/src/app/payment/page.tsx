@@ -2,16 +2,18 @@
 
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import { toast } from "react-hot-toast"; // optional, for nice notifications
+import { toast } from "react-hot-toast";
 import PaymentMethodSection from "@/components/payment/PaymentMethodSection";
 import PaymentSummarySection from "@/components/payment/PaymentSummarySection";
 import PaymentTotalSection from "@/components/payment/PaymentTotalSection";
 import { RootState } from "@/store/store";
 import { OrderService } from "@/lib/orderService";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 export default function PaymentPage() {
-  const cartItems = useSelector((state: RootState) => state.cart.items);
+  const cartItems = useSelector(
+    (state: RootState) => state.cart.items.filter((item) => item.selected) // ✅ only selected items
+  );
   const checkoutInfo = useSelector((state: RootState) => state.checkout);
   const router = useRouter();
 
@@ -20,7 +22,6 @@ export default function PaymentPage() {
   >("credit-card");
   const [loading, setLoading] = useState(false);
 
-  // Map cart items to summary
   const summaryItems = cartItems.map((item) => ({
     id: item.id,
     title: item.title,
@@ -37,39 +38,33 @@ export default function PaymentPage() {
 
   const handleProceed = async () => {
     if (cartItems.length === 0) {
-      alert("Your cart is empty!");
+      toast.error("Your cart is empty!");
       return;
     }
 
     setLoading(true);
 
     try {
-      // Loop through each cart item and create an order
-      const orderPromises = cartItems.map((item) =>
-        OrderService.create({
+      const orderData = {
+        items: cartItems.map((item) => ({
           tourId: Number(item.id),
           participants: item.participants,
-          scheduledAt: `${item.selectedDate}T${item.selectedTime}`, // ISO format
-          checkoutDetails: {
-            name: checkoutInfo.name,
-            email: checkoutInfo.email,
-            phone: checkoutInfo.phone,
-            nationality: checkoutInfo.nationality,
-          },
-          paymentMethod: selectedMethod === "credit-card" ? "CARD" : "PAY_LINK",
-        })
-      );
+          scheduledAt: `${item.selectedDate}T${item.selectedTime}`,
+        })),
+        paymentMethod: selectedMethod === "credit-card" ? "CARD" : "PAY_LINK",
+        name: checkoutInfo.name,
+        email: checkoutInfo.email,
+        phone: checkoutInfo.phone,
+        nationality: checkoutInfo.nationality,
+      };
 
-      const orders = await Promise.all(orderPromises);
+      const order = await OrderService.create(orderData);
 
-      // Optionally: show toast / alert
       toast.success("Order confirmed ✅");
-      console.log("Created orders:", orders);
 
-      // Redirect to success page or clear cart
-
+      // Redirect to confirmation page
       router.push(`/confirmation/${order.id}`);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to create order", err);
       toast.error("Failed to create order. Please try again.");
     } finally {
@@ -80,7 +75,6 @@ export default function PaymentPage() {
   return (
     <main className="min-h-screen bg-base-200 p-6">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-6">
-        {/* Left Column */}
         <div className="flex-1 space-y-6">
           <PaymentSummarySection items={summaryItems} contact={checkoutInfo} />
           <PaymentMethodSection
@@ -89,7 +83,6 @@ export default function PaymentPage() {
           />
         </div>
 
-        {/* Right Column */}
         <div className="flex justify-center md:block md:w-[320px] md:self-start">
           <PaymentTotalSection
             subtotal={subtotal}

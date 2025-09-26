@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import CustomDateInput from "./CustomDateInput";
+import { format } from "date-fns";
 
 interface SearchBarProps {
   onSearch?: (keywords: string, date: string) => void;
@@ -24,8 +25,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
     initialDate ? new Date(initialDate) : null
   );
   const [initialized, setInitialized] = useState(false);
-  const hasSkippedInitial = useRef(false); // ✅ new flag
+  const hasSkippedInitial = useRef(false);
   const router = useRouter();
+
+  // helper to format date safely in local time
+  const formatDate = (d: Date) => format(d, "yyyy-MM-dd");
 
   // Handle search
   const handleSearch = () => {
@@ -34,10 +38,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
     if (redirectOnSearch) {
       const params = new URLSearchParams();
       if (trimmed) params.append("keyword", trimmed);
-      if (date) params.append("date", date.toISOString().split("T")[0]);
+      if (date) params.append("date", formatDate(date));
       router.push(`/items?${params.toString()}`);
     } else {
-      onSearch?.(trimmed, date ? date.toISOString().split("T")[0] : "");
+      onSearch?.(trimmed, date ? formatDate(date) : "");
     }
   };
 
@@ -53,7 +57,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
     if (!redirectOnSearch && onSearch && initialized) {
       const trimmed = keywords.trim();
 
-      // ✅ Skip auto-search only once if params existed initially
       if ((initialKeywords || initialDate) && !hasSkippedInitial.current) {
         hasSkippedInitial.current = true;
         return;
@@ -78,10 +81,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
     setDate(null);
 
     if (redirectOnSearch) {
-      // ✅ If redirect mode → reset URL params
       router.push("/items");
     } else {
-      // ✅ If live search mode → trigger search reset
       onSearch?.("", "");
     }
   };
@@ -103,13 +104,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
             onClick={() => {
               setKeywords("");
               if (redirectOnSearch) {
-                // reset URL to remove keyword param
                 const params = new URLSearchParams();
-                if (date)
-                  params.append("date", date.toISOString().split("T")[0]);
+                if (date) params.append("date", formatDate(date));
                 router.push(`/items?${params.toString()}`);
               } else {
-                onSearch?.("", date ? date.toISOString().split("T")[0] : "");
+                onSearch?.("", date ? formatDate(date) : "");
               }
             }}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800"
@@ -136,7 +135,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           preventOpenOnFocus={true}
           customInput={
             <CustomDateInput
-              value={date ? date.toISOString().split("T")[0] : ""}
+              value={date ? formatDate(date) : ""}
               onClear={() => setDate(null)}
             />
           }

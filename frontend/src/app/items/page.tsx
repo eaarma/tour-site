@@ -7,9 +7,9 @@ import { FilterCategory } from "@/types/types";
 import FilterMenu from "@/components/items/FilterMenu";
 import ItemList from "@/components/items/ItemList";
 import { Item } from "@/types";
-import { TourService } from "@/lib/tourService";
+import { PageResponse, TourService } from "@/lib/tourService";
 import SortMenu from "@/components/items/SortMenu";
-import { TourScheduleService } from "@/lib/TourScheduleService";
+import { TourScheduleService } from "@/lib/tourScheduleService";
 
 export const FILTER_CATEGORIES: FilterCategory[] = [
   {
@@ -41,20 +41,72 @@ export const FILTER_CATEGORIES: FilterCategory[] = [
   },
 ];
 
+const PAGE_SIZE = 12;
+
 export default function ItemsPage() {
   const [allItems, setAllItems] = useState<Item[]>([]);
   const [filteredItems, setFilteredItems] = useState<Item[]>([]);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [sortedItems, setSortedItems] = useState<Item[]>([]);
   const [sortKey, setSortKey] = useState("az"); // default sorting
-  const [searchDate, setSearchDate] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageData, setPageData] = useState<PageResponse<Item>>({
+    content: [],
+    totalPages: 0,
+    totalElements: 0,
+    number: 0,
+    size: PAGE_SIZE,
+    first: true,
+    last: true,
+  });
+  const [loading, setLoading] = useState(true);
 
   const params = useSearchParams();
-
-  // ✅ Store params in local state so we can use them after fetch finishes
   const keywordParam = params.get("keyword") || "";
   const dateParam = params.get("date") || "";
 
+  // 🔍 Search handler
+  const handleSearch = useCallback(
+    async (keyword: string, date: string, items: Item[] = allItems) => {
+      setLoading(true);
+      try {
+        const lowerKeyword = keyword.toLowerCase();
+        setSearchKeyword(lowerKeyword);
+
+        let results = items;
+
+        if (lowerKeyword) {
+          results = results.filter(
+            (item) =>
+              item.title.toLowerCase().includes(lowerKeyword) ||
+              item.description.toLowerCase().includes(lowerKeyword) ||
+              item.location.toLowerCase().includes(lowerKeyword)
+          );
+        }
+
+        if (date) {
+          const filteredByDate: Item[] = [];
+          await Promise.all(
+            results.map(async (item) => {
+              const schedules = await TourScheduleService.getByTourId(item.id);
+              const hasMatchingDate = schedules.some((s) => s.date === date);
+              if (hasMatchingDate) filteredByDate.push(item);
+            })
+          );
+          results = filteredByDate;
+        }
+
+        setFilteredItems(results);
+      } catch (error) {
+        console.error("Failed to apply search filters:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [allItems]
+  );
+
+  // 🚀 Initial fetch
   useEffect(() => {
     const fetchTours = async () => {
       try {
@@ -75,7 +127,6 @@ export default function ItemsPage() {
             language: tour.language,
             location: tour.location,
           }))
-          // ✅ Only keep ACTIVE items
           .filter((item) => item.status === "ACTIVE");
 
         setAllItems(mapped);
@@ -93,49 +144,10 @@ export default function ItemsPage() {
     fetchTours();
   }, [keywordParam, dateParam]);
 
-  // Search handler
-  const handleSearch = async (
-    keyword: string,
-    date: string,
-    items: Item[] = allItems
-  ) => {
-    const lowerKeyword = keyword.toLowerCase();
-    setSearchKeyword(lowerKeyword);
-    setSearchDate(date);
-
-    let results = items;
-
-    // Filter by keyword first (synchronous)
-    if (lowerKeyword) {
-      results = results.filter(
-        (item) =>
-          item.title.toLowerCase().includes(lowerKeyword) ||
-          item.description.toLowerCase().includes(lowerKeyword) ||
-          item.location.toLowerCase().includes(lowerKeyword)
-      );
-    }
-
-    // Filter by date (async)
-    if (date) {
-      const filteredByDate: Item[] = [];
-
-      await Promise.all(
-        results.map(async (item) => {
-          const schedules = await TourScheduleService.getByTourId(item.id);
-          const hasMatchingDate = schedules.some((s) => s.date === date);
-          if (hasMatchingDate) filteredByDate.push(item);
-        })
-      );
-
-      results = filteredByDate;
-    }
-
-    setFilteredItems(results);
-  };
-
-  // Filter handler
+  // 🎯 Filter handler
   const handleFilter = useCallback(
     (filteredByFilterMenu: Item[]) => {
+      setLoading(true);
       let results = filteredByFilterMenu;
       if (searchKeyword) {
         results = results.filter(
@@ -145,9 +157,91 @@ export default function ItemsPage() {
         );
       }
       setFilteredItems(results);
+      setLoading(false);
     },
     [searchKeyword]
   );
+
+  // 🔄 Apply sorting whenever filteredItems or sortKey changes
+  useEffect(() => {
+    let sorted = [...filteredItems];
+    switch (sortKey) {
+      case "price":
+        sorted.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
+        break;
+      case "timeRequired":
+        sorted.sort(
+          (a, b) => (a.timeRequired ?? Infinity) - (b.timeRequired ?? Infinity)
+        );
+        break;
+      case "intensity":
+        sorted.sort((a, b) => (a.intensity ?? 0) - (b.intensity ?? 0));
+        break;
+      default:
+        sorted.sort((a, b) =>
+          (a[sortKey as keyof Item] ?? "")
+            .toString()
+            .localeCompare((b[sortKey as keyof Item] ?? "").toString())
+        );
+    }
+    setSortedItems(sorted);
+  }, [filteredItems, sortKey]);
+
+  // 🧩 Reset page on new sorted results
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [sortedItems]);
+
+  // 📄 Build paginated view
+  useEffect(() => {
+    if (!sortedItems.length) {
+      setPageData({
+        content: [],
+        totalPages: 0,
+        totalElements: 0,
+        number: 0,
+        size: PAGE_SIZE,
+        first: true,
+        last: true,
+      });
+      setLoading(false);
+      return;
+    }
+
+    const totalElements = sortedItems.length;
+    const totalPages = Math.ceil(totalElements / PAGE_SIZE);
+    const safePage = Math.min(
+      Math.max(currentPage, 0),
+      Math.max(totalPages - 1, 0)
+    );
+    const start = safePage * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    const content = sortedItems.slice(start, end);
+
+    setCurrentPage(safePage);
+    setPageData({
+      content,
+      totalPages,
+      totalElements,
+      number: safePage,
+      size: PAGE_SIZE,
+      first: safePage === 0,
+      last: safePage === totalPages - 1,
+    });
+    setLoading(false);
+  }, [sortedItems, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage((prev) => {
+      if (page === prev) return prev;
+      if (page < 0) return 0;
+      if (pageData) {
+        const maxPage = Math.max(pageData.totalPages - 1, 0);
+        return Math.min(page, maxPage);
+      }
+      return page;
+    });
+  };
 
   return (
     <main className="flex flex-col items-center justify-start min-h-screen p-4 max-w-7xl mx-auto">
@@ -167,10 +261,14 @@ export default function ItemsPage() {
             sortKey={sortKey}
             setSortKey={setSortKey}
             items={filteredItems}
-            onSort={setSortedItems}
+            onSort={(items) => setSortedItems(items)}
           />
         </div>
-        <ItemList items={sortedItems} />
+        <ItemList
+          pageData={pageData ?? undefined}
+          loading={loading}
+          onPageChange={handlePageChange}
+        />
       </div>
     </main>
   );

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { OrderService } from "@/services/orderService";
 import { OrderResponseDto } from "@/types/order";
 import toast from "react-hot-toast";
+import { OrderService } from "@/lib/orderService";
 
 export default function ConfirmationPage() {
   const { id } = useParams<{ id: string }>();
@@ -34,17 +34,17 @@ export default function ConfirmationPage() {
     };
 
     fetchOrder();
+  }, [id, router]);
 
-    // auto redirect after 30s only if order exists
-    let timer: NodeJS.Timeout;
-    if (order) {
-      timer = setTimeout(() => {
-        router.push("/");
-      }, 30000);
-    }
+  useEffect(() => {
+    if (!order) return;
+
+    const timer = setTimeout(() => {
+      router.push("/");
+    }, 30000);
 
     return () => clearTimeout(timer);
-  }, [id, router, order]);
+  }, [order, router]);
 
   if (loading) {
     return <p className="text-gray-500">Loading order confirmation...</p>;
@@ -68,44 +68,59 @@ export default function ConfirmationPage() {
 
   return (
     <main className="max-w-3xl mx-auto p-6 text-center">
-      <h1 className="text-3xl font-bold text-green-600 mb-4">
-        ✅ Order {order.id} confirmed!
-      </h1>
-
       <div className="bg-white shadow-md rounded-2xl p-6 text-left mb-6">
-        <h2 className="text-xl font-semibold mb-4">Order Details</h2>
+        <h1 className="text-3xl font-bold text-green-600 mb-8 mt-6">
+          ✅ Order {order.id} confirmed!
+        </h1>
+        <h2 className="text-xl font-semibold mb-4">Order Items</h2>
 
-        <p>
-          <strong>Tour ID:</strong> {order.tourId}
-        </p>
-        <p>
-          <strong>Participants:</strong> {order.participants}
-        </p>
-        <p>
-          <strong>Scheduled At:</strong>{" "}
-          {new Date(order.scheduledAt).toLocaleString()}
-        </p>
+        <ul className="space-y-4 mb-6">
+          {(order.items ?? []).map((item) => (
+            <li
+              key={item.id}
+              className="border-b pb-4 flex justify-between items-start"
+            >
+              <div>
+                <p className="font-medium">{item.tourTitle}</p>
+                <p className="text-sm text-gray-500">
+                  {new Date(item.scheduledAt).toLocaleString()}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Participants: {item.participants}
+                </p>
+                <p className="text-sm text-gray-500">Status: {item.status}</p>
+              </div>
+              <div className="font-semibold">€{item.pricePaid.toFixed(2)}</div>
+            </li>
+          ))}
+        </ul>
 
-        <h3 className="text-lg font-semibold mt-4 mb-2">Customer Details</h3>
-        <p>
-          <strong>Name:</strong> {order.checkoutDetails.name}
-        </p>
-        <p>
-          <strong>Email:</strong> {order.checkoutDetails.email}
-        </p>
-        <p>
-          <strong>Phone:</strong> {order.checkoutDetails.phone}
-        </p>
-        <p>
-          <strong>Nationality:</strong> {order.checkoutDetails.nationality}
-        </p>
+        <h3 className="text-lg font-semibold mb-2">Customer Details</h3>
+        {order.items[0] && (
+          <>
+            <p>
+              <strong>Name:</strong> {order.items[0].name}
+            </p>
+            <p>
+              <strong>Email:</strong> {order.items[0].email}
+            </p>
+            <p>
+              <strong>Phone:</strong> {order.items[0].phone}
+            </p>
+            {order.items[0].nationality && (
+              <p>
+                <strong>Nationality:</strong> {order.items[0].nationality}
+              </p>
+            )}
+          </>
+        )}
 
         <h3 className="text-lg font-semibold mt-4 mb-2">Payment</h3>
         <p>
           <strong>Method:</strong> {order.paymentMethod}
         </p>
         <p>
-          <strong>Amount Paid:</strong> {order.pricePaid} €
+          <strong>Total Paid:</strong> €{order.totalPrice.toFixed(2)}
         </p>
         <p>
           <strong>Status:</strong> {order.status}

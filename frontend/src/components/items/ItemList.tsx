@@ -19,7 +19,9 @@ const ItemList: React.FC<ItemListProps> = ({
   loading = false,
   onPageChange,
 }) => {
-  if (!loading && (!pageData || pageData.content.length === 0)) {
+  const items = pageData?.content ?? [];
+
+  if (!loading && items.length === 0) {
     return (
       <div className="text-center text-gray-500 mt-6">
         No results found. Try adjusting your search or filters.
@@ -35,18 +37,18 @@ const ItemList: React.FC<ItemListProps> = ({
           ? Array.from({ length: SKELETON_COUNT }).map((_, idx) => (
               <ItemCardSkeleton key={idx} />
             ))
-          : pageData?.content.map((item) => (
+          : items.map((item) => (
               <ItemCard key={item.id} item={item} href={`/items/${item.id}`} />
             ))}
       </div>
 
       {/* Pagination controls */}
       {pageData && pageData.totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2">
+        <div className="flex justify-center items-center gap-6 mt-6">
           <button
             onClick={() => onPageChange(pageData.number - 1)}
             disabled={pageData.first}
-            className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+            className="btn btn-sm btn-outline"
           >
             Prev
           </button>
@@ -55,8 +57,10 @@ const ItemList: React.FC<ItemListProps> = ({
             <button
               key={i}
               onClick={() => onPageChange(i)}
-              className={`px-3 py-1 rounded ${
-                i === pageData.number ? "bg-blue-500 text-white" : "bg-gray-200"
+              className={`btn btn-sm ${
+                i === pageData.number
+                  ? "btn-primary"
+                  : "btn-outline hover:btn-primary transition-colors"
               }`}
             >
               {i + 1}
@@ -66,7 +70,7 @@ const ItemList: React.FC<ItemListProps> = ({
           <button
             onClick={() => onPageChange(pageData.number + 1)}
             disabled={pageData.last}
-            className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+            className="btn btn-sm btn-outline"
           >
             Next
           </button>

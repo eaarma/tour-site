@@ -5,15 +5,19 @@ import CartTotalSection from "@/components/cart/CartTotalSection";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
+import ItemModal from "@/components/items/ItemModal"; // import the new modal
+import { CartItem as CartItemType } from "@/store/cartSlice";
+import { Item } from "@/types";
 
 export default function CartPage() {
   const cart = useSelector((state: RootState) => state.cart.items);
   const router = useRouter();
 
-  const handleView = useCallback((item) => {
-    // placeholder — open modal later
-    console.log("view item", item);
+  const [viewItem, setViewItem] = useState<CartItemType | null>(null);
+
+  const handleView = useCallback((cartItem: Item) => {
+    setViewItem(cartItem);
   }, []);
 
   return (
@@ -25,6 +29,30 @@ export default function CartPage() {
           <CartItemSection cart={cart} onView={handleView} />
           <CartTotalSection />
         </div>
+      )}
+
+      {/* 🔹 Render the modal if user clicked "View" */}
+      {viewItem && (
+        <ItemModal
+          isOpen={true}
+          onClose={() => setViewItem(null)}
+          item={{
+            id: Number(viewItem.id),
+            title: viewItem.title,
+            description: viewItem.description || "",
+            price: viewItem.price,
+            participants: viewItem.participants,
+            image: viewItem.image,
+            location: viewItem.location,
+            language: viewItem.language,
+            intensity: viewItem.intensity,
+            category: viewItem.category,
+            status: "ACTIVE",
+            timeRequired: 60, // 🔹 adjust if you store real value
+          }}
+          cartItemId={viewItem.id}
+          initialScheduleId={viewItem.scheduleId}
+        />
       )}
     </main>
   );

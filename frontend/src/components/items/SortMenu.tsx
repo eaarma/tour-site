@@ -46,10 +46,9 @@ const SortMenu: React.FC<SortMenuProps> = ({
   items,
   onSort,
 }) => {
-  // Apply sorting whenever sortKey or items change
-  useEffect(() => {
-    let sorted = [...items];
-    switch (sortKey) {
+  const applySort = (key: string, list: Item[]) => {
+    let sorted = [...list];
+    switch (key) {
       case "price":
         sorted.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
         break;
@@ -61,20 +60,21 @@ const SortMenu: React.FC<SortMenuProps> = ({
       case "intensity":
         sorted.sort((a, b) => (a.intensity ?? 0) - (b.intensity ?? 0));
         break;
-      case "category":
-      case "type":
-      case "location":
-      case "az":
       default:
         sorted.sort((a, b) =>
-          (a[sortKey as keyof Item] ?? "")
+          (a[key as keyof Item] ?? "")
             .toString()
-            .localeCompare((b[sortKey as keyof Item] ?? "").toString())
+            .localeCompare((b[key as keyof Item] ?? "").toString())
         );
-        break;
     }
+    return sorted;
+  };
+
+  const handleChange = (key: string) => {
+    setSortKey(key);
+    const sorted = applySort(key, items);
     onSort(sorted);
-  }, [sortKey, items, onSort]);
+  };
 
   const resetSort = () => setSortKey("az");
 
@@ -82,7 +82,7 @@ const SortMenu: React.FC<SortMenuProps> = ({
     <div className="flex flex-col items-end gap-2 mt-4 mr-4">
       <h2 className="text-lg font-semibold mb-2">Sort</h2>
       {/* Dropdown */}
-      <Listbox value={sortKey} onChange={setSortKey}>
+      <Listbox value={sortKey} onChange={handleChange}>
         <div className="relative w-60">
           <Listbox.Button className="w-full rounded border px-3 py-2 text-left bg-white text-sm shadow flex justify-between items-center">
             <span>

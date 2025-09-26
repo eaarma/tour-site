@@ -83,4 +83,16 @@ public class TourService {
                 .map(tourMapper::toDto)
                 .toList();
     }
+
+    public List<TourResponseDto> getRandomTours(int count) {
+        return tourRepository.findRandomActiveTours(count).stream()
+                .map(tourMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    public TourResponseDto getHighlightedTour() {
+        return tourRepository.findRandomActiveTour()
+                .map(tourMapper::toDto)
+                .orElseThrow(() -> new RuntimeException("No active tours found"));
+    }
 }

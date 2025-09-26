@@ -11,43 +11,30 @@ import ItemListHorizontalSkeleton from "@/components/home/ItemListHorizontalSkel
 import HighlightedItemSkeleton from "@/components/home/HighlightedItemSkeleton";
 
 export default function Home() {
-  const [items, setItems] = useState<Item[]>([]);
   const [allItems, setAllItems] = useState<Item[]>([]); // keep full list for filtering
   const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<Item[]>([]);
+  const [highlighted, setHighlighted] = useState<Item | null>(null);
 
   // Fetch tours from backend
   useEffect(() => {
-    const fetchTours = async () => {
+    const fetchData = async () => {
       try {
-        const tours: Item[] = await TourService.getAll();
+        const [randomTours, highlightedTour] = await Promise.all([
+          TourService.getRandom(8),
+          TourService.getHighlighted(),
+        ]);
 
-        // ✅ Map backend TourResponseDto to Item
-        const mapped: Item[] = tours.map((tour) => ({
-          id: tour.id,
-          title: tour.title,
-          description: tour.description,
-          image: tour.image ?? "/images/default.jpg", // fallback if null
-          price: tour.price,
-          timeRequired: tour.timeRequired,
-          intensity: tour.intensity,
-          type: tour.type,
-          status: tour.status,
-          participants: tour.participants,
-          category: tour.category,
-          language: tour.language,
-          location: tour.location,
-        }));
-
-        setItems(mapped);
-        setAllItems(mapped);
+        setItems(randomTours);
+        setHighlighted(highlightedTour);
       } catch (err) {
-        console.error("Failed to fetch tours:", err);
+        console.error("Failed to fetch home page tours:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTours();
+    fetchData();
   }, []);
 
   // Search handler
@@ -81,7 +68,7 @@ export default function Home() {
         {loading ? (
           <HighlightedItemSkeleton />
         ) : (
-          <HighlightedItem items={items} />
+          highlighted && <HighlightedItem item={highlighted} />
         )}
       </div>
     </main>

@@ -1,23 +1,28 @@
-import { CheckoutDetailsDto } from "./checkout"; // assuming you'll define this next
+export type OrderStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
 
-export interface OrderCreateRequestDto {
+export interface OrderItemResponseDto {
+  id: number;
   tourId: number;
+  shopId: number;
+  tourTitle: string;
+  scheduledAt: string; // LocalDateTime → ISO string
   participants: number;
-  scheduledAt: string; // LocalDateTime in Java → ISO string in TS
-  checkoutDetails: CheckoutDetailsDto;
-  paymentMethod: string;
-}
-
-export interface OrderResponseDto {
-  id: string; // UUID as string
-  tourId: number;
-  participants: number;
-  scheduledAt: string; // Instant as ISO string
-  checkoutDetails: CheckoutDetailsDto;
-  paymentMethod: string;
+  name: string;
+  email: string;
+  phone: string;
+  nationality?: string;
   pricePaid: number;
   status: OrderStatus;
   createdAt: string;
+  tourSnapshot?: string;
 }
 
-export type OrderStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
+export interface OrderResponseDto {
+  id: number;
+  totalPrice: number;
+  paymentMethod: string;
+  status: OrderStatus;
+  createdAt: string;
+  updatedAt: string;
+  items: OrderItemResponseDto[]; // ✅ correct name
+}

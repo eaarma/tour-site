@@ -68,4 +68,16 @@ public class TourController {
     public ResponseEntity<List<TourResponseDto>> getToursByShop(@PathVariable Long shopId) {
         return ResponseEntity.ok(tourService.getToursByShopId(shopId));
     }
+
+    // GET /tours/random?count=8
+    @GetMapping("/random")
+    public ResponseEntity<List<TourResponseDto>> getRandomTours(@RequestParam(defaultValue = "8") int count) {
+        return ResponseEntity.ok(tourService.getRandomTours(count));
+    }
+
+    // GET /tours/highlighted
+    @GetMapping("/highlighted")
+    public ResponseEntity<TourResponseDto> getHighlightedTour() {
+        return ResponseEntity.ok(tourService.getHighlightedTour());
+    }
 }

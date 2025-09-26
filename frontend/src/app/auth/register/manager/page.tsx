@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AuthService } from "@/lib/AuthService";
 import { ManagerRegisterRequestDto } from "@/types/user";
+import toast from "react-hot-toast";
 
 export default function ManagerRegisterPage() {
   const [email, setEmail] = useState("");
@@ -14,40 +15,47 @@ export default function ManagerRegisterPage() {
   const [experience, setExperience] = useState("");
   const [languages, setLanguages] = useState("");
   const [bio, setBio] = useState("");
-  const [errors, setErrors] = useState<string[]>([]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
 
-  // 🔹 Validation function
+  // 🔹 Inline validation
   const validate = () => {
-    const newErrors: string[] = [];
+    const newErrors: Record<string, string> = {};
 
-    if (!email.includes("@")) {
-      newErrors.push("Email must be valid.");
+    if (!email || !email.includes("@")) {
+      newErrors.email = "Email must be valid.";
     }
-    if (password.length < 6) {
-      newErrors.push("Password must be at least 6 characters.");
+    if (!password || password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters.";
     }
-    if (fullName.trim().length < 2) {
-      newErrors.push("Full name must be at least 2 characters.");
+    if (!fullName || fullName.trim().length < 2) {
+      newErrors.fullName = "Full name must be at least 2 characters.";
     }
-    if (!/^\+?\d{7,15}$/.test(phone)) {
-      newErrors.push("Phone number must be valid.");
+    if (!phone || !/^\+?\d{7,15}$/.test(phone)) {
+      newErrors.phone = "Phone number must be valid.";
     }
-    if (experience && Number(experience) < 0) {
-      newErrors.push("Experience must be a positive number.");
+    if (!nationality.trim()) {
+      newErrors.nationality = "Nationality is required.";
+    }
+    if (!experience || Number(experience) < 0) {
+      newErrors.experience = "Experience must be a positive number.";
+    }
+    if (!languages.trim()) {
+      newErrors.languages = "Languages field is required.";
+    }
+    if (!bio.trim()) {
+      newErrors.bio = "Bio field is required.";
     }
 
     setErrors(newErrors);
-    return newErrors.length === 0;
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     if (!validate()) {
       setLoading(false);
@@ -60,7 +68,7 @@ export default function ManagerRegisterPage() {
       name: fullName,
       phone,
       nationality,
-      experience: experience ? String(experience) : "undefined",
+      experience,
       languages,
       bio,
     };
@@ -68,24 +76,21 @@ export default function ManagerRegisterPage() {
     try {
       const user = await AuthService.registerManager(registerData);
       console.log("Manager registered:", user);
-      router.push("/auth/login"); // redirect to login
+
+      toast.success("Manager registered successfully ✅");
+      router.push("/auth/login");
     } catch (err: any) {
       console.error(err);
 
-      // Extract validation errors from backend response
       const responseData = err.response?.data;
-
       if (responseData?.errors && Array.isArray(responseData.errors)) {
-        // Case: backend returned a list of errors
-        setErrors(responseData.errors);
+        setErrors({ general: responseData.errors.join(", ") });
       } else if (responseData?.details) {
-        // Case: backend returned a field->error map
-        setErrors(Object.values(responseData.details));
+        setErrors({ general: Object.values(responseData.details).join(", ") });
       } else if (responseData?.message) {
-        // Case: single message
-        setErrors([responseData.message]);
+        setErrors({ general: responseData.message });
       } else {
-        setErrors(["Registration failed"]);
+        setErrors({ general: "Registration failed." });
       }
     } finally {
       setLoading(false);
@@ -98,82 +103,119 @@ export default function ManagerRegisterPage() {
         <div className="card w-full max-w-lg shadow-lg bg-base-100 p-6">
           <h2 className="text-2xl font-bold mb-4">Manager Register</h2>
 
-          {/* 🔹 Show validation errors */}
-          {errors.length > 0 && (
-            <div className="alert alert-error mb-4">
-              <ul className="list-disc list-inside text-sm">
-                {errors.map((err, idx) => (
-                  <li key={idx}>{err}</li>
-                ))}
-              </ul>
+          {errors.general && (
+            <div className="alert alert-error mb-4 text-sm">
+              {errors.general}
             </div>
           )}
 
-          {/* 🔹 Show backend error */}
-          {error && <div className="alert alert-error mb-4">{error}</div>}
-
           <form onSubmit={handleRegister} className="flex flex-col gap-4">
-            <input
-              type="email"
-              placeholder="Email"
-              className="input input-bordered w-full"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              className="input input-bordered w-full"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Full Name"
-              className="input input-bordered w-full"
-              required
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-            />
-            <input
-              type="tel"
-              placeholder="Phone Number"
-              className="input input-bordered w-full"
-              required
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Nationality (optional)"
-              className="input input-bordered w-full"
-              value={nationality}
-              onChange={(e) => setNationality(e.target.value)}
-            />
-            <input
-              type="number"
-              placeholder="Experience (years, optional)"
-              className="input input-bordered w-full"
-              min={0}
-              value={experience}
-              onChange={(e) => setExperience(e.target.value)}
-            />
-            <input
-              type="text"
-              placeholder="Languages Spoken (optional, comma separated)"
-              className="input input-bordered w-full"
-              value={languages}
-              onChange={(e) => setLanguages(e.target.value)}
-            />
-            <textarea
-              placeholder="Short Bio / Description (optional)"
-              className="textarea textarea-bordered w-full"
-              rows={4}
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-            ></textarea>
+            <div>
+              <input
+                type="email"
+                placeholder="Email"
+                className="input input-bordered w-full"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+              )}
+            </div>
+
+            <div>
+              <input
+                type="password"
+                placeholder="Password"
+                className="input input-bordered w-full"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              {errors.password && (
+                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+              )}
+            </div>
+
+            <div>
+              <input
+                type="text"
+                placeholder="Full Name"
+                className="input input-bordered w-full"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+              />
+              {errors.fullName && (
+                <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
+              )}
+            </div>
+
+            <div>
+              <input
+                type="tel"
+                placeholder="Phone Number"
+                className="input input-bordered w-full"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+              {errors.phone && (
+                <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+              )}
+            </div>
+
+            <div>
+              <input
+                type="text"
+                placeholder="Nationality"
+                className="input input-bordered w-full"
+                value={nationality}
+                onChange={(e) => setNationality(e.target.value)}
+              />
+              {errors.nationality && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.nationality}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <input
+                type="number"
+                placeholder="Experience (years)"
+                className="input input-bordered w-full"
+                min={0}
+                value={experience}
+                onChange={(e) => setExperience(e.target.value)}
+              />
+              {errors.experience && (
+                <p className="text-red-500 text-sm mt-1">{errors.experience}</p>
+              )}
+            </div>
+
+            <div>
+              <input
+                type="text"
+                placeholder="Languages Spoken (comma separated)"
+                className="input input-bordered w-full"
+                value={languages}
+                onChange={(e) => setLanguages(e.target.value)}
+              />
+              {errors.languages && (
+                <p className="text-red-500 text-sm mt-1">{errors.languages}</p>
+              )}
+            </div>
+
+            <div>
+              <textarea
+                placeholder="Short Bio / Description"
+                className="textarea textarea-bordered w-full"
+                rows={4}
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+              ></textarea>
+              {errors.bio && (
+                <p className="text-red-500 text-sm mt-1">{errors.bio}</p>
+              )}
+            </div>
 
             <button
               className="btn btn-primary"

@@ -4,10 +4,11 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Item } from "@/types";
 import { TourService } from "@/lib/tourService";
-import { TourScheduleService } from "@/lib/tourScheduleService"; // match your import case
+import { TourScheduleService } from "@/lib/tourScheduleService";
 import { TourScheduleResponseDto } from "@/types/tourSchedule";
 import BookingModal from "@/components/items/BookingModal";
 import { formatDuration } from "@/utils/formatDuration";
+import SchedulePicker from "@/components/items/SchedulePicker";
 
 export default function ItemPage() {
   const { itemId } = useParams<{ itemId: string }>();
@@ -28,7 +29,6 @@ export default function ItemPage() {
         const tour = await TourService.getById(Number(itemId));
         setItem(tour);
 
-        // load schedules from schedule service
         const sch = await TourScheduleService.getByTourId(Number(itemId));
         setSchedules(sch);
       } catch (err) {
@@ -48,13 +48,6 @@ export default function ItemPage() {
   if (!item) {
     return <div className="text-center mt-10 text-lg">Item not found</div>;
   }
-
-  const formatDateDMY = (isoDate: string) => {
-    // isoDate expected to be YYYY-MM-DD
-    const parts = isoDate.split("-");
-    if (parts.length !== 3) return isoDate;
-    return `${parts[2]}.${parts[1]}.${parts[0]}`; // dd.MM.yyyy
-  };
 
   return (
     <main className="bg-base-200 min-h-screen p-6">
@@ -132,47 +125,33 @@ export default function ItemPage() {
               </div>
             </div>
 
-            {/* Schedules */}
-            <div className="mt-4">
-              <h2 className="font-semibold mb-2">Available Times:</h2>
-              <div className="flex flex-wrap gap-2">
-                {schedules.length > 0 ? (
-                  schedules.map((s) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      className={`badge p-3 transition cursor-pointer ${
-                        selectedSchedule?.id === s.id
-                          ? "badge-primary text-white"
-                          : "badge-outline"
-                      }`}
-                      onClick={() => setSelectedSchedule(s)}
-                    >
-                      {formatDateDMY(s.date)} • {s.time}
-                    </button>
-                  ))
-                ) : (
-                  <div className="text-gray-500">No scheduled times yet</div>
-                )}
-              </div>
-            </div>
+            {/* ✅ Schedules (picker) */}
+            <SchedulePicker
+              schedules={schedules}
+              selectedScheduleId={selectedSchedule?.id}
+              onSelect={setSelectedSchedule}
+              className="mt-2"
+            />
 
             <button
-              className="btn btn-primary w-full lg:w-auto mt-4"
+              className="btn btn-primary w-full lg:w-auto mt-2"
               onClick={() => setIsModalOpen(true)}
+              disabled={!selectedSchedule}
+              title={!selectedSchedule ? "Pick a time first" : "Book now"}
             >
               Book Now
             </button>
           </div>
         </div>
       </div>
-      {/* Booking Modal - pass selected schedule (see below for required prop changes) */}
+
+      {/* Booking Modal */}
       <BookingModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         item={item}
         selectedSchedule={selectedSchedule ?? undefined}
-        schedules={schedules} // 🔹 added this line
+        schedules={schedules}
       />
     </main>
   );
