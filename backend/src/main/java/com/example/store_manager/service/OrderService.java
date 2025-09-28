@@ -10,8 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.store_manager.dto.order.OrderCreateRequestDto;
 import com.example.store_manager.dto.order.OrderItemCreateRequestDto;
+import com.example.store_manager.dto.order.OrderItemResponseDto;
 import com.example.store_manager.dto.order.OrderResponseDto;
 import com.example.store_manager.dto.tour.TourSnapshotDto;
+import com.example.store_manager.mapper.OrderItemMapper;
 import com.example.store_manager.mapper.OrderMapper;
 import com.example.store_manager.model.Order;
 import com.example.store_manager.model.OrderItem;
@@ -33,6 +35,7 @@ public class OrderService {
         private final UserRepository userRepository;
         private final TourRepository tourRepository;
         private final OrderMapper orderMapper;
+        private final OrderItemMapper orderItemMapper;
 
         /**
          * Create a new order with multiple items.
@@ -121,12 +124,14 @@ public class OrderService {
         /**
          * List all OrderItems for a given shop (provider) across all orders.
          */
+
         @Transactional(readOnly = true)
-        public List<OrderItem> getOrderItemsByShop(Long shopId) {
-                return orderRepository.findAll().stream() // Could use a custom repo query
+        public List<OrderItemResponseDto> getOrderItemsByShop(Long shopId) {
+                return orderRepository.findAll().stream()
                                 .flatMap(order -> order.getOrderItems().stream())
                                 .filter(item -> item.getTour() != null
                                                 && item.getTour().getShop().getId().equals(shopId))
+                                .map(orderItemMapper::toDto)
                                 .collect(Collectors.toList());
         }
 }

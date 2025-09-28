@@ -1,123 +1,134 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
-import OrderDetailsModal from "./OrderDetailsModal";
-import { OrderResponseDto } from "@/types";
+import { OrderItemResponseDto, OrderStatus } from "@/types/order";
 import { Item } from "@/types";
+import OrderDetailsModal from "./OrderDetailsModal";
+import OrderItemCard from "./item/OrderItemCard";
 
-interface ManagerOrderSectionProps {
-  orders: OrderResponseDto[];
+interface Props {
+  orderItems: OrderItemResponseDto[];
   tours: Item[];
 }
 
-export default function ManagerOrderSection({
-  orders,
-  tours,
-}: ManagerOrderSectionProps) {
+const STATUSES: OrderStatus[] = [
+  "CONFIRMED",
+  "PENDING",
+  "CANCELLED",
+  "COMPLETED",
+];
+
+export default function ManagerOrderSection({ orderItems, tours }: Props) {
   const [activeTab, setActiveTab] = useState<"active" | "past">("active");
-  const [selectedOrder, setSelectedOrder] = useState<OrderResponseDto | null>(
+  const [selectedItem, setSelectedItem] = useState<OrderItemResponseDto | null>(
     null
   );
+  const [filterStatus, setFilterStatus] = useState<OrderStatus | "ALL">("ALL");
+  const [sortStatus, setSortStatus] = useState<OrderStatus | "NONE">("NONE");
 
-  const handleConfirm = (id: string) => {
-    // Optionally implement API call to confirm order here
+  const handleConfirm = async (id: number) => {
+    console.log("Confirm order item:", id);
+    // TODO: API call
   };
 
-  const renderOrderCard = (order: OrderResponseDto) => {
-    const tour = tours.find((t) => t.id === order.tourId);
-
-    return (
-      <div
-        key={order.id}
-        className="card bg-base-100 shadow-md border flex flex-col md:flex-row gap-4 p-4 items-center cursor-pointer hover:shadow-lg transition"
-        onClick={() => setSelectedOrder(order)}
-      >
-        {tour && (
-          <div className="relative w-24 h-24 rounded-md overflow-hidden">
-            {/* <Image
-              src={tour.imageUrl}
-              alt={tour.title}
-              fill
-              className="object-cover"
-            /> */}
-          </div>
-        )}
-
-        <div className="flex-1 w-full">
-          <h3 className="text-lg font-semibold">Order #{order.id}</h3>
-          {tour && <p className="text-sm">{tour.title}</p>}
-          <p className="text-sm text-base-content/70">
-            {new Date(order.scheduledAt).toLocaleString()}
-          </p>
-          <p className="mt-1 text-sm font-medium">
-            Status:{" "}
-            <span
-              className={`badge ${
-                order.status === "CONFIRMED"
-                  ? "badge-success"
-                  : order.status === "PENDING"
-                  ? "badge-warning"
-                  : "badge-error"
-              }`}
-            >
-              {order.status}
-            </span>
-          </p>
-        </div>
-
-        {order.status !== "CONFIRMED" && (
-          <button
-            className="btn btn-sm btn-primary mt-2 md:mt-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleConfirm(order.id);
-            }}
-          >
-            Confirm
-          </button>
-        )}
-      </div>
-    );
-  };
-
-  const selectedTour = selectedOrder
-    ? tours.find((t) => t.id === selectedOrder.tourId) || null
-    : null;
-
-  const filteredOrders = orders.filter((o) =>
-    activeTab === "active" ? o.status !== "COMPLETED" : o.status === "COMPLETED"
+  // ✅ filter by active/past
+  let filteredItems = orderItems.filter((i) =>
+    activeTab === "active" ? i.status !== "COMPLETED" : i.status === "COMPLETED"
   );
+
+  // ✅ apply status filter
+  if (filterStatus !== "ALL") {
+    filteredItems = filteredItems.filter((i) => i.status === filterStatus);
+  }
+
+  // ✅ apply sorting by status
+  if (sortStatus !== "NONE") {
+    filteredItems = [...filteredItems].sort((a, b) => {
+      if (a.status === sortStatus && b.status !== sortStatus) return -1;
+      if (b.status === sortStatus && a.status !== sortStatus) return 1;
+      return 0;
+    });
+  }
 
   return (
     <section className="mb-12">
-      <h2 className="text-2xl font-bold mb-4">Manage Orders</h2>
+      <h2 className="text-2xl font-bold mb-4">Manage Bookings</h2>
 
-      <div role="tablist" className="tabs tabs-boxed mb-6">
-        <button
-          className={`tab ${activeTab === "active" ? "tab-active" : ""}`}
-          onClick={() => setActiveTab("active")}
-          role="tab"
-        >
-          Active
-        </button>
-        <button
-          className={`tab ${activeTab === "past" ? "tab-active" : ""}`}
-          onClick={() => setActiveTab("past")}
-          role="tab"
-        >
-          Past
-        </button>
+      {/* Sticky controls */}
+      <div className="sticky top-0 z-10 bg-base-200 pb-2">
+        {/* Tabs */}
+        <div role="tablist" className="tabs tabs-boxed mb-3">
+          <button
+            className={`tab ${activeTab === "active" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("active")}
+          >
+            Current
+          </button>
+          <button
+            className={`tab ${activeTab === "past" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("past")}
+          >
+            Past
+          </button>
+        </div>
+
+        {/* Filters & Sort */}
+        <div className="flex gap-4 items-center mb-2">
+          {/* Filter dropdown */}
+          <select
+            className="select select-bordered select-sm"
+            value={filterStatus}
+            onChange={(e) =>
+              setFilterStatus(e.target.value as OrderStatus | "ALL")
+            }
+          >
+            <option value="ALL">All statuses</option>
+            {STATUSES.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
+
+          {/* Sort dropdown */}
+          <select
+            className="select select-bordered select-sm"
+            value={sortStatus}
+            onChange={(e) =>
+              setSortStatus(e.target.value as OrderStatus | "NONE")
+            }
+          >
+            <option value="NONE">No sorting</option>
+            {STATUSES.map((status) => (
+              <option key={status} value={status}>
+                Sort by {status}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      <div className="space-y-4">{filteredOrders.map(renderOrderCard)}</div>
+      {/* Scrollable list */}
+      {filteredItems.length > 0 ? (
+        <div className="space-y-3 max-h-[560px] overflow-y-auto pr-2">
+          {filteredItems.map((item) => (
+            <OrderItemCard
+              key={item.id}
+              item={item}
+              tour={tours.find((t) => t.id === item.tourId)}
+              onConfirm={handleConfirm}
+              onClick={() => setSelectedItem(item)}
+            />
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-gray-500">No bookings to display.</p>
+      )}
 
-      {/* Modal */}
       <OrderDetailsModal
-        isOpen={!!selectedOrder}
-        onClose={() => setSelectedOrder(null)}
-        order={selectedOrder}
-        tour={selectedTour}
+        isOpen={!!selectedItem}
+        onClose={() => setSelectedItem(null)}
+        orderItem={selectedItem}
       />
     </section>
   );

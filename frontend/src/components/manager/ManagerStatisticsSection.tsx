@@ -2,22 +2,28 @@
 
 import { Briefcase, CalendarCheck, MapPin } from "lucide-react";
 import { Item } from "@/types";
-import { OrderResponseDto } from "@/types/order";
+import { OrderItemResponseDto } from "@/types/order";
 
 interface ManagerStatisticsSectionProps {
   tours: Item[];
-  orders: OrderResponseDto[];
+  orderItems: OrderItemResponseDto[];
 }
 
 export default function ManagerStatisticsSection({
   tours,
-  orders,
+  orderItems,
 }: ManagerStatisticsSectionProps) {
-  const totalTours = tours.length;
-  const upcomingTours = tours.filter(
-    (t) => new Date(t.scheduledAt) > new Date()
+  // 1️⃣ Total active tours offered (for this shop)
+  const totalTours = tours.filter((t) => t.status === "ACTIVE").length;
+
+  // 2️⃣ Upcoming tours = confirmed order items in the future
+  const upcomingTours = orderItems.filter(
+    (item) =>
+      item.status === "CONFIRMED" && new Date(item.scheduledAt) > new Date()
   ).length;
-  const availableTours = tours.filter((t) => t.availableSeats > 0).length; // if you have availableSeats
+
+  // 3️⃣ Total orders = number of order items (bookings)
+  const totalOrders = orderItems.length;
 
   const statistics = [
     {
@@ -31,8 +37,8 @@ export default function ManagerStatisticsSection({
       icon: <CalendarCheck className="w-6 h-6 text-success" />,
     },
     {
-      title: "Available Tours",
-      value: availableTours,
+      title: "Total Orders",
+      value: totalOrders,
       icon: <MapPin className="w-6 h-6 text-accent" />,
     },
   ];

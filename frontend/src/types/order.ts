@@ -1,11 +1,26 @@
 export type OrderStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
 
+export interface OrderItemCreateRequestDto {
+  tourId: number;
+  scheduledAt: string; // LocalDateTime → ISO string
+  participants: number;
+}
+
+export interface OrderCreateRequestDto {
+  items: OrderItemCreateRequestDto[];
+  paymentMethod: string;
+  name: string;
+  email: string;
+  phone: string;
+  nationality?: string;
+}
+
 export interface OrderItemResponseDto {
   id: number;
   tourId: number;
   shopId: number;
   tourTitle: string;
-  scheduledAt: string; // LocalDateTime → ISO string
+  scheduledAt: string;
   participants: number;
   name: string;
   email: string;
@@ -24,5 +39,5 @@ export interface OrderResponseDto {
   status: OrderStatus;
   createdAt: string;
   updatedAt: string;
-  items: OrderItemResponseDto[]; // ✅ correct name
+  items: OrderItemResponseDto[];
 }

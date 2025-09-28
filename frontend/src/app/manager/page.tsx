@@ -5,7 +5,7 @@ import ManagerItemList from "@/components/manager/ManagerItemList";
 import ManagerOrderSection from "@/components/manager/ManagerOrderSection";
 import ManagerStatisticsSection from "@/components/manager/ManagerStatisticsSection";
 import { Item } from "@/types";
-import { OrderResponseDto } from "@/types/order";
+import { OrderItemResponseDto } from "@/types/order";
 import { AuthService } from "@/lib/AuthService";
 import { ShopUserService } from "@/lib/shopUserService";
 import { TourService } from "@/lib/tourService";
@@ -14,7 +14,7 @@ import RequireAuth from "@/components/common/RequireAuth";
 
 export default function ManagerPage() {
   const [tours, setTours] = useState<Item[]>([]);
-  const [orders, setOrders] = useState<OrderResponseDto[]>([]);
+  const [orderItems, setOrderItems] = useState<OrderItemResponseDto[]>([]);
   const [shopId, setShopId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -34,8 +34,9 @@ export default function ManagerPage() {
         const shopTours = await TourService.getByShopId(id);
         setTours(shopTours);
 
-        const shopOrders = await OrderService.getByShopId(id);
-        setOrders(shopOrders);
+        // 🔹 Fetch order items, not orders
+        const shopOrderItems = await OrderService.getItemsByShopId(id);
+        setOrderItems(shopOrderItems);
       } catch (err) {
         console.error("Error loading manager page data", err);
       } finally {
@@ -57,8 +58,8 @@ export default function ManagerPage() {
   return (
     <RequireAuth requiredRole="MANAGER">
       <div className="p-6">
-        <ManagerStatisticsSection tours={tours} orders={orders} />
-        <ManagerOrderSection orders={orders} tours={tours} />
+        <ManagerStatisticsSection tours={tours} orderItems={orderItems} />
+        <ManagerOrderSection orderItems={orderItems} tours={tours} />
         <ManagerItemList items={tours} shopId={shopId} />
       </div>
     </RequireAuth>

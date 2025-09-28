@@ -8,7 +8,6 @@ import { RootState } from "@/store/store";
 import { useCallback, useState } from "react";
 import ItemModal from "@/components/items/ItemModal"; // import the new modal
 import { CartItem as CartItemType } from "@/store/cartSlice";
-import { Item } from "@/types";
 
 export default function CartPage() {
   const cart = useSelector((state: RootState) => state.cart.items);
@@ -16,7 +15,7 @@ export default function CartPage() {
 
   const [viewItem, setViewItem] = useState<CartItemType | null>(null);
 
-  const handleView = useCallback((cartItem: Item) => {
+  const handleView = useCallback((cartItem: CartItemType) => {
     setViewItem(cartItem);
   }, []);
 

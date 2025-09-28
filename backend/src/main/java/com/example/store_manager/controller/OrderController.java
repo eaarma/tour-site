@@ -1,6 +1,7 @@
 package com.example.store_manager.controller;
 
 import com.example.store_manager.dto.order.OrderCreateRequestDto;
+import com.example.store_manager.dto.order.OrderItemResponseDto;
 import com.example.store_manager.dto.order.OrderResponseDto;
 import com.example.store_manager.service.OrderService;
 
@@ -60,7 +61,7 @@ public class OrderController {
 
     // 4️⃣ Get all order items for a given shop (provider)
     @GetMapping("/shop/{shopId}/items")
-    public ResponseEntity<List<com.example.store_manager.model.OrderItem>> getOrderItemsByShop(
+    public ResponseEntity<List<OrderItemResponseDto>> getOrderItemsByShop(
             @PathVariable Long shopId) {
         return ResponseEntity.ok(orderService.getOrderItemsByShop(shopId));
     }

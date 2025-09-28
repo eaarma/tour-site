@@ -1,5 +1,9 @@
 import api from "./axios";
-import { OrderCreateRequestDto, OrderResponseDto } from "@/types/order";
+import {
+  OrderItemResponseDto,
+  OrderResponseDto,
+  OrderCreateRequestDto,
+} from "@/types/order";
 
 const BASE_URL = "/orders";
 
@@ -22,9 +26,9 @@ export const OrderService = {
     return res.data;
   },
 
-  // get orders by shop
-  getByShopId: async (shopId: number): Promise<OrderResponseDto[]> => {
-    const res = await api.get(`${BASE_URL}/shop/${shopId}`);
+  // 🔹 New: fetch order items for shop
+  getItemsByShopId: async (shopId: number): Promise<OrderItemResponseDto[]> => {
+    const res = await api.get(`${BASE_URL}/shop/${shopId}/items`);
     return res.data;
   },
 };
