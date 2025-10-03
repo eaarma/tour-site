@@ -6,15 +6,22 @@ import com.example.store_manager.model.ShopUser;
 
 import org.springframework.stereotype.Component;
 
+import com.example.store_manager.model.User;
+
 @Component
 public class ShopUserMapper {
 
     public ShopUserDto toDto(ShopUser shopUser) {
+        User user = shopUser.getUser();
+
         return ShopUserDto.builder()
-                .userId(shopUser.getUser().getId())
-                .userEmail(shopUser.getUser().getEmail())
+                .userId(user.getId())
+                .userEmail(user.getEmail())
+                .userName(user.getName())
+                .phone(user.getPhone())
                 .role(shopUser.getRole().name())
                 .status(shopUser.getStatus().name())
+                .joinedAt(shopUser.getCreatedAt())
                 .build();
     }
 

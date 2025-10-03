@@ -31,4 +31,19 @@ export const OrderService = {
     const res = await api.get(`${BASE_URL}/shop/${shopId}/items`);
     return res.data;
   },
+
+  updateItemStatus: async (
+    itemId: number,
+    status:
+      | "CONFIRMED"
+      | "CANCELLED_CONFIRMED"
+      | "CANCELLED"
+      | "PENDING"
+      | "COMPLETED"
+  ): Promise<OrderItemResponseDto> => {
+    const res = await api.patch(`${BASE_URL}/items/${itemId}/status`, {
+      status,
+    });
+    return res.data;
+  },
 };

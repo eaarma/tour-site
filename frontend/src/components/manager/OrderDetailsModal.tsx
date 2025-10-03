@@ -1,129 +1,142 @@
-import { OrderService } from "@/lib/orderService";
+"use client";
+
 import Modal from "../common/Modal";
-import { Item, OrderResponseDto } from "@/types";
-import { useState } from "react";
-import toast from "react-hot-toast";
+import { Item, OrderItemResponseDto, OrderStatus } from "@/types";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  order: OrderResponseDto | null;
-  tour: Item | null;
-  onOrderUpdated?: (order: OrderResponseDto) => void; // optional callback to refresh parent
+  orderItem: OrderItemResponseDto | null;
+  tour?: Item;
+  onConfirm: (id: number) => void; // PENDING → CONFIRMED
+  onConfirmCancellation: (id: number) => void; // CANCELLED → CANCELLED_CONFIRMED
+  onComplete: (id: number) => void; // CONFIRMED → COMPLETED
 }
 
 export default function OrderDetailsModal({
   isOpen,
   onClose,
-  order,
+  orderItem,
   tour,
-  onOrderUpdated,
+  onConfirm,
+  onConfirmCancellation,
+  onComplete,
 }: Props) {
-  const [loading, setLoading] = useState(false);
+  if (!orderItem) return null;
 
-  if (!order) return null;
+  const renderActionButton = () => {
+    switch (orderItem.status as OrderStatus) {
+      case "PENDING":
+        return (
+          <button
+            className="btn btn-sm btn-primary"
+            onClick={() => onConfirm(orderItem.id)}
+          >
+            Confirm
+          </button>
+        );
 
-  const checkout = order.checkoutDetails ?? null;
+      case "CANCELLED":
+        return (
+          <button
+            className="btn btn-sm btn-error"
+            onClick={() => onConfirmCancellation(orderItem.id)}
+          >
+            Confirm Cancellation
+          </button>
+        );
 
-  const handleConfirm = async () => {
-    if (order.status === "CONFIRMED") {
-      toast("Order is already confirmed ✅");
-      return;
-    }
+      case "CONFIRMED":
+        return (
+          <button
+            className="btn btn-sm btn-success"
+            onClick={() => onComplete(orderItem.id)}
+          >
+            Completed
+          </button>
+        );
 
-    setLoading(true);
-    try {
-      const updated = await OrderService.update(order.id, {
-        ...order,
-        status: "CONFIRMED",
-      });
-      toast.success("Order confirmed!");
-      if (onOrderUpdated) {
-        onOrderUpdated(updated);
-      }
-    } catch (err) {
-      console.error("Failed to confirm order", err);
-      toast.error("Failed to confirm order");
-    } finally {
-      setLoading(false);
+      default:
+        return null; // COMPLETED, CANCELLED_CONFIRMED
     }
   };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <h2 className="text-xl font-semibold mb-2">Order #{order.id}</h2>
+      <div className="flex justify-between items-start mb-4">
+        <h2 className="text-xl font-semibold">Order Item #{orderItem.id}</h2>
+        {renderActionButton()}
+      </div>
+
       <p className="text-sm text-gray-500 mb-4">
-        Status: <span className="font-medium">{order.status}</span>
+        Status: <span className="font-medium">{orderItem.status}</span>
       </p>
 
       {tour && (
         <div className="mb-4">
-          <img
-            src={tour.image}
-            alt={tour.title}
-            className="w-full h-40 object-cover rounded-lg mb-2"
-          />
+          {tour.image && (
+            <img
+              src={tour.image}
+              alt={tour.title}
+              className="w-full h-40 object-cover rounded-lg mb-2"
+            />
+          )}
           <h3 className="text-lg font-semibold">{tour.title}</h3>
-          <p className="text-sm text-gray-600">{tour.location}</p>
+          {tour.location && (
+            <p className="text-sm text-gray-600">{tour.location}</p>
+          )}
         </div>
       )}
 
-      <div className="space-y-2">
+      <div className="space-y-2 text-sm">
         <p>
-          <strong>Participants:</strong> {order.participants}
+          <strong>Tour:</strong> {orderItem.tourTitle}
         </p>
         <p>
           <strong>Scheduled:</strong>{" "}
-          {new Date(order.scheduledAt).toLocaleString()}
+          {new Date(orderItem.scheduledAt).toLocaleString()}
         </p>
         <p>
-          <strong>Price Paid:</strong> ${order.pricePaid}
+          <strong>Participants:</strong> {orderItem.participants}
         </p>
         <p>
-          <strong>Payment Method:</strong> {order.paymentMethod}
+          <strong>Price Paid:</strong> €{orderItem.pricePaid.toFixed(2)}
+        </p>
+        <p>
+          <strong>Payment Method:</strong> {orderItem.paymentMethod}
         </p>
 
-        {checkout ? (
-          <>
-            <p>
-              <strong>Name:</strong> {checkout.name}
-            </p>
-            <p>
-              <strong>Email:</strong> {checkout.email}
-            </p>
-            <p>
-              <strong>Phone:</strong> {checkout.phone}
-            </p>
-            <p>
-              <strong>Nationality:</strong> {checkout.nationality}
-            </p>
-          </>
-        ) : (
-          <p className="text-sm text-gray-400 italic">
-            No checkout details available.
+        <p>
+          <strong>Name:</strong> {orderItem.name}
+        </p>
+        <p>
+          <strong>Email:</strong> {orderItem.email}
+        </p>
+        <p>
+          <strong>Phone:</strong> {orderItem.phone}
+        </p>
+        {orderItem.nationality && (
+          <p>
+            <strong>Nationality:</strong> {orderItem.nationality}
           </p>
         )}
       </div>
 
-      <div className="mt-6 flex flex-col gap-2">
-        {order.status === "CONFIRMED" ? (
-          <button onClick={onClose} className="btn btn-primary w-full">
-            Ok
-          </button>
-        ) : (
-          <>
-            <button
-              onClick={handleConfirm}
-              disabled={loading}
-              className="btn btn-success w-full"
-            >
-              {loading ? "Confirming..." : "Confirm"}
-            </button>
-            <button onClick={onClose} className="btn btn-secondary w-full">
-              Close
-            </button>
-          </>
+      {/* Bottom row: View Tour + Close */}
+      <div className="mt-6 flex justify-between gap-2">
+        {tour && (
+          <a
+            href={`/items/${tour.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-outline flex-1"
+          >
+            View Tour
+          </a>
         )}
+        <button onClick={onClose} className="btn btn-primary flex-1">
+          Close
+        </button>
       </div>
     </Modal>
   );

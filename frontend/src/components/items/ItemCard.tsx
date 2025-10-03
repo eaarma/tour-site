@@ -15,7 +15,7 @@ interface ItemCardProps {
 
 const statusColors: Record<string, string> = {
   ACTIVE: "bg-green-500",
-  "ON HOLD": "bg-yellow-500",
+  ON_HOLD: "bg-yellow-500",
   CANCELLED: "bg-red-500",
 };
 

@@ -134,4 +134,17 @@ public class OrderService {
                                 .map(orderItemMapper::toDto)
                                 .collect(Collectors.toList());
         }
+
+        @Transactional
+        public OrderItemResponseDto updateOrderItemStatus(Long itemId, OrderStatus status) {
+                OrderItem item = orderRepository.findAll().stream()
+                                .flatMap(order -> order.getOrderItems().stream())
+                                .filter(i -> i.getId().equals(itemId))
+                                .findFirst()
+                                .orElseThrow(() -> new RuntimeException("OrderItem not found"));
+
+                item.setStatus(status);
+                return orderItemMapper.toDto(item);
+        }
+
 }

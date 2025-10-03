@@ -19,10 +19,13 @@ export interface ShopJoinRequestDto {
 
 // For user assigned to a shop
 export interface ShopUserDto {
-  userId: string; // UUID as string
+  userId: string;
   userEmail: string;
+  userName: string;
+  phone: string;
   role: string;
   status: string;
+  joinedAt: string; // ISO string
 }
 
 // For user-shop membership status

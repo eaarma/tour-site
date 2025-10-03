@@ -1,4 +1,9 @@
-export type OrderStatus = "PENDING" | "CONFIRMED" | "CANCELLED" | "COMPLETED";
+export type OrderStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "CANCELLED"
+  | "COMPLETED"
+  | "CANCELLED_CONFIRMED";
 
 export interface OrderItemCreateRequestDto {
   tourId: number;

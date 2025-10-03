@@ -12,6 +12,7 @@ public enum OrderStatus {
 
     // Cancellations & Refunds
     CANCELLED, // Entire order or item was cancelled before confirmation
+    CANCELLED_CONFIRMED, // Cancellation processed and confirmed
     PARTIALLY_CANCELLED, // For master order: some items cancelled, others active
     REFUNDED, // Full refund issued
     PARTIALLY_REFUNDED, // For master order: some items refunded

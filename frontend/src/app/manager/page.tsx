@@ -11,6 +11,7 @@ import { ShopUserService } from "@/lib/shopUserService";
 import { TourService } from "@/lib/tourService";
 import { OrderService } from "@/lib/orderService";
 import RequireAuth from "@/components/common/RequireAuth";
+import ManagerShopSection from "@/components/manager/ManagerShopSection";
 
 export default function ManagerPage() {
   const [tours, setTours] = useState<Item[]>([]);
@@ -57,7 +58,8 @@ export default function ManagerPage() {
 
   return (
     <RequireAuth requiredRole="MANAGER">
-      <div className="p-6">
+      <div className="p-6 space-y-8">
+        {shopId && <ManagerShopSection shopId={shopId} />}
         <ManagerStatisticsSection tours={tours} orderItems={orderItems} />
         <ManagerOrderSection orderItems={orderItems} tours={tours} />
         <ManagerItemList items={tours} shopId={shopId} />

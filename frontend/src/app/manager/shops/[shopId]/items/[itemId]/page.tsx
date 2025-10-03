@@ -11,7 +11,7 @@ import { formatDuration } from "@/utils/formatDuration";
 
 const INTENSITY_OPTIONS = ["Easy", "Moderate", "Hard"];
 const CATEGORY_OPTIONS = ["Nature", "History", "Culture"];
-const STATUS_OPTIONS = ["ACTIVE", "ON HOLD", "CANCELLED"];
+const STATUS_OPTIONS = ["ACTIVE", "ON_HOLD", "CANCELLED"];
 const TYPE_OPTIONS = ["Walking", "Bus", "Boat", "Museum"];
 
 export default function ManagerItemPage() {
@@ -29,7 +29,7 @@ export default function ManagerItemPage() {
     isNew
       ? {
           shopId,
-          status: "ON HOLD",
+          status: "ON_HOLD",
           category: CATEGORY_OPTIONS[0],
           type: TYPE_OPTIONS[0],
           intensity: INTENSITY_OPTIONS[0],
@@ -267,7 +267,7 @@ export default function ManagerItemPage() {
                     className={`badge ${
                       item?.status === "ACTIVE"
                         ? "badge-success"
-                        : item?.status === "ON HOLD"
+                        : item?.status === "ON_HOLD"
                         ? "badge-warning"
                         : "badge-error"
                     }`}

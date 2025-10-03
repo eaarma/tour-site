@@ -1,21 +1,27 @@
 package com.example.store_manager.controller;
 
-import com.example.store_manager.dto.order.OrderCreateRequestDto;
-import com.example.store_manager.dto.order.OrderItemResponseDto;
-import com.example.store_manager.dto.order.OrderResponseDto;
-import com.example.store_manager.service.OrderService;
-
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.store_manager.dto.order.OrderCreateRequestDto;
+import com.example.store_manager.dto.order.OrderItemResponseDto;
+import com.example.store_manager.dto.order.OrderResponseDto;
+import com.example.store_manager.dto.order.StatusUpdateRequestDto;
+import com.example.store_manager.service.OrderService;
 
 import jakarta.validation.Valid;
-
-import java.util.List;
-import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/orders")
@@ -64,6 +70,13 @@ public class OrderController {
     public ResponseEntity<List<OrderItemResponseDto>> getOrderItemsByShop(
             @PathVariable Long shopId) {
         return ResponseEntity.ok(orderService.getOrderItemsByShop(shopId));
+    }
+
+    @PatchMapping("/items/{itemId}/status")
+    public ResponseEntity<OrderItemResponseDto> updateOrderItemStatus(
+            @PathVariable Long itemId,
+            @RequestBody StatusUpdateRequestDto request) {
+        return ResponseEntity.ok(orderService.updateOrderItemStatus(itemId, request.getStatus()));
     }
 
 }

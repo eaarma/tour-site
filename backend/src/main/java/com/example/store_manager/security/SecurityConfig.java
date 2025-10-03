@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/tours/**").hasRole("MANAGER")
 
                         // Orders
+                        .requestMatchers(HttpMethod.GET, "/orders/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/orders/**").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/orders/**").hasRole("MANAGER")
                         .requestMatchers(HttpMethod.DELETE, "/orders/**").hasRole("MANAGER")
@@ -77,7 +78,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.setAllowedOriginPatterns(List.of("http://localhost:3000", "http://127.0.0.1:3000"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
         config.setExposedHeaders(List.of("Authorization")); // so frontend can read token if returned
         config.setExposedHeaders(List.of(HttpHeaders.SET_COOKIE));
