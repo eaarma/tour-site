@@ -10,7 +10,7 @@ const redirectByRole = (role: string) => {
   switch (role) {
     case "ADMIN":
     case "MANAGER":
-      return "/manager";
+      return "/shops";
     case "USER":
     default:
       return "/user";

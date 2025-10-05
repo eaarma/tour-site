@@ -8,6 +8,7 @@ import EditableSchedules from "@/components/manager/item/EditableSchedules";
 import EditableLanguages from "@/components/manager/item/EditableLanguages";
 import { DURATION_OPTIONS } from "@/utils/duration";
 import { formatDuration } from "@/utils/formatDuration";
+import { ArrowLeft } from "lucide-react";
 
 const INTENSITY_OPTIONS = ["Easy", "Moderate", "Hard"];
 const CATEGORY_OPTIONS = ["Nature", "History", "Culture"];
@@ -105,6 +106,16 @@ export default function ManagerItemPage() {
         </h1>
 
         <div className="flex gap-2">
+          {/* ✅ Back Button */}
+          <button
+            onClick={() => router.push(`/shops/manager?shopId=${shopId}`)}
+            className="btn btn-md btn-outline flex items-center gap-1"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Back
+          </button>
+
+          {/* Edit / Cancel */}
           {!isNew && (
             <button
               className="btn btn-md btn-primary"
@@ -113,6 +124,8 @@ export default function ManagerItemPage() {
               {isEditing ? "Cancel" : "Edit"}
             </button>
           )}
+
+          {/* Save */}
           {isEditing && (
             <button className="btn btn-md btn-success" onClick={handleSave}>
               Save

@@ -85,19 +85,31 @@ const Header: React.FC = () => {
 
                 {open && (
                   <div className="absolute right-0 mt-2 w-44 bg-base-100 border border-gray-700 rounded shadow-lg z-50 text-neutral">
+                    {/* View Profile */}
                     <button
                       className="block w-full text-left px-4 py-2 hover:bg-base-200 hover:text-primary transition-colors"
                       onClick={() => {
-                        router.push(
-                          user.role === "ADMIN" || user.role === "MANAGER"
-                            ? "/manager"
-                            : "/user"
-                        );
+                        router.push("/user");
                         setOpen(false);
                       }}
                     >
                       View Profile
                     </button>
+
+                    {/* View Shops (MANAGER only) */}
+                    {user.role === "MANAGER" && (
+                      <button
+                        className="block w-full text-left px-4 py-2 hover:bg-base-200 hover:text-primary transition-colors"
+                        onClick={() => {
+                          router.push("/shops");
+                          setOpen(false);
+                        }}
+                      >
+                        View Shops
+                      </button>
+                    )}
+
+                    {/* Logout */}
                     <button
                       className="block w-full text-left px-4 py-2 hover:bg-base-100 hover:text-red-700 transition-colors text-red-500"
                       onClick={handleLogout}

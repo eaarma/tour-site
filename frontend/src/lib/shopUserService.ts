@@ -29,4 +29,8 @@ export const ShopUserService = {
   ): Promise<void> => {
     await api.patch(`${BASE_URL}/${shopId}/${userId}/status?status=${status}`);
   },
+
+  requestJoinShop: async (shopId: number): Promise<void> => {
+    await api.post(`${BASE_URL}/shop/${shopId}/request`);
+  },
 };

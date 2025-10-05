@@ -59,7 +59,7 @@ export default function ManagerItemList({
 
         <button
           className="btn btn-outline btn-primary flex items-center gap-2"
-          onClick={() => router.push(`/manager/shops/${shopId}/items/new`)}
+          onClick={() => router.push(`/shops/manager/shop/${shopId}/items/new`)}
         >
           <span className="text-xl">+</span> Add a Tour
         </button>
@@ -78,7 +78,7 @@ export default function ManagerItemList({
               item={item}
               showStatus={true}
               onClick={() =>
-                router.push(`/manager/shops/${shopId}/items/${item.id}`)
+                router.push(`/shops/manager/shop/${shopId}/items/${item.id}`)
               }
             />
           ))}

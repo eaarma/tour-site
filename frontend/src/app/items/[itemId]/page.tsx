@@ -9,6 +9,7 @@ import { TourScheduleResponseDto } from "@/types/tourSchedule";
 import BookingModal from "@/components/items/BookingModal";
 import { formatDuration } from "@/utils/formatDuration";
 import SchedulePicker from "@/components/items/SchedulePicker";
+import { ArrowLeft } from "lucide-react";
 
 export default function ItemPage() {
   const { itemId } = useParams<{ itemId: string }>();
@@ -53,8 +54,19 @@ export default function ItemPage() {
     <main className="bg-base-200 min-h-screen p-6">
       {/* Back Button */}
       <div className="max-w-5xl mx-auto mb-4">
-        <button className="btn btn-sm btn-ghost" onClick={() => router.back()}>
-          ← Back
+        <button
+          onClick={() => {
+            if (window.history.length > 1) {
+              router.back();
+            } else {
+              // Fallback: go to the items page if there's no history
+              router.push(`/items`);
+            }
+          }}
+          className="btn btn-md btn-outline flex items-center gap-1"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back
         </button>
       </div>
 

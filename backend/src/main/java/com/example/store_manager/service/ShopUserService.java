@@ -83,4 +83,50 @@ public class ShopUserService {
                                 .map(shopUser -> shopUser.getRole().equals(role))
                                 .orElse(false);
         }
+
+        public void requestToJoinShop(Long shopId, UUID currentUserId) {
+                Shop shop = shopRepository.findById(shopId)
+                                .orElseThrow(() -> new RuntimeException("Shop not found"));
+
+                User user = userRepository.findById(currentUserId)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                // Prevent duplicates
+                if (shopUserRepository.findByShopIdAndUserId(shopId, currentUserId).isPresent()) {
+                        throw new IllegalStateException(
+                                        "You already have a membership or pending request for this shop.");
+                }
+
+                ShopUser shopUser = ShopUser.builder()
+                                .shop(shop)
+                                .user(user)
+                                .role(ShopUserRole.GUIDE) // default role (or GUEST/PENDING)
+                                .status(ShopUserStatus.PENDING)
+                                .createdAt(LocalDateTime.now())
+                                .build();
+
+                shopUserRepository.save(shopUser);
+        }
+
+        public void requestJoinShop(Long shopId, UUID userId) {
+                Shop shop = shopRepository.findById(shopId)
+                                .orElseThrow(() -> new RuntimeException("Shop not found"));
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                boolean alreadyExists = shopUserRepository.findByShopIdAndUserId(shopId, userId).isPresent();
+                if (alreadyExists) {
+                        throw new IllegalStateException("Already requested or a member of this shop");
+                }
+
+                ShopUser shopUser = ShopUser.builder()
+                                .shop(shop)
+                                .user(user)
+                                .role(ShopUserRole.GUIDE) // default role
+                                .status(ShopUserStatus.PENDING)
+                                .createdAt(LocalDateTime.now())
+                                .build();
+
+                shopUserRepository.save(shopUser);
+        }
 }

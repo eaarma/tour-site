@@ -58,4 +58,12 @@ public class ShopUserController {
         shopUserService.updateUserStatus(shopId, userId, status, currentUserId);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/shop/{shopId}/request")
+    public ResponseEntity<Void> requestJoinShop(@PathVariable Long shopId) {
+        UUID currentUserId = currentUserService.getCurrentUserId();
+        shopUserService.requestJoinShop(shopId, currentUserId);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
 }

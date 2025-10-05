@@ -34,11 +34,11 @@ export default function RootLayout({
       data-theme="light"
       className={`${geistSans.variable} ${geistMono.variable}`}
     >
-      <body>
+      <body className="flex flex-col min-h-screen bg-base-200">
         <ReduxProvider>
           <AuthProvider>
             <Header />
-            <main>
+            <main className="flex-grow">
               <MarginContainer>{children}</MarginContainer>
               <Toaster position="top-center" />
             </main>

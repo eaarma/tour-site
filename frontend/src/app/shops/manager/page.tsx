@@ -1,42 +1,42 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import ManagerShopSection from "@/components/manager/ManagerShopSection";
 import ManagerItemList from "@/components/manager/ManagerItemList";
 import ManagerOrderSection from "@/components/manager/ManagerOrderSection";
 import ManagerStatisticsSection from "@/components/manager/ManagerStatisticsSection";
 import { Item } from "@/types";
 import { OrderItemResponseDto } from "@/types/order";
-import { AuthService } from "@/lib/AuthService";
-import { ShopUserService } from "@/lib/shopUserService";
 import { TourService } from "@/lib/tourService";
 import { OrderService } from "@/lib/orderService";
 import RequireAuth from "@/components/common/RequireAuth";
-import ManagerShopSection from "@/components/manager/ManagerShopSection";
 
-export default function ManagerPage() {
+export default function ShopManagerPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const shopIdParam = searchParams.get("shopId");
+
+  const [shopId, setShopId] = useState<number | null>(
+    shopIdParam ? Number(shopIdParam) : null
+  );
   const [tours, setTours] = useState<Item[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemResponseDto[]>([]);
-  const [shopId, setShopId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
+      if (!shopId) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        const user = await AuthService.getCurrentUser();
-        if (!user) return;
-
-        const shops = await ShopUserService.getShopsForCurrentUser();
-        if (!shops || shops.length === 0) return;
-
-        // Pick first shop (later allow selection)
-        const id = shops[0].shopId;
-        setShopId(id);
-
-        const shopTours = await TourService.getByShopId(id);
+        // Fetch shop-specific data
+        const shopTours = await TourService.getByShopId(shopId);
         setTours(shopTours);
 
-        // 🔹 Fetch order items, not orders
-        const shopOrderItems = await OrderService.getItemsByShopId(id);
+        const shopOrderItems = await OrderService.getItemsByShopId(shopId);
         setOrderItems(shopOrderItems);
       } catch (err) {
         console.error("Error loading manager page data", err);
@@ -46,22 +46,39 @@ export default function ManagerPage() {
     };
 
     fetchData();
-  }, []);
+  }, [shopId]);
 
   if (loading) {
-    return <div className="p-6">Loading...</div>;
+    return <div className="p-6">Loading shop data...</div>;
   }
 
   if (!shopId) {
-    return <div className="p-6">No shop assigned to this account.</div>;
+    return (
+      <div className="p-6">
+        <p className="text-gray-600 mb-4">No shop selected.</p>
+        <button
+          className="btn btn-outline"
+          onClick={() => router.push("/shops")}
+        >
+          Back to My Shops
+        </button>
+      </div>
+    );
   }
 
   return (
     <RequireAuth requiredRole="MANAGER">
       <div className="p-6 space-y-8">
-        {shopId && <ManagerShopSection shopId={shopId} />}
+        {/* 🏪 Shop Header */}
+        <ManagerShopSection shopId={shopId} />
+
+        {/* 📊 Shop Statistics */}
         <ManagerStatisticsSection tours={tours} orderItems={orderItems} />
+
+        {/* 🧾 Orders */}
         <ManagerOrderSection orderItems={orderItems} tours={tours} />
+
+        {/* 🧭 Items (Tours) */}
         <ManagerItemList items={tours} shopId={shopId} />
       </div>
     </RequireAuth>

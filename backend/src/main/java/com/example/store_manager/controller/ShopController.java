@@ -3,6 +3,7 @@ package com.example.store_manager.controller;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,8 +30,10 @@ public class ShopController {
     private final CurrentUserService currentUserService;
 
     @PostMapping
-    public ResponseEntity<ShopDto> createShop(@RequestBody @Valid ShopCreateRequestDto dto) {
-        return ResponseEntity.ok(shopService.createShop(dto));
+    public ResponseEntity<ShopDto> createShop(@RequestBody ShopCreateRequestDto dto) {
+        UUID currentUserId = currentUserService.getCurrentUserId();
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(shopService.createShop(dto, currentUserId));
     }
 
     @GetMapping("/{id}")
