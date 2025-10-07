@@ -16,8 +16,10 @@ export default function ManagerShopUsersModal({
 }: Props) {
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      <div className="m-4">
-        <h3 className="text-lg font-semibold mb-4">Shop Members</h3>
+      <div className="m-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Shop Members</h3>
+        </div>
         {members.length === 0 ? (
           <p className="text-gray-500">No members found.</p>
         ) : (

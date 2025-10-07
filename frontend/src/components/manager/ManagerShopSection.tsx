@@ -8,7 +8,8 @@ import { ShopUserService } from "@/lib/shopUserService";
 import ManagerShopUsersModal from "./ManagerShopUsersModal";
 import ManagerShopSettingsModal from "./ManagerShopSettingsModal";
 import { Settings } from "lucide-react";
-
+import ManagerPendingRequestsModal from "./ManagerPendingRequestsModal";
+import { useRouter } from "next/navigation";
 interface Props {
   shopId: number;
 }
@@ -18,7 +19,12 @@ export default function ManagerShopSection({ shopId }: Props) {
   const [members, setMembers] = useState<ShopUserDto[]>([]);
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isPendingModalOpen, setIsPendingModalOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const router = useRouter();
+
+  const pendingRequests = members.filter((m) => m.status === "PENDING");
+  const activeMembers = members.filter((m) => m.status === "ACTIVE");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -48,8 +54,21 @@ export default function ManagerShopSection({ shopId }: Props) {
       {/* Right side: actions */}
       <div className="flex items-center gap-4 relative">
         {/* Pending Requests button */}
-        <button className="btn btn-sm btn-outline btn-warning">
-          Pending requests
+        <button
+          className={`btn btn-sm ${
+            pendingRequests.length > 0
+              ? "btn-outline btn-warning"
+              : "btn-disabled"
+          }`}
+          onClick={() =>
+            pendingRequests.length > 0 && setIsPendingModalOpen(true)
+          }
+        >
+          {pendingRequests.length === 0
+            ? "0 pending requests"
+            : `${pendingRequests.length} pending ${
+                pendingRequests.length === 1 ? "request" : "requests"
+              }`}
         </button>
 
         {/* Members button */}
@@ -57,7 +76,7 @@ export default function ManagerShopSection({ shopId }: Props) {
           className="btn btn-sm btn-outline"
           onClick={() => setIsUsersModalOpen(true)}
         >
-          {members.length} members
+          {activeMembers.length} members
         </button>
 
         {/* Settings dropdown */}
@@ -86,9 +105,8 @@ export default function ManagerShopSection({ shopId }: Props) {
               <button
                 className="w-full text-left px-4 py-2 hover:bg-base-200"
                 onClick={() => {
-                  console.log("Switch shop clicked");
                   setDropdownOpen(false);
-                  // We'll handle actual switching next
+                  router.push("/shops"); // ✅ Navigate to shops page
                 }}
               >
                 Switch shop
@@ -102,7 +120,22 @@ export default function ManagerShopSection({ shopId }: Props) {
       <ManagerShopUsersModal
         isOpen={isUsersModalOpen}
         onClose={() => setIsUsersModalOpen(false)}
-        members={members}
+        members={members.filter((m) => m.status === "ACTIVE")}
+      />
+
+      {/* Pending Requests modal */}
+      <ManagerPendingRequestsModal
+        isOpen={isPendingModalOpen}
+        onClose={() => setIsPendingModalOpen(false)}
+        pendingRequests={pendingRequests}
+        shopId={shopId}
+        onStatusChange={(updatedUserId, newStatus) => {
+          setMembers((prev) =>
+            prev.map((m) =>
+              m.userId === updatedUserId ? { ...m, status: newStatus } : m
+            )
+          );
+        }}
       />
 
       {/* Settings modal */}
