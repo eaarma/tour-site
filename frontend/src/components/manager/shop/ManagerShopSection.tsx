@@ -121,6 +121,7 @@ export default function ManagerShopSection({ shopId }: Props) {
         isOpen={isUsersModalOpen}
         onClose={() => setIsUsersModalOpen(false)}
         members={members.filter((m) => m.status === "ACTIVE")}
+        shopId={shopId} // ✅ Pass the shopId explicitly
       />
 
       {/* Pending Requests modal */}

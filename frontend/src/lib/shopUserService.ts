@@ -30,6 +30,15 @@ export const ShopUserService = {
     await api.patch(`${BASE_URL}/${shopId}/${userId}/status?status=${status}`);
   },
 
+  // ✅ New: update user role
+  updateRole: async (
+    shopId: number,
+    userId: string,
+    role: string
+  ): Promise<void> => {
+    await api.patch(`${BASE_URL}/${shopId}/${userId}/role?role=${role}`);
+  },
+
   requestJoinShop: async (shopId: number): Promise<void> => {
     await api.post(`${BASE_URL}/shop/${shopId}/request`);
   },

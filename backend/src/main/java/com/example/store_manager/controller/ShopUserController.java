@@ -59,6 +59,16 @@ public class ShopUserController {
         return ResponseEntity.ok().build();
     }
 
+    @PatchMapping("/{shopId}/{userId}/role")
+    public ResponseEntity<Void> updateRole(
+            @PathVariable Long shopId,
+            @PathVariable UUID userId,
+            @RequestParam String role) {
+        UUID currentUserId = currentUserService.getCurrentUserId();
+        shopUserService.updateUserRole(shopId, userId, role, currentUserId);
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/shop/{shopId}/request")
     public ResponseEntity<Void> requestJoinShop(@PathVariable Long shopId) {
         UUID currentUserId = currentUserService.getCurrentUserId();

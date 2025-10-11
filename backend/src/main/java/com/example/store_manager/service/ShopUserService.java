@@ -129,4 +129,17 @@ public class ShopUserService {
 
                 shopUserRepository.save(shopUser);
         }
+
+        public void updateUserRole(Long shopId, UUID userId, String role, UUID currentUserId) {
+                if (!hasShopRole(shopId, currentUserId, ShopUserRole.MANAGER)) {
+                        throw new AccessDeniedException("Only MANAGER can change user roles in the shop.");
+                }
+
+                ShopUser shopUser = shopUserRepository.findByShopIdAndUserId(shopId, userId)
+                                .orElseThrow(() -> new RuntimeException("Shop user not found"));
+
+                shopUser.setRole(ShopUserRole.valueOf(role.toUpperCase()));
+                shopUserRepository.save(shopUser);
+        }
+
 }

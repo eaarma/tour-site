@@ -1,22 +1,26 @@
 "use client";
 
-import { useSelector } from "react-redux";
+import { ReactNode } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { RootState } from "@/store/store";
-
+import { useRoleGuard } from "@/hooks/userRoleGuard";
 interface RequireAuthProps {
-  children: React.ReactNode;
-  requiredRole?: "USER" | "MANAGER";
+  children: ReactNode;
+  requiredRole?: "USER" | "MANAGER" | ("USER" | "MANAGER")[];
 }
 
 export default function RequireAuth({
   children,
   requiredRole,
 }: RequireAuthProps) {
-  const user = useSelector((state: RootState) => state.auth.user);
+  const { user, isAuthenticated, role } = useAuth();
   const router = useRouter();
 
-  if (!user) {
+  // Reuse guard hook for internal role consistency
+  useRoleGuard(requiredRole);
+
+  // Not logged in
+  if (!isAuthenticated || !user) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
         <h2 className="text-2xl font-bold mb-4">Not Authorized</h2>
@@ -31,16 +35,23 @@ export default function RequireAuth({
     );
   }
 
-  if (requiredRole && user.role !== requiredRole) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
-        <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
-        <p>
-          You need to be logged in as a {requiredRole.toLowerCase()} to view
-          this page.
-        </p>
-      </div>
-    );
+  // Role mismatch (supports single or multiple roles)
+  if (requiredRole) {
+    const allowedRoles = Array.isArray(requiredRole)
+      ? requiredRole
+      : [requiredRole];
+    if (!allowedRoles.includes(role as string)) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
+          <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
+          <p>
+            You must be logged in as{" "}
+            {allowedRoles.map((r) => r.toLowerCase()).join(" or ")} to view this
+            page.
+          </p>
+        </div>
+      );
+    }
   }
 
   return <>{children}</>;

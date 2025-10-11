@@ -1,8 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import ItemCard from "../items/ItemCard";
 import { Item } from "@/types";
+import ItemCard from "@/components/items/ItemCard";
 
 interface ManagerItemListProps {
   items: Item[];

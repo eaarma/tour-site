@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import ManagerShopSection from "@/components/manager/ManagerShopSection";
-import ManagerItemList from "@/components/manager/ManagerItemList";
-import ManagerOrderSection from "@/components/manager/ManagerOrderSection";
-import ManagerStatisticsSection from "@/components/manager/ManagerStatisticsSection";
+import ManagerShopSection from "@/components/manager/shop/ManagerShopSection";
+import ManagerOrderSection from "@/components/manager/order/ManagerOrderSection";
+import ManagerItemList from "@/components/manager/item/ManagerItemList";
+import ManagerStatisticsSection from "@/components/manager/statistics/ManagerStatisticsSection";
 import { Item } from "@/types";
 import { OrderItemResponseDto } from "@/types/order";
 import { TourService } from "@/lib/tourService";

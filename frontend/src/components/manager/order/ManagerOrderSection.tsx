@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { OrderItemResponseDto, OrderStatus } from "@/types/order";
 import { Item } from "@/types";
+import CardFrame from "@/components/common/CardFrame";
+import OrderItemCard from "./OrderItemCard";
 import OrderDetailsModal from "./OrderDetailsModal";
-import OrderItemCard from "./item/OrderItemCard";
 import { OrderService } from "@/lib/orderService";
 import toast from "react-hot-toast";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import CustomDateInput from "../common/CustomDateInput";
-import CardFrame from "../common/cardFrame";
+import CustomDateInput from "@/components/common/CustomDateInput";
 
 interface Props {
   orderItems: OrderItemResponseDto[];

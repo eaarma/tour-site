@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Modal from "../common/Modal";
 import { ShopDto, ShopCreateRequestDto } from "@/types/shop";
 import { ShopService } from "@/lib/shopService";
 import toast from "react-hot-toast";
+import Modal from "@/components/common/Modal";
 
 interface Props {
   isOpen: boolean;
