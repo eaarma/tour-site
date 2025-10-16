@@ -20,6 +20,7 @@ import com.example.store_manager.model.OrderItem;
 import com.example.store_manager.model.OrderStatus;
 import com.example.store_manager.model.Tour;
 import com.example.store_manager.model.User;
+import com.example.store_manager.repository.OrderItemRepository;
 import com.example.store_manager.repository.OrderRepository;
 import com.example.store_manager.repository.TourRepository;
 import com.example.store_manager.repository.UserRepository;
@@ -36,6 +37,7 @@ public class OrderService {
         private final TourRepository tourRepository;
         private final OrderMapper orderMapper;
         private final OrderItemMapper orderItemMapper;
+        private final OrderItemRepository orderItemRepository;
 
         /**
          * Create a new order with multiple items.
@@ -124,13 +126,9 @@ public class OrderService {
         /**
          * List all OrderItems for a given shop (provider) across all orders.
          */
-
         @Transactional(readOnly = true)
         public List<OrderItemResponseDto> getOrderItemsByShop(Long shopId) {
-                return orderRepository.findAll().stream()
-                                .flatMap(order -> order.getOrderItems().stream())
-                                .filter(item -> item.getTour() != null
-                                                && item.getTour().getShop().getId().equals(shopId))
+                return orderItemRepository.findByShopId(shopId).stream()
                                 .map(orderItemMapper::toDto)
                                 .collect(Collectors.toList());
         }
@@ -145,6 +143,27 @@ public class OrderService {
 
                 item.setStatus(status);
                 return orderItemMapper.toDto(item);
+        }
+
+        @Transactional
+        public OrderItemResponseDto assignManagerToOrderItem(Long itemId, UUID managerId) {
+                OrderItem item = orderItemRepository.findById(itemId)
+                                .orElseThrow(() -> new RuntimeException("OrderItem not found"));
+
+                User manager = userRepository.findById(managerId)
+                                .orElseThrow(() -> new RuntimeException("Manager not found"));
+
+                item.setManager(manager);
+                orderItemRepository.save(item);
+
+                return orderItemMapper.toDto(item);
+        }
+
+        @Transactional(readOnly = true)
+        public List<OrderItemResponseDto> getOrderItemsByManager(UUID managerId) {
+                return orderItemRepository.findByManagerId(managerId).stream()
+                                .map(orderItemMapper::toDto)
+                                .collect(Collectors.toList());
         }
 
 }

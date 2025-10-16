@@ -48,4 +48,7 @@ public class User {
     private String experience;
     private String languages;
 
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
+
 }

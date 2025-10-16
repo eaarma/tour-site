@@ -1,23 +1,36 @@
 "use client";
 
-import { useAuth } from "@/hooks/useAuth";
+import { useEffect, useState } from "react";
+import { UserService } from "@/lib/userService";
+import { UserResponseDto } from "@/types/user";
 import ManagerProfilePage from "@/components/user/ManagerProfilePage";
 import UserProfilePage from "@/components/user/UserProfilePage";
 
 export default function UserPage() {
-  const { user, role, isAuthenticated } = useAuth();
+  const [profile, setProfile] = useState<UserResponseDto | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!isAuthenticated) {
-    return <div className="p-6">Please log in to view your profile.</div>;
-  }
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await UserService.getProfile();
+        setProfile(data);
+      } catch (err) {
+        console.error("Failed to load profile", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
 
-  if (!role) {
+  if (loading || !profile) {
     return <div className="p-6">Loading profile...</div>;
   }
 
-  return role === "MANAGER" ? (
-    <ManagerProfilePage user={user} />
+  return profile.role === "MANAGER" ? (
+    <ManagerProfilePage profile={profile} setProfile={setProfile} />
   ) : (
-    <UserProfilePage user={user} />
+    <UserProfilePage profile={profile} setProfile={setProfile} />
   );
 }

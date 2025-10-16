@@ -1,5 +1,6 @@
 package com.example.store_manager.dto.user;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import lombok.AllArgsConstructor;
@@ -16,4 +17,12 @@ public class UserResponseDto {
     private String name;
     private String email;
     private String role;
+
+    private String phone;
+    private String nationality;
+    private String bio;
+    private String experience;
+    private String languages;
+    private LocalDateTime createdAt;
+    private String profileImageUrl;
 }

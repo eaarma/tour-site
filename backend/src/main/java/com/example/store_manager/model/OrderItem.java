@@ -27,6 +27,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+//This mapper should not use MapStruct since the json snapshot made an infinite loop with mapstruct
 @Entity
 @Table(name = "order_items")
 @Data
@@ -95,4 +96,9 @@ public class OrderItem {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
+
+    @ManyToOne
+    @JoinColumn(name = "manager_id")
+    private User manager;
+
 }

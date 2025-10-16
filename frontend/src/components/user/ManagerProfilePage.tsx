@@ -1,53 +1,66 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { ShopUserService } from "@/lib/shopUserService";
+import { ShopService } from "@/lib/shopService";
+import { ShopDto } from "@/types/shop";
+import { UserResponseDto } from "@/types/user";
+import ManagerProfileStatisticSection from "./ManagerProfileStatisticSection";
+import ProfileSection from "./ProfileSection";
+import ManagerProfileShopsSection from "./ManagerProfileShopsSections";
 
-export default function ManagerProfilePage() {
+interface ManagerProfilePageProps {
+  profile: UserResponseDto;
+  setProfile: React.Dispatch<React.SetStateAction<UserResponseDto | null>>;
+}
+
+export default function ManagerProfilePage({
+  profile,
+  setProfile,
+}: ManagerProfilePageProps) {
+  const [shops, setShops] = useState<ShopDto[]>([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Dummy data for now
-  const numberOfShops = 3;
-  const managedShops = [
-    { id: 1, name: "Athens Souvenir Store" },
-    { id: 2, name: "Santorini Tours" },
-    { id: 3, name: "Delphi Guides" },
-  ];
+  useEffect(() => {
+    const fetchShops = async () => {
+      try {
+        const shopStatuses = await ShopUserService.getShopsForCurrentUser();
+        const activeShops = shopStatuses.filter((s) => s.status === "ACTIVE");
+
+        const shopDetails = await Promise.all(
+          activeShops.map(async (s) => await ShopService.getById(s.shopId))
+        );
+
+        setShops(shopDetails);
+      } catch (err) {
+        console.error("Failed to load manager shops", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchShops();
+  }, []);
 
   return (
     <main className="bg-base-200 min-h-screen p-6">
       <div className="max-w-5xl mx-auto flex flex-col gap-8">
-        {/* Summary Section */}
-        <div className="card bg-base-100 shadow-lg p-6">
-          <h2 className="text-2xl font-bold mb-2">Manager Dashboard</h2>
-          <p className="text-lg">
-            You manage <span className="font-semibold">{numberOfShops}</span>{" "}
-            {numberOfShops === 1 ? "shop" : "shops"}.
-          </p>
-        </div>
+        {/* Profile info */}
+        <ProfileSection user={profile} onProfileUpdated={setProfile} />
 
-        {/* Managed Shops Section */}
-        <div className="card bg-base-100 shadow-lg p-6">
-          <h3 className="text-xl font-bold mb-4">Your Shops</h3>
-          {managedShops.length > 0 ? (
-            <ul className="space-y-3">
-              {managedShops.map((shop) => (
-                <li
-                  key={shop.id}
-                  className="border rounded p-3 hover:shadow cursor-pointer transition"
-                  onClick={() =>
-                    router.push(`/shops/manager?shopId=${shop.id}`)
-                  }
-                >
-                  <div className="font-semibold">{shop.name}</div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>No shops associated with your account.</p>
-          )}
-        </div>
+        {/* Stats */}
+        <ManagerProfileStatisticSection
+          shopsCount={shops.length}
+          toursGiven={12} // dummy for now
+          upcomingTours={3} // dummy for now
+        />
 
-        {/* Link to Shops Page */}
+        {/* Shops */}
+        <ManagerProfileShopsSection shops={shops} loading={loading} />
+
+        {/* Go to Shops Page */}
         <button
           className="btn btn-primary self-start"
           onClick={() => router.push("/shops")}

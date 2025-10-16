@@ -35,6 +35,7 @@ export interface OrderItemResponseDto {
   status: OrderStatus;
   createdAt: string;
   tourSnapshot?: string;
+  managerId?: string;
 }
 
 export interface OrderResponseDto {

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AuthService } from "@/lib/AuthService";
+import { AuthService } from "@/lib/authService";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/store/authSlice";
 

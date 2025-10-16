@@ -1,9 +1,11 @@
 package com.example.store_manager.dto.order;
 
 import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import com.example.store_manager.model.OrderStatus;
 
@@ -29,5 +31,6 @@ public class OrderItemResponseDto {
     private OrderStatus status;
     private Instant createdAt;
 
+    private UUID managerId;
     private String tourSnapshot; // optional in response, but nice to expose
 }

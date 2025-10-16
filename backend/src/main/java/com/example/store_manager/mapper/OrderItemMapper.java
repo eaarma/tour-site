@@ -61,6 +61,7 @@ public class OrderItemMapper {
                 .status(item.getStatus())
                 .createdAt(item.getCreatedAt())
                 .tourSnapshot(item.getTourSnapshot())
+                .managerId(item.getManager() != null ? item.getManager().getId() : null)
                 .build();
     }
 

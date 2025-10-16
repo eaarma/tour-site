@@ -79,4 +79,19 @@ public class OrderController {
         return ResponseEntity.ok(orderService.updateOrderItemStatus(itemId, request.getStatus()));
     }
 
+    // ✅ Assign manager to order item
+    @PatchMapping("/items/{itemId}/assign/{managerId}")
+    public ResponseEntity<OrderItemResponseDto> assignManagerToOrderItem(
+            @PathVariable Long itemId,
+            @PathVariable UUID managerId) {
+        return ResponseEntity.ok(orderService.assignManagerToOrderItem(itemId, managerId));
+    }
+
+    // ✅ Get order items by manager
+    @GetMapping("/manager/{managerId}/items")
+    public ResponseEntity<List<OrderItemResponseDto>> getOrderItemsByManager(
+            @PathVariable UUID managerId) {
+        return ResponseEntity.ok(orderService.getOrderItemsByManager(managerId));
+    }
+
 }

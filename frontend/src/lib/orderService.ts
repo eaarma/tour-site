@@ -46,4 +46,14 @@ export const OrderService = {
     });
     return res.data;
   },
+
+  assignManagerToOrderItem: async (
+    itemId: number,
+    managerId: string
+  ): Promise<OrderItemResponseDto> => {
+    const res = await api.patch(
+      `${BASE_URL}/items/${itemId}/assign/${managerId}`
+    );
+    return res.data;
+  },
 };

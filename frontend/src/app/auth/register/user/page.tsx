@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AuthService } from "@/lib/AuthService";
+import { AuthService } from "@/lib/authService";
 import { UserRegisterRequestDto } from "@/types/user";
 import toast from "react-hot-toast";
 

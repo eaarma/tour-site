@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { setUser, clearUser } from "@/store/authSlice";
-import { AuthService } from "@/lib/AuthService";
+import { AuthService } from "@/lib/authService";
 import { UserResponseDto } from "@/types";
 
 export default function AuthProvider({

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TourService } from "@/lib/tourService";
 import { TourCreateDto, Item } from "@/types";
-import { AuthService } from "@/lib/AuthService";
+import { AuthService } from "@/lib/authService";
 
 type Props = {
   mode: "add" | "edit";

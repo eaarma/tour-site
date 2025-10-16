@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import CustomDateInput from "@/components/common/CustomDateInput";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
   orderItems: OrderItemResponseDto[];
@@ -40,6 +41,8 @@ export default function ManagerOrderSection({ orderItems, tours }: Props) {
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
 
+  const { user } = useAuth();
+
   const resetFiltersAndDates = () => {
     setFilterStatus("ALL");
     setSortStatus("NONE");
@@ -52,16 +55,25 @@ export default function ManagerOrderSection({ orderItems, tours }: Props) {
   };
 
   const handleConfirm = async (id: number) => {
+    if (!user?.id) {
+      toast.error("User not authenticated");
+      return;
+    }
+
     try {
+      // 1️⃣ Assign current user as manager
+      await OrderService.assignManagerToOrderItem(id, user.id);
+
+      // 2️⃣ Update status to CONFIRMED
       const updated = await OrderService.updateItemStatus(id, "CONFIRMED");
+
       updateLocalItem(updated);
-      toast.success("Order confirmed ✅");
+      toast.success("Order confirmed and assigned ✅");
     } catch (err) {
       console.error(err);
       toast.error("Failed to confirm order");
     }
   };
-
   const handleConfirmCancellation = async (id: number) => {
     try {
       const updated = await OrderService.updateItemStatus(
