@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { OrderItemResponseDto, OrderStatus } from "@/types/order";
-import { Item } from "@/types";
+import { Tour } from "@/types";
 import CardFrame from "@/components/common/CardFrame";
 import OrderItemCard from "./OrderItemCard";
 import OrderDetailsModal from "./OrderDetailsModal";
@@ -15,7 +15,8 @@ import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
   orderItems: OrderItemResponseDto[];
-  tours: Item[];
+  tours: Tour[];
+  shopMembers: { userId: string; userName: string }[];
 }
 
 const ACTIVE_STATUSES: (OrderStatus | "ALL")[] = [
@@ -30,28 +31,36 @@ const PAST_STATUSES: (OrderStatus | "ALL")[] = [
   "CANCELLED_CONFIRMED",
 ];
 
-export default function ManagerOrderSection({ orderItems, tours }: Props) {
+export default function ManagerOrderSection({
+  orderItems,
+  tours,
+  shopMembers,
+}: Props) {
   const [activeTab, setActiveTab] = useState<"active" | "past">("active");
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [items, setItems] = useState(orderItems);
-
   const [filterStatus, setFilterStatus] = useState<OrderStatus | "ALL">("ALL");
   const [sortStatus, setSortStatus] = useState<OrderStatus | "NONE">("NONE");
-
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
 
   const { user } = useAuth();
 
-  const resetFiltersAndDates = () => {
-    setFilterStatus("ALL");
-    setSortStatus("NONE");
-    setFromDate(null);
-    setToDate(null);
-  };
+  const selectedItem = selectedItemId
+    ? items.find((i) => i.id === selectedItemId) || null
+    : null;
 
   const updateLocalItem = (updated: OrderItemResponseDto) => {
     setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+  };
+
+  const refreshAfterReassign = async (itemId: number) => {
+    try {
+      const updated = await OrderService.getOrderItemById(itemId);
+      updateLocalItem(updated);
+    } catch {
+      toast.error("Failed to refresh item");
+    }
   };
 
   const handleConfirm = async (id: number) => {
@@ -61,12 +70,7 @@ export default function ManagerOrderSection({ orderItems, tours }: Props) {
     }
 
     try {
-      // 1️⃣ Assign current user as manager
-      await OrderService.assignManagerToOrderItem(id, user.id);
-
-      // 2️⃣ Update status to CONFIRMED
-      const updated = await OrderService.updateItemStatus(id, "CONFIRMED");
-
+      const updated = await OrderService.confirmOrderItem(id, user.id);
       updateLocalItem(updated);
       toast.success("Order confirmed and assigned ✅");
     } catch (err) {
@@ -74,6 +78,7 @@ export default function ManagerOrderSection({ orderItems, tours }: Props) {
       toast.error("Failed to confirm order");
     }
   };
+
   const handleConfirmCancellation = async (id: number) => {
     try {
       const updated = await OrderService.updateItemStatus(
@@ -99,19 +104,15 @@ export default function ManagerOrderSection({ orderItems, tours }: Props) {
     }
   };
 
-  // ✅ Base filter: active vs past
+  // ✅ Filtering + Sorting logic (same as before)
   let filteredItems = items.filter((i) =>
     activeTab === "active"
       ? i.status !== "COMPLETED" && i.status !== "CANCELLED_CONFIRMED"
       : i.status === "COMPLETED" || i.status === "CANCELLED_CONFIRMED"
   );
-
-  // ✅ Status filter
   if (filterStatus !== "ALL") {
     filteredItems = filteredItems.filter((i) => i.status === filterStatus);
   }
-
-  // ✅ Date range filter (full-day inclusive)
   if (fromDate) {
     const fromStart = new Date(fromDate);
     fromStart.setHours(0, 0, 0, 0);
@@ -126,8 +127,6 @@ export default function ManagerOrderSection({ orderItems, tours }: Props) {
       (i) => new Date(i.scheduledAt) <= toEnd
     );
   }
-
-  // ✅ Sorting
   if (sortStatus !== "NONE") {
     filteredItems = [...filteredItems].sort((a, b) => {
       if (a.status === sortStatus && b.status !== sortStatus) return -1;
@@ -139,42 +138,29 @@ export default function ManagerOrderSection({ orderItems, tours }: Props) {
   const statusOptions =
     activeTab === "active" ? ACTIVE_STATUSES : PAST_STATUSES;
 
-  // 🔹 Always pull the latest item for modal
-  const selectedItem = selectedItemId
-    ? items.find((i) => i.id === selectedItemId) || null
-    : null;
-
   return (
     <section className="mb-12">
       <CardFrame>
         <div className="p-4">
           <h2 className="text-2xl font-bold mb-4">Manage Bookings</h2>
 
-          {/* Sticky controls */}
+          {/* Filters + Tabs (same logic) */}
           <div className="sticky top-0 z-10 bg-base-200 pb-3">
-            {/* Tabs */}
             <div role="tablist" className="tabs tabs-boxed mb-3">
               <button
                 className={`tab ${activeTab === "active" ? "tab-active" : ""}`}
-                onClick={() => {
-                  setActiveTab("active");
-                  resetFiltersAndDates();
-                }}
+                onClick={() => setActiveTab("active")}
               >
                 Current
               </button>
               <button
                 className={`tab ${activeTab === "past" ? "tab-active" : ""}`}
-                onClick={() => {
-                  setActiveTab("past");
-                  resetFiltersAndDates();
-                }}
+                onClick={() => setActiveTab("past")}
               >
                 Past
               </button>
             </div>
 
-            {/* Filters row */}
             <div className="flex flex-wrap gap-4 items-center mb-2">
               <select
                 className="select select-bordered select-sm"
@@ -212,7 +198,7 @@ export default function ManagerOrderSection({ orderItems, tours }: Props) {
               </select>
             </div>
 
-            {/* Date pickers row */}
+            {/* Date pickers */}
             <div className="flex gap-4 items-center mb-2 mt-2">
               <div className="flex items-center gap-2">
                 <label className="text-sm">From:</label>
@@ -220,10 +206,6 @@ export default function ManagerOrderSection({ orderItems, tours }: Props) {
                   selected={fromDate}
                   onChange={(d) => setFromDate(d)}
                   dateFormat="yyyy-MM-dd"
-                  calendarStartDay={1}
-                  showPopperArrow={false}
-                  shouldCloseOnSelect
-                  preventOpenOnFocus
                   customInput={
                     <CustomDateInput
                       value={
@@ -241,10 +223,6 @@ export default function ManagerOrderSection({ orderItems, tours }: Props) {
                   selected={toDate}
                   onChange={(d) => setToDate(d)}
                   dateFormat="yyyy-MM-dd"
-                  calendarStartDay={1}
-                  showPopperArrow={false}
-                  shouldCloseOnSelect
-                  preventOpenOnFocus
                   customInput={
                     <CustomDateInput
                       value={toDate ? toDate.toLocaleDateString("en-GB") : ""}
@@ -253,27 +231,16 @@ export default function ManagerOrderSection({ orderItems, tours }: Props) {
                   }
                 />
               </div>
-
-              <button
-                className="btn btn-sm btn-outline"
-                onClick={() => {
-                  setFromDate(null);
-                  setToDate(null);
-                }}
-              >
-                Clear Dates
-              </button>
             </div>
           </div>
 
-          {/* Scrollable list */}
+          {/* List */}
           <div className="space-y-3 min-h-[465px] max-h-[465px] overflow-y-auto pr-2">
             {filteredItems.length > 0 ? (
               filteredItems.map((item) => (
                 <OrderItemCard
                   key={item.id}
                   item={item}
-                  tour={tours.find((t) => t.id === item.tourId)}
                   onConfirm={handleConfirm}
                   onConfirmCancellation={handleConfirmCancellation}
                   onComplete={handleComplete}
@@ -285,7 +252,7 @@ export default function ManagerOrderSection({ orderItems, tours }: Props) {
             )}
           </div>
 
-          {/* Modal always uses latest item */}
+          {/* Details modal */}
           <OrderDetailsModal
             isOpen={!!selectedItem}
             onClose={() => setSelectedItemId(null)}
@@ -298,6 +265,9 @@ export default function ManagerOrderSection({ orderItems, tours }: Props) {
             onConfirm={handleConfirm}
             onConfirmCancellation={handleConfirmCancellation}
             onComplete={handleComplete}
+            onReassigned={() =>
+              selectedItem && refreshAfterReassign(selectedItem.id)
+            }
           />
         </div>
       </CardFrame>

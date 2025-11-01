@@ -6,10 +6,10 @@ import SearchBar from "@/components/common/SearchBar";
 import { FilterCategory } from "@/types/types";
 import FilterMenu from "@/components/items/FilterMenu";
 import ItemList from "@/components/items/ItemList";
-import { Item } from "@/types";
+import { Tour } from "@/types";
 import { PageResponse, TourService } from "@/lib/tourService";
 import SortMenu from "@/components/items/SortMenu";
-import { TourScheduleService } from "@/lib/tourScheduleService";
+import { tourScheduleService } from "@/lib/tourScheduleService";
 
 export const FILTER_CATEGORIES: FilterCategory[] = [
   {
@@ -44,13 +44,13 @@ export const FILTER_CATEGORIES: FilterCategory[] = [
 const PAGE_SIZE = 12;
 
 export default function ItemsPage() {
-  const [allItems, setAllItems] = useState<Item[]>([]);
-  const [filteredItems, setFilteredItems] = useState<Item[]>([]);
+  const [allItems, setAllItems] = useState<Tour[]>([]);
+  const [filteredItems, setFilteredItems] = useState<Tour[]>([]);
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [sortedItems, setSortedItems] = useState<Item[]>([]);
+  const [sortedItems, setSortedItems] = useState<Tour[]>([]);
   const [sortKey, setSortKey] = useState("az"); // default sorting
   const [currentPage, setCurrentPage] = useState(0);
-  const [pageData, setPageData] = useState<PageResponse<Item>>({
+  const [pageData, setPageData] = useState<PageResponse<Tour>>({
     content: [],
     totalPages: 0,
     totalElements: 0,
@@ -67,7 +67,7 @@ export default function ItemsPage() {
 
   // 🔍 Search handler
   const handleSearch = useCallback(
-    async (keyword: string, date: string, items: Item[] = allItems) => {
+    async (keyword: string, date: string, items: Tour[] = allItems) => {
       setLoading(true);
       try {
         const lowerKeyword = keyword.toLowerCase();
@@ -85,10 +85,10 @@ export default function ItemsPage() {
         }
 
         if (date) {
-          const filteredByDate: Item[] = [];
+          const filteredByDate: Tour[] = [];
           await Promise.all(
             results.map(async (item) => {
-              const schedules = await TourScheduleService.getByTourId(item.id);
+              const schedules = await tourScheduleService.getByTourId(item.id);
               const hasMatchingDate = schedules.some((s) => s.date === date);
               if (hasMatchingDate) filteredByDate.push(item);
             })
@@ -110,8 +110,8 @@ export default function ItemsPage() {
   useEffect(() => {
     const fetchTours = async () => {
       try {
-        const tours: Item[] = await TourService.getAll();
-        const mapped: Item[] = tours
+        const tours: Tour[] = await TourService.getAll();
+        const mapped: Tour[] = tours
           .map((tour) => ({
             id: tour.id,
             title: tour.title,
@@ -146,7 +146,7 @@ export default function ItemsPage() {
 
   // 🎯 Filter handler
   const handleFilter = useCallback(
-    (filteredByFilterMenu: Item[]) => {
+    (filteredByFilterMenu: Tour[]) => {
       setLoading(true);
       let results = filteredByFilterMenu;
       if (searchKeyword) {
@@ -179,9 +179,9 @@ export default function ItemsPage() {
         break;
       default:
         sorted.sort((a, b) =>
-          (a[sortKey as keyof Item] ?? "")
+          (a[sortKey as keyof Tour] ?? "")
             .toString()
-            .localeCompare((b[sortKey as keyof Item] ?? "").toString())
+            .localeCompare((b[sortKey as keyof Tour] ?? "").toString())
         );
     }
     setSortedItems(sorted);

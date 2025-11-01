@@ -1,6 +1,6 @@
 "use client";
 
-import { TourScheduleService } from "@/lib/tourScheduleService";
+import { tourScheduleService } from "@/lib/tourScheduleService";
 import { TourScheduleResponseDto } from "@/types/tourSchedule";
 import { useEffect, useMemo, useState } from "react";
 import DatePicker from "react-datepicker";
@@ -41,7 +41,7 @@ export default function EditableSchedules({
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await TourScheduleService.getByTourId(tourId);
+        const data = await tourScheduleService.getByTourId(tourId);
         setSchedules(data);
       } catch (err) {
         console.error("Failed to load schedules", err);
@@ -82,7 +82,7 @@ export default function EditableSchedules({
     });
 
     try {
-      const created = await TourScheduleService.create({
+      const created = await tourScheduleService.create({
         tourId,
         date: formattedDate,
         time: formattedTime,
@@ -113,7 +113,7 @@ export default function EditableSchedules({
         return next;
       });
 
-      await TourScheduleService.delete(id);
+      await tourScheduleService.delete(id);
     } catch (err) {
       console.error("Failed to delete schedule", err);
       toast.error("Failed to delete schedule.");

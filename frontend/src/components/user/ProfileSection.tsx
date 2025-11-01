@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { UserResponseDto } from "@/types/user";
-import EditProfileModal from "./EditProfileModal";
+import EditProfileModal from "./ManagerEditProfileModal";
 import { Edit } from "lucide-react";
 
 export default function ProfileSection({

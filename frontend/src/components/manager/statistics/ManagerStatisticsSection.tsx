@@ -1,11 +1,11 @@
 "use client";
 
 import { Briefcase, CalendarCheck, MapPin } from "lucide-react";
-import { Item } from "@/types";
+import { Tour } from "@/types";
 import { OrderItemResponseDto } from "@/types/order";
 
 interface ManagerStatisticsSectionProps {
-  tours: Item[];
+  tours: Tour[];
   orderItems: OrderItemResponseDto[];
 }
 

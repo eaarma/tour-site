@@ -23,6 +23,9 @@ const Header: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
 
+  const cartItems = useSelector((state: RootState) => state.cart.items);
+  const cartCount = cartItems.length;
+
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -130,10 +133,15 @@ const Header: React.FC = () => {
 
             <Link
               href="/cart"
-              className="btn btn-sm btn-outline flex items-center hover:bg-base-200 hover:text-primary transition-colors"
+              className="btn btn-sm btn-outline flex items-center hover:bg-base-200 hover:text-primary transition-colors relative"
             >
               <FaShoppingCart className="mr-2" />
               Cart
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-primary text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
             </Link>
           </div>
         </div>

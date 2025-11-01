@@ -50,7 +50,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/orders/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/orders/**").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/orders/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.PATCH, "/orders/**").hasRole("MANAGER")
                         .requestMatchers(HttpMethod.DELETE, "/orders/**").hasRole("MANAGER")
+
+                        // Order items
+                        .requestMatchers(HttpMethod.PATCH, "/orders/items/**")
+                        .hasAnyRole("MANAGER", "OWNER", "ADMIN")
 
                         // Shops & Shop Users
                         .requestMatchers(HttpMethod.POST, "/shops/**").permitAll()

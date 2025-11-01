@@ -5,16 +5,16 @@ import SearchBar from "@/components/common/SearchBar";
 import HighlightedItem from "@/components/home/HighlightedItem";
 import ItemListHorizontal from "@/components/home/ItemListHorizontal";
 import { TourService } from "@/lib/tourService";
-import { Item } from "@/types";
+import { Tour } from "@/types";
 import WelcomeImage from "@/components/home/WelcomeImage";
 import ItemListHorizontalSkeleton from "@/components/home/ItemListHorizontalSkeleton";
 import HighlightedItemSkeleton from "@/components/home/HighlightedItemSkeleton";
 
 export default function Home() {
-  const [allItems, setAllItems] = useState<Item[]>([]); // keep full list for filtering
+  const [allItems, setAllItems] = useState<Tour[]>([]); // keep full list for filtering
   const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState<Item[]>([]);
-  const [highlighted, setHighlighted] = useState<Item | null>(null);
+  const [items, setItems] = useState<Tour[]>([]);
+  const [highlighted, setHighlighted] = useState<Tour | null>(null);
 
   // Fetch tours from backend
   useEffect(() => {

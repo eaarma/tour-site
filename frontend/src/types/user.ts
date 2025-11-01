@@ -20,10 +20,6 @@ export interface UserRegisterRequestDto {
 }
 
 // For login
-export interface LoginRequestDto {
-  email: string;
-  password: string;
-}
 
 // Response received for authenticated user
 export interface UserResponseDto {
@@ -37,8 +33,13 @@ export interface UserResponseDto {
   experience?: string | null;
   languages?: string | null;
   createdAt?: string; // ISO date string
+  profileImageUrl?: string | null;
 }
 
+export interface LoginRequestDto {
+  email: string;
+  password: string;
+}
 export interface UserUpdateDto {
   name?: string;
   phone?: string;
@@ -46,4 +47,5 @@ export interface UserUpdateDto {
   bio?: string;
   experience?: string;
   languages?: string;
+  profileImageUrl?: string;
 }

@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Item } from "@/types";
+import { Tour } from "@/types";
 import { Clock, Globe, MapPin, Euro, Users } from "lucide-react";
 import { formatDuration } from "@/utils/formatDuration";
 
 interface HighlightedItemProps {
-  item: Item;
+  item: Tour;
 }
 
 const HighlightedItem: React.FC<HighlightedItemProps> = ({ item }) => {

@@ -7,6 +7,7 @@ import { UserResponseDto, UserUpdateDto } from "@/types/user";
 import { UserService } from "@/lib/userService";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
+import EditableLanguages from "../manager/item/EditableLanguages";
 
 export default function EditProfileModal({
   isOpen,
@@ -165,36 +166,55 @@ export default function EditProfileModal({
             />
           </label>
 
+          {/* ✅ Full width Bio */}
           <label className="form-control sm:col-span-2">
             <span className="label-text font-medium">Bio</span>
             <textarea
               name="bio"
-              className="textarea textarea-bordered textarea-sm"
+              className="textarea textarea-bordered w-full"
               rows={3}
               value={formData.bio}
               onChange={handleChange}
             />
           </label>
 
+          {/* ✅ Experience dropdown */}
           <label className="form-control sm:col-span-2">
-            <span className="label-text font-medium">Experience (years)</span>
-            <input
-              type="number"
+            <span className="label-text font-medium">Experience</span>
+            <select
               name="experience"
-              className="input input-bordered input-sm"
+              className="select select-bordered w-full"
               value={formData.experience}
-              onChange={handleChange}
-            />
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, experience: e.target.value }))
+              }
+            >
+              <option value="">Select experience</option>
+              <option value="0.5">6 months</option>
+              <option value="1">1 year</option>
+              <option value="2">2 years</option>
+              <option value="3">3 years</option>
+              <option value="4">4 years</option>
+              <option value="5">5+ years</option>
+            </select>
           </label>
 
+          {/* ✅ Languages dropdown + bubbles */}
           <label className="form-control sm:col-span-2">
             <span className="label-text font-medium">Languages</span>
-            <input
-              type="text"
-              name="languages"
-              className="input input-bordered input-sm"
-              value={formData.languages}
-              onChange={handleChange}
+            <EditableLanguages
+              value={
+                formData.languages
+                  ? formData.languages.split(", ").filter((lang) => lang)
+                  : []
+              }
+              onChange={(updated) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  languages: updated.join(", "),
+                }));
+              }}
+              isEditing={true}
             />
           </label>
         </div>

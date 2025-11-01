@@ -3,12 +3,17 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { TourService } from "@/lib/tourService";
-import { Item, TourCreateDto } from "@/types";
+import { Tour, TourCreateDto } from "@/types";
 import EditableSchedules from "@/components/manager/item/EditableSchedules";
 import EditableLanguages from "@/components/manager/item/EditableLanguages";
 import { DURATION_OPTIONS } from "@/utils/duration";
 import { formatDuration } from "@/utils/formatDuration";
 import { ArrowLeft } from "lucide-react";
+import toast from "react-hot-toast";
+import { tourImageService } from "@/lib/tourImageService";
+import { TourImage } from "@/types/tour";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { storage } from "@/lib/firebase";
 
 const INTENSITY_OPTIONS = ["Easy", "Moderate", "Hard"];
 const CATEGORY_OPTIONS = ["Nature", "History", "Culture"];
@@ -23,7 +28,7 @@ export default function ManagerItemPage() {
   const [currentItemId, setCurrentItemId] = useState(itemId);
   const isNew = currentItemId === "new";
 
-  const [item, setItem] = useState<Item | null>(null);
+  const [item, setItem] = useState<Tour | null>(null);
   const [loading, setLoading] = useState(!isNew);
   const [isEditing, setIsEditing] = useState(isNew); // in add mode, editing by default
   const [form, setForm] = useState<Partial<TourCreateDto>>(
@@ -40,6 +45,12 @@ export default function ManagerItemPage() {
         }
       : {}
   );
+
+  const [tourImages, setTourImages] = useState<TourImage[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // ✅ Load item only if editing existing
   useEffect(() => {
@@ -59,7 +70,48 @@ export default function ManagerItemPage() {
     fetchItem();
   }, [isNew, itemId]);
 
+  // Load images only for existing tours
+  useEffect(() => {
+    if (!isNew) {
+      tourImageService
+        .getImages(Number(itemId))
+        .then(setTourImages)
+        .catch(() => console.error("Failed to load tour images"));
+    }
+  }, [isNew, itemId]);
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!form.title || form.title.trim().length < 3) {
+      newErrors.title = "Title must be at least 3 characters.";
+    }
+
+    if (!form.description || form.description.trim().length < 10) {
+      newErrors.description = "Description must be at least 10 characters.";
+    }
+
+    if (!form.location || form.location.trim().length === 0) {
+      newErrors.location = "Location is required.";
+    }
+
+    if (form.price === undefined || form.price <= 0) {
+      newErrors.price = "Price must be greater than 0.";
+    }
+
+    if (!form.participants || form.participants < 1) {
+      newErrors.participants = "Participants must be at least 1.";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSave = async () => {
+    if (!validateForm()) {
+      toast.error("Please fix the errors before saving.");
+      return;
+    }
     try {
       if (isNew) {
         // Create new tour
@@ -73,7 +125,7 @@ export default function ManagerItemPage() {
         setCurrentItemId(String(created.id));
 
         // Optional: show a popup/notification
-        alert("Tour created! You can now add schedules.");
+        toast.success(" Tour created! You can now add schedules.");
 
         // The page stays on the same route (itemId is still "new")
         // Optionally, you could update URL with actual id if you want
@@ -84,9 +136,71 @@ export default function ManagerItemPage() {
         const updated = await TourService.update(item.id, dto);
         setItem(updated);
         setIsEditing(false);
+
+        toast.success("Tour updated successfully!");
       }
     } catch (err) {
       console.error("Failed to save", err);
+    }
+  };
+
+  const handleTourImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file || (!item && !isNew)) return;
+
+    setUploading(true);
+    try {
+      const fileRef = ref(storage, `tours/${item?.id || "temp"}/${file.name}`);
+      const uploadTask = uploadBytesResumable(fileRef, file);
+
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          setUploadProgress(
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          );
+        },
+        () => {
+          toast.error("Upload failed");
+          setUploading(false);
+        },
+        async () => {
+          const imageUrl = await getDownloadURL(uploadTask.snapshot.ref);
+
+          // If tour is newly created, store only locally for now
+          if (isNew) {
+            setTourImages((prev) => [
+              ...prev,
+              { id: Date.now(), imageUrl } as TourImage,
+            ]);
+          } else {
+            const savedImage = await tourImageService.addImage(
+              Number(itemId),
+              imageUrl
+            );
+            setTourImages((prev) => [...prev, savedImage]);
+          }
+
+          toast.success("Image added");
+          setUploading(false);
+        }
+      );
+    } catch (error) {
+      console.error(error);
+      toast.error("Upload failed");
+      setUploading(false);
+    }
+  };
+
+  const handleDeleteImage = async (imageId: number) => {
+    try {
+      await tourImageService.deleteImage(imageId);
+      setTourImages((prev) => prev.filter((img) => img.id !== imageId));
+      toast.success("Image deleted");
+    } catch {
+      toast.error("Could not delete image");
     }
   };
 
@@ -137,94 +251,73 @@ export default function ManagerItemPage() {
       {/* Main card */}
       <div className="max-w-5xl mx-auto card bg-base-100 shadow-lg p-6">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* Image */}
+          {/* ✅ TOUR IMAGES SECTION */}
           <div className="lg:w-1/2">
             {isEditing || isNew ? (
-              <div className="flex flex-col gap-2">
-                {/* URL input (optional) */}
-                <input
-                  value={form.image || ""}
-                  onChange={(e) => setForm({ ...form, image: e.target.value })}
-                  placeholder="Image URL"
-                  className="input input-bordered w-full"
-                />
-
-                {/* Hidden file input */}
+              <div className="flex flex-col gap-4">
+                {/* Upload Input */}
                 <input
                   type="file"
+                  id="imageUpload"
                   accept="image/*"
                   className="hidden"
-                  id="imageUpload"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        setForm({ ...form, image: reader.result as string });
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }}
+                  onChange={handleTourImageUpload}
                 />
 
-                {/* Upload area */}
-                <div
-                  className={`
-    relative cursor-pointer group rounded-xl overflow-hidden
-    border-2 border-dashed border-gray-300
-    hover:border-primary hover:bg-primary/10
-    transition-all duration-200
-  `}
+                <button
                   onClick={() =>
                     document.getElementById("imageUpload")?.click()
                   }
+                  className="btn btn-outline btn-sm"
                 >
-                  <img
-                    src={form.image || "/images/placeholder-tour.jpg"}
-                    alt={form.title || "Tour placeholder"}
-                    className="w-full h-72 object-cover rounded-xl"
-                  />
+                  + Upload Image
+                </button>
 
-                  {/* Overlay (always visible, but stronger on hover) */}
-                  <div
-                    className={`
-      absolute inset-0 flex flex-col items-center justify-center gap-2
-      bg-black/30 group-hover:bg-black/50
-      text-white text-center transition-colors duration-200
-    `}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="w-10 h-10 opacity-80 group-hover:opacity-100"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4-4m0 0l-4 4m4-4v12"
-                      />
-                    </svg>
-                    <span className="font-medium opacity-90 group-hover:opacity-100">
-                      {form.image ? "Change image" : "Click to add image"}
-                    </span>
-                  </div>
+                {/* Progress bar */}
+                {uploading && (
+                  <progress
+                    className="progress progress-primary w-full"
+                    value={uploadProgress}
+                    max="100"
+                  ></progress>
+                )}
+
+                {/* Image Gallery */}
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {tourImages.length > 0 ? (
+                    tourImages.map((img) => (
+                      <div key={img.id} className="relative group">
+                        <img
+                          src={img.imageUrl}
+                          className="h-40 w-full object-cover rounded-lg"
+                          alt="Tour"
+                        />
+                        <button
+                          className="absolute top-2 right-2 btn btn-xs btn-error opacity-0 group-hover:opacity-100 transition"
+                          onClick={() => handleDeleteImage(img.id)}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-sm">
+                      No images uploaded yet.
+                    </p>
+                  )}
                 </div>
               </div>
             ) : (
-              <div className="relative">
-                <img
-                  src={item.image || "/images/placeholder-tour.jpg"}
-                  alt={item.title}
-                  className="rounded-xl w-full object-cover h-72 lg:h-full"
-                />
-                {!item.image && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-xl">
-                    <span className="text-white text-lg font-semibold">
-                      No image yet
-                    </span>
+              <div>
+                {tourImages.length > 0 ? (
+                  <img
+                    src={tourImages[0].imageUrl}
+                    alt="Main tour image"
+                    className="rounded-xl w-full object-cover h-72"
+                  />
+                ) : (
+                  <div className="h-72 w-full rounded-xl flex items-center justify-center bg-gray-200">
+                    No image available
                   </div>
                 )}
               </div>
@@ -234,6 +327,7 @@ export default function ManagerItemPage() {
           {/* Details */}
           <div className="lg:w-1/2 flex flex-col justify-between gap-4">
             <div>
+              {/* title */}
               {isEditing ? (
                 <input
                   className="input input-bordered w-full text-3xl font-bold"
@@ -245,18 +339,31 @@ export default function ManagerItemPage() {
                 <h1 className="text-3xl font-bold mb-2">{item?.title}</h1>
               )}
 
-              {isEditing ? (
-                <textarea
-                  className="textarea textarea-bordered w-full"
-                  value={form.description || ""}
-                  placeholder="Description"
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
-                  }
-                />
-              ) : (
-                <p className="text-gray-600 mb-4">{item?.description}</p>
-              )}
+              {/* Description */}
+              <div className="col-span-2">
+                <span className="font-semibold">Description:</span>
+                {isEditing ? (
+                  <div>
+                    <textarea
+                      className={`textarea textarea-bordered w-full ${
+                        errors.description ? "textarea-error" : ""
+                      }`}
+                      placeholder="Description (min 10 characters)"
+                      value={form.description || ""}
+                      onChange={(e) =>
+                        setForm({ ...form, description: e.target.value })
+                      }
+                    />
+                    {errors.description && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.description}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-600">{item?.description}</p>
+                )}
+              </div>
 
               {/* Status */}
               <div className="mb-2 mt-3">
@@ -293,16 +400,25 @@ export default function ManagerItemPage() {
               <div className="grid grid-cols-2 gap-3 text-sm">
                 {/* Price */}
                 <div>
-                  <span className="font-semibold">Price:</span>{" "}
+                  <span className="font-semibold">Price:</span>
                   {isEditing ? (
-                    <input
-                      type="number"
-                      className="input input-bordered w-full"
-                      value={form.price || 0}
-                      onChange={(e) =>
-                        setForm({ ...form, price: Number(e.target.value) })
-                      }
-                    />
+                    <div>
+                      <input
+                        type="number"
+                        className={`input input-bordered w-full ${
+                          errors.price ? "input-error" : ""
+                        }`}
+                        value={form.price || ""}
+                        onChange={(e) =>
+                          setForm({ ...form, price: Number(e.target.value) })
+                        }
+                      />
+                      {errors.price && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.price}
+                        </p>
+                      )}
+                    </div>
                   ) : (
                     item?.price
                   )}
@@ -400,19 +516,36 @@ export default function ManagerItemPage() {
 
                 {/* Participants */}
                 <div>
-                  <span className="font-semibold">Max participants:</span>{" "}
+                  <span className="font-semibold">Max Participants:</span>
                   {isEditing ? (
-                    <input
-                      type="number"
-                      className="input input-bordered w-full"
-                      value={form.participants || 0}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          participants: Number(e.target.value),
-                        })
-                      }
-                    />
+                    <div>
+                      <select
+                        className={`select select-bordered w-full ${
+                          errors.participants ? "select-error" : ""
+                        }`}
+                        value={form.participants || ""}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            participants: Number(e.target.value),
+                          })
+                        }
+                      >
+                        <option value="">Select...</option>
+                        {Array.from({ length: 30 }, (_, i) => i + 1).map(
+                          (num) => (
+                            <option key={num} value={num}>
+                              {num}
+                            </option>
+                          )
+                        )}
+                      </select>
+                      {errors.participants && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.participants}
+                        </p>
+                      )}
+                    </div>
                   ) : (
                     item?.participants
                   )}
@@ -420,17 +553,29 @@ export default function ManagerItemPage() {
 
                 {/* Location */}
                 <div className="col-span-2">
-                  <span className="font-semibold">Location:</span>{" "}
+                  <span className="font-semibold">Location:</span>
                   {isEditing ? (
-                    <input
-                      className="input input-bordered w-full"
-                      value={form.location || ""}
-                      onChange={(e) =>
-                        setForm({ ...form, location: e.target.value })
-                      }
-                    />
+                    <div>
+                      <input
+                        className={`input input-bordered w-full ${
+                          errors.location ? "input-error" : ""
+                        }`}
+                        placeholder="Location (required)"
+                        value={form.location || ""}
+                        onChange={(e) =>
+                          setForm({ ...form, location: e.target.value })
+                        }
+                      />
+                      {errors.location && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.location}
+                        </p>
+                      )}
+                    </div>
                   ) : (
-                    item?.location
+                    item?.location || (
+                      <span className="text-gray-500">No location set</span>
+                    )
                   )}
                 </div>
 

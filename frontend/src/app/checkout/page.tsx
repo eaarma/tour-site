@@ -2,46 +2,95 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { countryDialCodes } from "@/utils/countryDialCodes";
 import { useDispatch, useSelector } from "react-redux";
+import { countryDialCodes } from "@/utils/countryDialCodes";
 import { setCheckoutInfo, updateCheckoutInfo } from "@/store/checkoutSlice";
-import { RootState } from "@/store"; // Adjust path if needed
+import { RootState } from "@/store/store";
+import { UserService } from "@/lib/userService";
+import toast from "react-hot-toast";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const checkout = useSelector((state: RootState) => state.checkout);
 
-  const [countryCode, setCountryCode] = useState("+30");
+  const [countryCode, setCountryCode] = useState("");
   const [query, setQuery] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
 
-  const [phoneNumber, setPhoneNumber] = useState(
-    checkout.phone.replace(/^\+\d+/, "") // Remove country code initially
-  );
-
+  // ✅ 1. Pre-fill checkout info from logged-in user
   useEffect(() => {
-    // Sync Redux value when countryCode or phoneNumber changes
-    dispatch(
-      updateCheckoutInfo({
-        phone: `${countryCode}${phoneNumber}`,
-      })
-    );
+    const loadUserProfile = async () => {
+      try {
+        const user = await UserService.getProfile();
+
+        if (user) {
+          // detect country code from phone if available
+          let detectedCode = "+";
+          let localNumber = user.phone || "";
+          if (user.phone?.startsWith("+")) {
+            const match = countryDialCodes.find((c) =>
+              user.phone?.startsWith(c.dial_code)
+            );
+            if (match) {
+              detectedCode = match.dial_code;
+              localNumber = user.phone.replace(match.dial_code, "");
+            }
+          }
+
+          // set local states immediately
+          setCountryCode(detectedCode);
+          setPhoneNumber(localNumber);
+
+          // update Redux checkout state
+          dispatch(
+            setCheckoutInfo({
+              name: user.name || "",
+              email: user.email || "",
+              phone: `${detectedCode}${localNumber}` || "",
+              nationality: user.nationality || "",
+            })
+          );
+        }
+      } catch (err: any) {
+        console.warn("User not logged in or failed to fetch profile:", err);
+
+        // ✅ Reset checkout state for logged-out users
+        dispatch(
+          setCheckoutInfo({
+            name: "",
+            email: "",
+            phone: "",
+            nationality: "",
+          })
+        );
+      }
+    };
+
+    loadUserProfile();
+  }, [dispatch]);
+
+  // ✅ 2. Sync Redux state when phone or code changes
+  useEffect(() => {
+    dispatch(updateCheckoutInfo({ phone: `${countryCode}${phoneNumber}` }));
   }, [countryCode, phoneNumber, dispatch]);
 
+  // ✅ 3. Handle submit
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const fullPhone = `${countryCode}${checkout.phone.replace(
-      countryCode,
-      ""
-    )}`;
+
+    if (!checkout.name || !checkout.email || !checkout.phone) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
 
     dispatch(
       setCheckoutInfo({
         name: checkout.name,
         email: checkout.email,
-        phone: fullPhone,
+        phone: `${countryCode}${phoneNumber}`,
         nationality: checkout.nationality,
       })
     );
@@ -49,6 +98,7 @@ export default function CheckoutPage() {
     router.push("/payment");
   };
 
+  // ✅ 4. Country dropdown logic
   const filteredCountries = countryDialCodes.filter((country) =>
     country.name.toLowerCase().includes(query.toLowerCase())
   );
@@ -62,7 +112,7 @@ export default function CheckoutPage() {
   return (
     <main className="bg-base-200 min-h-screen p-6">
       <div className="max-w-2xl mx-auto bg-base-100 p-6 rounded-lg shadow-md">
-        <h1 className="text-3xl font-bold mb-6">Checkout</h1>
+        <h1 className="text-3xl font-bold mb-6 text-center">Checkout</h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Name */}
@@ -97,19 +147,19 @@ export default function CheckoutPage() {
             />
           </div>
 
-          {/* Phone Number with Searchable Country Code */}
+          {/* Phone */}
           <div>
             <label className="label">
               <span className="label-text">Phone Number</span>
             </label>
 
             <div className="flex gap-2 relative">
-              {/* Country Code Search & Dropdown */}
+              {/* Country Code */}
               <div className="w-40 relative">
                 <input
                   type="text"
                   className="input input-bordered w-full"
-                  placeholder="Search"
+                  placeholder="+372"
                   value={isFocused ? query : countryCode}
                   onChange={(e) => {
                     setQuery(e.target.value);
@@ -127,7 +177,6 @@ export default function CheckoutPage() {
                     }, 150);
                   }}
                 />
-
                 {dropdownOpen && (
                   <ul className="absolute z-20 mt-1 max-h-60 overflow-y-auto w-full bg-base-100 border border-base-300 rounded-box shadow-lg">
                     {filteredCountries.map((country) => (
@@ -148,7 +197,6 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              {/* Phone number input */}
               <input
                 type="tel"
                 className="input input-bordered flex-1"

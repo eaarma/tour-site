@@ -32,5 +32,6 @@ public class OrderItemResponseDto {
     private Instant createdAt;
 
     private UUID managerId;
+    private String managerName;
     private String tourSnapshot; // optional in response, but nice to expose
 }

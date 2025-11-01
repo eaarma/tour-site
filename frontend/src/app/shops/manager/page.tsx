@@ -6,7 +6,7 @@ import ManagerShopSection from "@/components/manager/shop/ManagerShopSection";
 import ManagerOrderSection from "@/components/manager/order/ManagerOrderSection";
 import ManagerItemList from "@/components/manager/item/ManagerItemList";
 import ManagerStatisticsSection from "@/components/manager/statistics/ManagerStatisticsSection";
-import { Item } from "@/types";
+import { Tour } from "@/types";
 import { OrderItemResponseDto } from "@/types/order";
 import { TourService } from "@/lib/tourService";
 import { OrderService } from "@/lib/orderService";
@@ -20,7 +20,7 @@ export default function ShopManagerPage() {
   const [shopId, setShopId] = useState<number | null>(
     shopIdParam ? Number(shopIdParam) : null
   );
-  const [tours, setTours] = useState<Item[]>([]);
+  const [tours, setTours] = useState<Tour[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
 

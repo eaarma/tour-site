@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 
 import toast from "react-hot-toast";
 import { CartItem } from "@/store/cartSlice";
-import { TourScheduleService } from "@/lib/tourScheduleService";
+import { tourScheduleService } from "@/lib/tourScheduleService";
 
 interface Props {
   // optional callback after successful validation/checkout
@@ -35,7 +35,7 @@ const CartTotalSection: React.FC<Props> = ({ onCheckoutSuccess }) => {
 
     for (const it of selectedItems) {
       try {
-        const schedule = await TourScheduleService.getById(it.scheduleId);
+        const schedule = await tourScheduleService.getById(it.scheduleId);
         // adjust check depending on your backend response; earlier you used schedule.status === 'ACTIVE'
         if (!schedule || schedule.status !== "ACTIVE") {
           bad.push(it);

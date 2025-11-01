@@ -2,18 +2,18 @@
 
 import Modal from "../common/Modal";
 import { useEffect, useState } from "react";
-import { Item } from "@/types";
+import { Tour } from "@/types";
 import { TourScheduleResponseDto } from "@/types/tourSchedule";
 import SchedulePicker from "./SchedulePicker";
 import { useDispatch } from "react-redux";
 import { updateItemSchedule } from "@/store/cartSlice";
 import toast from "react-hot-toast";
-import { TourScheduleService } from "@/lib/tourScheduleService";
+import { tourScheduleService } from "@/lib/tourScheduleService";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  item: Item;
+  item: Tour;
   cartItemId: string;
   schedules?: TourScheduleResponseDto[]; // optional
   initialScheduleId?: number;
@@ -53,7 +53,7 @@ export default function ItemModal({
     let cancelled = false;
     (async () => {
       try {
-        const data = await TourScheduleService.getByTourId(item.id);
+        const data = await tourScheduleService.getByTourId(item.id);
         if (!cancelled) setLocalSchedules(data);
       } catch (e) {
         console.error("Failed to load schedules in ItemModal", e);

@@ -1,7 +1,7 @@
 export interface TourCreateDto {
   title: string;
   description: string;
-  image: string;
+  images?: string[];
   price: number; // BigDecimal in Java becomes number in TS
   timeRequired: number;
   intensity: string;
@@ -14,11 +14,11 @@ export interface TourCreateDto {
   shopId: number; // Long in Java -> number in TS
 }
 
-export interface Item {
+export interface Tour {
   id: number;
   title: string;
   description: string;
-  image: string;
+  images?: string[];
   price: number;
   timeRequired: number;
   intensity: string;
@@ -30,4 +30,11 @@ export interface Item {
   status: string;
   madeBy: string;
   shopId: number;
+}
+
+export interface TourImage {
+  id: number;
+  imageUrl: string;
+  position: number;
+  uploadedAt: string;
 }

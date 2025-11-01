@@ -2,9 +2,9 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Item } from "@/types";
+import { Tour } from "@/types";
 import { TourService } from "@/lib/tourService";
-import { TourScheduleService } from "@/lib/tourScheduleService";
+import { tourScheduleService } from "@/lib/tourScheduleService";
 import { TourScheduleResponseDto } from "@/types/tourSchedule";
 import BookingModal from "@/components/items/BookingModal";
 import { formatDuration } from "@/utils/formatDuration";
@@ -15,7 +15,7 @@ export default function ItemPage() {
   const { itemId } = useParams<{ itemId: string }>();
   const router = useRouter();
 
-  const [item, setItem] = useState<Item | null>(null);
+  const [item, setItem] = useState<Tour | null>(null);
   const [schedules, setSchedules] = useState<TourScheduleResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,7 +30,7 @@ export default function ItemPage() {
         const tour = await TourService.getById(Number(itemId));
         setItem(tour);
 
-        const sch = await TourScheduleService.getByTourId(Number(itemId));
+        const sch = await tourScheduleService.getByTourId(Number(itemId));
         setSchedules(sch);
       } catch (err) {
         console.error("Error fetching item or schedules:", err);

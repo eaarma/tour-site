@@ -12,7 +12,7 @@ export default function ManagerProfileStatisticSection({
   upcomingTours,
 }: Props) {
   return (
-    <div className="card bg-base-100 shadow-lg p-6">
+    <div className="card bg-base-100 shadow-lg p-4">
       <h2 className="text-2xl font-bold mb-4">Statistics</h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

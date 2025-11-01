@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 export default function ContactPage() {
   const [name, setName] = useState("");
@@ -15,17 +16,21 @@ export default function ContactPage() {
     setIsSubmitting(true);
     setErrorMessage("");
 
-    const formData = { name, email, subject, message };
+    if (!name || !email || !message) {
+      toast.error("Please fill all required fields.");
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ name, email, subject, message }),
       });
 
       if (response.ok) {
-        alert("Message sent successfully!");
+        toast.success("Message sent successfully!");
         setName("");
         setEmail("");
         setSubject("");
@@ -34,12 +39,11 @@ export default function ContactPage() {
         throw new Error("Failed to send message");
       }
     } catch (error: any) {
-      setErrorMessage(error.message);
+      toast.error(error.message);
     } finally {
       setIsSubmitting(false);
     }
   };
-
   return (
     <main className="max-w-4xl mx-auto p-6 min-h-screen">
       <section className="text-center mb-10">
@@ -52,7 +56,7 @@ export default function ContactPage() {
 
       <div className="text-center mb-6">
         <h2 className="text-lg font-semibold">Email</h2>
-        <p className="text-sm text-gray-500">contact@shop.com</p>
+        <p className="text-sm text-gray-500">helpsprtcontact@gmail.com</p>
       </div>
 
       <form

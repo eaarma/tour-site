@@ -1,18 +1,35 @@
-import { configureStore } from "@reduxjs/toolkit";
+// store/store.ts
+import { configureStore, combineReducers } from "@reduxjs/toolkit";
+import storage from "redux-persist/lib/storage"; // default: localStorage for web
+import { persistReducer, persistStore } from "redux-persist";
 
-// Example slice — you will replace this with your actual slices
 import authReducer from "./authSlice";
 import cartReducer from "./cartSlice";
 import checkoutReducer from "./checkoutSlice";
 
-export const store = configureStore({
-  reducer: {
-    auth: authReducer,
-    cart: cartReducer,
-    checkout: checkoutReducer,
-  },
+const persistConfig = {
+  key: "root",
+  storage,
+  whitelist: ["cart"], // Only persist cart
+};
+
+const rootReducer = combineReducers({
+  auth: authReducer,
+  cart: cartReducer,
+  checkout: checkoutReducer,
 });
 
-// Infer the `RootState` and `AppDispatch` types from the store itself
+const persistedReducer = persistReducer(persistConfig, rootReducer);
+
+export const store = configureStore({
+  reducer: persistedReducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: false, //Required for redux-persist
+    }),
+});
+
+export const persistor = persistStore(store);
+
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

@@ -1,6 +1,7 @@
 package com.example.store_manager.dto.tour;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -18,8 +19,7 @@ public class TourCreateDto {
     @Size(min = 10, message = "Description must be at least 10 characters")
     private String description;
 
-    @NotBlank(message = "Image URL is required")
-    private String image;
+    private List<String> images;
 
     @DecimalMin(value = "0.0", inclusive = false, message = "Price must be positive")
     private BigDecimal price;

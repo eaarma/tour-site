@@ -1,11 +1,11 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Item } from "@/types";
+import { Tour } from "@/types";
 import ItemCard from "@/components/items/ItemCard";
 
 interface ManagerItemListProps {
-  items: Item[];
+  items: Tour[];
   shopId: number;
 }
 
@@ -19,7 +19,7 @@ export default function ManagerItemList({
   );
 
   // ✅ Filtering logic
-  let filteredItems: Item[] = [];
+  let filteredItems: Tour[] = [];
   if (activeTab === "active") {
     filteredItems = items.filter((i) => i.status === "ACTIVE");
   } else if (activeTab === "inactive") {
@@ -34,7 +34,7 @@ export default function ManagerItemList({
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">Manage Tours</h2>
 
-      {/* Tabs + Add Tour Button in one row */}
+      {/* Tabs + Add Tour Button */}
       <div className="flex justify-between items-center mb-4">
         <div role="tablist" className="tabs tabs-boxed">
           <button
@@ -65,23 +65,25 @@ export default function ManagerItemList({
         </button>
       </div>
 
-      {/* Item grid with fixed 2-row scroll */}
+      {/* ✅ Scrollable grid container */}
       {filteredItems.length === 0 ? (
         <div className="text-center text-gray-500 mt-6">
           No items found for this tab.
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 max-h-[740px] overflow-y-auto pr-2">
-          {filteredItems.map((item) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              showStatus={true}
-              onClick={() =>
-                router.push(`/shops/manager/shop/${shopId}/items/${item.id}`)
-              }
-            />
-          ))}
+        <div className="overflow-y-auto pr-2" style={{ maxHeight: "740px" }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-max">
+            {filteredItems.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                showStatus={true}
+                onClick={() =>
+                  router.push(`/shops/manager/shop/${shopId}/items/${item.id}`)
+                }
+              />
+            ))}
+          </div>
         </div>
       )}
     </div>

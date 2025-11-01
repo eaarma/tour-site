@@ -16,4 +16,9 @@ export const UserService = {
     const res = await api.put(`${BASE_URL}/me`, data);
     return res.data;
   },
+
+  getById: async (id: string): Promise<UserResponseDto> => {
+    const res = await api.get(`/api/users/${id}`);
+    return res.data;
+  },
 };

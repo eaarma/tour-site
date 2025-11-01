@@ -1,4 +1,4 @@
-import { TourCreateDto, Item } from "@/types";
+import { TourCreateDto, Tour } from "@/types";
 import api from "./axios";
 
 const BASE_URL = "/tours";
@@ -27,22 +27,22 @@ interface QueryParams {
 }
 
 export const TourService = {
-  getAll: async (): Promise<Item[]> => {
+  getAll: async (): Promise<Tour[]> => {
     const res = await api.get(BASE_URL, { withCredentials: false });
     return res.data;
   },
 
-  getById: async (id: number): Promise<Item> => {
+  getById: async (id: number): Promise<Tour> => {
     const res = await api.get(`${BASE_URL}/${id}`, { withCredentials: false });
     return res.data;
   },
 
-  create: async (data: TourCreateDto): Promise<Item> => {
+  create: async (data: TourCreateDto): Promise<Tour> => {
     const res = await api.post(BASE_URL, data, { withCredentials: true });
     return res.data;
   },
 
-  update: async (id: number, data: TourCreateDto): Promise<Item> => {
+  update: async (id: number, data: TourCreateDto): Promise<Tour> => {
     const res = await api.put(`${BASE_URL}/${id}`, data, {
       withCredentials: true,
     });
@@ -50,13 +50,13 @@ export const TourService = {
   },
 
   // get tours by shop
-  getByShopId: async (shopId: number): Promise<Item[]> => {
+  getByShopId: async (shopId: number): Promise<Tour[]> => {
     const res = await api.get(`${BASE_URL}/shop/${shopId}`);
     return res.data;
   },
 
   // 🔹 New: get tours with pagination, filtering, sorting
-  getAllByQuery: async (params: QueryParams): Promise<PageResponse<Item>> => {
+  getAllByQuery: async (params: QueryParams): Promise<PageResponse<Tour>> => {
     const res = await api.get(`${BASE_URL}/query`, {
       params,
       withCredentials: false,
@@ -65,7 +65,7 @@ export const TourService = {
   },
 
   // ✅ fetch random tours for horizontal list
-  async getRandom(count: number = 8): Promise<Item[]> {
+  async getRandom(count: number = 8): Promise<Tour[]> {
     const res = await api.get(`${BASE_URL}/random`, {
       params: { count },
       withCredentials: false,
@@ -74,7 +74,7 @@ export const TourService = {
   },
 
   // ✅ fetch a single highlighted tour
-  async getHighlighted(): Promise<Item> {
+  async getHighlighted(): Promise<Tour> {
     const res = await api.get(`${BASE_URL}/highlighted`, {
       withCredentials: false,
     });

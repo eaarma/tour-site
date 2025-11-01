@@ -3,11 +3,11 @@
 import React from "react";
 import ItemCard from "./ItemCard";
 import ItemCardSkeleton from "./ItemCardSkeleton";
-import { Item } from "@/types";
+import { Tour } from "@/types";
 import { PageResponse } from "@/lib/tourService";
 
 interface ItemListProps {
-  pageData?: PageResponse<Item>;
+  pageData?: PageResponse<Tour>;
   loading?: boolean;
   onPageChange: (page: number) => void;
 }

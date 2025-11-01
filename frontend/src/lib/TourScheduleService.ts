@@ -7,7 +7,7 @@ import api from "./axios";
 
 const BASE_URL = "/schedules";
 
-export const TourScheduleService = {
+export const tourScheduleService = {
   // Create new schedule
   create: async (
     data: TourScheduleCreateDto

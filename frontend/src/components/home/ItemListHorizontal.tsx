@@ -1,13 +1,13 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { Item } from "@/types";
+import { Tour } from "@/types";
 import ItemCard from "../items/ItemCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ItemListHorizontalProps {
   title: string;
-  items: Item[];
+  items: Tour[];
   visibleCount?: number;
 }
 

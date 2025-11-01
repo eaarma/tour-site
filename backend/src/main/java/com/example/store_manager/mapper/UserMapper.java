@@ -1,7 +1,9 @@
 package com.example.store_manager.mapper;
 
+import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
+import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import com.example.store_manager.dto.user.UserResponseDto;
 import com.example.store_manager.dto.user.UserUpdateDto;
@@ -14,6 +16,6 @@ public interface UserMapper {
 
     User toEntity(UserResponseDto dto);
 
-    // ✅ This allows partial updates
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateUserFromDto(UserUpdateDto dto, @MappingTarget User user);
 }

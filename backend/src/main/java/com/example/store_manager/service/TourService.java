@@ -15,9 +15,11 @@ import com.example.store_manager.dto.tour.TourResponseDto;
 import com.example.store_manager.mapper.TourMapper;
 import com.example.store_manager.model.Shop;
 import com.example.store_manager.model.Tour;
+import com.example.store_manager.model.TourImage;
 import com.example.store_manager.repository.ShopRepository;
 import com.example.store_manager.repository.TourRepository;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -39,12 +41,31 @@ public class TourService {
         return tourMapper.toDto(tourRepository.save(tour));
     }
 
+    @Transactional
     public TourResponseDto updateTour(Long id, TourCreateDto dto) {
         Tour tour = tourRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tour not found"));
 
+        // ✅ Update basic fields using the mapper (title, description, price, etc.)
         tourMapper.updateTourFromDto(dto, tour);
-        return tourMapper.toDto(tourRepository.save(tour));
+
+        // ✅ Handle image updates (replace old images with new ones)
+        if (dto.getImages() != null) {
+            // 1️⃣ Clear old images
+            tour.getImages().clear();
+
+            // 2️⃣ Add new images
+            for (String imageUrl : dto.getImages()) {
+                TourImage img = new TourImage();
+                img.setImageUrl(imageUrl);
+                img.setTour(tour);
+                tour.getImages().add(img);
+            }
+        }
+
+        // ✅ Save & return updated data
+        Tour updated = tourRepository.save(tour);
+        return tourMapper.toDto(updated);
     }
 
     // ✅ fetch all (no pagination)

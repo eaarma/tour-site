@@ -31,4 +31,12 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
 
     // ✅ Simple helper for direct lookup (faster than scanning all orders)
     Optional<OrderItem> findById(Long id);
+
+    @Query("""
+            SELECT oi
+            FROM OrderItem oi
+            WHERE oi.order.user.id = :userId
+            ORDER BY oi.scheduledAt DESC
+            """)
+    List<OrderItem> findByUserId(@Param("userId") UUID userId);
 }

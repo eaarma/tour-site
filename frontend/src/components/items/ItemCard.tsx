@@ -1,13 +1,13 @@
 "use client";
 
-import { Item } from "@/types";
+import { Tour } from "@/types";
 import { formatDuration } from "@/utils/formatDuration";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Globe, Clock, Euro, MapPin } from "lucide-react";
 
 interface ItemCardProps {
-  item: Item;
+  item: Tour;
   href?: string;
   onClick?: () => void;
   showStatus?: boolean;

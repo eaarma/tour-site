@@ -5,16 +5,16 @@ import { useDispatch } from "react-redux";
 import { addItemToCart } from "@/store/cartSlice";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Item } from "@/types";
+import { Tour } from "@/types";
 import { TourScheduleResponseDto } from "@/types/tourSchedule";
 import toast from "react-hot-toast";
-import { TourScheduleService } from "@/lib/tourScheduleService";
+import { tourScheduleService } from "@/lib/tourScheduleService";
 import SchedulePicker from "./SchedulePicker";
 
 interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  item: Item;
+  item: Tour;
   selectedSchedule?: TourScheduleResponseDto | null;
   schedules?: TourScheduleResponseDto[];
 }
@@ -63,7 +63,7 @@ export default function BookingModal({
     }
 
     try {
-      const latest = await TourScheduleService.getById(chosenSchedule.id);
+      const latest = await tourScheduleService.getById(chosenSchedule.id);
 
       if (!latest || latest.status !== "ACTIVE") {
         handleRemoveUnavailable(chosenSchedule.id);

@@ -7,7 +7,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/20/solid";
 import { useEffect } from "react";
-import { Item } from "@/types";
+import { Tour } from "@/types";
 
 function parseDuration(timeRequired: string): number {
   if (!timeRequired) return Infinity; // handle empty values by putting them at the end
@@ -36,8 +36,8 @@ const SORT_OPTIONS = [
 interface SortMenuProps {
   sortKey: string;
   setSortKey: (key: string) => void;
-  items: Item[];
-  onSort: (sorted: Item[]) => void;
+  items: Tour[];
+  onSort: (sorted: Tour[]) => void;
 }
 
 const SortMenu: React.FC<SortMenuProps> = ({
@@ -46,7 +46,7 @@ const SortMenu: React.FC<SortMenuProps> = ({
   items,
   onSort,
 }) => {
-  const applySort = (key: string, list: Item[]) => {
+  const applySort = (key: string, list: Tour[]) => {
     let sorted = [...list];
     switch (key) {
       case "price":
@@ -62,9 +62,9 @@ const SortMenu: React.FC<SortMenuProps> = ({
         break;
       default:
         sorted.sort((a, b) =>
-          (a[key as keyof Item] ?? "")
+          (a[key as keyof Tour] ?? "")
             .toString()
-            .localeCompare((b[key as keyof Item] ?? "").toString())
+            .localeCompare((b[key as keyof Tour] ?? "").toString())
         );
     }
     return sorted;

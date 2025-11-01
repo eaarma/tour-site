@@ -31,4 +31,10 @@ public class UserController {
         UUID userId = currentUserService.getCurrentUserId();
         return ResponseEntity.ok(userService.updateProfile(userId, dto));
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponseDto> getUserById(@PathVariable UUID id) {
+        return ResponseEntity.ok(userService.getUserProfile(id));
+    }
+
 }
