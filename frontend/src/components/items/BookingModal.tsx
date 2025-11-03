@@ -79,6 +79,7 @@ export default function BookingModal({
           title: item.title,
           price: Number(item.price),
           participants,
+          images: item.images,
           selected: true,
           scheduleId: chosenSchedule.id,
           selectedDate: chosenSchedule.date,

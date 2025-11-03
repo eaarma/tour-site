@@ -4,13 +4,13 @@ import { TourImage } from "@/types/tour";
 export const tourImageService = {
   // ✅ Fetch all images for a tour
   getImages: async (tourId: number): Promise<TourImage[]> => {
-    const res = await api.get(`/tours/${tourId}/images`);
+    const res = await api.get(`/api/tours/${tourId}/images`);
     return res.data;
   },
 
   // ✅ Add a new image (after uploading to Firebase)
   addImage: async (tourId: number, imageUrl: string): Promise<TourImage> => {
-    const res = await api.post(`/tours/${tourId}/images`, {
+    const res = await api.post(`/api/tours/${tourId}/images`, {
       imageUrl,
     });
     return res.data;
@@ -18,6 +18,10 @@ export const tourImageService = {
 
   // ✅ Delete image by imageId
   deleteImage: async (imageId: number): Promise<void> => {
-    await api.delete(`/tours/images/${imageId}`);
+    await api.delete(`/api/tours/images/${imageId}`);
+  },
+
+  updateOrder: async (tourId: number, imageIds: number[]) => {
+    await api.put(`/api/tours/${tourId}/images/reorder`, imageIds);
   },
 };

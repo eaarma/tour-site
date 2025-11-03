@@ -14,6 +14,13 @@ import { tourImageService } from "@/lib/tourImageService";
 import { TourImage } from "@/types/tour";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  DropResult,
+} from "@hello-pangea/dnd";
+import TourImagesManager from "@/components/manager/item/TourImagesManager";
 
 const INTENSITY_OPTIONS = ["Easy", "Moderate", "Hard"];
 const CATEGORY_OPTIONS = ["Nature", "History", "Culture"];
@@ -204,6 +211,24 @@ export default function ManagerItemPage() {
     }
   };
 
+  const handleDragEnd = async (result: DropResult) => {
+    if (!result.destination) return;
+
+    const newOrder = Array.from(tourImages);
+    const [moved] = newOrder.splice(result.source.index, 1);
+    newOrder.splice(result.destination.index, 0, moved);
+
+    setTourImages(newOrder);
+
+    // Persist to backend (only if not new tour)
+    if (!isNew) {
+      await tourImageService.updateOrder(
+        Number(itemId),
+        newOrder.map((img) => img.id)
+      );
+    }
+  };
+
   if (loading) {
     return <div className="text-center mt-10 text-lg">Loading...</div>;
   }
@@ -252,78 +277,14 @@ export default function ManagerItemPage() {
       <div className="max-w-5xl mx-auto card bg-base-100 shadow-lg p-6">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* ✅ TOUR IMAGES SECTION */}
-          <div className="lg:w-1/2">
-            {isEditing || isNew ? (
-              <div className="flex flex-col gap-4">
-                {/* Upload Input */}
-                <input
-                  type="file"
-                  id="imageUpload"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleTourImageUpload}
-                />
-
-                <button
-                  onClick={() =>
-                    document.getElementById("imageUpload")?.click()
-                  }
-                  className="btn btn-outline btn-sm"
-                >
-                  + Upload Image
-                </button>
-
-                {/* Progress bar */}
-                {uploading && (
-                  <progress
-                    className="progress progress-primary w-full"
-                    value={uploadProgress}
-                    max="100"
-                  ></progress>
-                )}
-
-                {/* Image Gallery */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {tourImages.length > 0 ? (
-                    tourImages.map((img) => (
-                      <div key={img.id} className="relative group">
-                        <img
-                          src={img.imageUrl}
-                          className="h-40 w-full object-cover rounded-lg"
-                          alt="Tour"
-                        />
-                        <button
-                          className="absolute top-2 right-2 btn btn-xs btn-error opacity-0 group-hover:opacity-100 transition"
-                          onClick={() => handleDeleteImage(img.id)}
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 text-sm">
-                      No images uploaded yet.
-                    </p>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div>
-                {tourImages.length > 0 ? (
-                  <img
-                    src={tourImages[0].imageUrl}
-                    alt="Main tour image"
-                    className="rounded-xl w-full object-cover h-72"
-                  />
-                ) : (
-                  <div className="h-72 w-full rounded-xl flex items-center justify-center bg-gray-200">
-                    No image available
-                  </div>
-                )}
-              </div>
-            )}
+          <div className="lg:w-1/2 flex flex-col gap-4">
+            <TourImagesManager
+              tourId={Number(itemId)}
+              isEditing={isEditing}
+              tourImages={tourImages}
+              setTourImages={setTourImages}
+            />
           </div>
-
           {/* Details */}
           <div className="lg:w-1/2 flex flex-col justify-between gap-4">
             <div>
@@ -336,7 +297,10 @@ export default function ManagerItemPage() {
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                 />
               ) : (
-                <h1 className="text-3xl font-bold mb-2">{item?.title}</h1>
+                <div>
+                  <h1 className="text-3xl font-bold mb-2">{item?.title}</h1>
+                  <p>ID: {item?.id}</p>
+                </div>
               )}
 
               {/* Description */}
@@ -400,7 +364,7 @@ export default function ManagerItemPage() {
               <div className="grid grid-cols-2 gap-3 text-sm">
                 {/* Price */}
                 <div>
-                  <span className="font-semibold">Price:</span>
+                  <span className="font-semibold">Price: </span>
                   {isEditing ? (
                     <div>
                       <input
@@ -420,7 +384,7 @@ export default function ManagerItemPage() {
                       )}
                     </div>
                   ) : (
-                    item?.price
+                    item?.price + " €"
                   )}
                 </div>
 
@@ -516,7 +480,7 @@ export default function ManagerItemPage() {
 
                 {/* Participants */}
                 <div>
-                  <span className="font-semibold">Max Participants:</span>
+                  <span className="font-semibold">Max Participants: </span>
                   {isEditing ? (
                     <div>
                       <select
@@ -553,7 +517,7 @@ export default function ManagerItemPage() {
 
                 {/* Location */}
                 <div className="col-span-2">
-                  <span className="font-semibold">Location:</span>
+                  <span className="font-semibold">Location: </span>
                   {isEditing ? (
                     <div>
                       <input

@@ -116,7 +116,7 @@ export default function ItemsPage() {
             id: tour.id,
             title: tour.title,
             description: tour.description,
-            image: tour.image ?? "/images/default.jpg",
+            images: tour.images ?? "/images/default.jpg",
             price: tour.price,
             timeRequired: tour.timeRequired,
             intensity: tour.intensity,

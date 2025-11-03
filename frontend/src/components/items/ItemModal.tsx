@@ -9,6 +9,7 @@ import { useDispatch } from "react-redux";
 import { updateItemSchedule } from "@/store/cartSlice";
 import toast from "react-hot-toast";
 import { tourScheduleService } from "@/lib/tourScheduleService";
+import { useRouter } from "next/navigation";
 
 interface Props {
   isOpen: boolean;
@@ -30,6 +31,7 @@ export default function ItemModal({
   initialParticipants = 1,
 }: Props) {
   const dispatch = useDispatch();
+  const router = useRouter();
 
   const [localSchedules, setLocalSchedules] = useState<
     TourScheduleResponseDto[]
@@ -99,6 +101,10 @@ export default function ItemModal({
     onClose();
   };
 
+  const viewTour = () => {
+    router.push(`/items/${item.id}`);
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <h2 className="text-2xl font-bold mb-4">{item.title}</h2>
@@ -132,6 +138,10 @@ export default function ItemModal({
       </div>
 
       <div className="flex justify-end mt-6">
+        <button className="btn btn-secondary mr-4" onClick={viewTour}>
+          View Tour
+        </button>
+
         <button
           className="btn btn-primary"
           onClick={handleUpdate}

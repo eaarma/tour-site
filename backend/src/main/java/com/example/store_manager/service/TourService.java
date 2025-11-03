@@ -49,20 +49,6 @@ public class TourService {
         // ✅ Update basic fields using the mapper (title, description, price, etc.)
         tourMapper.updateTourFromDto(dto, tour);
 
-        // ✅ Handle image updates (replace old images with new ones)
-        if (dto.getImages() != null) {
-            // 1️⃣ Clear old images
-            tour.getImages().clear();
-
-            // 2️⃣ Add new images
-            for (String imageUrl : dto.getImages()) {
-                TourImage img = new TourImage();
-                img.setImageUrl(imageUrl);
-                img.setTour(tour);
-                tour.getImages().add(img);
-            }
-        }
-
         // ✅ Save & return updated data
         Tour updated = tourRepository.save(tour);
         return tourMapper.toDto(updated);

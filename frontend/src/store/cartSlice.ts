@@ -1,15 +1,5 @@
+import { CartItem } from "@/types";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-
-export interface CartItem {
-  id: string;
-  title: string;
-  price: number;
-  participants: number;
-  scheduleId: number;
-  selectedDate: string;
-  selectedTime: string;
-  selected: boolean;
-}
 
 interface CartState {
   items: CartItem[];
@@ -25,10 +15,11 @@ const cartSlice = createSlice({
   reducers: {
     addItemToCart: (state, action: PayloadAction<CartItem>) => {
       // Ensure newly added item is selected by default
-      state.items.push({ ...action.payload, selected: true });
-    },
-    removeItemFromCart: (state, action: PayloadAction<string>) => {
-      state.items = state.items.filter((item) => item.id !== action.payload);
+      state.items.push({
+        ...action.payload,
+        cartItemId: crypto.randomUUID(),
+        selected: true,
+      });
     },
     updateItemInCart: (
       state,
@@ -65,10 +56,17 @@ const cartSlice = createSlice({
       }
     },
 
+    removeItemFromCart: (state, action: PayloadAction<string>) => {
+      state.items = state.items.filter(
+        (item) => item.cartItemId !== action.payload
+      );
+    },
+
     toggleItemSelection: (state, action: PayloadAction<string>) => {
-      const item = state.items.find((it) => it.id === action.payload);
+      const item = state.items.find((it) => it.cartItemId === action.payload);
       if (item) item.selected = !item.selected;
     },
+
     clearCart: (state) => {
       state.items = [];
     },

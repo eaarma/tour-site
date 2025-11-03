@@ -4,7 +4,7 @@ import React from "react";
 import CartItem from "./CartItem";
 import { useDispatch } from "react-redux";
 import { removeItemFromCart, toggleItemSelection } from "@/store/cartSlice";
-import { CartItem as CartItemType } from "@/store/cartSlice";
+import { CartItem as CartItemType } from "@/types";
 
 interface Props {
   cart: CartItemType[];
@@ -14,12 +14,12 @@ interface Props {
 const CartItemSection: React.FC<Props> = ({ cart, onView }) => {
   const dispatch = useDispatch();
 
-  const handleRemove = (id: string) => {
-    dispatch(removeItemFromCart(id));
+  const handleRemove = (cartItemId: string) => {
+    dispatch(removeItemFromCart(cartItemId));
   };
 
-  const handleToggle = (id: string) => {
-    dispatch(toggleItemSelection(id));
+  const handleToggle = (cartItemId: string) => {
+    dispatch(toggleItemSelection(cartItemId));
   };
 
   // ✅ Count selected items
@@ -32,7 +32,7 @@ const CartItemSection: React.FC<Props> = ({ cart, onView }) => {
   const handleToggleAll = () => {
     cart.forEach((item) => {
       if (item.selected !== !allSelected) {
-        dispatch(toggleItemSelection(item.id));
+        dispatch(toggleItemSelection(item.cartItemId));
       }
     });
   };
@@ -65,9 +65,9 @@ const CartItemSection: React.FC<Props> = ({ cart, onView }) => {
           </div>
 
           {/* ✅ Cart Items */}
-          {cart.map((entry) => (
+          {cart.map((entry, index) => (
             <CartItem
-              key={entry.id}
+              key={entry.cartItemId || `${entry.id}-${index}`} // ✅ fallback if missing
               item={entry}
               onRemove={handleRemove}
               onView={onView ? onView : () => {}}

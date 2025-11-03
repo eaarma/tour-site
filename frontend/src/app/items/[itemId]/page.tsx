@@ -10,6 +10,7 @@ import BookingModal from "@/components/items/BookingModal";
 import { formatDuration } from "@/utils/formatDuration";
 import SchedulePicker from "@/components/items/SchedulePicker";
 import { ArrowLeft } from "lucide-react";
+import TourImageGallery from "@/components/common/TourImageGallery";
 
 export default function ItemPage() {
   const { itemId } = useParams<{ itemId: string }>();
@@ -93,11 +94,7 @@ export default function ItemPage() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Image */}
           <div className="lg:w-1/2">
-            <img
-              src={item.image || "/images/placeholder-tour.jpg"}
-              alt={item.title}
-              className="rounded-xl w-full object-cover h-72 lg:h-full"
-            />
+            <TourImageGallery images={item.images} title={item.title} />
           </div>
 
           {/* Details */}

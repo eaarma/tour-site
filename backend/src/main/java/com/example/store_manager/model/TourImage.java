@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 @Data
 @Entity
 @Table(name = "tour_images")
@@ -14,6 +16,7 @@ public class TourImage {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tour_id")
+    @JsonBackReference // ✅ Prevents infinite Tour → Image → Tour loop
     private Tour tour;
 
     private String imageUrl;

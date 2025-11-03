@@ -38,18 +38,13 @@ export default function CartPage() {
           item={{
             id: Number(viewItem.id),
             title: viewItem.title,
-            description: viewItem.description || "",
             price: viewItem.price,
             participants: viewItem.participants,
-            image: viewItem.image,
-            location: viewItem.location,
-            language: viewItem.language,
-            intensity: viewItem.intensity,
-            category: viewItem.category,
+            images: viewItem.images,
             status: "ACTIVE",
             timeRequired: 60, // 🔹 adjust if you store real value
           }}
-          cartItemId={viewItem.id}
+          cartItemId={viewItem.cartItemId}
           initialScheduleId={viewItem.scheduleId}
         />
       )}

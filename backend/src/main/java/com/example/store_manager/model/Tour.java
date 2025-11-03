@@ -45,8 +45,8 @@ public class Tour {
     private String madeBy;
 
     @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("position ASC")
     private List<TourImage> images = new ArrayList<>();
+
     @ManyToOne
     @JoinColumn(name = "shop_id", nullable = false)
     private Shop shop;

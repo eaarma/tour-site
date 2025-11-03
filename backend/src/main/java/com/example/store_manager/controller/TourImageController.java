@@ -38,4 +38,12 @@ public class TourImageController {
         tourImageService.deleteImage(imageId);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{tourId}/images/reorder")
+    public ResponseEntity<Void> reorderImages(
+            @PathVariable Long tourId,
+            @RequestBody List<Long> orderedImageIds) {
+        tourImageService.updateImageOrder(tourId, orderedImageIds);
+        return ResponseEntity.ok().build();
+    }
 }

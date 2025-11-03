@@ -43,7 +43,11 @@ const ItemCard: React.FC<ItemCardProps> = ({
       {/* Image */}
       <figure className="relative w-full h-52 md:h-48 lg:h-48 flex-shrink-0">
         <img
-          src={item.image}
+          src={
+            item.images?.length
+              ? item.images[0]
+              : "/images/placeholder-tour.jpg"
+          }
           alt={item.title}
           className="w-full h-full object-cover"
         />
