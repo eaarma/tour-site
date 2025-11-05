@@ -24,9 +24,9 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ item }) => {
       className="block group"
       aria-label={`View ${item.title}`}
     >
-      <div className="card bg-base-100 shadow-xl border overflow-hidden rounded-xl lg:flex lg:flex-row cursor-pointer transition-shadow duration-200 group-hover:shadow-2xl">
-        {/* Image (locked half) */}
-        <figure className="relative w-full lg:w-1/2 h-64 lg:h-auto max-h-[310px] flex-shrink-0">
+      <div className="card bg-base-100 shadow-xl border overflow-hidden rounded-xl lg:flex lg:flex-row h-[310px]">
+        {/* Image */}
+        <figure className="relative w-full lg:w-1/2 h-full flex-shrink-0">
           <img
             src={mainImage}
             alt={item.title || "Tour Image"}
@@ -34,9 +34,8 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ item }) => {
           />
         </figure>
 
-        {/* Content (locked half) */}
-        <div className="w-full lg:w-1/2 p-6 flex flex-col h-full">
-          {/* Title, location, description */}
+        {/* Content */}
+        <div className="w-full lg:w-1/2 p-6 flex flex-col">
           <div>
             <h2 className="card-title text-2xl font-bold mb-3">{item.title}</h2>
 
@@ -54,7 +53,7 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ item }) => {
             )}
           </div>
 
-          {/* Details row */}
+          {/* Details */}
           <div className="flex flex-wrap gap-8 ml-1 text-sm text-gray-700 mb-4">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-primary" />
@@ -72,14 +71,12 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ item }) => {
             )}
           </div>
 
-          {/* Price + CTA */}
+          {/* Price + Button pinned to bottom */}
           <div className="flex items-center gap-6 mt-auto self-start lg:self-end">
             <span className="text-2xl font-bold text-primary flex items-center gap-1">
               <Euro className="w-5 h-5" />
               {item.price}
             </span>
-
-            {/* Button links to the same place; no need to stopPropagation */}
             <Link
               href={`/items/${item.id}`}
               className="btn btn-primary px-6"

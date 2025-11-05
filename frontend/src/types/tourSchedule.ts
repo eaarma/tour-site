@@ -11,11 +11,15 @@ export interface TourScheduleResponseDto {
   date: string;
   time?: string;
   maxParticipants: number;
-  status?: string;
+  bookedParticipants: number; // ✅ add this
+  status?: "ACTIVE" | "BOOKED" | "CANCELLED";
+  type?: "PUBLIC" | "PRIVATE"; // ✅ add this
 }
 
 export interface TourScheduleUpdateDto {
-  date?: string; // ISO string
-  time?: string; // ISO time string
+  date?: string;
+  time?: string;
   maxParticipants?: number;
+  bookedParticipants?: number; // ✅
+  status?: string; // ✅
 }

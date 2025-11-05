@@ -35,17 +35,20 @@ const cartSlice = createSlice({
         };
       }
     },
+
     updateItemSchedule: (
       state,
       action: PayloadAction<{
-        id: string;
+        cartItemId: string;
         scheduleId: number;
         date: string;
         time: string;
         participants?: number;
       }>
     ) => {
-      const it = state.items.find((i) => i.id === action.payload.id);
+      const it = state.items.find(
+        (i) => i.cartItemId === action.payload.cartItemId
+      );
       if (it) {
         it.scheduleId = action.payload.scheduleId;
         it.selectedDate = action.payload.date;

@@ -31,5 +31,8 @@ public class TourSchedule {
     private int maxParticipants;
 
     @Column(nullable = false)
+    private Integer bookedParticipants = 0;
+
+    @Column(nullable = false)
     private String status; // ACTIVE, EXPIRED, BOOKED
 }

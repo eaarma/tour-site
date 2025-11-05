@@ -14,23 +14,29 @@ import java.util.stream.Collectors;
 @Mapper(componentModel = "spring")
 public interface TourMapper {
 
+    // ✅ ENTITY → DTO (Response)
     @Mapping(target = "shopId", source = "shop.id")
     @Mapping(target = "images", expression = "java(mapImages(tour.getImages()))")
+    @Mapping(target = "categories", source = "categories") // ✅ Map directly
     TourResponseDto toDto(Tour tour);
 
+    // ✅ DTO → ENTITY (Create)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "madeBy", ignore = true)
     @Mapping(target = "shop", ignore = true)
-    @Mapping(target = "images", ignore = true) // Images handled separately
+    @Mapping(target = "images", ignore = true) // Images added separately
+    @Mapping(target = "categories", source = "categories") // ✅ Add this
     Tour toEntity(TourCreateDto dto);
 
+    // ✅ DTO → ENTITY (Update)
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "shop", ignore = true) // keep original shop
     @Mapping(target = "madeBy", ignore = true)
-    @Mapping(target = "shop", ignore = true)
     @Mapping(target = "images", ignore = true)
+    @Mapping(target = "categories", source = "categories")
     void updateTourFromDto(TourCreateDto dto, @MappingTarget Tour tour);
 
-    // ✅ Helper to map List<TourImage> → List<String>
+    // ✅ Convert List<TourImage> → List<String>
     default List<String> mapImages(List<TourImage> images) {
         if (images == null)
             return null;
@@ -38,4 +44,5 @@ public interface TourMapper {
                 .map(TourImage::getImageUrl)
                 .collect(Collectors.toList());
     }
+
 }

@@ -27,7 +27,7 @@ const CartItem: React.FC<CartItemProps> = ({
     <div className="w-full flex items-center gap-3 py-2">
       {/* Selection Checkbox */}
       <input
-        id={`cart-toggle-${item.car}`}
+        id={`cart-toggle-${item.cartItemId}`}
         type="checkbox"
         checked={item.selected}
         onChange={() => onToggle(item.cartItemId)}

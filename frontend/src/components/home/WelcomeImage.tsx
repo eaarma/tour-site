@@ -11,11 +11,11 @@ const WelcomeImage: React.FC<WelcomeImageProps> = ({ imageUrl, children }) => {
   return (
     <div className="relative w-full">
       {/* Hero image */}
-      <div className="w-full h-50 sm:h-60 md:h-70 lg:h-80">
+      <div className="w-full h-50 sm:h-60 md:h-70 lg:h-80 ">
         <img
           src={imageUrl}
-          alt="Welcome"
-          className="w-full h-full object-cover rounded-xl shadow-md"
+          className="w-full h-full object-cover rounded-xl shadow-md object-cover object-bottom"
+          style={{ objectPosition: "50% 60%" }}
         />
       </div>
 

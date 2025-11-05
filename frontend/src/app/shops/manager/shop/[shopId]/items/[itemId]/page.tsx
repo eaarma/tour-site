@@ -11,21 +11,15 @@ import { formatDuration } from "@/utils/formatDuration";
 import { ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
 import { tourImageService } from "@/lib/tourImageService";
-import { TourImage } from "@/types/tour";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { storage } from "@/lib/firebase";
-import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-  DropResult,
-} from "@hello-pangea/dnd";
+import { TourCategory, TourImage } from "@/types/tour";
+
 import TourImagesManager from "@/components/manager/item/TourImagesManager";
+import CategorySelector from "@/components/manager/shop/CategorySelector";
 
 const INTENSITY_OPTIONS = ["Easy", "Moderate", "Hard"];
 const CATEGORY_OPTIONS = ["Nature", "History", "Culture"];
 const STATUS_OPTIONS = ["ACTIVE", "ON_HOLD", "CANCELLED"];
-const TYPE_OPTIONS = ["Walking", "Bus", "Boat", "Museum"];
+const TYPE_OPTIONS = ["PRIVATE", "PUBLIC"];
 
 export default function ManagerItemPage() {
   const params = useParams();
@@ -43,7 +37,7 @@ export default function ManagerItemPage() {
       ? {
           shopId,
           status: "ON_HOLD",
-          category: CATEGORY_OPTIONS[0],
+          categories: [],
           type: TYPE_OPTIONS[0],
           intensity: INTENSITY_OPTIONS[0],
           timeRequired: 5,
@@ -54,8 +48,6 @@ export default function ManagerItemPage() {
   );
 
   const [tourImages, setTourImages] = useState<TourImage[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -148,84 +140,6 @@ export default function ManagerItemPage() {
       }
     } catch (err) {
       console.error("Failed to save", err);
-    }
-  };
-
-  const handleTourImageUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file || (!item && !isNew)) return;
-
-    setUploading(true);
-    try {
-      const fileRef = ref(storage, `tours/${item?.id || "temp"}/${file.name}`);
-      const uploadTask = uploadBytesResumable(fileRef, file);
-
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          setUploadProgress(
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-          );
-        },
-        () => {
-          toast.error("Upload failed");
-          setUploading(false);
-        },
-        async () => {
-          const imageUrl = await getDownloadURL(uploadTask.snapshot.ref);
-
-          // If tour is newly created, store only locally for now
-          if (isNew) {
-            setTourImages((prev) => [
-              ...prev,
-              { id: Date.now(), imageUrl } as TourImage,
-            ]);
-          } else {
-            const savedImage = await tourImageService.addImage(
-              Number(itemId),
-              imageUrl
-            );
-            setTourImages((prev) => [...prev, savedImage]);
-          }
-
-          toast.success("Image added");
-          setUploading(false);
-        }
-      );
-    } catch (error) {
-      console.error(error);
-      toast.error("Upload failed");
-      setUploading(false);
-    }
-  };
-
-  const handleDeleteImage = async (imageId: number) => {
-    try {
-      await tourImageService.deleteImage(imageId);
-      setTourImages((prev) => prev.filter((img) => img.id !== imageId));
-      toast.success("Image deleted");
-    } catch {
-      toast.error("Could not delete image");
-    }
-  };
-
-  const handleDragEnd = async (result: DropResult) => {
-    if (!result.destination) return;
-
-    const newOrder = Array.from(tourImages);
-    const [moved] = newOrder.splice(result.source.index, 1);
-    newOrder.splice(result.destination.index, 0, moved);
-
-    setTourImages(newOrder);
-
-    // Persist to backend (only if not new tour)
-    if (!isNew) {
-      await tourImageService.updateOrder(
-        Number(itemId),
-        newOrder.map((img) => img.id)
-      );
     }
   };
 
@@ -408,28 +322,6 @@ export default function ManagerItemPage() {
                   )}
                 </div>
 
-                {/* Category */}
-                <div>
-                  <span className="font-semibold">Category:</span>{" "}
-                  {isEditing ? (
-                    <select
-                      className="select select-bordered w-full"
-                      value={form.category || CATEGORY_OPTIONS[0]}
-                      onChange={(e) =>
-                        setForm({ ...form, category: e.target.value })
-                      }
-                    >
-                      {CATEGORY_OPTIONS.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    item?.category
-                  )}
-                </div>
-
                 {/* Type */}
                 <div>
                   <span className="font-semibold">Type:</span>{" "}
@@ -562,11 +454,39 @@ export default function ManagerItemPage() {
                   )}
                 </div>
 
+                {/* Category */}
+                <div className="col-span-2">
+                  <span className="font-semibold">Categories</span>
+                  {isEditing ? (
+                    <CategorySelector
+                      selected={form.categories || []}
+                      onChange={(newList: TourCategory[]) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          categories: newList,
+                        }))
+                      }
+                    />
+                  ) : (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {item.categories?.map((cat) => (
+                        <span
+                          key={cat}
+                          className="px-3 py-1 bg-gray-200 rounded-full text-sm"
+                        >
+                          {cat.replace(/_/g, " ")}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
                 {/* Schedules */}
                 {item && (
                   <div className="col-span-2 mt-4">
                     <EditableSchedules
                       tourId={item!.id}
+                      participants={item.participants}
                       isEditing={isEditing}
                     />
                   </div>

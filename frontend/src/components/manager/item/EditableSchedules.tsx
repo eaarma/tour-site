@@ -10,11 +10,13 @@ import toast from "react-hot-toast";
 interface EditableSchedulesProps {
   tourId: number;
   isEditing: boolean;
+  participants: number;
 }
 
 export default function EditableSchedules({
   tourId,
   isEditing,
+  participants,
 }: EditableSchedulesProps) {
   const [schedules, setSchedules] = useState<TourScheduleResponseDto[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -86,12 +88,12 @@ export default function EditableSchedules({
         tourId,
         date: formattedDate,
         time: formattedTime,
-        maxParticipants: newParticipants,
+        maxParticipants: participants,
       });
       setSchedules((prev) => [...prev, created]);
       setNewDate(null);
       setNewTime(null);
-      setNewParticipants(10);
+      setNewParticipants(participants);
       setSelectedDate(formattedDate); // focus the date we just added
     } catch (err) {
       console.error("Failed to add schedule", err);

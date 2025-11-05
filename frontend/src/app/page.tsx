@@ -57,9 +57,9 @@ export default function Home() {
   return (
     <main className="flex flex-col items-center justify-start min-h-screen p-4 max-w-7xl mx-auto">
       <div className="w-full space-y-6 mt-5">
-        <WelcomeImage imageUrl="/images/hero.jpg">
+        <WelcomeImage imageUrl="/images/background.jpg">
           <SearchBar redirectOnSearch />
-        </WelcomeImage>{" "}
+        </WelcomeImage>
         {loading ? (
           <ItemListHorizontalSkeleton />
         ) : (

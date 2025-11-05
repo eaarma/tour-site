@@ -10,6 +10,9 @@ import { RootState } from "@/store/store";
 import { OrderService } from "@/lib/orderService";
 import { useRouter } from "next/navigation";
 import { OrderCreateRequestDto } from "@/types/order";
+import { CartItem as CartItemType } from "@/types/cart";
+import { tourScheduleService } from "@/lib/tourScheduleService";
+import ItemModal from "@/components/items/ItemModal";
 
 export default function PaymentPage() {
   const cartItems = useSelector((state: RootState) =>
@@ -17,6 +20,7 @@ export default function PaymentPage() {
   );
   const checkoutInfo = useSelector((state: RootState) => state.checkout);
   const router = useRouter();
+  const [badItem, setBadItem] = useState<CartItemType | null>(null);
 
   const [selectedMethod, setSelectedMethod] = useState<
     "credit-card" | "pay-link"
@@ -38,6 +42,21 @@ export default function PaymentPage() {
     0
   );
 
+  const validateSchedules = async () => {
+    const bad: CartItemType[] = [];
+    for (const it of cartItems) {
+      try {
+        const schedule = await tourScheduleService.getById(it.scheduleId);
+        if (!schedule || schedule.status !== "ACTIVE") {
+          bad.push(it);
+        }
+      } catch {
+        bad.push(it);
+      }
+    }
+    return { ok: bad.length === 0, badItems: bad };
+  };
+
   const handleProceed = async () => {
     if (cartItems.length === 0) {
       toast.error("Your cart is empty!");
@@ -46,8 +65,20 @@ export default function PaymentPage() {
 
     setLoading(true);
 
+    // ✅ Step 1: Revalidate schedules before placing order
+    const { ok, badItems } = await validateSchedules();
+    if (!ok) {
+      const firstBad = badItems[0];
+      setBadItem(firstBad);
+      toast.error(
+        `Time ${firstBad.selectedDate} ${firstBad.selectedTime} for "${firstBad.title}" is no longer available.`
+      );
+      setLoading(false);
+      return;
+    }
+
     try {
-      // ✅ Build order request
+      // ✅ Step 2: Create full order (backend will book schedules internally)
       const orderRequest: OrderCreateRequestDto = {
         paymentMethod: selectedMethod === "credit-card" ? "CARD" : "PAY_LINK",
         name: checkoutInfo.name,
@@ -56,18 +87,28 @@ export default function PaymentPage() {
         nationality: checkoutInfo.nationality,
         items: cartItems.map((item) => ({
           tourId: Number(item.id),
+          scheduleId: item.scheduleId, // ✅ sent to backend
           participants: item.participants,
-          scheduledAt: `${item.selectedDate}T${item.selectedTime}`, // ISO
+          scheduledAt: `${item.selectedDate}T${item.selectedTime}`,
         })),
       };
 
       const order = await OrderService.create(orderRequest);
 
+      // ✅ Step 3: Send email confirmation
+      await fetch("/api/send-confirmation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order }),
+      });
+
       toast.success("Order confirmed ✅");
+
+      // ✅ Step 4: Redirect to confirmation page
       router.push(`/confirmation/${order.id}`);
     } catch (err) {
-      console.error("Failed to create order", err);
-      toast.error("Failed to create order. Please try again.");
+      console.error("Order creation failed", err);
+      toast.error("Failed to create order. Try again.");
     } finally {
       setLoading(false);
     }
@@ -85,7 +126,7 @@ export default function PaymentPage() {
           />
         </div>
 
-        {/* Right Column */}
+        {/* Right Column: total + proceed */}
         <div className="flex justify-center md:block md:w-[320px] md:self-start">
           <PaymentTotalSection
             subtotal={subtotal}
@@ -94,6 +135,25 @@ export default function PaymentPage() {
           />
         </div>
       </div>
+
+      {/* 🔹 Show ItemModal when badItem is detected */}
+      {badItem && (
+        <ItemModal
+          isOpen={true}
+          onClose={() => setBadItem(null)}
+          item={{
+            id: Number(badItem.id),
+            title: badItem.title,
+            price: badItem.price,
+            participants: badItem.participants,
+            images: badItem.images,
+            status: "ACTIVE",
+            timeRequired: 60,
+          }}
+          cartItemId={badItem.cartItemId}
+          initialScheduleId={badItem.scheduleId}
+        />
+      )}
     </main>
   );
 }

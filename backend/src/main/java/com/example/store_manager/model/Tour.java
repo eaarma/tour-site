@@ -2,9 +2,16 @@ package com.example.store_manager.model;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -18,6 +25,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "tours")
@@ -37,8 +45,15 @@ public class Tour {
     private Integer timeRequired; // in minutes
     private String intensity;
     private int participants;
-    private String category;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "tour_categories", joinColumns = @JoinColumn(name = "tour_id"))
+    @Enumerated(EnumType.STRING) // ✅ Store enum as text instead of number
+    @Column(name = "category")
+    private Set<TourCategory> categories;
+
     private String language;
+
     private String type;
     private String location;
     private String status;

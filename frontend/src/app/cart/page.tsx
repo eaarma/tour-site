@@ -2,16 +2,14 @@
 
 import CartItemSection from "@/components/cart/CartItemSection";
 import CartTotalSection from "@/components/cart/CartTotalSection";
-import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { useCallback, useState } from "react";
 import ItemModal from "@/components/items/ItemModal"; // import the new modal
-import { CartItem as CartItemType } from "@/store/cartSlice";
+import { CartItem as CartItemType } from "@/types/cart";
 
 export default function CartPage() {
   const cart = useSelector((state: RootState) => state.cart.items);
-  const router = useRouter();
 
   const [viewItem, setViewItem] = useState<CartItemType | null>(null);
 

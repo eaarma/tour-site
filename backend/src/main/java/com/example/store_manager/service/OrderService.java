@@ -22,12 +22,14 @@ import com.example.store_manager.model.Order;
 import com.example.store_manager.model.OrderItem;
 import com.example.store_manager.model.OrderStatus;
 import com.example.store_manager.model.Tour;
+import com.example.store_manager.model.TourSchedule;
 import com.example.store_manager.model.User;
 import com.example.store_manager.repository.OrderItemRepository;
 import com.example.store_manager.repository.OrderRepository;
 import com.example.store_manager.repository.TourRepository;
 import com.example.store_manager.repository.UserRepository;
 import com.example.store_manager.security.CustomUserDetails;
+import com.example.store_manager.repository.TourScheduleRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -42,10 +44,13 @@ public class OrderService {
         private final OrderMapper orderMapper;
         private final OrderItemMapper orderItemMapper;
         private final OrderItemRepository orderItemRepository;
+        private final TourScheduleRepository tourScheduleRepository;
 
         /**
          * Create a new order with multiple items.
          */
+
+        @Transactional
         public OrderResponseDto createOrder(OrderCreateRequestDto dto, UUID userId) {
                 User user = null;
                 if (userId != null) {
@@ -53,18 +58,44 @@ public class OrderService {
                                         .orElseThrow(() -> new RuntimeException("User not found"));
                 }
 
-                // 1️. Create master Order
+                // 1. Create main Order
                 Order order = Order.builder()
                                 .user(user)
                                 .paymentMethod(dto.getPaymentMethod())
                                 .status(OrderStatus.PENDING)
                                 .build();
 
-                // 2️. Build OrderItems from DTOs
+                // 2. For each order item
                 for (OrderItemCreateRequestDto itemDto : dto.getItems()) {
+
+                        // Load tour & schedule
                         Tour tour = tourRepository.findById(itemDto.getTourId())
                                         .orElseThrow(() -> new RuntimeException("Tour not found"));
 
+                        TourSchedule schedule = tourScheduleRepository.findById(itemDto.getScheduleId())
+                                        .orElseThrow(() -> new RuntimeException("Schedule not found"));
+
+                        // Prevent overbooking
+                        int newBooked = schedule.getBookedParticipants() + itemDto.getParticipants();
+                        if (newBooked > schedule.getMaxParticipants()) {
+                                throw new RuntimeException("Not enough spots available for this schedule.");
+                        }
+
+                        // Update schedule bookings
+                        schedule.setBookedParticipants(newBooked);
+
+                        if ("PRIVATE".equalsIgnoreCase(tour.getType())) {
+                                schedule.setStatus("BOOKED"); // fully locked after first booking
+                        } else {
+                                schedule.setStatus(
+                                                newBooked >= schedule.getMaxParticipants()
+                                                                ? "BOOKED"
+                                                                : "ACTIVE");
+                        }
+
+                        tourScheduleRepository.save(schedule);
+
+                        // Create snapshot & order item
                         TourSnapshotDto snapshot = TourSnapshotDto.builder()
                                         .id(tour.getId())
                                         .title(tour.getTitle())
@@ -99,10 +130,9 @@ public class OrderService {
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
                 order.setTotalPrice(totalPrice);
 
-                // 4️. Save order
+                // 4. Save everything
                 Order saved = orderRepository.save(order);
 
-                // 5️. Return DTO
                 return orderMapper.toDto(saved);
         }
 

@@ -46,15 +46,16 @@ public class TourController {
         return ResponseEntity.ok(tourService.getAllTours());
     }
 
-    // ✅ new: paginated + filtering + sorting
     @GetMapping("/query")
     public ResponseEntity<Page<TourResponseDto>> getAllByQuery(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "id,asc") String[] sort,
-            @RequestParam(required = false) String category,
+            @RequestParam(required = false) List<String> category, // accept multiple categories like
+                                                                   // ?category=HISTORY&category=FOOD
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String language) {
+
         return ResponseEntity.ok(
                 tourService.getAllByQuery(category, type, language, page, size, sort));
     }

@@ -1,5 +1,6 @@
 package com.example.store_manager.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -57,17 +58,29 @@ public class TourScheduleService {
         TourSchedule schedule = scheduleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Schedule not found"));
 
-        if (dto.getDate() != null) {
+        if (dto.getDate() != null)
             schedule.setDate(dto.getDate());
-        }
-        if (dto.getTime() != null) {
+        if (dto.getTime() != null)
             schedule.setTime(dto.getTime());
-        }
-        if (dto.getMaxParticipants() != null) {
+        if (dto.getMaxParticipants() != null)
             schedule.setMaxParticipants(dto.getMaxParticipants());
+        if (dto.getBookedParticipants() != null)
+            schedule.setBookedParticipants(dto.getBookedParticipants());
+
+        // Auto-update status logic:
+        int booked = schedule.getBookedParticipants();
+        if (booked >= schedule.getMaxParticipants()) {
+            schedule.setStatus("BOOKED");
+        } else {
+            schedule.setStatus("ACTIVE");
         }
 
-        schedule = scheduleRepository.save(schedule);
+        // Optional: mark expired dates
+        if (schedule.getDate().isBefore(LocalDate.now())) {
+            schedule.setStatus("EXPIRED");
+        }
+
+        scheduleRepository.save(schedule);
         return scheduleMapper.toDto(schedule);
     }
 

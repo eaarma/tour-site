@@ -17,6 +17,9 @@ public class OrderItemCreateRequestDto {
     @NotNull(message = "Tour ID must not be null")
     private Long tourId;
 
+    @NotNull(message = "Schedule ID must not be null")
+    private Long scheduleId;
+
     @NotNull(message = "Tour date and time are required")
     private LocalDateTime scheduledAt;
 

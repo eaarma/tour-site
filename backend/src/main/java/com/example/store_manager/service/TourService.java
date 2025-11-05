@@ -1,6 +1,7 @@
 package com.example.store_manager.service;
 
 import java.security.Principal;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.PageRequest;
@@ -15,6 +16,7 @@ import com.example.store_manager.dto.tour.TourResponseDto;
 import com.example.store_manager.mapper.TourMapper;
 import com.example.store_manager.model.Shop;
 import com.example.store_manager.model.Tour;
+import com.example.store_manager.model.TourCategory;
 import com.example.store_manager.model.TourImage;
 import com.example.store_manager.repository.ShopRepository;
 import com.example.store_manager.repository.TourRepository;
@@ -46,12 +48,15 @@ public class TourService {
         Tour tour = tourRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Tour not found"));
 
-        // ✅ Update basic fields using the mapper (title, description, price, etc.)
+        // Update simple fields
         tourMapper.updateTourFromDto(dto, tour);
 
-        // ✅ Save & return updated data
-        Tour updated = tourRepository.save(tour);
-        return tourMapper.toDto(updated);
+        // Reattach categories safely (prevent null crash)
+        if (dto.getCategories() != null) {
+            tour.setCategories(dto.getCategories());
+        }
+
+        return tourMapper.toDto(tourRepository.save(tour));
     }
 
     // ✅ fetch all (no pagination)
@@ -62,19 +67,28 @@ public class TourService {
                 .toList();
     }
 
-    // ✅ new: fetch with filters + pagination
-    public Page<TourResponseDto> getAllByQuery(String category,
+    public Page<TourResponseDto> getAllByQuery(
+            List<String> categories, // <-- now a list, not string
             String type,
             String language,
             int page,
             int size,
             String[] sort) {
-        Sort sortSpec = Sort.by(
-                Sort.Direction.fromString(sort[1]),
-                sort[0]);
+
+        Sort sortSpec = Sort.by(Sort.Direction.fromString(sort[1]), sort[0]);
         Pageable pageable = PageRequest.of(page, size, sortSpec);
 
-        Page<Tour> tours = tourRepository.findByFilters(category, type, language, pageable);
+        // Convert List<String> to List<TourCategory> (Enum)
+        List<TourCategory> categoryEnums = null;
+        if (categories != null && !categories.isEmpty()) {
+            categoryEnums = categories.stream()
+                    .map(String::trim)
+                    .map(String::toUpperCase)
+                    .map(TourCategory::valueOf)
+                    .toList();
+        }
+
+        Page<Tour> tours = tourRepository.findByFilters(categoryEnums, type, language, pageable);
         return tours.map(tourMapper::toDto);
     }
 

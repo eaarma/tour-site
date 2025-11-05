@@ -89,7 +89,7 @@ export default function ItemModal({
 
     dispatch(
       updateItemSchedule({
-        id: cartItemId,
+        cartItemId: cartItemId,
         scheduleId: selectedSchedule.id,
         date: selectedSchedule.date,
         time: selectedSchedule.time || "",

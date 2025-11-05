@@ -6,7 +6,7 @@ export interface TourCreateDto {
   timeRequired: number;
   intensity: string;
   participants: number;
-  category: string;
+  categories: TourCategory[];
   language: string;
   type: string;
   location: string;
@@ -23,7 +23,7 @@ export interface Tour {
   timeRequired: number;
   intensity: string;
   participants: number;
-  category: string;
+  categories: TourCategory[];
   language: string;
   type: string;
   location: string;
@@ -38,3 +38,32 @@ export interface TourImage {
   position: number;
   uploadedAt: string;
 }
+
+export type TourCategory =
+  | "WALKING"
+  | "CYCLING"
+  | "HIKING"
+  | "BUS"
+  | "BOAT"
+  | "CAR"
+  | "SIGHTSEEING"
+  | "CITY_TOUR"
+  | "ISLAND"
+  | "WORKSHOP"
+  | "BOAT_CRUISE"
+  | "ADVENTURE"
+  | "HISTORY"
+  | "CULTURE"
+  | "ART"
+  | "RELIGION"
+  | "NATURE"
+  | "WILDLIFE"
+  | "FOOD"
+  | "WINE"
+  | "PHOTOGRAPHY"
+  | "MUSIC"
+  | "NIGHTLIFE"
+  | "FESTIVAL"
+  | "SLOW_PACED"
+  | "INTENSE"
+  | "BUDGET";

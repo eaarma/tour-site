@@ -101,6 +101,13 @@ export default function ItemPage() {
           <div className="lg:w-1/2 flex flex-col justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold mb-2">{item.title}</h1>
+
+              <div className="col-span-2 mb-2">
+                <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                  {item.type}
+                </span>
+              </div>
+
               <p className="text-gray-600 mb-4">{item.description}</p>
 
               <div className="grid grid-cols-2 gap-2 text-sm">
@@ -120,16 +127,27 @@ export default function ItemPage() {
                   {item.intensity}
                 </div>
                 <div>
-                  <span className="font-semibold">Category:</span>{" "}
-                  {item.category}
-                </div>
-                <div>
                   <span className="font-semibold">Language:</span>{" "}
                   {item.language}
                 </div>
                 <div className="col-span-2">
                   <span className="font-semibold">Location:</span>{" "}
                   {item.location}
+                </div>
+
+                <div className="col-span-2">
+                  <span className="font-semibold">Categories</span>
+
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {item.categories?.map((cat) => (
+                      <span
+                        key={cat}
+                        className="px-3 py-1 bg-gray-200 rounded-full text-sm"
+                      >
+                        {cat.replace(/_/g, " ")}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

@@ -2,6 +2,9 @@ package com.example.store_manager.dto.tour;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
+
+import com.example.store_manager.model.TourCategory;
 
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -33,8 +36,8 @@ public class TourCreateDto {
     @Min(value = 1, message = "At least 1 participant is required")
     private int participants;
 
-    @NotBlank(message = "Category is required")
-    private String category;
+    @NotEmpty(message = "At least one category required")
+    private Set<TourCategory> categories;
 
     @NotBlank(message = "Language is required")
     private String language;
