@@ -3,5 +3,6 @@ package com.example.store_manager.model;
 public enum Role {
     USER,
     MANAGER,
-    ADMIN
+    ADMIN,
+    OWNER
 }

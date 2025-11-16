@@ -19,6 +19,7 @@ export default function CheckoutPage() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   // ✅ 1. Pre-fill checkout info from logged-in user
   useEffect(() => {
@@ -81,16 +82,30 @@ export default function CheckoutPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!checkout.name || !checkout.email || !checkout.phone) {
+    const fullPhone = `${countryCode}${phoneNumber}`.replace(/\D/g, "");
+
+    if (!checkout.name || !checkout.email || !phoneNumber) {
       toast.error("Please fill in all required fields");
+      return;
+    }
+
+    // ✅ Email format validation
+    if (!emailRegex.test(checkout.email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    // ✅ Phone length validation
+    if (fullPhone.length < 7 || fullPhone.length > 15) {
+      toast.error("Phone number must be between 7 and 15 digits long");
       return;
     }
 
     dispatch(
       setCheckoutInfo({
-        name: checkout.name,
-        email: checkout.email,
-        phone: `${countryCode}${phoneNumber}`,
+        name: checkout.name.trim(),
+        email: checkout.email.trim(),
+        phone: `+${fullPhone}`,
         nationality: checkout.nationality,
       })
     );
@@ -98,13 +113,17 @@ export default function CheckoutPage() {
     router.push("/payment");
   };
 
-  // ✅ 4. Country dropdown logic
-  const filteredCountries = countryDialCodes.filter((country) =>
-    country.name.toLowerCase().includes(query.toLowerCase())
-  );
+  // ✅ Unified search by name or dial code
+  const filteredCountries = countryDialCodes.filter((country) => {
+    const lowerQuery = query.toLowerCase();
+    return (
+      country.name.toLowerCase().includes(lowerQuery) ||
+      country.dial_code.replace("+", "").startsWith(lowerQuery)
+    );
+  });
 
   const handleSelect = (dial_code: string) => {
-    setCountryCode(dial_code);
+    setCountryCode(dial_code.replace("+", "")); // store digits only
     setQuery("");
     setDropdownOpen(false);
   };
@@ -143,58 +162,61 @@ export default function CheckoutPage() {
               onChange={(e) =>
                 dispatch(updateCheckoutInfo({ email: e.target.value }))
               }
+              onBlur={(e) =>
+                dispatch(updateCheckoutInfo({ email: e.target.value.trim() }))
+              }
               required
             />
           </div>
 
-          {/* Phone */}
+          {/* Phone and country code */}
           <div>
             <label className="label">
               <span className="label-text">Phone Number</span>
             </label>
-
             <div className="flex gap-2 relative">
-              {/* Country Code */}
-              <div className="w-40 relative">
-                <input
-                  type="text"
-                  className="input input-bordered w-full"
-                  placeholder="+372"
-                  value={isFocused ? query : countryCode}
-                  onChange={(e) => {
-                    setQuery(e.target.value);
-                    setDropdownOpen(true);
-                  }}
-                  onFocus={() => {
-                    setIsFocused(true);
-                    setQuery("");
-                    setDropdownOpen(true);
-                  }}
-                  onBlur={() => {
-                    setTimeout(() => {
-                      setIsFocused(false);
-                      setDropdownOpen(false);
-                    }, 150);
-                  }}
-                />
-                {dropdownOpen && (
-                  <ul className="absolute z-20 mt-1 max-h-60 overflow-y-auto w-full bg-base-100 border border-base-300 rounded-box shadow-lg">
-                    {filteredCountries.map((country) => (
-                      <li
-                        key={country.code}
-                        className="px-3 py-2 cursor-pointer hover:bg-base-200"
-                        onMouseDown={() => handleSelect(country.dial_code)}
-                      >
-                        {country.name} ({country.dial_code})
-                      </li>
-                    ))}
-                    {filteredCountries.length === 0 && (
-                      <li className="px-3 py-2 text-sm text-gray-500">
-                        No results
-                      </li>
-                    )}
-                  </ul>
-                )}
+              <div className="flex gap-2 relative">
+                <div className="w-40 relative">
+                  <input
+                    type="text"
+                    className="input input-bordered w-full"
+                    placeholder="+372"
+                    value={isFocused ? query : `+${countryCode}`}
+                    onChange={(e) => {
+                      setQuery(e.target.value);
+                      setDropdownOpen(true);
+                    }}
+                    onFocus={() => {
+                      setIsFocused(true);
+                      setQuery("");
+                      setDropdownOpen(true);
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => {
+                        setIsFocused(false);
+                        setDropdownOpen(false);
+                      }, 150);
+                    }}
+                  />
+                  {dropdownOpen && (
+                    <ul className="absolute z-20 mt-1 max-h-60 overflow-y-auto w-full bg-base-100 border border-base-300 rounded-box shadow-lg">
+                      {filteredCountries.map((country) => (
+                        <li
+                          key={country.code}
+                          className="px-3 py-2 cursor-pointer hover:bg-base-200"
+                          onMouseDown={() => handleSelect(country.dial_code)}
+                        >
+                          {country.name} ({country.dial_code})
+                        </li>
+                      ))}
+                      {filteredCountries.length === 0 && (
+                        <li className="px-3 py-2 text-sm text-gray-500">
+                          No results
+                        </li>
+                      )}
+                    </ul>
+                  )}
+                </div>
               </div>
 
               <input

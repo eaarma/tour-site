@@ -13,6 +13,7 @@ import { OrderCreateRequestDto } from "@/types/order";
 import { CartItem as CartItemType } from "@/types/cart";
 import { tourScheduleService } from "@/lib/tourScheduleService";
 import ItemModal from "@/components/items/ItemModal";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function PaymentPage() {
   const cartItems = useSelector((state: RootState) =>
@@ -26,6 +27,8 @@ export default function PaymentPage() {
     "credit-card" | "pay-link"
   >("credit-card");
   const [loading, setLoading] = useState(false);
+
+  const { user, isAuthenticated } = useAuth();
 
   // Map cart items to summary
   const summaryItems = cartItems.map((item) => ({
@@ -63,6 +66,8 @@ export default function PaymentPage() {
       return;
     }
 
+    const isGuest = !isAuthenticated;
+
     setLoading(true);
 
     // ✅ Step 1: Revalidate schedules before placing order
@@ -93,7 +98,7 @@ export default function PaymentPage() {
         })),
       };
 
-      const order = await OrderService.create(orderRequest);
+      const order = await OrderService.create(orderRequest, isGuest);
 
       // ✅ Step 3: Send email confirmation
       await fetch("/api/send-confirmation", {

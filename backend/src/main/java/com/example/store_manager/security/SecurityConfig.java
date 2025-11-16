@@ -47,11 +47,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/tours/**").hasRole("MANAGER")
 
                         // Orders
-                        .requestMatchers(HttpMethod.GET, "/orders/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/orders/**").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/orders/**").hasRole("MANAGER")
-                        .requestMatchers(HttpMethod.PATCH, "/orders/**").hasRole("MANAGER")
-                        .requestMatchers(HttpMethod.DELETE, "/orders/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.GET, "/orders/guest/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/orders/guest").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/orders/**").hasAnyRole("MANAGER", "OWNER", "ADMIN", "USER")
+                        .requestMatchers(HttpMethod.POST, "/orders/**").hasAnyRole("MANAGER", "OWNER", "ADMIN", "USER")
+                        .requestMatchers(HttpMethod.PUT, "/orders/**").hasAnyRole("MANAGER", "OWNER", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/orders/**").hasAnyRole("MANAGER", "OWNER", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/orders/**").hasAnyRole("MANAGER", "OWNER", "ADMIN")
 
                         // Order items
                         .requestMatchers(HttpMethod.PATCH, "/orders/items/**")

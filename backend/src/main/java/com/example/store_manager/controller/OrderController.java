@@ -130,4 +130,34 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrderItemsByUser(userId));
     }
 
+    // 🔹 Guest checkout (no authentication)
+    @PostMapping("/guest")
+    public ResponseEntity<OrderResponseDto> createGuestOrder(
+            @RequestBody @Valid OrderCreateRequestDto dto) {
+
+        // userId = null → orderService will treat this as a guest order
+        return ResponseEntity.ok(orderService.createOrder(dto, null));
+    }
+
+    // Guest-safe order view
+    @GetMapping("/guest/{id}")
+    public ResponseEntity<OrderResponseDto> getGuestOrder(@PathVariable Long id) {
+        OrderResponseDto order = orderService.getOrderById(id);
+        if (order == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Remove sensitive fields from items for guests
+        if (order.getItems() != null) {
+            order.getItems().forEach(item -> {
+                item.setEmail(null);
+                item.setPhone(null);
+                // Optional: also hide name/nationality if you want
+                // item.setName(null);
+                // item.setNationality(null);
+            });
+        }
+
+        return ResponseEntity.ok(order);
+    }
 }

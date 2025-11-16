@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Item } from "@/types";
 import { Clock, Globe, MapPin, Euro, Users } from "lucide-react";
 import { formatDuration } from "@/utils/formatDuration";
@@ -10,21 +10,23 @@ interface HighlightedItemProps {
 }
 
 const HighlightedItem: React.FC<HighlightedItemProps> = ({ item }) => {
+  const router = useRouter();
   if (!item) return null;
 
-  // Prefer new images array → fallback to legacy image → fallback to default
   const mainImage =
     (Array.isArray((item as any).images) && (item as any).images[0]) ||
     (item as any).image ||
     "/images/default.jpg";
 
+  const handleNavigate = () => router.push(`/items/${item.id}`);
+
   return (
-    <Link
-      href={`/items/${item.id}`}
-      className="block group"
+    <div
+      className="block group cursor-pointer"
       aria-label={`View ${item.title}`}
+      onClick={handleNavigate}
     >
-      <div className="card bg-base-100 shadow-xl border overflow-hidden rounded-xl lg:flex lg:flex-row h-[310px]">
+      <div className="card bg-base-100 shadow-xl border overflow-hidden rounded-xl lg:flex lg:flex-row h-[310px] transition-shadow duration-200 group-hover:shadow-2xl">
         {/* Image */}
         <figure className="relative w-full lg:w-1/2 h-full flex-shrink-0">
           <img
@@ -77,17 +79,21 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ item }) => {
               <Euro className="w-5 h-5" />
               {item.price}
             </span>
-            <Link
-              href={`/items/${item.id}`}
+
+            {/* Button version — no nested link */}
+            <button
               className="btn btn-primary px-6"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNavigate();
+              }}
             >
               Book Now
-            </Link>
+            </button>
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 };
 

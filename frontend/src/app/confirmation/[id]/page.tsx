@@ -5,10 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import { OrderResponseDto } from "@/types/order";
 import toast from "react-hot-toast";
 import { OrderService } from "@/lib/orderService";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function ConfirmationPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
 
   const [order, setOrder] = useState<OrderResponseDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -19,7 +21,7 @@ export default function ConfirmationPage() {
 
     const fetchOrder = async () => {
       try {
-        const data = await OrderService.getById(id);
+        const data = await OrderService.getById(id, !isAuthenticated);
         setOrder(data);
       } catch (err) {
         console.error("Failed to fetch order", err);
@@ -34,7 +36,7 @@ export default function ConfirmationPage() {
     };
 
     fetchOrder();
-  }, [id, router]);
+  }, [id, isAuthenticated, router]);
 
   useEffect(() => {
     if (!order) return;
@@ -101,12 +103,16 @@ export default function ConfirmationPage() {
             <p>
               <strong>Name:</strong> {order.items[0].name}
             </p>
-            <p>
-              <strong>Email:</strong> {order.items[0].email}
-            </p>
-            <p>
-              <strong>Phone:</strong> {order.items[0].phone}
-            </p>
+            {isAuthenticated && (
+              <>
+                <p>
+                  <strong>Email:</strong> {order.items[0].email}
+                </p>
+                <p>
+                  <strong>Phone:</strong> {order.items[0].phone}
+                </p>
+              </>
+            )}
             {order.items[0].nationality && (
               <p>
                 <strong>Nationality:</strong> {order.items[0].nationality}
