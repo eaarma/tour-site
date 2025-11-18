@@ -52,47 +52,64 @@ public class AuthenticationController {
         private final ShopUserRepository shopUserRepository;
 
         @PostMapping("/register/user")
-        public ResponseEntity<UserResponseDto> registerUser(@RequestBody @Valid UserRegisterRequestDto request) {
+        public ResponseEntity<?> registerUser(@RequestBody @Valid UserRegisterRequestDto request) {
+
+                String email = request.getEmail().trim().toLowerCase();
+
+                // Email uniqueness
+                if (userRepository.existsByEmail(email)) {
+                        throw new IllegalArgumentException("Email already in use");
+                }
+
+                // Build new user
                 User newUser = User.builder()
-                                .email(request.getEmail())
+                                .email(email)
                                 .password(passwordEncoder.encode(request.getPassword()))
-                                .name(request.getName())
-                                .phone(request.getPhone())
+                                .name(request.getName().trim())
+                                .phone(request.getPhone() != null ? request.getPhone().trim() : null)
                                 .nationality(request.getNationality())
                                 .createdAt(LocalDateTime.now())
                                 .role(Role.USER)
                                 .build();
 
-                User savedUser = userRepository.save(newUser);
+                User saved = userRepository.save(newUser);
 
                 return ResponseEntity.ok(UserResponseDto.builder()
-                                .id(savedUser.getId())
-                                .name(savedUser.getName())
-                                .email(savedUser.getEmail())
-                                .role(savedUser.getRole().name())
+                                .id(saved.getId())
+                                .name(saved.getName())
+                                .email(saved.getEmail())
+                                .role(saved.getRole().name())
                                 .build());
         }
 
         @PostMapping("/register/manager")
-        public ResponseEntity<UserResponseDto> registerAdmin(@RequestBody @Valid ManagerRegisterRequestDto request) {
-                User newAdmin = User.builder()
-                                .email(request.getEmail())
+        public ResponseEntity<?> registerManager(@RequestBody @Valid ManagerRegisterRequestDto request) {
+
+                String email = request.getEmail().trim().toLowerCase();
+
+                if (userRepository.existsByEmail(email)) {
+                        throw new IllegalArgumentException("Email already in use");
+                }
+
+                User manager = User.builder()
+                                .email(email)
                                 .password(passwordEncoder.encode(request.getPassword()))
-                                .name(request.getName())
+                                .name(request.getName().trim())
                                 .phone(request.getPhone())
-                                .role(Role.MANAGER)
                                 .bio(request.getBio())
                                 .experience(request.getExperience())
                                 .languages(request.getLanguages())
                                 .createdAt(LocalDateTime.now())
+                                .role(Role.MANAGER)
                                 .build();
 
-                User savedAdmin = userRepository.save(newAdmin);
+                User saved = userRepository.save(manager);
 
+                // Auto assign shop
                 Shop shop = shopAssignmentUtil.assignRandomShopToManager();
                 ShopUser shopUser = ShopUser.builder()
                                 .shop(shop)
-                                .user(savedAdmin)
+                                .user(saved)
                                 .role(ShopUserRole.MANAGER)
                                 .status(ShopUserStatus.ACTIVE)
                                 .createdAt(LocalDateTime.now())
@@ -101,32 +118,50 @@ public class AuthenticationController {
                 shopUserRepository.save(shopUser);
 
                 return ResponseEntity.ok(UserResponseDto.builder()
-                                .id(savedAdmin.getId())
-                                .name(savedAdmin.getName())
-                                .email(savedAdmin.getEmail())
-                                .role(savedAdmin.getRole().name())
+                                .id(saved.getId())
+                                .name(saved.getName())
+                                .email(saved.getEmail())
+                                .role(saved.getRole().name())
                                 .build());
         }
 
         @PostMapping("/login")
-        public ResponseEntity<?> login(@RequestBody LoginRequestDto loginDto, HttpServletResponse response,
+        public ResponseEntity<?> login(
+                        @RequestBody LoginRequestDto loginDto,
+                        HttpServletResponse response,
                         @Value("${spring.profiles.active:dev}") String activeProfile) {
-                Authentication authentication = authManager.authenticate(
-                                new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword()));
 
-                User user = userRepository.findByEmail(loginDto.getEmail()).orElseThrow();
+                // Basic input safety
+                if (loginDto.getEmail() == null || loginDto.getPassword() == null) {
+                        throw new IllegalArgumentException("Email and password are required");
+                }
+
+                String email = loginDto.getEmail().trim().toLowerCase();
+                String password = loginDto.getPassword();
+
+                if (!email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+                        throw new IllegalArgumentException("Invalid email format");
+                }
+
+                Authentication authentication;
+                try {
+                        authentication = authManager.authenticate(
+                                        new UsernamePasswordAuthenticationToken(email, password));
+                } catch (Exception e) {
+                        throw new IllegalArgumentException("Invalid email or password");
+                }
+
+                User user = userRepository.findByEmail(email).orElseThrow();
 
                 String accessToken = jwtService.generateToken(authentication);
-
-                // Determine if cookie should be secure
                 boolean isSecure = "prod".equals(activeProfile);
 
                 ResponseCookie cookie = ResponseCookie.from("accessToken", accessToken)
                                 .httpOnly(true)
                                 .secure(isSecure)
                                 .path("/")
-                                .maxAge(24 * 60 * 60) // 1 day
                                 .sameSite("Strict")
+                                .maxAge(24 * 60 * 60)
                                 .build();
 
                 response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());

@@ -67,9 +67,11 @@ public class SecurityConfig {
 
                         // Tour Schedules
                         .requestMatchers(HttpMethod.GET, "/schedules/**").permitAll() // ✅ anyone can view
-                        .requestMatchers(HttpMethod.POST, "/schedules/**").hasRole("MANAGER") // ✅ only MANAGER
-                        .requestMatchers(HttpMethod.PATCH, "/schedules/**").hasRole("MANAGER") // ✅ only MANAGER
-                        .requestMatchers(HttpMethod.DELETE, "/schedules/**").hasRole("MANAGER")// ✅ only MANAGER
+                        .requestMatchers(HttpMethod.POST, "/schedules/**").hasRole("MANAGER") // ✅ only MANAGER or above
+                        .requestMatchers(HttpMethod.PATCH, "/schedules/**").hasRole("MANAGER") // ✅ only MANAGER or
+                                                                                               // above
+                        .requestMatchers(HttpMethod.DELETE, "/schedules/**").hasRole("MANAGER")// ✅ only MANAGER or
+                                                                                               // above
 
                         // All other requests require authentication
                         .anyRequest().authenticated())
@@ -87,8 +89,7 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(List.of("http://localhost:3000", "http://127.0.0.1:3000"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
-        config.setExposedHeaders(List.of("Authorization")); // so frontend can read token if returned
-        config.setExposedHeaders(List.of(HttpHeaders.SET_COOKIE));
+        config.setExposedHeaders(List.of("Authorization", HttpHeaders.SET_COOKIE));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
@@ -111,12 +112,6 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
-    }
-
-    // Test
-    @PostConstruct
-    public void init() {
-        System.out.println(">> JwtAuthenticationFilter injected: " + (jwtAuthFilter != null));
     }
 
 }

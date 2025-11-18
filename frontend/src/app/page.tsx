@@ -37,23 +37,6 @@ export default function Home() {
     fetchData();
   }, []);
 
-  // Search handler
-  const handleSearch = (keyword: string) => {
-    if (!keyword) {
-      setItems(allItems);
-      return;
-    }
-
-    const lowerKeyword = keyword.toLowerCase();
-    const filtered = allItems.filter(
-      (item) =>
-        item.title.toLowerCase().includes(lowerKeyword) ||
-        item.description.toLowerCase().includes(lowerKeyword)
-    );
-
-    setItems(filtered);
-  };
-
   return (
     <main className="flex flex-col items-center justify-start min-h-screen p-4 max-w-7xl mx-auto">
       <div className="w-full space-y-6 mt-5">

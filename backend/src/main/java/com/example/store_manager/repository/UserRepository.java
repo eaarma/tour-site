@@ -9,4 +9,6 @@ import com.example.store_manager.model.User;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
+
+    boolean existsByEmail(String email);
 }
