@@ -26,52 +26,63 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final CustomUserDetailsService userDetailsService;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
+    protected void doFilterInternal(
+            HttpServletRequest request,
             HttpServletResponse response,
-            FilterChain filterChain)
-            throws ServletException, IOException {
-
-        System.out.println(">>> JwtAuthenticationFilter called for " + request.getRequestURI());
+            FilterChain filterChain) throws ServletException, IOException {
 
         String jwt = null;
         String username = null;
 
-        // 1) Try Authorization header
+        // ---------------------------------------------------------
+        // 1) Check Authorization header
+        // ---------------------------------------------------------
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            jwt = authHeader.substring(7);
-            username = jwtService.getUsernameFromToken(jwt);
+            String token = authHeader.substring(7);
+            try {
+                if (jwtService.validateAccessToken(token)) {
+                    jwt = token;
+                    username = jwtService.getUsernameFromToken(jwt);
+                }
+            } catch (Exception ignored) {
+                // Invalid token → ignore and continue unauthenticated
+            }
         }
 
-        // 2) If not found, try cookies
-        if (jwt == null) {
-            if (request.getCookies() != null) {
-                for (Cookie cookie : request.getCookies()) {
-                    if ("accessToken".equals(cookie.getName())) {
-                        jwt = cookie.getValue();
-                        username = jwtService.getUsernameFromToken(jwt);
-                        System.out.println(">>> JWT token extracted from cookie: " + jwt);
-                        break;
+        // ---------------------------------------------------------
+        // 2) Check cookie if no header token found
+        // ---------------------------------------------------------
+        if (jwt == null && request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("accessToken".equals(cookie.getName())) {
+                    String token = cookie.getValue();
+                    try {
+                        if (jwtService.validateAccessToken(token)) {
+                            jwt = token;
+                            username = jwtService.getUsernameFromToken(jwt);
+                        }
+                    } catch (Exception ignored) {
+                        // Ignore invalid token
                     }
                 }
             }
         }
 
-        System.out.println(">>> Username from token: " + username);
+        // ---------------------------------------------------------
+        // 3) Authenticate only if token was valid
+        // ---------------------------------------------------------
+        if (jwt != null && username != null &&
+                SecurityContextHolder.getContext().getAuthentication() == null) {
 
-        // 3) Authenticate
-        if (jwt != null && username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-            if (jwtService.validateToken(jwt)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities());
+            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    null,
+                    userDetails.getAuthorities());
 
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-                System.out.println(">>>>> Authenticated user: " + username);
-            }
+            SecurityContextHolder.getContext().setAuthentication(auth);
         }
 
         filterChain.doFilter(request, response);

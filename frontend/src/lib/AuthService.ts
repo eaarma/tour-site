@@ -1,4 +1,4 @@
-import api from "@/lib/axios"; // for authenticated requests
+import api from "@/lib/axios";
 import {
   UserResponseDto,
   ManagerRegisterRequestDto,
@@ -27,7 +27,6 @@ export const AuthService = {
 
   login: async (data: LoginRequestDto): Promise<UserResponseDto> => {
     const res = await api.post("/auth/login", data);
-    // With credentials: true to receive JWT cookie
     return res.data;
   },
 
@@ -35,8 +34,10 @@ export const AuthService = {
     await api.post("/auth/logout");
   },
 
-  refresh: async (refreshToken: string) => {
-    const res = await api.post("/auth/refresh", { refreshToken });
+  // You can keep this if you ever call refresh manually,
+  // but axios.interceptor already does it automatically.
+  refresh: async () => {
+    const res = await api.post("/auth/refresh");
     return res.data;
   },
 

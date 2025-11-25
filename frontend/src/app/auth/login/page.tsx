@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AuthService } from "@/lib/authService";
 import { useDispatch } from "react-redux";
 import { setUser } from "@/store/authSlice";
+import toast from "react-hot-toast";
 
 const redirectByRole = (role: string) => {
   switch (role) {
@@ -24,16 +25,31 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
+  const searchParams = useSearchParams();
   const dispatch = useDispatch();
+  const toastShown = useRef(false);
+
+  // 🔹 Show toast if redirected from expired session
+  useEffect(() => {
+    if (toastShown.current) return;
+
+    const expired = searchParams.get("sessionExpired");
+    if (expired === "1") {
+      toastShown.current = true;
+      toast.error("Your session has expired. Please log in again.");
+
+      // Remove query param after showing toast
+      router.replace("/auth/login");
+    }
+  }, [searchParams, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
       const user = await AuthService.login({ email, password });
-
       dispatch(setUser(user));
       router.push(redirectByRole(user.role));
     } catch (err) {
