@@ -2,6 +2,7 @@ package com.example.store_manager.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,4 +35,19 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
 
         @Query(value = "SELECT * FROM tours WHERE status = 'ACTIVE' ORDER BY random() LIMIT 1", nativeQuery = true)
         Optional<Tour> findRandomActiveTour();
+
+        @Query("""
+                            SELECT t.shop.id
+                            FROM Tour t
+                            WHERE t.id = :tourId
+                        """)
+        Long findShopIdByTourId(@Param("tourId") Long tourId);
+
+        @Query("""
+                            SELECT s.tour.id
+                            FROM TourSchedule s
+                            WHERE s.id = :scheduleId
+                        """)
+        Long findTourIdByScheduleId(@Param("scheduleId") Long scheduleId);
+
 }

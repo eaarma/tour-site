@@ -11,47 +11,51 @@ import { OrderItemResponseDto } from "@/types/order";
 import { TourService } from "@/lib/tourService";
 import { OrderService } from "@/lib/orderService";
 import RequireAuth from "@/components/common/RequireAuth";
+import { useShopAccess } from "@/hooks/useShopAccess";
+import Unauthorized from "@/components/common/Unauthorized";
 
 export default function ShopManagerPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const shopIdParam = searchParams.get("shopId");
 
-  const [shopId, setShopId] = useState<number | null>(
-    shopIdParam ? Number(shopIdParam) : null
-  );
+  const shopIdParam = searchParams.get("shopId");
+  const shopId = shopIdParam ? Number(shopIdParam) : null;
+
+  const access = useShopAccess(shopId ?? 0); // null | true | false
+
   const [tours, setTours] = useState<Tour[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemResponseDto[]>([]);
-  const [loading, setLoading] = useState(true);
 
+  // ============================
+  // 🔍 Fetch shop data only if allowed
+  // ============================
   useEffect(() => {
-    const fetchData = async () => {
-      if (!shopId) {
-        setLoading(false);
-        return;
-      }
+    if (!shopId || access !== true) return;
 
+    const load = async () => {
       try {
-        // Fetch shop-specific data
         const shopTours = await TourService.getByShopId(shopId);
         setTours(shopTours);
-
         const shopOrderItems = await OrderService.getItemsByShopId(shopId);
         setOrderItems(shopOrderItems);
       } catch (err) {
         console.error("Error loading manager page data", err);
-      } finally {
-        setLoading(false);
       }
     };
 
-    fetchData();
-  }, [shopId]);
+    load();
+  }, [shopId, access]);
 
-  if (loading) {
-    return <div className="p-6">Loading shop data...</div>;
+  // ============================
+  // 🌀 Loading state (auth + access)
+  // ============================
+  if (access === null) {
+    return <div className="p-6">Loading shop access...</div>;
   }
 
+  // ============================
+  // ❌ No shopId provided
+  // ============================
   if (!shopId) {
     return (
       <div className="p-6">
@@ -66,21 +70,29 @@ export default function ShopManagerPage() {
     );
   }
 
+  // ============================
+  // 🚫 User is not a member → show Unauthorized component
+  // ============================
+  if (access === false) {
+    return <Unauthorized />;
+  }
+
+  // ============================
+  // ✅ Authorized → show manager page
+  // ============================
   return (
-    <RequireAuth requiredRole="MANAGER">
-      <div className="p-6 space-y-8">
-        {/* 🏪 Shop Header */}
-        <ManagerShopSection shopId={shopId} />
+    <div className="p-6 space-y-8">
+      {/* 🏪 Shop Section */}
+      <ManagerShopSection shopId={shopId} />
 
-        {/* 📊 Shop Statistics */}
-        <ManagerStatisticsSection tours={tours} orderItems={orderItems} />
+      {/* 📊 Statistics */}
+      <ManagerStatisticsSection tours={tours} orderItems={orderItems} />
 
-        {/* 🧾 Orders */}
-        <ManagerOrderSection orderItems={orderItems} tours={tours} />
+      {/* 🧾 Orders */}
+      <ManagerOrderSection orderItems={orderItems} tours={tours} />
 
-        {/* 🧭 Items (Tours) */}
-        <ManagerItemList items={tours} shopId={shopId} />
-      </div>
-    </RequireAuth>
+      {/* 🧭 Items */}
+      <ManagerItemList items={tours} shopId={shopId} />
+    </div>
   );
 }

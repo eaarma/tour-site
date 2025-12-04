@@ -1,10 +1,13 @@
 package com.example.store_manager.controller;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,9 +16,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.store_manager.dto.shop.ShopMembershipStatusDto;
 import com.example.store_manager.dto.shop.ShopUserDto;
 import com.example.store_manager.dto.shop.ShopUserStatusDto;
 import com.example.store_manager.security.CurrentUserService;
+import com.example.store_manager.security.CustomUserDetails;
 import com.example.store_manager.service.ShopUserService;
 
 import lombok.RequiredArgsConstructor;
@@ -33,6 +38,11 @@ public class ShopUserController {
         return ResponseEntity.ok(shopUserService.getUsersByShopId(shopId));
     }
 
+    @GetMapping("/shop/{shopId}/active")
+    public ResponseEntity<List<ShopUserDto>> getActiveMembers(@PathVariable Long shopId) {
+        return ResponseEntity.ok(shopUserService.getActiveMembersForShop(shopId));
+    }
+
     @GetMapping("/user/me")
     public ResponseEntity<List<ShopUserStatusDto>> getShopsForCurrentUser() {
         UUID currentUserId = currentUserService.getCurrentUserId();
@@ -44,8 +54,7 @@ public class ShopUserController {
             @PathVariable Long shopId,
             @PathVariable UUID userId,
             @RequestParam String role) {
-        UUID currentUserId = currentUserService.getCurrentUserId();
-        shopUserService.addUserToShop(shopId, userId, role, currentUserId);
+        shopUserService.addUserToShop(shopId, userId, role);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -54,8 +63,7 @@ public class ShopUserController {
             @PathVariable Long shopId,
             @PathVariable UUID userId,
             @RequestParam String status) {
-        UUID currentUserId = currentUserService.getCurrentUserId();
-        shopUserService.updateUserStatus(shopId, userId, status, currentUserId);
+        shopUserService.updateUserStatus(shopId, userId, status);
         return ResponseEntity.ok().build();
     }
 
@@ -64,8 +72,7 @@ public class ShopUserController {
             @PathVariable Long shopId,
             @PathVariable UUID userId,
             @RequestParam String role) {
-        UUID currentUserId = currentUserService.getCurrentUserId();
-        shopUserService.updateUserRole(shopId, userId, role, currentUserId);
+        shopUserService.updateUserRole(shopId, userId, role);
         return ResponseEntity.ok().build();
     }
 
@@ -74,6 +81,20 @@ public class ShopUserController {
         UUID currentUserId = currentUserService.getCurrentUserId();
         shopUserService.requestJoinShop(shopId, currentUserId);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @GetMapping("/membership/{shopId}")
+    public ShopMembershipStatusDto checkMembership(
+            @PathVariable Long shopId,
+            Authentication authentication) {
+
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
+            throw new IllegalArgumentException("Unauthenticated");
+        }
+
+        UUID currentUserId = userDetails.getId();
+
+        return shopUserService.getMembership(shopId, currentUserId);
     }
 
 }

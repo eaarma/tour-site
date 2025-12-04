@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import com.example.store_manager.model.User;
 
@@ -22,12 +23,10 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secret;
 
-    // Short-lived access token (default 15 minutes)
-    @Value("${jwt.access-expiration-ms:900000}")
+    @Value("${jwt.access-expiration-ms:900000}") // default 15 min
     private long accessExpirationMs;
 
-    // Longer-lived refresh token (default 7 days)
-    @Value("${jwt.refresh-expiration-ms:604800000}")
+    @Value("${jwt.refresh-expiration-ms:604800000}") // default 7 days
     private long refreshExpirationMs;
 
     private Key key;
@@ -37,7 +36,9 @@ public class JwtService {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    // ---------- Helpers ----------
+    // ---------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------
 
     private Claims parseClaims(String token) {
         return Jwts.parserBuilder()
@@ -47,55 +48,63 @@ public class JwtService {
                 .getBody();
     }
 
+    // ✔️ REQUIRED (kept exactly as you asked)
     public String getUsernameFromToken(String token) {
+        // Now returns the UUID string (subject)
         return parseClaims(token).getSubject();
+    }
+
+    public UUID getUserId(String token) {
+        return UUID.fromString(parseClaims(token).getSubject());
+    }
+
+    public String getEmail(String token) {
+        return parseClaims(token).get("email", String.class);
+    }
+
+    public String getRole(String token) {
+        return parseClaims(token).get("role", String.class);
     }
 
     public String getTokenType(String token) {
         return parseClaims(token).get("typ", String.class);
     }
 
-    // ---------- Access token ----------
+    // ---------------------------------------------------
+    // Access Token
+    // ---------------------------------------------------
 
     public String generateAccessToken(User user) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", user.getRole().name());
+        claims.put("email", user.getEmail());
         claims.put("typ", "access");
 
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(user.getEmail())
+                .setSubject(user.getId().toString()) // ✔️ UUID as subject
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + accessExpirationMs))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // Optional overload if you still want the Authentication version:
-    public String generateAccessToken(Authentication authentication) {
-        CustomUserDetails userPrincipal = (CustomUserDetails) authentication.getPrincipal();
-        User user = userPrincipal.getUser(); // or look up by email
-        return generateAccessToken(user);
-    }
-
     public boolean validateAccessToken(String token) {
         try {
             Claims claims = parseClaims(token);
 
-            // Must be access token
-            if (!"access".equals(claims.get("typ", String.class))) {
+            if (!"access".equals(claims.get("typ", String.class)))
                 return false;
-            }
 
-            // Must NOT be expired
             return claims.getExpiration().after(new Date());
-
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
     }
 
-    // ---------- Refresh token ----------
+    // ---------------------------------------------------
+    // Refresh Token
+    // ---------------------------------------------------
 
     public String generateRefreshToken(User user) {
         Map<String, Object> claims = new HashMap<>();
@@ -103,20 +112,20 @@ public class JwtService {
 
         return Jwts.builder()
                 .setClaims(claims)
-                .setSubject(user.getEmail())
+                .setSubject(user.getId().toString()) // ✔️ UUID as subject
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + refreshExpirationMs))
-                .signWith(key, SignatureAlgorithm.HS256) // ✅ new style
+                .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public boolean validateRefreshToken(String token) {
         try {
             Claims claims = parseClaims(token);
-            if (!"refresh".equals(claims.get("typ", String.class))) {
-                return false;
-            }
-            return true;
+
+            return "refresh".equals(claims.get("typ", String.class))
+                    && claims.getExpiration().after(new Date());
+
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }

@@ -1,35 +1,27 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AuthService } from "@/lib/authService";
-import { useDispatch } from "react-redux";
-import { setUser } from "@/store/authSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { clearUser, setUser } from "@/store/authSlice";
 import toast from "react-hot-toast";
-
-const redirectByRole = (role: string) => {
-  switch (role) {
-    case "ADMIN":
-    case "MANAGER":
-      return "/shops";
-    case "USER":
-    default:
-      return "/user";
-  }
-};
 
 export default function LoginPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
+  const searchParams = useSearchParams();
+
+  const user = useSelector((state: any) => state.auth.user); // <-- logged-in check
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const searchParams = useSearchParams();
-  const dispatch = useDispatch();
   const toastShown = useRef(false);
+  const pathname = usePathname();
 
-  // 🔹 Show toast if redirected from expired session
+  // Redirect toast
   useEffect(() => {
     if (toastShown.current) return;
 
@@ -37,12 +29,51 @@ export default function LoginPage() {
     if (expired === "1") {
       toastShown.current = true;
       toast.error("Your session has expired. Please log in again.");
-
-      // Remove query param after showing toast
       router.replace("/auth/login");
     }
   }, [searchParams, router]);
 
+  const handleLogout = () => {
+    dispatch(clearUser());
+    fetch("http://localhost:8080/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    }).finally(() => {
+      if (pathname?.startsWith("/user") || pathname?.startsWith("/manager")) {
+        router.push("/");
+      } else {
+        router.refresh();
+      }
+    });
+  };
+
+  // 🔹 If already logged in → show message instead of login form
+  if (user) {
+    return (
+      <main className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="card bg-base-300 shadow-lg p-8 max-w-md w-full text-center space-y-4">
+          <h2 className="text-2xl font-bold">You are already logged in</h2>
+          <p className="opacity-80">
+            Log out or navigate back to the home page.
+          </p>
+
+          <div className="flex flex-col gap-3 mt-4">
+            <button className="btn btn-error" onClick={() => handleLogout()}>
+              Log Out
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => router.push("/")}
+            >
+              Go to Home
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Normal login flow
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -51,7 +82,11 @@ export default function LoginPage() {
     try {
       const user = await AuthService.login({ email, password });
       dispatch(setUser(user));
-      router.push(redirectByRole(user.role));
+
+      const redirect =
+        user.role === "ADMIN" || user.role === "MANAGER" ? "/shops" : "/user";
+
+      router.push(redirect);
     } catch (err) {
       setError("Invalid email or password");
     } finally {
@@ -62,7 +97,6 @@ export default function LoginPage() {
   return (
     <main className="flex flex-col items-center justify-start min-h-screen pt-24 px-4">
       <div className="w-full max-w-md space-y-8">
-        {/* User login card */}
         <div className="card shadow-lg bg-base-300 p-8">
           <h2 className="text-2xl font-bold mb-4">User Login</h2>
           <form onSubmit={handleLogin} className="flex flex-col gap-4">
@@ -93,30 +127,6 @@ export default function LoginPage() {
           </form>
 
           {error && <p className="text-error text-sm mt-2">{error}</p>}
-
-          <div className="mt-4 text-sm text-center space-y-2">
-            <div>
-              Don’t have an account?{" "}
-              <button
-                className="link link-primary"
-                onClick={() => router.push("/auth/register/user")}
-              >
-                Register
-              </button>
-            </div>
-
-            <div className="divider text-xs">or</div>
-
-            <div>
-              Want to share your expertise?{" "}
-              <button
-                className="link link-secondary"
-                onClick={() => router.push("/auth/register/manager")}
-              >
-                Become a Tour Guide
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </main>

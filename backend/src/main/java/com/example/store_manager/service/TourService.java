@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import com.example.store_manager.dto.tour.TourCreateDto;
@@ -20,6 +21,8 @@ import com.example.store_manager.model.TourCategory;
 import com.example.store_manager.model.TourImage;
 import com.example.store_manager.repository.ShopRepository;
 import com.example.store_manager.repository.TourRepository;
+import com.example.store_manager.security.annotations.AccessLevel;
+import com.example.store_manager.security.annotations.ShopAccess;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +35,8 @@ public class TourService {
     private final TourMapper tourMapper;
     private final ShopRepository shopRepository;
 
-    public TourResponseDto createTour(TourCreateDto dto, Principal principal) {
+    @ShopAccess(AccessLevel.MANAGER)
+    public TourResponseDto createTour(Long shopId, TourCreateDto dto, Principal principal) {
         Shop shop = shopRepository.findById(dto.getShopId())
                 .orElseThrow(() -> new RuntimeException("Shop not found"));
 
@@ -44,8 +48,9 @@ public class TourService {
     }
 
     @Transactional
-    public TourResponseDto updateTour(Long id, TourCreateDto dto) {
-        Tour tour = tourRepository.findById(id)
+    @ShopAccess(AccessLevel.MANAGER)
+    public TourResponseDto updateTour(Long tourId, TourCreateDto dto) {
+        Tour tour = tourRepository.findById(tourId)
                 .orElseThrow(() -> new RuntimeException("Tour not found"));
 
         // Update simple fields

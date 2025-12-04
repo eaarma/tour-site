@@ -45,8 +45,7 @@ public class ShopController {
     public ResponseEntity<ShopDto> updateShop(
             @PathVariable Long shopId,
             @RequestBody ShopCreateRequestDto dto) {
-        UUID currentUserId = currentUserService.getCurrentUserId();
-        ShopDto updatedShop = shopService.updateShop(shopId, dto, currentUserId);
+        ShopDto updatedShop = shopService.updateShop(shopId, dto);
         return ResponseEntity.ok(updatedShop);
     }
 

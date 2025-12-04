@@ -1,6 +1,7 @@
 package com.example.store_manager.security;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,7 +18,9 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -30,61 +33,47 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
+        log.info("🔥 JwtAuthenticationFilter - filter entered");
 
-        String jwt = null;
-        String username = null;
+        String token = extractToken(request);
 
-        // ---------------------------------------------------------
-        // 1) Check Authorization header
-        // ---------------------------------------------------------
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            try {
-                if (jwtService.validateAccessToken(token)) {
-                    jwt = token;
-                    username = jwtService.getUsernameFromToken(jwt);
-                }
-            } catch (Exception ignored) {
-                // Invalid token → ignore and continue unauthenticated
+        log.info("🔥 Incoming JWT token = {}" + token);
+
+        if (token != null && jwtService.validateAccessToken(token)) {
+            UUID userId = jwtService.getUserId(token);
+
+            if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
+                UserDetails userDetails = userDetailsService.loadUserById(userId);
+
+                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities());
+
+                SecurityContextHolder.getContext().setAuthentication(auth);
             }
-        }
-
-        // ---------------------------------------------------------
-        // 2) Check cookie if no header token found
-        // ---------------------------------------------------------
-        if (jwt == null && request.getCookies() != null) {
-            for (Cookie cookie : request.getCookies()) {
-                if ("accessToken".equals(cookie.getName())) {
-                    String token = cookie.getValue();
-                    try {
-                        if (jwtService.validateAccessToken(token)) {
-                            jwt = token;
-                            username = jwtService.getUsernameFromToken(jwt);
-                        }
-                    } catch (Exception ignored) {
-                        // Ignore invalid token
-                    }
-                }
-            }
-        }
-
-        // ---------------------------------------------------------
-        // 3) Authenticate only if token was valid
-        // ---------------------------------------------------------
-        if (jwt != null && username != null &&
-                SecurityContextHolder.getContext().getAuthentication() == null) {
-
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    userDetails,
-                    null,
-                    userDetails.getAuthorities());
-
-            SecurityContextHolder.getContext().setAuthentication(auth);
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private String extractToken(HttpServletRequest request) {
+        // 1. Try Bearer header
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7);
+        }
+
+        // 2. Try cookie
+        if (request.getCookies() != null) {
+            for (Cookie c : request.getCookies()) {
+                if ("accessToken".equals(c.getName())) {
+                    return c.getValue();
+                }
+            }
+        }
+
+        return null;
     }
 }

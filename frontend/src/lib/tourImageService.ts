@@ -1,4 +1,4 @@
-import api from "@/lib/axios"; // for authenticated requests
+import api from "@/lib/api/axios"; // for authenticated requests
 import { TourImage } from "@/types/tour";
 
 export const tourImageService = {

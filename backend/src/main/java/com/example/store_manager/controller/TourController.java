@@ -31,7 +31,8 @@ public class TourController {
     @PostMapping
     public ResponseEntity<TourResponseDto> createTour(@RequestBody @Valid TourCreateDto dto,
             Principal principal) {
-        return ResponseEntity.ok(tourService.createTour(dto, principal));
+        long shopId = dto.getShopId();
+        return ResponseEntity.ok(tourService.createTour(shopId, dto, principal));
     }
 
     @PutMapping("/{id}")

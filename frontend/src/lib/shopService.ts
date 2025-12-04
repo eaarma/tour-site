@@ -1,4 +1,4 @@
-import api from "./axios";
+import api from "./api/axios";
 import { ShopDto, ShopCreateRequestDto } from "@/types/shop";
 
 const BASE_URL = "/shops";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { OrderItemResponseDto, OrderStatus } from "@/types/order";
 import { Tour } from "@/types";
 import CardFrame from "@/components/common/CardFrame";
@@ -16,7 +16,6 @@ import { useAuth } from "@/hooks/useAuth";
 interface Props {
   orderItems: OrderItemResponseDto[];
   tours: Tour[];
-  shopMembers: { userId: string; userName: string }[];
 }
 
 const ACTIVE_STATUSES: (OrderStatus | "ALL")[] = [
@@ -31,11 +30,7 @@ const PAST_STATUSES: (OrderStatus | "ALL")[] = [
   "CANCELLED_CONFIRMED",
 ];
 
-export default function ManagerOrderSection({
-  orderItems,
-  tours,
-  shopMembers,
-}: Props) {
+export default function ManagerOrderSection({ orderItems, tours }: Props) {
   const [activeTab, setActiveTab] = useState<"active" | "past">("active");
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [items, setItems] = useState(orderItems);
@@ -45,6 +40,10 @@ export default function ManagerOrderSection({
   const [toDate, setToDate] = useState<Date | null>(null);
 
   const { user } = useAuth();
+
+  useEffect(() => {
+    setItems(orderItems);
+  }, [orderItems]);
 
   const selectedItem = selectedItemId
     ? items.find((i) => i.id === selectedItemId) || null

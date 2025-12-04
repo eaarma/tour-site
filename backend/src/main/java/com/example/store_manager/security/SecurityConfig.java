@@ -10,6 +10,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -26,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 
 @Configuration
 @RequiredArgsConstructor
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
@@ -67,12 +69,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/shop-users/**").authenticated()
 
                         // Tour Schedules
-                        .requestMatchers(HttpMethod.GET, "/schedules/**").permitAll() // ✅ anyone can view
-                        .requestMatchers(HttpMethod.POST, "/schedules/**").hasRole("MANAGER") // ✅ only MANAGER or above
-                        .requestMatchers(HttpMethod.PATCH, "/schedules/**").hasRole("MANAGER") // ✅ only MANAGER or
-                                                                                               // above
-                        .requestMatchers(HttpMethod.DELETE, "/schedules/**").hasRole("MANAGER")// ✅ only MANAGER or
-                                                                                               // above
+                        .requestMatchers(HttpMethod.GET, "/schedules/**").permitAll() // anyone can view
+                        .requestMatchers(HttpMethod.POST, "/schedules/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.PATCH, "/schedules/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/schedules/**").hasRole("MANAGER")
 
                         // All other requests require authentication
                         .anyRequest().authenticated())

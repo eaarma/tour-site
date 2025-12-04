@@ -35,7 +35,7 @@ export default function OwnershipModal({
     const fetchMembers = async () => {
       try {
         setLoadingMembers(true);
-        const members = await ShopUserService.getUsersForShop(shopId);
+        const members = await ShopUserService.getActiveUsersForShop(shopId);
         setShopMembers(members);
       } catch (err) {
         console.error(err);

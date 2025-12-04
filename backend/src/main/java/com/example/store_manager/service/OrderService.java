@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,8 @@ import com.example.store_manager.repository.OrderRepository;
 import com.example.store_manager.repository.TourRepository;
 import com.example.store_manager.repository.UserRepository;
 import com.example.store_manager.security.CustomUserDetails;
+import com.example.store_manager.security.annotations.AccessLevel;
+import com.example.store_manager.security.annotations.ShopAccess;
 import com.example.store_manager.repository.TourScheduleRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -50,6 +53,7 @@ public class OrderService {
          * Create a new order with multiple items.
          */
 
+        @ShopAccess(AccessLevel.MANAGER)
         @Transactional
         public OrderResponseDto createOrder(OrderCreateRequestDto dto, UUID userId) {
                 User user = null;
@@ -158,6 +162,7 @@ public class OrderService {
          * List all orders for a specific user.
          */
         @Transactional(readOnly = true)
+        @ShopAccess(AccessLevel.MANAGER)
         public List<OrderResponseDto> getOrdersByUser(UUID userId) {
                 return orderRepository.findByUserId(userId)
                                 .stream()
@@ -169,13 +174,9 @@ public class OrderService {
          * List all OrderItems for a given shop (provider) across all orders.
          */
         @Transactional(readOnly = true)
+        @ShopAccess(AccessLevel.MANAGER)
         public List<OrderItemResponseDto> getOrderItemsByShop(Long shopId) {
                 List<OrderItem> items = orderItemRepository.findByShopId(shopId);
-
-                for (OrderItem i : items) {
-                        System.out.println("OrderItem " + i.getId() + " manager: " +
-                                        (i.getManager() != null ? i.getManager().getName() : "null"));
-                }
 
                 return items.stream()
                                 .map(orderItemMapper::toDto)
@@ -183,6 +184,7 @@ public class OrderService {
         }
 
         @Transactional
+        @ShopAccess(AccessLevel.MANAGER)
         public OrderItemResponseDto assignManagerToOrderItem(Long itemId,
                         UUID newManagerId,
                         UUID actingUserId,
@@ -217,6 +219,7 @@ public class OrderService {
         }
 
         @Transactional
+        @ShopAccess(AccessLevel.MANAGER)
         public OrderItemResponseDto confirmOrderItem(Long itemId, UUID managerId) {
                 // 1️⃣ Get authenticated user
                 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -255,6 +258,7 @@ public class OrderService {
         }
 
         @Transactional
+        @ShopAccess(AccessLevel.MANAGER)
         public OrderItemResponseDto updateOrderItemStatus(Long itemId, OrderStatus status) {
                 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
@@ -289,6 +293,7 @@ public class OrderService {
         }
 
         @Transactional(readOnly = true)
+        @ShopAccess(AccessLevel.MANAGER)
         public List<OrderItemResponseDto> getOrderItemsByManager(UUID managerId) {
                 List<OrderItem> items = orderItemRepository.findByManagerId(managerId);
 

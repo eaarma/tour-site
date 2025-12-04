@@ -3,7 +3,7 @@ import {
   TourScheduleResponseDto,
   TourScheduleUpdateDto,
 } from "@/types/tourSchedule";
-import api from "./axios";
+import api from "./api/axios";
 
 const BASE_URL = "/schedules";
 

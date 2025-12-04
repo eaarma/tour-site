@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Modal from "@/components/common/Modal";
 import { Tour, OrderItemResponseDto, OrderStatus } from "@/types";
-import OwnershipModal from "./OwnerShipModal";
+import OwnershipModal from "./OwnershipModal";
 
 interface Props {
   isOpen: boolean;

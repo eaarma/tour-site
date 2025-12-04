@@ -10,7 +10,7 @@ import checkoutReducer from "./checkoutSlice";
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["cart"], // Only persist cart
+  whitelist: ["cart", "auth"],
 };
 
 const rootReducer = combineReducers({

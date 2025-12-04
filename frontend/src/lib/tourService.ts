@@ -1,5 +1,5 @@
 import { TourCreateDto, Tour } from "@/types";
-import api from "./axios";
+import api from "./api/axios";
 
 const BASE_URL = "/tours";
 

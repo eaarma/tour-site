@@ -1,11 +1,16 @@
 import { ShopUserDto, ShopUserStatusDto } from "@/types";
-import api from "./axios";
+import api from "./api/axios";
 
 const BASE_URL = "/api/shop-users";
 
 export const ShopUserService = {
   getUsersForShop: async (shopId: number): Promise<ShopUserDto[]> => {
     const res = await api.get(`${BASE_URL}/shop/${shopId}`);
+    return res.data;
+  },
+
+  getActiveUsersForShop: async (shopId: number): Promise<ShopUserDto[]> => {
+    const res = await api.get(`${BASE_URL}/shop/${shopId}/active`);
     return res.data;
   },
 
@@ -41,5 +46,10 @@ export const ShopUserService = {
 
   requestJoinShop: async (shopId: number): Promise<void> => {
     await api.post(`${BASE_URL}/shop/${shopId}/request`);
+  },
+
+  getMembership: async (shopId: number) => {
+    const res = await api.get(`${BASE_URL}/membership/${shopId}`);
+    return res.data; // returns ShopUserDto OR throws 404
   },
 };

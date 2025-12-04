@@ -3,6 +3,7 @@ package com.example.store_manager.controller;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -226,8 +227,9 @@ public class AuthenticationController {
                         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
                 }
 
-                String email = jwtService.getUsernameFromToken(token);
-                User user = userRepository.findByEmail(email).orElseThrow();
+                UUID userId = jwtService.getUserId(token);
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
 
                 UserResponseDto dto = UserResponseDto.builder()
                                 .id(user.getId())
@@ -240,7 +242,6 @@ public class AuthenticationController {
         }
 
         private ResponseCookie buildCookie(String name, String value, long maxAgeSeconds, boolean httpOnly) {
-                boolean isSecure = "prod".equals(activeProfile);
 
                 return ResponseCookie.from(name, value)
                                 .httpOnly(httpOnly)

@@ -1,5 +1,5 @@
 // handles fetching and updating profile info
-import api from "@/lib/axios";
+import api from "@/lib/api/axios";
 import { UserResponseDto } from "@/types/user";
 
 const BASE_URL = "/api/users";

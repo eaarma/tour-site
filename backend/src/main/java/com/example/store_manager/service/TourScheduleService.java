@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import com.example.store_manager.dto.schedule.TourScheduleCreateDto;
@@ -14,6 +15,8 @@ import com.example.store_manager.model.Tour;
 import com.example.store_manager.model.TourSchedule;
 import com.example.store_manager.repository.TourRepository;
 import com.example.store_manager.repository.TourScheduleRepository;
+import com.example.store_manager.security.annotations.AccessLevel;
+import com.example.store_manager.security.annotations.ShopAccess;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,16 +27,6 @@ public class TourScheduleService {
     private final TourScheduleRepository scheduleRepository;
     private final TourRepository tourRepository;
     private final TourScheduleMapper scheduleMapper;
-
-    public TourScheduleResponseDto createSchedule(TourScheduleCreateDto dto) {
-        Tour tour = tourRepository.findById(dto.getTourId())
-                .orElseThrow(() -> new RuntimeException("Tour not found"));
-
-        TourSchedule schedule = scheduleMapper.fromCreateDto(dto, tour);
-        schedule = scheduleRepository.save(schedule);
-
-        return scheduleMapper.toDto(schedule);
-    }
 
     public List<TourScheduleResponseDto> getAllSchedulesForTour(Long tourId) {
         return scheduleRepository.findByTourId(tourId).stream()
@@ -54,6 +47,18 @@ public class TourScheduleService {
         return scheduleMapper.toDto(schedule);
     }
 
+    @ShopAccess(AccessLevel.MANAGER)
+    public TourScheduleResponseDto createSchedule(TourScheduleCreateDto dto) {
+        Tour tour = tourRepository.findById(dto.getTourId())
+                .orElseThrow(() -> new RuntimeException("Tour not found"));
+
+        TourSchedule schedule = scheduleMapper.fromCreateDto(dto, tour);
+        schedule = scheduleRepository.save(schedule);
+
+        return scheduleMapper.toDto(schedule);
+    }
+
+    @ShopAccess(AccessLevel.MANAGER)
     public TourScheduleResponseDto updateSchedule(Long id, TourScheduleUpdateDto dto) {
         TourSchedule schedule = scheduleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Schedule not found"));
@@ -84,6 +89,7 @@ public class TourScheduleService {
         return scheduleMapper.toDto(schedule);
     }
 
+    @ShopAccess(AccessLevel.MANAGER)
     public void deleteSchedule(Long id) {
         if (!scheduleRepository.existsById(id)) {
             throw new RuntimeException("Schedule not found");
