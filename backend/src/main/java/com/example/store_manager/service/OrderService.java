@@ -29,6 +29,7 @@ import com.example.store_manager.repository.OrderItemRepository;
 import com.example.store_manager.repository.OrderRepository;
 import com.example.store_manager.repository.TourRepository;
 import com.example.store_manager.repository.UserRepository;
+import com.example.store_manager.security.CurrentUserService;
 import com.example.store_manager.security.CustomUserDetails;
 import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
@@ -48,12 +49,12 @@ public class OrderService {
         private final OrderItemMapper orderItemMapper;
         private final OrderItemRepository orderItemRepository;
         private final TourScheduleRepository tourScheduleRepository;
+        private final CurrentUserService currentUserService;
 
         /**
          * Create a new order with multiple items.
          */
 
-        @ShopAccess(AccessLevel.MANAGER)
         @Transactional
         public OrderResponseDto createOrder(OrderCreateRequestDto dto, UUID userId) {
                 User user = null;
@@ -293,8 +294,12 @@ public class OrderService {
         }
 
         @Transactional(readOnly = true)
-        @ShopAccess(AccessLevel.MANAGER)
         public List<OrderItemResponseDto> getOrderItemsByManager(UUID managerId) {
+
+                UUID currentUserId = currentUserService.getCurrentUserId();
+                if (!currentUserId.equals(managerId)) {
+                        throw new AccessDeniedException("Not allowed to view another manager's orders.");
+                }
                 List<OrderItem> items = orderItemRepository.findByManagerId(managerId);
 
                 return items.stream()

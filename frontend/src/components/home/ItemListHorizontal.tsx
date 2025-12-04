@@ -20,8 +20,6 @@ const ItemListHorizontal: React.FC<ItemListHorizontalProps> = ({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const itemWidthPercent = 100 / visibleCount;
-
   const updateScrollButtons = () => {
     const container = containerRef.current;
     if (!container) return;

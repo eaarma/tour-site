@@ -4,7 +4,6 @@ import {
   TourScheduleUpdateDto,
 } from "@/types/tourSchedule";
 import api from "./api/axios";
-
 const BASE_URL = "/schedules";
 
 export const tourScheduleService = {

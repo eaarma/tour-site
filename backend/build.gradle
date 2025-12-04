@@ -37,8 +37,12 @@ dependencies {
 	implementation 'org.hibernate.validator:hibernate-validator:8.0.1.Final'
   	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
-	//implementation 'io.hypersistence:hypersistence-utils-hibernate-70:3.10.1'
-	//implementation 'org.hibernate.orm:hibernate-core:7.0.6.Final'
+   implementation 'com.bucket4j:bucket4j-core:8.7.0'
+   
+   //If you later want Redis-based cluster rate limiting:
+//implementation 'com.bucket4j:bucket4j-redis:8.7.0'
+//implementation 'io.lettuce:lettuce-core:6.3.2.RELEASE'
+
 }
 
 tasks.withType(JavaCompile).configureEach {

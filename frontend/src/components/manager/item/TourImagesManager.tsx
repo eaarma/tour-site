@@ -37,11 +37,13 @@ export default function TourImagesManager({
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  const PLACEHOLDER = "/images/item_placeholder.jpg";
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
-  // ✅ Upload image
+  // Upload image
   const handleTourImageUpload = async (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -77,13 +79,13 @@ export default function TourImagesManager({
     }
   };
 
-  // ✅ Delete image
+  // Delete image
   const handleDeleteImage = async (id: number) => {
     await tourImageService.deleteImage(id);
     setTourImages((prev) => prev.filter((img) => img.id !== id));
   };
 
-  // ✅ Drag reorder save
+  // Drag reorder save
   const handleDragEnd = async (event: any) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -99,15 +101,19 @@ export default function TourImagesManager({
     );
   };
 
-  // ✅ Sortable Image Tile
+  // Sortable tile
   const ImageTile = ({ img, index }: { img: TourImage; index: number }) => {
     const { attributes, listeners, setNodeRef, transform, transition } =
       useSortable({ id: img.id });
+
+    const [failed, setFailed] = useState(false);
 
     const style = {
       transform: CSS.Transform.toString(transform),
       transition,
     };
+
+    const displaySrc = failed || !img.imageUrl ? PLACEHOLDER : img.imageUrl;
 
     return (
       <div
@@ -117,12 +123,17 @@ export default function TourImagesManager({
         {...(isEditing ? { ...attributes, ...listeners } : {})}
       >
         <img
-          src={img.imageUrl}
-          className="h-40 w-full object-cover rounded-lg"
+          src={displaySrc}
+          onError={() => setFailed(true)}
+          className={`h-40 w-full object-cover rounded-lg transition-all ${
+            failed ? "opacity-70 grayscale blur-[1px]" : ""
+          }`}
         />
+
         <div className="absolute top-1 left-1 bg-black/60 text-white text-xs px-2 py-1 rounded">
           #{index + 1}
         </div>
+
         {isEditing && (
           <button
             className="absolute top-1 right-1 btn btn-xs btn-error opacity-0 group-hover:opacity-100 transition"
@@ -163,30 +174,46 @@ export default function TourImagesManager({
         </div>
       )}
 
-      {/* Grid: Draggable if Editing */}
-      {isEditing ? (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={tourImages.map((img) => img.id)}
-            strategy={rectSortingStrategy}
-          >
+      {/* ⛔ If NO images → show a placeholder tile */}
+      {tourImages.length === 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-lg overflow-hidden">
+            <img
+              src={PLACEHOLDER}
+              className="h-40 w-full object-cover opacity-70 grayscale blur-[1px] rounded-lg"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* If images exist → show grid */}
+      {tourImages.length > 0 && (
+        <>
+          {isEditing ? (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={tourImages.map((img) => img.id)}
+                strategy={rectSortingStrategy}
+              >
+                <div className="grid grid-cols-3 gap-3">
+                  {tourImages.map((img, index) => (
+                    <ImageTile key={img.id} img={img} index={index} />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          ) : (
             <div className="grid grid-cols-3 gap-3">
               {tourImages.map((img, index) => (
                 <ImageTile key={img.id} img={img} index={index} />
               ))}
             </div>
-          </SortableContext>
-        </DndContext>
-      ) : (
-        <div className="grid grid-cols-3 gap-3">
-          {tourImages.map((img, index) => (
-            <ImageTile key={img.id} img={img} index={index} />
-          ))}
-        </div>
+          )}
+        </>
       )}
     </div>
   );

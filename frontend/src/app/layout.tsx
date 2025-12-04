@@ -7,6 +7,8 @@ import Footer from "@/components/layout/Footer";
 import MarginContainer from "@/components/common/MarginContainer";
 import AuthProvider from "@/providers/AuthProvider";
 import { Toaster } from "react-hot-toast";
+import GlobalLoader from "@/components/common/GlobalLoader";
+import SessionExpiredModal from "@/components/common/SessionExpiredModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,6 +39,8 @@ export default function RootLayout({
       <body className="flex flex-col min-h-screen bg-base-200">
         <ReduxProvider>
           <AuthProvider>
+            <GlobalLoader />
+            <SessionExpiredModal />
             <Header />
             <main className="flex-grow">
               <MarginContainer>{children}</MarginContainer>

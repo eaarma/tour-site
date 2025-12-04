@@ -9,7 +9,7 @@ interface WelcomeImageProps {
 
 const WelcomeImage: React.FC<WelcomeImageProps> = ({ imageUrl, children }) => {
   return (
-    <div className="relative w-full">
+    <div className="relative w-full z-20">
       {/* Hero image */}
       <div className="w-full h-50 sm:h-60 md:h-70 lg:h-80 ">
         <img

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Modal from "@/components/common/Modal";
 import { Tour, OrderItemResponseDto, OrderStatus } from "@/types";
 import OwnershipModal from "./OwnershipModal";
+import OrderStatusModal from "./OrderStatusModal";
 
 interface Props {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export default function OrderDetailsModal({
 }: Props) {
   const [isOwnershipModalOpen, setIsOwnershipModalOpen] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
 
   if (!orderItem) return null;
 
@@ -160,6 +162,7 @@ export default function OrderDetailsModal({
                       View Tour
                     </button>
                   )}
+
                   <button
                     className="block w-full px-4 py-2 text-left hover:bg-base-200"
                     onClick={() => {
@@ -168,6 +171,16 @@ export default function OrderDetailsModal({
                     }}
                   >
                     Ownership
+                  </button>
+
+                  <button
+                    className="block w-full px-4 py-2 text-left hover:bg-base-200"
+                    onClick={() => {
+                      setOptionsOpen(false);
+                      setIsStatusModalOpen(true);
+                    }}
+                  >
+                    Set Order Status
                   </button>
                 </div>
               )}
@@ -192,6 +205,14 @@ export default function OrderDetailsModal({
         currentManagerName={orderItem.managerName}
         shopId={orderItem.shopId}
         onReassigned={onReassigned}
+      />
+
+      <OrderStatusModal
+        isOpen={isStatusModalOpen}
+        onClose={() => setIsStatusModalOpen(false)}
+        orderItemId={orderItem.id}
+        currentStatus={orderItem.status as any}
+        onUpdated={onReassigned}
       />
     </>
   );

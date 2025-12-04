@@ -17,6 +17,8 @@ export default function TourImageGallery({
   const startX = useRef(0);
   const scrollLeft = useRef(0);
 
+  const placeholder = "/images/item_placeholder.jpg";
+
   const handleMouseDown = (e: React.MouseEvent) => {
     isDragging.current = true;
     startX.current = e.pageX - (scrollRef.current?.offsetLeft ?? 0);
@@ -39,8 +41,9 @@ export default function TourImageGallery({
     isDragging.current = false;
   };
 
-  const mainImage =
-    images.length > 0 ? images[selectedIndex] : "/images/placeholder-tour.jpg";
+  // If no images → use placeholder
+  const mainImage = images.length > 0 ? images[selectedIndex] : placeholder;
+  const isPlaceholder = images.length === 0;
 
   return (
     <div className="flex flex-col gap-3">
@@ -49,11 +52,18 @@ export default function TourImageGallery({
         <img
           src={mainImage}
           alt={title || "Tour Image"}
-          className="rounded-xl w-full h-72 lg:h-[420px] object-cover shadow-md"
+          className={`rounded-xl w-full h-72 lg:h-[420px] object-cover shadow-md ${
+            isPlaceholder ? "opacity-70 grayscale blur-[1px]" : ""
+          }`}
+          onError={(e) => {
+            const img = e.currentTarget as HTMLImageElement;
+            img.src = placeholder;
+            img.classList.add("opacity-70", "grayscale", "blur-[1px]");
+          }}
         />
       </div>
 
-      {/* ✅ Thumbnails + Drag-to-Scroll */}
+      {/* ✅ Thumbnails */}
       {images.length > 1 && (
         <div
           ref={scrollRef}
@@ -77,6 +87,11 @@ export default function TourImageGallery({
                 src={img}
                 alt={`Thumbnail ${index + 1}`}
                 className="h-20 w-28 object-cover pointer-events-none"
+                onError={(e) => {
+                  const thumb = e.currentTarget as HTMLImageElement;
+                  thumb.src = placeholder;
+                  thumb.classList.add("opacity-70", "grayscale", "blur-[1px]");
+                }}
               />
             </div>
           ))}

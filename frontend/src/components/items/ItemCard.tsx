@@ -46,11 +46,22 @@ const ItemCard: React.FC<ItemCardProps> = ({
           src={
             item.images?.length
               ? item.images[0]
-              : "/images/placeholder-tour.jpg"
+              : "/images/item_placeholder.jpg"
           }
           alt={item.title}
-          className="w-full h-full object-cover"
+          className={`w-full h-full object-cover ${
+            item.images?.length ? "" : "opacity-70 grayscale blur-[1px]"
+          }`}
+          onError={(e) => {
+            e.currentTarget.src = "/images/item_placeholder.jpg";
+            e.currentTarget.classList.add(
+              "opacity-70",
+              "grayscale",
+              "blur-[1px]"
+            );
+          }}
         />
+
         {showStatus && item.status && (
           <div className="absolute top-2 right-2 flex items-center gap-2">
             <span

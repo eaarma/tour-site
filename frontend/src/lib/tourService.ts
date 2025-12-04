@@ -4,7 +4,6 @@ import api from "./api/axios";
 const BASE_URL = "/tours";
 
 // 🔹 Generic page response type from backend
-// 🔹 Generic page response type from backend
 export interface PageResponse<T> {
   content: T[];
   totalPages: number;

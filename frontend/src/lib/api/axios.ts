@@ -1,6 +1,10 @@
+// src/lib/axios.ts
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import toast from "react-hot-toast";
 import { ApiError } from "./ApiError";
+import { store } from "@/store/store";
+import { markExpired } from "@/store/sessionSlice";
+import { clearUser } from "@/store/authSlice";
 
 const api = axios.create({
   baseURL: "http://localhost:8080",
@@ -61,9 +65,18 @@ api.interceptors.response.use(
       originalRequest.url?.includes("/auth/logout");
 
     // ====================================================
-    // 401 UNAUTHORIZED — attempt token refresh
+    // 401 UNAUTHORIZED — attempt token refresh (ONLY if logged in)
     // ====================================================
     if (status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+      // 🔍 Check if we actually have a logged-in user
+      const state = store.getState();
+      const isLoggedIn = !!state.auth.user;
+
+      // ❗ Guest 401: don't treat as "session expired", just propagate error
+      if (!isLoggedIn) {
+        throw new ApiError(status, response.data);
+      }
+
       originalRequest._retry = true;
 
       if (isRefreshing) {
@@ -86,9 +99,9 @@ api.interceptors.response.use(
         isRefreshing = false;
         refreshSubscribers = [];
 
-        if (typeof window !== "undefined") {
-          window.location.href = "/auth/login?sessionExpired=1";
-        }
+        // ❗ No redirect here — just mark session as expired
+        store.dispatch(clearUser());
+        store.dispatch(markExpired());
 
         throw new ApiError(status, response.data);
       }

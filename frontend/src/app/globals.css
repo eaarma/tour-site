@@ -40,3 +40,6 @@
   --tab-border: 1px;
   --tab-radius: 0.5rem;
 }
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}

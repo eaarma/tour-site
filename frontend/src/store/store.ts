@@ -6,6 +6,8 @@ import { persistReducer, persistStore } from "redux-persist";
 import authReducer from "./authSlice";
 import cartReducer from "./cartSlice";
 import checkoutReducer from "./checkoutSlice";
+import loadingReducer from "./loadingSlice";
+import sessionReducer from "./sessionSlice";
 
 const persistConfig = {
   key: "root",
@@ -17,6 +19,8 @@ const rootReducer = combineReducers({
   auth: authReducer,
   cart: cartReducer,
   checkout: checkoutReducer,
+  loading: loadingReducer,
+  session: sessionReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
