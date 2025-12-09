@@ -31,7 +31,9 @@ const PAST_STATUSES: (OrderStatus | "ALL")[] = [
 ];
 
 export default function ManagerOrderSection({ orderItems, tours }: Props) {
-  const [activeTab, setActiveTab] = useState<"active" | "past">("active");
+  const [activeTab, setActiveTab] = useState<"today" | "active" | "past">(
+    "today"
+  );
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [items, setItems] = useState(orderItems);
   const [filterStatus, setFilterStatus] = useState<OrderStatus | "ALL">("ALL");
@@ -104,11 +106,35 @@ export default function ManagerOrderSection({ orderItems, tours }: Props) {
   };
 
   // ✅ Filtering + Sorting logic (same as before)
-  let filteredItems = items.filter((i) =>
-    activeTab === "active"
-      ? i.status !== "COMPLETED" && i.status !== "CANCELLED_CONFIRMED"
-      : i.status === "COMPLETED" || i.status === "CANCELLED_CONFIRMED"
-  );
+  let filteredItems = items;
+
+  // today
+  if (activeTab === "today") {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+
+    filteredItems = filteredItems.filter((i) => {
+      const dt = new Date(i.scheduledAt);
+      return dt >= today && dt < tomorrow;
+    });
+  }
+
+  // active
+  if (activeTab === "active") {
+    filteredItems = filteredItems.sort(
+      (a, b) =>
+        new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
+    );
+  }
+
+  // past
+  if (activeTab === "past") {
+    filteredItems = filteredItems.filter(
+      (i) => i.status === "COMPLETED" || i.status === "CANCELLED_CONFIRMED"
+    );
+  }
   if (filterStatus !== "ALL") {
     filteredItems = filteredItems.filter((i) => i.status === filterStatus);
   }
@@ -145,12 +171,18 @@ export default function ManagerOrderSection({ orderItems, tours }: Props) {
 
           {/* Filters + Tabs (same logic) */}
           <div className="sticky top-0 z-10 bg-base-200 pb-3">
-            <div role="tablist" className="tabs tabs-boxed mb-3">
+            <div className="tabs tabs-boxed mb-3">
+              <button
+                className={`tab ${activeTab === "today" ? "tab-active" : ""}`}
+                onClick={() => setActiveTab("today")}
+              >
+                Today
+              </button>
               <button
                 className={`tab ${activeTab === "active" ? "tab-active" : ""}`}
                 onClick={() => setActiveTab("active")}
               >
-                Current
+                Active
               </button>
               <button
                 className={`tab ${activeTab === "past" ? "tab-active" : ""}`}

@@ -13,6 +13,7 @@ import { OrderService } from "@/lib/orderService";
 import RequireAuth from "@/components/common/RequireAuth";
 import { useShopAccess } from "@/hooks/useShopAccess";
 import Unauthorized from "@/components/common/Unauthorized";
+import { Navigation, Package } from "lucide-react";
 
 export default function ShopManagerPage() {
   const router = useRouter();
@@ -25,6 +26,8 @@ export default function ShopManagerPage() {
 
   const [tours, setTours] = useState<Tour[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemResponseDto[]>([]);
+
+  const [activeTab, setActiveTab] = useState<"orders" | "tours">("orders");
 
   // ============================
   // 🔍 Fetch shop data only if allowed
@@ -88,11 +91,49 @@ export default function ShopManagerPage() {
       {/* 📊 Statistics */}
       <ManagerStatisticsSection tours={tours} orderItems={orderItems} />
 
-      {/* 🧾 Orders */}
-      <ManagerOrderSection orderItems={orderItems} tours={tours} />
+      {/* ===== Tabs ===== */}
+      <div className="mt-6">
+        <div className="border-b border-base-300 mb-10">
+          <div className="flex gap-10">
+            <button
+              onClick={() => setActiveTab("orders")}
+              className={`py-3 px-1 text-[1.05rem] font-semibold tracking-wide 
+        flex items-center gap-2 transition-all 
+        ${
+          activeTab === "orders"
+            ? "text-primary border-b-2 border-primary"
+            : "text-gray-700 hover:text-gray-900"
+        }`}
+            >
+              <Package className="w-5 h-5" strokeWidth={2.25} />
+              Orders
+            </button>
 
-      {/* 🧭 Items */}
-      <ManagerItemList items={tours} shopId={shopId} />
+            <button
+              onClick={() => setActiveTab("tours")}
+              className={`py-3 px-1 text-[1.05rem] font-semibold tracking-wide 
+        flex items-center gap-2 transition-all 
+        ${
+          activeTab === "tours"
+            ? "text-primary border-b-2 border-primary"
+            : "text-gray-700 hover:text-gray-900"
+        }`}
+            >
+              <Navigation className="w-5 h-5" strokeWidth={2.25} />
+              Tours
+            </button>
+          </div>
+        </div>
+
+        {/* Tab panels */}
+        {activeTab === "orders" && (
+          <ManagerOrderSection orderItems={orderItems} tours={tours} />
+        )}
+
+        {activeTab === "tours" && (
+          <ManagerItemList items={tours} shopId={shopId} />
+        )}
+      </div>
     </div>
   );
 }
