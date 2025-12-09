@@ -3,7 +3,6 @@
 import { Tour } from "@/types";
 import { formatDuration } from "@/utils/formatDuration";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Globe, Clock, Euro, MapPin } from "lucide-react";
 
 interface ItemCardProps {
@@ -25,21 +24,19 @@ const ItemCard: React.FC<ItemCardProps> = ({
   onClick,
   showStatus = false,
 }) => {
-  const router = useRouter();
-
   const handleClick = () => {
     if (onClick) {
       onClick();
-    } else {
-      router.push(`/items/${item.id}`);
+      return;
+    }
+    if (href) {
+      // let Link handle; do not navigate here
+      return;
     }
   };
 
   const CardContent = (
-    <div
-      className="card w-full bg-base-100 shadow-md hover:shadow-lg transition duration-300 border cursor-pointer flex flex-col rounded-xl overflow-hidden"
-      onClick={handleClick}
-    >
+    <div className="card w-full bg-base-100 shadow-md hover:shadow-lg transition duration-300 border cursor-pointer flex flex-col rounded-xl overflow-hidden">
       {/* Image */}
       <figure className="relative w-full h-52 md:h-48 lg:h-48 flex-shrink-0">
         <img
@@ -132,7 +129,12 @@ const ItemCard: React.FC<ItemCardProps> = ({
     );
   }
 
-  return CardContent;
+  // Otherwise clickable div (manager list)
+  return (
+    <div onClick={handleClick} className="h-full">
+      {CardContent}
+    </div>
+  );
 };
 
 export default ItemCard;

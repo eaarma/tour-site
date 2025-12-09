@@ -28,6 +28,8 @@ export default function BookingModal({
 }: BookingModalProps) {
   const dispatch = useDispatch();
   const router = useRouter();
+  const [preferredLanguage, setPreferredLanguage] = useState("");
+  const [comment, setComment] = useState("");
 
   const [chosenSchedule, setChosenSchedule] =
     useState<TourScheduleResponseDto | null>(selectedSchedule ?? null);
@@ -75,6 +77,7 @@ export default function BookingModal({
 
       dispatch(
         addItemToCart({
+          cartItemId: crypto.randomUUID(),
           id: item.id.toString(),
           title: item.title,
           price: Number(item.price),
@@ -84,6 +87,8 @@ export default function BookingModal({
           scheduleId: chosenSchedule.id,
           selectedDate: chosenSchedule.date,
           selectedTime: chosenSchedule.time || "",
+          preferredLanguage: preferredLanguage || undefined,
+          comment: comment || undefined,
         })
       );
 
@@ -145,6 +150,39 @@ export default function BookingModal({
             )
           )}
         </select>
+      </div>
+      {/* 🔹 Preferred Language */}
+      {item.language && (
+        <div className="mb-4">
+          <label className="block font-semibold mb-2">
+            Preferred Language (optional)
+          </label>
+
+          <select
+            className="select select-bordered w-full"
+            value={preferredLanguage}
+            onChange={(e) => setPreferredLanguage(e.target.value)}
+          >
+            <option value="">No preference</option>
+            {item.language.map((lang) => (
+              <option key={lang} value={lang}>
+                {lang}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* 🔹 Comment */}
+      <div className="mb-4">
+        <label className="block font-semibold mb-2">Comment (optional)</label>
+        <textarea
+          className="textarea textarea-bordered w-full"
+          rows={3}
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Anything the guide should know?"
+        />
       </div>
 
       <div className="flex justify-between mt-6">

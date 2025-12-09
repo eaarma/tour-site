@@ -1,7 +1,19 @@
 package com.example.store_manager.security.annotations;
 
 public enum AccessLevel {
-    VIEW, // User must belong to the shop
-    MANAGER, // User must be MANAGER of the shop
-    OWNER // User must be OWNER of the shop
+    VIEW(0),
+    GUIDE(1),
+    MANAGER(2),
+    OWNER(3),
+    ADMIN(4);
+
+    private final int level;
+
+    AccessLevel(int level) {
+        this.level = level;
+    }
+
+    public int getLevel() {
+        return level;
+    }
 }

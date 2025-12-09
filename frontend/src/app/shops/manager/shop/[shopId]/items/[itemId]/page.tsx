@@ -17,17 +17,16 @@ import TourImagesManager from "@/components/manager/item/TourImagesManager";
 import CategorySelector from "@/components/manager/shop/CategorySelector";
 
 const INTENSITY_OPTIONS = ["Easy", "Moderate", "Hard"];
-const CATEGORY_OPTIONS = ["Nature", "History", "Culture"];
 const STATUS_OPTIONS = ["ACTIVE", "ON_HOLD", "CANCELLED"];
 const TYPE_OPTIONS = ["PRIVATE", "PUBLIC"];
 
 export default function ManagerItemPage() {
   const params = useParams();
   const shopId = Number(params.shopId); //number
-  const itemId = params.itemId;
+  const itemId = params.itemId as string;
   const router = useRouter();
-  const [currentItemId, setCurrentItemId] = useState(itemId);
-  const isNew = currentItemId === "new";
+
+  const isNew = itemId === "new";
 
   const [item, setItem] = useState<Tour | null>(null);
   const [loading, setLoading] = useState(!isNew);
@@ -121,7 +120,6 @@ export default function ManagerItemPage() {
         setItem(created);
         setForm(created);
         setIsEditing(true);
-        setCurrentItemId(String(created.id));
 
         // Optional: show a popup/notification
         toast.success(" Tour created! You can now add schedules.");

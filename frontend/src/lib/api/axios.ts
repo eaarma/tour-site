@@ -7,6 +7,8 @@ import { markExpired } from "@/store/sessionSlice";
 import { clearUser } from "@/store/authSlice";
 import qs from "qs";
 
+const NETWORK_ERROR_TOAST_ID = "network-error";
+
 const api = axios.create({
   baseURL: "http://localhost:8080",
   withCredentials: true,
@@ -45,7 +47,9 @@ api.interceptors.response.use(
     console.log("🔥 Interceptor got", response?.status, config?.url);
 
     if (!response) {
-      toast.error("Network error. Please check your connection.");
+      toast.error("Network error. Please check your connection.", {
+        id: NETWORK_ERROR_TOAST_ID,
+      });
       throw new ApiError(0, { message: "Network error" });
     }
 

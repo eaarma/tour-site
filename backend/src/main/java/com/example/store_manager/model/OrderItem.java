@@ -101,4 +101,10 @@ public class OrderItem {
     @JoinColumn(name = "manager_id")
     private User manager;
 
+    @Column(name = "preferred_language")
+    private String preferredLanguage;
+
+    @Column(name = "comment", columnDefinition = "text")
+    private String comment;
+
 }

@@ -10,6 +10,7 @@ interface ItemListProps {
   pageData?: PageResponse<Tour>;
   loading?: boolean;
   onPageChange: (page: number) => void;
+  queryString: string;
 }
 
 const SKELETON_COUNT = 8;
@@ -18,6 +19,7 @@ const ItemList: React.FC<ItemListProps> = ({
   pageData,
   loading = false,
   onPageChange,
+  queryString,
 }) => {
   const items = pageData?.content ?? [];
 
@@ -38,7 +40,11 @@ const ItemList: React.FC<ItemListProps> = ({
               <ItemCardSkeleton key={idx} />
             ))
           : items.map((item) => (
-              <ItemCard key={item.id} item={item} href={`/items/${item.id}`} />
+              <ItemCard
+                key={item.id}
+                item={item}
+                href={`/items/${item.id}?${queryString}`}
+              />
             ))}
       </div>
 

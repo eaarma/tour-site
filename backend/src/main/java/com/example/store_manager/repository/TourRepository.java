@@ -24,6 +24,7 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
         WHERE (:type IS NULL OR t.type = :type)
           AND (:language IS NULL OR l IN :language)
           AND (:categories IS NULL OR c IN :categories)
+          AND t.status = 'ACTIVE'
           AND (
             COALESCE(:keyword, '') = '' OR (
               LOWER(t.title) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%')) OR

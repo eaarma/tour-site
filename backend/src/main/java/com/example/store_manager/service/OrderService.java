@@ -119,6 +119,8 @@ public class OrderService {
                                         .email(dto.getEmail())
                                         .phone(dto.getPhone())
                                         .nationality(dto.getNationality())
+                                        .preferredLanguage(itemDto.getPreferredLanguage())
+                                        .comment(itemDto.getComment())
                                         .paymentMethod(dto.getPaymentMethod())
                                         .status(OrderStatus.PENDING)
                                         .pricePaid(tour.getPrice()
@@ -175,7 +177,7 @@ public class OrderService {
          * List all OrderItems for a given shop (provider) across all orders.
          */
         @Transactional(readOnly = true)
-        @ShopAccess(AccessLevel.MANAGER)
+        @ShopAccess(AccessLevel.GUIDE)
         public List<OrderItemResponseDto> getOrderItemsByShop(Long shopId) {
                 List<OrderItem> items = orderItemRepository.findByShopId(shopId);
 
@@ -220,7 +222,7 @@ public class OrderService {
         }
 
         @Transactional
-        @ShopAccess(AccessLevel.MANAGER)
+        @ShopAccess(AccessLevel.GUIDE)
         public OrderItemResponseDto confirmOrderItem(Long itemId, UUID managerId) {
                 // 1️⃣ Get authenticated user
                 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -259,7 +261,7 @@ public class OrderService {
         }
 
         @Transactional
-        @ShopAccess(AccessLevel.MANAGER)
+        @ShopAccess(AccessLevel.GUIDE)
         public OrderItemResponseDto updateOrderItemStatus(Long itemId, OrderStatus status) {
                 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 

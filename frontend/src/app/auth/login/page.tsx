@@ -127,6 +127,23 @@ export default function LoginPage() {
           </form>
 
           {error && <p className="text-error text-sm mt-2">{error}</p>}
+
+          {/* 👇 Add these */}
+          <div className="mt-10 flex flex-col gap-3">
+            <button
+              className="btn btn-outline w-full"
+              onClick={() => router.push("/auth/register/user")}
+            >
+              Register
+            </button>
+
+            <button
+              className="btn btn-outline w-full"
+              onClick={() => router.push("/auth/register/manager")}
+            >
+              Become a tour guide
+            </button>
+          </div>
         </div>
       </div>
     </main>

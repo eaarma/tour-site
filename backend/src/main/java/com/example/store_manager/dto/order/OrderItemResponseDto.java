@@ -34,4 +34,7 @@ public class OrderItemResponseDto {
     private UUID managerId;
     private String managerName;
     private String tourSnapshot; // optional in response, but nice to expose
+    private String preferredLanguage;
+    private String comment;
+
 }

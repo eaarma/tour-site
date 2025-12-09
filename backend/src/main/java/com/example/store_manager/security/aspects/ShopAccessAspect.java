@@ -81,26 +81,12 @@ public class ShopAccessAspect {
 
         // -------------------------
         // 5️⃣ Enforce role
-        // -------------------------
         ShopUserRole role = membership.getRole();
 
-        switch (requiredLevel) {
-
-            case VIEW:
-                return; // ACTIVE users can view
-
-            case MANAGER:
-                if (role != ShopUserRole.MANAGER && role != ShopUserRole.OWNER) {
-                    throw new AccessDeniedException("Manager access required.");
-                }
-                return;
-
-            case OWNER:
-                if (role != ShopUserRole.OWNER) {
-                    throw new AccessDeniedException("Owner access required.");
-                }
-                return;
+        if (role.getLevel() < requiredLevel.getLevel()) {
+            throw new AccessDeniedException("Access level too low");
         }
+
     }
 
     // -------------------------------------------------------------------

@@ -58,17 +58,18 @@ export default function ItemsPage() {
     load();
   }, [sort, searchKey]);
 
-  const handleSearch = (keyword: string, date: string) => {
+  const handleSearch = (kw: string, dt: string) => {
+    if (kw === keyword && dt === date) return;
     const search = new URLSearchParams(params);
 
-    if (keyword) {
-      search.set("keyword", keyword);
+    if (kw) {
+      search.set("keyword", kw);
     } else {
       search.delete("keyword");
     }
 
-    if (date) {
-      search.set("date", date);
+    if (dt) {
+      search.set("date", dt);
     } else {
       search.delete("date");
     }
@@ -123,6 +124,7 @@ export default function ItemsPage() {
           <SortMenu
             sortKey={sort}
             onSortChange={(newSort) => {
+              if (newSort === sort) return; // ignore no-change
               const search = new URLSearchParams(params);
               search.set("sort", newSort);
               search.set("page", "0");
@@ -138,6 +140,7 @@ export default function ItemsPage() {
             pageData={pageData}
             loading={false}
             onPageChange={handlePageChange}
+            queryString={params.toString()}
           />
         )}
       </div>

@@ -49,7 +49,7 @@ public class ShopService {
                 ShopUser shopUser = ShopUser.builder()
                                 .shop(saved)
                                 .user(user)
-                                .role(ShopUserRole.MANAGER)
+                                .role(ShopUserRole.OWNER)
                                 .status(ShopUserStatus.ACTIVE)
                                 .createdAt(LocalDateTime.now())
                                 .build();
@@ -65,7 +65,7 @@ public class ShopService {
                 return shopMapper.toDto(shop);
         }
 
-        @ShopAccess(AccessLevel.MANAGER)
+        @ShopAccess(AccessLevel.OWNER)
         public ShopDto updateShop(Long shopId, ShopCreateRequestDto dto) {
 
                 Shop shop = shopRepository.findById(shopId)

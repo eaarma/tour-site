@@ -43,7 +43,7 @@ public class TourImageService {
     }
 
     @ShopAccess(AccessLevel.MANAGER)
-    public void deleteImage(Long imageId) {
+    public void deleteImage(Long tourId, Long imageId) {
         if (!tourImageRepository.existsById(imageId)) {
             throw new RuntimeException("Image not found");
         }

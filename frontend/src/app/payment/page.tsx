@@ -92,9 +92,11 @@ export default function PaymentPage() {
         nationality: checkoutInfo.nationality,
         items: cartItems.map((item) => ({
           tourId: Number(item.id),
-          scheduleId: item.scheduleId, // ✅ sent to backend
+          scheduleId: item.scheduleId,
           participants: item.participants,
           scheduledAt: `${item.selectedDate}T${item.selectedTime}`,
+          preferredLanguage: item.preferredLanguage,
+          comment: item.comment,
         })),
       };
 
@@ -158,6 +160,15 @@ export default function PaymentPage() {
           cartItemId={badItem.cartItemId}
           initialScheduleId={badItem.scheduleId}
         />
+      )}
+
+      {loading && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center">
+          <div className="bg-base-100 rounded-lg p-6 shadow-xl flex flex-col items-center gap-4 animate-fade-in">
+            <span className="loading loading-spinner loading-lg"></span>
+            <p className="font-medium text-lg">Processing…</p>
+          </div>
+        </div>
       )}
     </main>
   );

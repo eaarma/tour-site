@@ -33,9 +33,11 @@ public class TourImageController {
         return ResponseEntity.ok(tourImageService.addImageToTour(tourId, imageUrl));
     }
 
-    @DeleteMapping("/images/{imageId}")
-    public ResponseEntity<Void> deleteImage(@PathVariable Long imageId) {
-        tourImageService.deleteImage(imageId);
+    @DeleteMapping("/{tourId}/images/{imageId}")
+    public ResponseEntity<Void> deleteImage(
+            @PathVariable Long tourId,
+            @PathVariable Long imageId) {
+        tourImageService.deleteImage(tourId, imageId);
         return ResponseEntity.noContent().build();
     }
 

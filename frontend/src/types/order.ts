@@ -9,6 +9,8 @@ export interface OrderItemCreateRequestDto {
   tourId: number;
   scheduledAt: string; // LocalDateTime → ISO string
   participants: number;
+  preferredLanguage?: string;
+  comment?: string;
 }
 
 export interface OrderCreateRequestDto {
@@ -37,6 +39,8 @@ export interface OrderItemResponseDto {
   tourSnapshot?: string;
   managerId?: string;
   managerName?: string;
+  preferredLanguage?: string;
+  comment?: string;
 }
 
 export interface OrderResponseDto {

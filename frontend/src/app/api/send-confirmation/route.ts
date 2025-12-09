@@ -42,7 +42,10 @@ export async function POST(req: Request) {
               <strong>${item.tourTitle}</strong><br/>
               📅 ${new Date(item.scheduledAt).toLocaleString()}<br/>
               👥 ${item.participants} participant(s)<br/>
-              💶 €${item.pricePaid.toFixed(2)}
+              💶 €${item.pricePaid.toFixed(2)}<br/>
+              🌐 ${item.preferredLanguage}<br/>
+              📝 ${item.comment || "N/A"}
+
             </li>
           `
             )

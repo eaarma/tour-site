@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class OrderItemCreateRequestDto {
+
     @NotNull(message = "Tour ID must not be null")
     private Long tourId;
 
@@ -24,6 +25,9 @@ public class OrderItemCreateRequestDto {
     private LocalDateTime scheduledAt;
 
     @NotNull(message = "Number of participants is required")
-    @Min(value = 1, message = "At least one participant is required")
+    @Min(value = 1)
     private Integer participants;
+
+    private String preferredLanguage;
+    private String comment;
 }

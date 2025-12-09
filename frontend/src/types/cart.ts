@@ -2,6 +2,8 @@ export interface CartItemDto {
   tourId: number;
   participants: number;
   selectedDate: string; // assumed to be ISO string
+  preferredLanguage?: string;
+  comment?: string;
 }
 
 export interface CartItem {
@@ -15,4 +17,6 @@ export interface CartItem {
   selectedTime: string;
   selected: boolean;
   images?: string[];
+  preferredLanguage?: string;
+  comment?: string;
 }

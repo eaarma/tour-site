@@ -17,7 +17,12 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { TourImage } from "@/types";
 import { tourImageService } from "@/lib/tourImageService";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import {
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import toast from "react-hot-toast";
 
@@ -79,11 +84,35 @@ export default function TourImagesManager({
     }
   };
 
+  function getStoragePathFromUrl(url: string) {
+    // everything after `/o/` before `?`
+    const decoded = decodeURIComponent(url);
+    const path = decoded.split("/o/")[1].split("?")[0];
+    return path;
+  }
+
+  async function deleteFromStorageByUrl(imageUrl: string) {
+    const path = getStoragePathFromUrl(imageUrl);
+    const fileRef = ref(storage, path);
+    await deleteObject(fileRef);
+  }
+
   // Delete image
-  const handleDeleteImage = async (id: number) => {
-    await tourImageService.deleteImage(id);
-    setTourImages((prev) => prev.filter((img) => img.id !== id));
+  const handleDeleteImage = async (id: number, imageUrl: string) => {
+    try {
+      await deleteFromStorageByUrl(imageUrl);
+      await tourImageService.deleteImage(tourId, id); // 👈 add tourId
+      setTourImages((prev) => prev.filter((img) => img.id !== id));
+      toast.success("Image deleted");
+    } catch (e) {
+      toast.error("Failed to delete image");
+    }
   };
+
+  async function deleteFromFirebase(imageUrl: string) {
+    const fileRef = ref(storage, imageUrl);
+    await deleteObject(fileRef);
+  }
 
   // Drag reorder save
   const handleDragEnd = async (event: any) => {
@@ -137,7 +166,7 @@ export default function TourImagesManager({
         {isEditing && (
           <button
             className="absolute top-1 right-1 btn btn-xs btn-error opacity-0 group-hover:opacity-100 transition"
-            onClick={() => handleDeleteImage(img.id)}
+            onClick={() => handleDeleteImage(img.id, img.imageUrl)}
           >
             ✕
           </button>

@@ -47,7 +47,7 @@ public class TourScheduleService {
         return scheduleMapper.toDto(schedule);
     }
 
-    @ShopAccess(AccessLevel.MANAGER)
+    @ShopAccess(AccessLevel.GUIDE)
     public TourScheduleResponseDto createSchedule(TourScheduleCreateDto dto) {
         Tour tour = tourRepository.findById(dto.getTourId())
                 .orElseThrow(() -> new RuntimeException("Tour not found"));
@@ -58,7 +58,7 @@ public class TourScheduleService {
         return scheduleMapper.toDto(schedule);
     }
 
-    @ShopAccess(AccessLevel.MANAGER)
+    @ShopAccess(AccessLevel.GUIDE)
     public TourScheduleResponseDto updateSchedule(Long id, TourScheduleUpdateDto dto) {
         TourSchedule schedule = scheduleRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Schedule not found"));
@@ -89,7 +89,7 @@ public class TourScheduleService {
         return scheduleMapper.toDto(schedule);
     }
 
-    @ShopAccess(AccessLevel.MANAGER)
+    @ShopAccess(AccessLevel.GUIDE)
     public void deleteSchedule(Long id) {
         if (!scheduleRepository.existsById(id)) {
             throw new RuntimeException("Schedule not found");

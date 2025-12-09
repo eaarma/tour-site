@@ -17,8 +17,8 @@ export const tourImageService = {
   },
 
   // ✅ Delete image by imageId
-  deleteImage: async (imageId: number): Promise<void> => {
-    await api.delete(`/api/tours/images/${imageId}`);
+  deleteImage: async (tourId: number, imageId: number): Promise<void> => {
+    await api.delete(`/api/tours/${tourId}/images/${imageId}`);
   },
 
   updateOrder: async (tourId: number, imageIds: number[]) => {
