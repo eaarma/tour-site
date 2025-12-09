@@ -16,7 +16,7 @@ public class TourUpdateDto {
     private Integer participants;
     private String intensity;
     private String type;
-    private String language;
+    private List<String> language;
     private String location;
     private String status;
     private List<TourCategory> categories; // Enum list

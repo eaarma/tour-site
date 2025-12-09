@@ -1,312 +1,138 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import SearchBar from "@/components/common/SearchBar";
-import { FilterCategory } from "@/types/types";
 import FilterMenu from "@/components/items/FilterMenu";
-import ItemList from "@/components/items/ItemList";
-import { Tour } from "@/types";
-import { PageResponse, TourService } from "@/lib/tourService";
 import SortMenu from "@/components/items/SortMenu";
-import { tourScheduleService } from "@/lib/tourScheduleService";
+import ItemList from "@/components/items/ItemList";
+import { PageResponse, TourService } from "@/lib/tourService";
 import { ItemListSkeleton } from "@/components/items/ItemListSkeleton";
-
-export const FILTER_CATEGORIES: FilterCategory[] = [
-  {
-    key: "category",
-    label: "Category",
-    options: ["Culture", "History", "Adventure", "Urban", "Nature"],
-  },
-  {
-    key: "language",
-    label: "Language",
-    options: [
-      "English",
-      "Estonian",
-      "Russian",
-      "German",
-      "French",
-      "Spanish",
-      "Italian",
-      "Finnish",
-      "Swedish",
-      "Chinese",
-      "Japanese",
-    ],
-  },
-  {
-    key: "type",
-    label: "Type",
-    options: ["Walking", "Bus", "Boat", "Museum"],
-  },
-];
+import { FILTER_CATEGORIES } from "@/types/filterCategories";
 
 const PAGE_SIZE = 12;
 
 export default function ItemsPage() {
-  const [allItems, setAllItems] = useState<Tour[]>([]);
-  const [filteredItems, setFilteredItems] = useState<Tour[]>([]);
-  const [searchKeyword, setSearchKeyword] = useState("");
-  const [sortedItems, setSortedItems] = useState<Tour[]>([]);
-  const [sortKey, setSortKey] = useState("az"); // default sorting
-  const [currentPage, setCurrentPage] = useState(0);
-  const [pageData, setPageData] = useState<PageResponse<Tour>>({
-    content: [],
-    totalPages: 0,
-    totalElements: 0,
-    number: 0,
-    size: PAGE_SIZE,
-    first: true,
-    last: true,
-  });
-  const [loading, setLoading] = useState(true);
-
   const params = useSearchParams();
-  const keywordParam = params.get("keyword") || "";
-  const dateParam = params.get("date") || "";
   const router = useRouter();
 
-  // 🔍 Search handler
-  const handleSearch = useCallback(
-    async (keyword: string, date: string, items: Tour[] = allItems) => {
+  const [loading, setLoading] = useState(true);
+  const [pageData, setPageData] = useState<PageResponse<any> | null>(null);
+  const currentPage = Number(params.get("page") || 0);
+  // read query params
+  const keyword = params.get("keyword") || "";
+  const date = params.get("date") || "";
+
+  const selectedCategories = params.getAll("category");
+  const selectedLanguages = params.getAll("language");
+  const selectedTypes = params.getAll("type");
+
+  const sort = params.get("sort") || "title,asc";
+
+  // 🔑 stable key for all search params
+  const searchKey = params.toString();
+
+  useEffect(() => {
+    const load = async () => {
       setLoading(true);
+
+      const query = {
+        page: currentPage,
+        size: PAGE_SIZE,
+        sort,
+        keyword: keyword || undefined,
+        date: date || undefined,
+        category: selectedCategories.length ? selectedCategories : undefined,
+        language: selectedLanguages.length ? selectedLanguages : undefined,
+        type: selectedTypes.length ? selectedTypes[0] : undefined,
+      };
+
       try {
-        const trimmed = keyword.trim();
-        const lowerKeyword = trimmed.toLowerCase();
-        setSearchKeyword(lowerKeyword);
-
-        // 🔄 Update URL to reflect current search
-        const newParams = new URLSearchParams();
-        if (trimmed) newParams.set("keyword", trimmed);
-        if (date) newParams.set("date", date);
-
-        const query = newParams.toString();
-        router.replace(query ? `/items?${query}` : "/items");
-
-        // 🔍 Apply filters in memory
-        let results = items;
-
-        if (lowerKeyword) {
-          results = results.filter(
-            (item) =>
-              item.title.toLowerCase().includes(lowerKeyword) ||
-              item.description.toLowerCase().includes(lowerKeyword) ||
-              item.location.toLowerCase().includes(lowerKeyword)
-          );
-        }
-
-        if (date) {
-          const filteredByDate: Tour[] = [];
-          await Promise.all(
-            results.map(async (item) => {
-              const schedules = await tourScheduleService.getByTourId(item.id);
-              const hasMatchingDate = schedules.some((s) => s.date === date);
-              if (hasMatchingDate) filteredByDate.push(item);
-            })
-          );
-          results = filteredByDate;
-        }
-
-        setFilteredItems(results);
-      } catch (error) {
-        console.error("Failed to apply search filters:", error);
+        const data = await TourService.getAllByQuery(query);
+        setPageData(data);
       } finally {
         setLoading(false);
       }
-    },
-    [allItems, router]
-  );
-
-  // 🚀 Initial fetch
-  useEffect(() => {
-    const fetchTours = async () => {
-      try {
-        const tours: Tour[] = await TourService.getAll();
-        const mapped: Tour[] = tours
-          .map((tour) => ({
-            id: tour.id,
-            title: tour.title,
-            description: tour.description,
-            images: tour.images ?? "/images/default.jpg",
-            price: tour.price,
-            timeRequired: tour.timeRequired,
-            intensity: tour.intensity,
-            type: tour.type,
-            status: tour.status,
-            participants: tour.participants,
-            category: tour.category,
-            language: tour.language,
-            location: tour.location,
-          }))
-          .filter((item) => item.status === "ACTIVE");
-
-        setAllItems(mapped);
-
-        if (keywordParam || dateParam) {
-          // Directly apply the filters ONCE without touching the URL
-          const trimmed = keywordParam.trim().toLowerCase();
-          let results = mapped;
-
-          if (trimmed) {
-            results = results.filter(
-              (item) =>
-                item.title.toLowerCase().includes(trimmed) ||
-                item.description.toLowerCase().includes(trimmed) ||
-                item.location.toLowerCase().includes(trimmed)
-            );
-          }
-
-          if (dateParam) {
-            const date = dateParam;
-            const filteredByDate: Tour[] = [];
-            await Promise.all(
-              results.map(async (item) => {
-                const schedules = await tourScheduleService.getByTourId(
-                  item.id
-                );
-                if (schedules.some((s) => s.date === date)) {
-                  filteredByDate.push(item);
-                }
-              })
-            );
-            results = filteredByDate;
-          }
-
-          setFilteredItems(results);
-        } else {
-          setFilteredItems(mapped);
-        }
-      } catch (err) {
-        console.error("Failed to fetch tours:", err);
-      }
     };
 
-    fetchTours();
-  }, [keywordParam, dateParam]);
+    load();
+  }, [sort, searchKey]);
 
-  // 🎯 Filter handler
-  const handleFilter = useCallback(
-    (filteredByFilterMenu: Tour[]) => {
-      setLoading(true);
-      let results = filteredByFilterMenu;
-      if (searchKeyword) {
-        results = results.filter(
-          (item) =>
-            item.title.toLowerCase().includes(searchKeyword) ||
-            item.description.toLowerCase().includes(searchKeyword)
-        );
-      }
-      setFilteredItems(results);
-      setLoading(false);
-    },
-    [searchKeyword]
-  );
+  const handleSearch = (keyword: string, date: string) => {
+    const search = new URLSearchParams(params);
 
-  // 🔄 Apply sorting whenever filteredItems or sortKey changes
-  useEffect(() => {
-    let sorted = [...filteredItems];
-    switch (sortKey) {
-      case "price":
-        sorted.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
-        break;
-      case "timeRequired":
-        sorted.sort(
-          (a, b) => (a.timeRequired ?? Infinity) - (b.timeRequired ?? Infinity)
-        );
-        break;
-      case "intensity":
-        sorted.sort((a, b) => (a.intensity ?? 0) - (b.intensity ?? 0));
-        break;
-      default:
-        sorted.sort((a, b) =>
-          (a[sortKey as keyof Tour] ?? "")
-            .toString()
-            .localeCompare((b[sortKey as keyof Tour] ?? "").toString())
-        );
-    }
-    setSortedItems(sorted);
-  }, [filteredItems, sortKey]);
-
-  // 🧩 Reset page on new sorted results
-  useEffect(() => {
-    setCurrentPage(0);
-  }, [sortedItems]);
-
-  // 📄 Build paginated view
-  useEffect(() => {
-    if (!sortedItems.length) {
-      setPageData({
-        content: [],
-        totalPages: 0,
-        totalElements: 0,
-        number: 0,
-        size: PAGE_SIZE,
-        first: true,
-        last: true,
-      });
-      setLoading(false);
-      return;
+    if (keyword) {
+      search.set("keyword", keyword);
+    } else {
+      search.delete("keyword");
     }
 
-    const totalElements = sortedItems.length;
-    const totalPages = Math.ceil(totalElements / PAGE_SIZE);
-    const safePage = Math.min(
-      Math.max(currentPage, 0),
-      Math.max(totalPages - 1, 0)
-    );
-    const start = safePage * PAGE_SIZE;
-    const end = start + PAGE_SIZE;
-    const content = sortedItems.slice(start, end);
+    if (date) {
+      search.set("date", date);
+    } else {
+      search.delete("date");
+    }
 
-    setCurrentPage(safePage);
-    setPageData({
-      content,
-      totalPages,
-      totalElements,
-      number: safePage,
-      size: PAGE_SIZE,
-      first: safePage === 0,
-      last: safePage === totalPages - 1,
+    search.set("page", "0");
+    router.replace(`/items?${search.toString()}`);
+  };
+
+  const handleFilterChange = (selection: Record<string, string[]>) => {
+    const search = new URLSearchParams();
+
+    // always rebuild URL from scratch
+    search.set("page", "0");
+    search.set("sort", sort);
+
+    if (keyword) search.set("keyword", keyword);
+    if (date) search.set("date", date);
+
+    Object.entries(selection).forEach(([key, values]) => {
+      values.forEach((v) => search.append(key, v));
     });
-    setLoading(false);
-  }, [sortedItems, currentPage]);
+
+    router.replace(`/items?${search.toString()}`);
+  };
 
   const handlePageChange = (page: number) => {
-    setCurrentPage((prev) => {
-      if (page === prev) return prev;
-      if (page < 0) return 0;
-      if (pageData) {
-        const maxPage = Math.max(pageData.totalPages - 1, 0);
-        return Math.min(page, maxPage);
-      }
-      return page;
-    });
+    const search = new URLSearchParams(params);
+    search.set("page", page.toString());
+    router.replace(`/items?${search.toString()}`);
   };
 
   return (
-    <main className="flex flex-col items-center justify-start min-h-screen p-4 max-w-7xl mx-auto">
+    <main className="flex flex-col items-center min-h-screen p-4 max-w-7xl mx-auto">
       <div className="w-full space-y-6 mt-5">
         <SearchBar
           onSearch={handleSearch}
-          initialKeywords={keywordParam}
-          initialDate={dateParam}
+          initialKeywords={keyword}
+          initialDate={date}
         />
+
         <div className="flex justify-between items-start gap-4">
           <FilterMenu
             filters={FILTER_CATEGORIES}
-            items={allItems}
-            onFilter={handleFilter}
+            selected={{
+              category: selectedCategories,
+              language: selectedLanguages,
+              type: selectedTypes,
+            }}
+            onChange={handleFilterChange}
           />
+
           <SortMenu
-            sortKey={sortKey}
-            setSortKey={setSortKey}
-            items={filteredItems}
-            onSort={(items) => setSortedItems(items)}
+            sortKey={sort}
+            onSortChange={(newSort) => {
+              const search = new URLSearchParams(params);
+              search.set("sort", newSort);
+              search.set("page", "0");
+              router.replace(`/items?${search.toString()}`);
+            }}
           />
         </div>
-        {loading ? (
-          <ItemListSkeleton /> // Or loading spinner, or nothing
+
+        {loading || !pageData ? (
+          <ItemListSkeleton />
         ) : (
           <ItemList
             pageData={pageData}

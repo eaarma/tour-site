@@ -7,7 +7,7 @@ export interface TourCreateDto {
   intensity: string;
   participants: number;
   categories: TourCategory[];
-  language: string;
+  language: string[];
   type: string;
   location: string;
   status: string;
@@ -24,7 +24,7 @@ export interface Tour {
   intensity: string;
   participants: number;
   categories: TourCategory[];
-  language: string;
+  language: string[];
   type: string;
   location: string;
   status: string;

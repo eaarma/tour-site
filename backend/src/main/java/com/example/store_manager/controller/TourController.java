@@ -48,17 +48,16 @@ public class TourController {
     }
 
     @GetMapping("/query")
-    public ResponseEntity<Page<TourResponseDto>> getAllByQuery(
+    public Page<TourResponseDto> getAllByQuery(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(defaultValue = "id,asc") String[] sort,
-            @RequestParam(required = false) List<String> category, // accept multiple categories like
-                                                                   // ?category=HISTORY&category=FOOD
+            @RequestParam(defaultValue = "12") int size,
+            @RequestParam(defaultValue = "title,asc") String[] sort,
+            @RequestParam(required = false) List<String> category,
+            @RequestParam(required = false) List<String> language,
             @RequestParam(required = false) String type,
-            @RequestParam(required = false) String language) {
-
-        return ResponseEntity.ok(
-                tourService.getAllByQuery(category, type, language, page, size, sort));
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String date) {
+        return tourService.getAllByQuery(category, type, language, keyword, date, page, size, sort);
     }
 
     @GetMapping("/{id}")

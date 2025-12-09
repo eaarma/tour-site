@@ -1,20 +1,20 @@
 "use client";
 
-import { FilterCategory, Item } from "@/types/types";
-import { useState, useEffect, useMemo } from "react";
+import { FilterCategory } from "@/types/types";
+import { useState, useMemo } from "react";
 import { Listbox } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 
 interface FilterMenuProps {
   filters: FilterCategory[];
-  items: Item[];
-  onFilter: (filtered: Item[]) => void;
+  selected: Record<string, string[]>; // from URL (parent)
+  onChange: (selection: Record<string, string[]>) => void; // tell parent to update URL
 }
 
 const FilterMenu: React.FC<FilterMenuProps> = ({
   filters,
-  items,
-  onFilter,
+  selected,
+  onChange,
 }) => {
   const [selectedFilters, setSelectedFilters] = useState<
     Record<string, Set<string>>
@@ -26,15 +26,31 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
     return initial;
   });
 
+  const emitChange = (next: Record<string, Set<string>>) => {
+    const plain: Record<string, string[]> = {};
+    Object.entries(next).forEach(([k, v]) => {
+      plain[k] = Array.from(v);
+    });
+    onChange(plain);
+  };
+
   const toggleFilter = (key: string, value: string) => {
     setSelectedFilters((prev) => {
       const updated = new Set(prev[key]);
+
       if (updated.has(value)) {
         updated.delete(value);
       } else {
         updated.add(value);
       }
-      return { ...prev, [key]: updated };
+
+      const next = {
+        ...prev,
+        [key]: updated,
+      };
+
+      emitChange(next);
+      return next;
     });
   };
 
@@ -47,38 +63,19 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
       cleared[f.key] = new Set();
     });
     setSelectedFilters(cleared);
+
+    // also notify parent that all filters are cleared
+    const emptySelection: Record<string, string[]> = {};
+    filters.forEach((f) => {
+      emptySelection[f.key] = [];
+    });
+    onChange(emptySelection);
   };
 
   // ✅ Check if any filter is applied
   const hasFiltersApplied = useMemo(() => {
     return Object.values(selectedFilters).some((set) => set.size > 0);
   }, [selectedFilters]);
-
-  // ✅ Apply filters whenever they change
-  useEffect(() => {
-    if (!items.length) return;
-
-    // Flatten all selected values into groups
-    const activeFilters = Object.entries(selectedFilters).filter(
-      ([, values]) => values.size > 0
-    );
-
-    let results: Item[];
-
-    if (activeFilters.length === 0) {
-      // no filters -> show everything
-      results = items;
-    } else {
-      results = items.filter((item) => {
-        // Item matches if it satisfies at least ONE filter group
-        return activeFilters.some(([key, values]) =>
-          values.has(item[key as keyof Item] as string)
-        );
-      });
-    }
-
-    onFilter(results);
-  }, [selectedFilters, items, onFilter]);
 
   return (
     <div className="w-full max-w-5xl mx-auto px-4 mt-4">
@@ -91,10 +88,14 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
             <Listbox
               value={Array.from(selectedFilters[filter.key] || [])}
               onChange={(values: string[]) => {
-                setSelectedFilters((prev) => ({
-                  ...prev,
-                  [filter.key]: new Set(values),
-                }));
+                setSelectedFilters((prev) => {
+                  const next = {
+                    ...prev,
+                    [filter.key]: new Set(values),
+                  };
+                  emitChange(next);
+                  return next;
+                });
               }}
               multiple
             >
@@ -105,24 +106,29 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
                 </Listbox.Button>
 
                 <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-base-100 text-neutral shadow-lg border text-sm">
-                  {filter.options.map((option) => (
-                    <Listbox.Option
-                      key={option}
-                      value={option}
-                      className={({ active }) =>
-                        `cursor-pointer select-none relative px-4 py-2 flex items-center gap-2 ${
-                          active ? "bg-blue-400" : ""
-                        }`
-                      }
-                    >
-                      <div className="w-4 h-4 flex items-center justify-center">
-                        {isSelected(filter.key, option) && (
-                          <CheckIcon className="h-4 w-4 text-blue-600" />
-                        )}
-                      </div>
-                      <span>{option}</span>
-                    </Listbox.Option>
-                  ))}
+                  {filter.options.map((opt) => {
+                    const label = typeof opt === "string" ? opt : opt.label;
+                    const value = typeof opt === "string" ? opt : opt.value;
+
+                    return (
+                      <Listbox.Option
+                        key={value}
+                        value={value}
+                        className={({ active }) =>
+                          `cursor-pointer select-none relative px-4 py-2 flex items-center gap-2 ${
+                            active ? "bg-blue-400" : ""
+                          }`
+                        }
+                      >
+                        <div className="w-4 h-4 flex items-center justify-center">
+                          {isSelected(filter.key, value) && (
+                            <CheckIcon className="h-4 w-4 text-blue-600" />
+                          )}
+                        </div>
+                        <span>{label}</span>
+                      </Listbox.Option>
+                    );
+                  })}
                 </Listbox.Options>
               </div>
             </Listbox>
@@ -131,9 +137,8 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
       </div>
 
       {/* Selected filters + Clear button */}
-      {(hasFiltersApplied || false) && (
+      {hasFiltersApplied && (
         <div className="mt-6 flex flex-wrap items-center gap-4">
-          {/* Selected Filters Display */}
           {Object.entries(selectedFilters).map(([key, values]) => {
             if (!values || values.size === 0) return null;
             const filterLabel = filters.find((f) => f.key === key)?.label;
@@ -162,7 +167,6 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
             );
           })}
 
-          {/* Clear All Button */}
           <button
             onClick={clearAllFilters}
             className="ml-2 mt-7 text-sm bg-red-100 text-red-700 px-3 py-1 rounded-full hover:bg-red-200"

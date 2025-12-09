@@ -39,8 +39,8 @@ public class TourCreateDto {
     @NotEmpty(message = "At least one category required")
     private Set<TourCategory> categories;
 
-    @NotBlank(message = "Language is required")
-    private String language;
+    @NotEmpty(message = "Language is required")
+    private Set<String> language;
 
     @NotBlank(message = "Type is required")
     private String type;

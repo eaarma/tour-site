@@ -52,7 +52,11 @@ public class Tour {
     @Column(name = "category")
     private Set<TourCategory> categories;
 
-    private String language;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "tour_languages", joinColumns = @JoinColumn(name = "tour_id"))
+    @Enumerated(EnumType.STRING) // ✅ Store enum as text instead of number
+    @Column(name = "language")
+    private Set<String> language;
 
     private String type;
     private String location;

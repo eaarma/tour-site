@@ -5,10 +5,15 @@ import { ApiError } from "./ApiError";
 import { store } from "@/store/store";
 import { markExpired } from "@/store/sessionSlice";
 import { clearUser } from "@/store/authSlice";
+import qs from "qs";
 
 const api = axios.create({
   baseURL: "http://localhost:8080",
   withCredentials: true,
+  paramsSerializer: (params) =>
+    qs.stringify(params, {
+      arrayFormat: "repeat", // <-- no [] in URL
+    }),
 });
 
 // ========================================================

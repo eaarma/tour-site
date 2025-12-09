@@ -22,7 +22,7 @@ public class TourResponseDto {
     private String intensity;
     private int participants;
     private Set<TourCategory> categories;
-    private String language;
+    private Set<String> language;
     private String type;
     private String location;
     private String status;

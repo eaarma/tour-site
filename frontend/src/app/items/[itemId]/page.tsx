@@ -128,7 +128,7 @@ export default function ItemPage() {
                 </div>
                 <div>
                   <span className="font-semibold">Language:</span>{" "}
-                  {item.language}
+                  {" " + item?.language?.join(", ")}
                 </div>
                 <div className="col-span-2">
                   <span className="font-semibold">Location:</span>{" "}

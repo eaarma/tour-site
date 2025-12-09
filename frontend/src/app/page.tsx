@@ -11,7 +11,6 @@ import ItemListHorizontalSkeleton from "@/components/home/ItemListHorizontalSkel
 import HighlightedItemSkeleton from "@/components/home/HighlightedItemSkeleton";
 
 export default function Home() {
-  const [allItems, setAllItems] = useState<Tour[]>([]); // keep full list for filtering
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Tour[]>([]);
   const [highlighted, setHighlighted] = useState<Tour | null>(null);

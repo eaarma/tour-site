@@ -73,27 +73,33 @@ public class TourService {
     }
 
     public Page<TourResponseDto> getAllByQuery(
-            List<String> categories, // <-- now a list, not string
+            List<String> categories,
             String type,
-            String language,
+            List<String> language,
+            String keyword,
+            String date,
             int page,
             int size,
             String[] sort) {
-
         Sort sortSpec = Sort.by(Sort.Direction.fromString(sort[1]), sort[0]);
         Pageable pageable = PageRequest.of(page, size, sortSpec);
 
-        // Convert List<String> to List<TourCategory> (Enum)
+        if (keyword != null && keyword.isBlank())
+            keyword = null;
+        if (date != null && date.isBlank())
+            date = null;
+
         List<TourCategory> categoryEnums = null;
         if (categories != null && !categories.isEmpty()) {
             categoryEnums = categories.stream()
-                    .map(String::trim)
                     .map(String::toUpperCase)
                     .map(TourCategory::valueOf)
                     .toList();
         }
 
-        Page<Tour> tours = tourRepository.findByFilters(categoryEnums, type, language, pageable);
+        Page<Tour> tours = tourRepository.searchByFilters(
+                categoryEnums, type, language, keyword, date, pageable);
+
         return tours.map(tourMapper::toDto);
     }
 

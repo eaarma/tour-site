@@ -83,17 +83,29 @@ const ItemCard: React.FC<ItemCardProps> = ({
           {item.title}
         </h2>
 
-        {/* Language + Location (closer to title now) */}
+        {/* Language + Location */}
         <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
           <span className="flex items-center gap-1 truncate">
             <MapPin size={14} className="text-gray-400" />
             {item.location}
           </span>
+
           <span className="flex items-center gap-1 truncate">
             <Globe size={14} className="text-gray-400" />
-            {item.language && item.language.length > 10
-              ? item.language.slice(0, 13) + "…"
-              : item.language}
+
+            {Array.isArray(item.language) && item.language.length > 0 ? (
+              (() => {
+                const langs = item.language;
+                const display =
+                  langs.length > 2
+                    ? `${langs[0]}, ${langs[1]} +${langs.length - 2}`
+                    : langs.join(", ");
+
+                return <span>{display}</span>;
+              })()
+            ) : (
+              <span>-</span>
+            )}
           </span>
         </div>
 

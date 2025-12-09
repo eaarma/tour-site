@@ -6,99 +6,54 @@ import {
   CheckIcon,
   XMarkIcon,
 } from "@heroicons/react/20/solid";
-import { useEffect } from "react";
-import { Tour } from "@/types";
 
-function parseDuration(timeRequired: string): number {
-  if (!timeRequired) return Infinity; // handle empty values by putting them at the end
-
-  const lower = timeRequired.toLowerCase();
-
-  const minutesMatch = lower.match(/(\d+)\s*minute/);
-  if (minutesMatch) return parseInt(minutesMatch[1], 10);
-
-  const hoursMatch = lower.match(/(\d+)\s*hour/);
-  if (hoursMatch) return parseInt(hoursMatch[1], 10) * 60;
-
-  return Infinity; // if format doesn't match expected
-}
+const DEFAULT_SORT = "title,asc";
 
 const SORT_OPTIONS = [
-  { key: "az", label: "A–Z (Title)" },
-  { key: "price", label: "Price (Low → High)" },
-  { key: "timeRequired", label: "Time Required (Low → High)" },
-  { key: "intensity", label: "Intensity (Low → High)" },
-  { key: "category", label: "Category (A–Z)" },
-  { key: "type", label: "Type (A–Z)" },
-  { key: "location", label: "Location (A–Z)" },
+  { key: "title,asc", label: "A–Z (Title)" },
+  { key: "title,desc", label: "Z–A (Title)" },
+  { key: "price,asc", label: "Price (Low → High)" },
+  { key: "price,desc", label: "Price (High → Low)" },
+  { key: "timeRequired,asc", label: "Duration (Low → High)" },
+  { key: "timeRequired,desc", label: "Duration (High → Low)" },
 ];
 
 interface SortMenuProps {
   sortKey: string;
-  setSortKey: (key: string) => void;
-  items: Tour[];
-  onSort: (sorted: Tour[]) => void;
+  onSortChange: (newSortKey: string) => void;
 }
 
-const SortMenu: React.FC<SortMenuProps> = ({
-  sortKey,
-  setSortKey,
-  items,
-  onSort,
-}) => {
-  const applySort = (key: string, list: Tour[]) => {
-    let sorted = [...list];
-    switch (key) {
-      case "price":
-        sorted.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
-        break;
-      case "timeRequired":
-        sorted.sort(
-          (a, b) => (a.timeRequired ?? Infinity) - (b.timeRequired ?? Infinity)
-        );
-        break;
-      case "intensity":
-        sorted.sort((a, b) => (a.intensity ?? 0) - (b.intensity ?? 0));
-        break;
-      default:
-        sorted.sort((a, b) =>
-          (a[key as keyof Tour] ?? "")
-            .toString()
-            .localeCompare((b[key as keyof Tour] ?? "").toString())
-        );
-    }
-    return sorted;
-  };
-
+const SortMenu: React.FC<SortMenuProps> = ({ sortKey, onSortChange }) => {
   const handleChange = (key: string) => {
-    setSortKey(key);
-    const sorted = applySort(key, items);
-    onSort(sorted);
+    onSortChange(key);
   };
 
-  const resetSort = () => setSortKey("az");
+  const reset = () => onSortChange(DEFAULT_SORT);
+
+  const activeLabel =
+    SORT_OPTIONS.find((o) => o.key === sortKey)?.label || "Sort";
 
   return (
     <div className="flex flex-col items-end gap-2 mt-4 mr-4">
       <h2 className="text-lg font-semibold mb-2">Sort</h2>
-      {/* Dropdown */}
+
       <Listbox value={sortKey} onChange={handleChange}>
         <div className="relative w-60">
           <Listbox.Button className="w-full rounded border px-3 py-2 text-left bg-white text-sm shadow flex justify-between items-center">
-            <span>
-              {SORT_OPTIONS.find((opt) => opt.key === sortKey)?.label ?? "Sort"}
-            </span>
+            <span>{activeLabel}</span>
             <ChevronUpDownIcon className="h-4 w-4 text-neutral ml-2" />
           </Listbox.Button>
+
           <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white shadow-lg border text-sm">
             {SORT_OPTIONS.map((opt) => (
               <Listbox.Option
                 key={opt.key}
                 value={opt.key}
                 className={({ active }) =>
-                  `cursor-pointer select-none relative px-4 py-2 flex items-center gap-2 ${
-                    active ? "bg-blue-400 text-white" : ""
-                  }`
+                  `
+                    cursor-pointer select-none relative px-4 py-2 flex items-center gap-2
+                    ${active ? "bg-blue-400 text-white" : ""}
+                  `
                 }
               >
                 {({ selected }) => (
@@ -115,15 +70,12 @@ const SortMenu: React.FC<SortMenuProps> = ({
         </div>
       </Listbox>
 
-      {/* "Sorted by" bubble */}
-      {sortKey !== "az" && (
+      {sortKey !== DEFAULT_SORT && (
         <div className="inline-flex items-center bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full mt-2">
-          Sorted by: {SORT_OPTIONS.find((opt) => opt.key === sortKey)?.label}
+          Sorted by: {activeLabel}
           <button
-            onClick={resetSort}
+            onClick={reset}
             className="ml-2 text-blue-600 hover:text-blue-900 focus:outline-none"
-            aria-label="Clear sorting"
-            type="button"
           >
             <XMarkIcon className="h-4 w-4" />
           </button>

@@ -440,17 +440,14 @@ export default function ManagerItemPage() {
                   <span className="font-semibold">Languages:</span>
                   {isEditing ? (
                     <EditableLanguages
-                      value={(form.language || "")
-                        .split(",")
-                        .map((l) => l.trim())
-                        .filter(Boolean)}
+                      value={Array.isArray(form.language) ? form.language : []}
                       onChange={(langs) =>
-                        setForm({ ...form, language: langs.join(", ") })
+                        setForm({ ...form, language: langs })
                       }
                       isEditing={isEditing}
                     />
                   ) : (
-                    " " + item?.language
+                    " " + item?.language?.join(", ")
                   )}
                 </div>
 

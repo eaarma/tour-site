@@ -26,6 +26,7 @@
     "nodemailer": "^7.0.10",
     "npm": "^11.4.2",
     "postcss": "^8.5.6",
+    "qs": "^6.14.0",
     "react": "^19.0.0",
     "react-clock": "^6.0.0",
     "react-datepicker": "^8.7.0",

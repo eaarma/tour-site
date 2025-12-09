@@ -20,9 +20,9 @@ interface QueryParams {
   sort?: string; // e.g. "title,asc" or "price,desc"
   keyword?: string;
   date?: string;
-  category?: string[];
-  language?: string[];
-  type?: string[];
+  category?: string;
+  language?: string;
+  type?: string;
 }
 
 export const TourService = {

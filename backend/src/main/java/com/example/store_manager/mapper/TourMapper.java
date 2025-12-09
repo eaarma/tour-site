@@ -18,6 +18,7 @@ public interface TourMapper {
     @Mapping(target = "shopId", source = "shop.id")
     @Mapping(target = "images", expression = "java(mapImages(tour.getImages()))")
     @Mapping(target = "categories", source = "categories") // ✅ Map directly
+    @Mapping(target = "language", source = "language")
     TourResponseDto toDto(Tour tour);
 
     // ✅ DTO → ENTITY (Create)
@@ -26,6 +27,7 @@ public interface TourMapper {
     @Mapping(target = "shop", ignore = true)
     @Mapping(target = "images", ignore = true) // Images added separately
     @Mapping(target = "categories", source = "categories") // ✅ Add this
+    @Mapping(target = "language", source = "language") // ✅ Add this
     Tour toEntity(TourCreateDto dto);
 
     // ✅ DTO → ENTITY (Update)
@@ -34,6 +36,7 @@ public interface TourMapper {
     @Mapping(target = "madeBy", ignore = true)
     @Mapping(target = "images", ignore = true)
     @Mapping(target = "categories", source = "categories")
+    @Mapping(target = "language", source = "language")
     void updateTourFromDto(TourCreateDto dto, @MappingTarget Tour tour);
 
     // ✅ Convert List<TourImage> → List<String>
