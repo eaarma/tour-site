@@ -16,9 +16,12 @@ interface Props {
   onClose: () => void;
   item: Tour;
   cartItemId: string;
-  schedules?: TourScheduleResponseDto[]; // optional
+  schedules?: TourScheduleResponseDto[];
   initialScheduleId?: number;
   initialParticipants?: number;
+  initialPreferredLanguage?: string;
+  language: string[];
+  initialComment?: string;
 }
 
 export default function ItemModal({
@@ -26,7 +29,9 @@ export default function ItemModal({
   onClose,
   item,
   cartItemId,
-  schedules, // ❌ no default here
+  schedules,
+  initialComment,
+  initialPreferredLanguage,
   initialScheduleId,
   initialParticipants = 1,
 }: Props) {
@@ -39,6 +44,8 @@ export default function ItemModal({
   const [selectedSchedule, setSelectedSchedule] =
     useState<TourScheduleResponseDto | null>(null);
   const [participants, setParticipants] = useState(initialParticipants);
+  const [preferredLanguage, setPreferredLanguage] = useState("");
+  const [comment, setComment] = useState("");
 
   // 1) If parent provides schedules, sync them once (or when identity changes)
   useEffect(() => {
@@ -89,17 +96,27 @@ export default function ItemModal({
 
     dispatch(
       updateItemSchedule({
-        cartItemId: cartItemId,
+        cartItemId,
         scheduleId: selectedSchedule.id,
         date: selectedSchedule.date,
         time: selectedSchedule.time || "",
-        participants, // make sure your reducer accepts this
+        participants,
+
+        preferredLanguage: preferredLanguage || undefined,
+        comment: comment || undefined,
       })
     );
 
     toast.success("Cart item updated ✅");
     onClose();
   };
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    setPreferredLanguage(initialPreferredLanguage ?? "");
+    setComment(initialComment ?? "");
+  }, [isOpen, initialPreferredLanguage, initialComment]);
 
   const viewTour = () => {
     router.push(`/items/${item.id}`);
@@ -135,6 +152,39 @@ export default function ItemModal({
             )
           )}
         </select>
+      </div>
+      {/* 🔹 Preferred Language */}
+      {item.language && item.language.length > 0 && (
+        <div className="mb-4">
+          <label className="block font-semibold mb-2">
+            Preferred Language (optional)
+          </label>
+
+          <select
+            className="select select-bordered w-full"
+            value={preferredLanguage}
+            onChange={(e) => setPreferredLanguage(e.target.value)}
+          >
+            <option value="">No preference</option>
+            {item.language.map((lang) => (
+              <option key={lang} value={lang}>
+                {lang}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* 🔹 Comment */}
+      <div className="mb-4">
+        <label className="block font-semibold mb-2">Comment (optional)</label>
+        <textarea
+          className="textarea textarea-bordered w-full"
+          rows={3}
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Anything the guide should know?"
+        />
       </div>
 
       <div className="flex justify-end mt-6">

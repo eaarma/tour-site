@@ -1,7 +1,11 @@
 package com.example.store_manager.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -24,6 +28,7 @@ import com.example.store_manager.model.OrderItem;
 import com.example.store_manager.model.OrderStatus;
 import com.example.store_manager.model.Tour;
 import com.example.store_manager.model.TourSchedule;
+import com.example.store_manager.model.TourSession;
 import com.example.store_manager.model.User;
 import com.example.store_manager.repository.OrderItemRepository;
 import com.example.store_manager.repository.OrderRepository;
@@ -34,6 +39,7 @@ import com.example.store_manager.security.CustomUserDetails;
 import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
 import com.example.store_manager.repository.TourScheduleRepository;
+import com.example.store_manager.repository.TourSessionRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -50,6 +56,7 @@ public class OrderService {
         private final OrderItemRepository orderItemRepository;
         private final TourScheduleRepository tourScheduleRepository;
         private final CurrentUserService currentUserService;
+        private final TourSessionRepository tourSessionRepository;
 
         /**
          * Create a new order with multiple items.
@@ -58,6 +65,7 @@ public class OrderService {
         @Transactional
         public OrderResponseDto createOrder(OrderCreateRequestDto dto, UUID userId) {
                 User user = null;
+
                 if (userId != null) {
                         user = userRepository.findById(userId)
                                         .orElseThrow(() -> new RuntimeException("User not found"));
@@ -70,6 +78,7 @@ public class OrderService {
                                 .status(OrderStatus.PENDING)
                                 .build();
 
+                // 2. For each order item
                 // 2. For each order item
                 for (OrderItemCreateRequestDto itemDto : dto.getItems()) {
 
@@ -86,21 +95,22 @@ public class OrderService {
                                 throw new RuntimeException("Not enough spots available for this schedule.");
                         }
 
-                        // Update schedule bookings
+                        // Update schedule
                         schedule.setBookedParticipants(newBooked);
-
                         if ("PRIVATE".equalsIgnoreCase(tour.getType())) {
-                                schedule.setStatus("BOOKED"); // fully locked after first booking
+                                schedule.setStatus("BOOKED");
                         } else {
-                                schedule.setStatus(
-                                                newBooked >= schedule.getMaxParticipants()
-                                                                ? "BOOKED"
-                                                                : "ACTIVE");
+                                schedule.setStatus(newBooked >= schedule.getMaxParticipants() ? "BOOKED" : "ACTIVE");
                         }
-
                         tourScheduleRepository.save(schedule);
 
-                        // Create snapshot & order item
+                        // ⭐ NEW SESSION logic
+                        TourSession session = getOrCreateSession(
+                                        tour,
+                                        itemDto.getScheduledAt(),
+                                        itemDto.getParticipants());
+
+                        // Snapshot
                         TourSnapshotDto snapshot = TourSnapshotDto.builder()
                                         .id(tour.getId())
                                         .title(tour.getTitle())
@@ -108,12 +118,14 @@ public class OrderService {
                                         .price(tour.getPrice())
                                         .build();
 
+                        // Create item
                         OrderItem item = OrderItem.builder()
                                         .order(order)
                                         .tour(tour)
+                                        .session(session) // ⭐ NEW
                                         .shopId(tour.getShop().getId())
                                         .tourTitle(tour.getTitle())
-                                        .scheduledAt(itemDto.getScheduledAt())
+                                        .scheduledAt(itemDto.getScheduledAt()) // keep for now
                                         .participants(itemDto.getParticipants())
                                         .name(dto.getName())
                                         .email(dto.getEmail())
@@ -122,9 +134,10 @@ public class OrderService {
                                         .preferredLanguage(itemDto.getPreferredLanguage())
                                         .comment(itemDto.getComment())
                                         .paymentMethod(dto.getPaymentMethod())
-                                        .status(OrderStatus.PENDING)
-                                        .pricePaid(tour.getPrice()
-                                                        .multiply(BigDecimal.valueOf(itemDto.getParticipants())))
+                                        .status(OrderStatus.CONFIRMED)
+                                        .pricePaid(
+                                                        tour.getPrice().multiply(
+                                                                        BigDecimal.valueOf(itemDto.getParticipants())))
                                         .tourSnapshot(orderMapper.toJsonSnapshot(snapshot))
                                         .build();
 
@@ -338,6 +351,39 @@ public class OrderService {
                 if (!isAdmin && !userDetails.getId().equals(userId)) {
                         throw new AccessDeniedException("You are not allowed to access these items");
                 }
+        }
+
+        private TourSession getOrCreateSession(Tour tour, LocalDateTime scheduledAt, int participants) {
+
+                LocalDate date = scheduledAt.toLocalDate();
+                LocalTime time = scheduledAt.toLocalTime();
+
+                // 1️⃣ Check if session exists
+                Optional<TourSession> existing = tourSessionRepository
+                                .findByTourIdAndDateAndTime(tour.getId(), date, time);
+
+                if (existing.isPresent()) {
+                        TourSession session = existing.get();
+
+                        // Prevent overbooking
+                        if (session.getRemaining() < participants) {
+                                throw new RuntimeException("Not enough spots available in this session");
+                        }
+
+                        session.setRemaining(session.getRemaining() - participants);
+                        return tourSessionRepository.save(session);
+                }
+
+                // 2️⃣ If session doesn't exist → create one
+                TourSession session = TourSession.builder()
+                                .tour(tour)
+                                .date(date)
+                                .time(time)
+                                .capacity(participants) // fallback only; normally session is created from schedule
+                                .remaining(0) // fully used because no schedule? You may adjust this behavior.
+                                .build();
+
+                return tourSessionRepository.save(session);
         }
 
 }

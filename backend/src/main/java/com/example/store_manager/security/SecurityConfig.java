@@ -23,7 +23,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.example.store_manager.security.filters.GlobalRateLimitFilter;
 
-import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
@@ -76,6 +75,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/schedules/**").hasRole("MANAGER")
                         .requestMatchers(HttpMethod.PATCH, "/schedules/**").hasRole("MANAGER")
                         .requestMatchers(HttpMethod.DELETE, "/schedules/**").hasRole("MANAGER")
+
+                        // Tour Sessions
+                        .requestMatchers(HttpMethod.GET, "/sessions/**").permitAll() // anyone can view
+                        .requestMatchers(HttpMethod.POST, "/sessions/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.PATCH, "/sessions/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/sessions/**").hasRole("MANAGER")
 
                         // All other requests require authentication
                         .anyRequest().authenticated())

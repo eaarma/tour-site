@@ -40,10 +40,16 @@ export default function CartPage() {
             participants: viewItem.participants,
             images: viewItem.images,
             status: "ACTIVE",
-            timeRequired: 60, // 🔹 adjust if you store real value
+            timeRequired: 60,
+
+            // 🔥 IMPORTANT
+            language: viewItem.availableLanguages,
           }}
           cartItemId={viewItem.cartItemId}
           initialScheduleId={viewItem.scheduleId}
+          initialParticipants={viewItem.participants}
+          initialPreferredLanguage={viewItem.preferredLanguage}
+          initialComment={viewItem.comment}
         />
       )}
     </main>

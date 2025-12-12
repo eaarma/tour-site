@@ -11,13 +11,17 @@ import com.example.store_manager.dto.schedule.TourScheduleCreateDto;
 import com.example.store_manager.dto.schedule.TourScheduleResponseDto;
 import com.example.store_manager.dto.schedule.TourScheduleUpdateDto;
 import com.example.store_manager.mapper.TourScheduleMapper;
+import com.example.store_manager.mapper.TourSessionMapper;
 import com.example.store_manager.model.Tour;
 import com.example.store_manager.model.TourSchedule;
+import com.example.store_manager.model.TourSession;
 import com.example.store_manager.repository.TourRepository;
 import com.example.store_manager.repository.TourScheduleRepository;
+import com.example.store_manager.repository.TourSessionRepository;
 import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -27,6 +31,8 @@ public class TourScheduleService {
     private final TourScheduleRepository scheduleRepository;
     private final TourRepository tourRepository;
     private final TourScheduleMapper scheduleMapper;
+    private final TourSessionMapper sessionMapper;
+    private final TourSessionRepository sessionRepository;
 
     public List<TourScheduleResponseDto> getAllSchedulesForTour(Long tourId) {
         return scheduleRepository.findByTourId(tourId).stream()
@@ -48,12 +54,17 @@ public class TourScheduleService {
     }
 
     @ShopAccess(AccessLevel.GUIDE)
+    @Transactional
     public TourScheduleResponseDto createSchedule(TourScheduleCreateDto dto) {
         Tour tour = tourRepository.findById(dto.getTourId())
                 .orElseThrow(() -> new RuntimeException("Tour not found"));
 
         TourSchedule schedule = scheduleMapper.fromCreateDto(dto, tour);
         schedule = scheduleRepository.save(schedule);
+
+        // ⭐ Automatically create matching session
+        TourSession session = sessionMapper.fromSchedule(schedule);
+        sessionRepository.save(session);
 
         return scheduleMapper.toDto(schedule);
     }

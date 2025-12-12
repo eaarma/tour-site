@@ -3,6 +3,8 @@ package com.example.store_manager.model;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+import org.hibernate.envers.Audited;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,6 +13,7 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Audited
 public class TourSchedule {
 
     @Id

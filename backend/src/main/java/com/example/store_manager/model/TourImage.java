@@ -4,11 +4,14 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
 
+import org.hibernate.envers.Audited;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
 @Data
 @Entity
 @Table(name = "tour_images")
+@Audited
 public class TourImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

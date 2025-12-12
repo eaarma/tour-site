@@ -17,6 +17,7 @@ export interface CartItem {
   selectedTime: string;
   selected: boolean;
   images?: string[];
+  availableLanguages?: string[];
   preferredLanguage?: string;
   comment?: string;
 }

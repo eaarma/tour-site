@@ -1,10 +1,11 @@
 package com.example.store_manager.model;
 
-
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
+
+import org.hibernate.envers.Audited;
 
 @Entity
 @Table(name = "shops")
@@ -12,6 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Audited
 public class Shop {
 
     @Id

@@ -1,175 +1,197 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { OrderItemResponseDto, OrderStatus } from "@/types/order";
-import { Tour } from "@/types";
+import { useEffect, useRef, useState } from "react";
 import CardFrame from "@/components/common/CardFrame";
-import OrderItemCard from "./OrderItemCard";
-import OrderDetailsModal from "./OrderDetailsModal";
-import { OrderService } from "@/lib/orderService";
-import toast from "react-hot-toast";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import CustomDateInput from "@/components/common/CustomDateInput";
+import { Tour } from "@/types";
+import { TourSessionDto } from "@/types/tourSession";
+import SessionCard from "./SessionCard";
+import SessionDetailsModal from "./SessionDetailsModal";
+import { TourSessionService } from "@/lib/tourSessionService";
 import { useAuth } from "@/hooks/useAuth";
+import toast from "react-hot-toast";
 
-interface Props {
-  orderItems: OrderItemResponseDto[];
-  tours: Tour[];
-}
+const ACTIVE_STATUSES: TourSessionDto["status"][] = ["PLANNED", "CONFIRMED"];
 
-const ACTIVE_STATUSES: (OrderStatus | "ALL")[] = [
-  "ALL",
-  "CONFIRMED",
-  "PENDING",
-  "CANCELLED",
-];
-const PAST_STATUSES: (OrderStatus | "ALL")[] = [
-  "ALL",
+const PAST_STATUSES: TourSessionDto["status"][] = [
   "COMPLETED",
+  "CANCELLED",
   "CANCELLED_CONFIRMED",
 ];
 
-export default function ManagerOrderSection({ orderItems, tours }: Props) {
+const ALL_STATUSES: TourSessionDto["status"][] = [
+  "PLANNED",
+  "CONFIRMED",
+  "COMPLETED",
+  "CANCELLED",
+  "CANCELLED_CONFIRMED",
+];
+
+interface Props {
+  sessions: TourSessionDto[];
+  tours: Tour[];
+  shopId: number; // 🔥 REQUIRED so reloadSessions works
+}
+
+export default function ManagerOrderSection({
+  sessions,
+  tours,
+  shopId,
+}: Props) {
   const [activeTab, setActiveTab] = useState<"today" | "active" | "past">(
     "today"
   );
-  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
-  const [items, setItems] = useState(orderItems);
-  const [filterStatus, setFilterStatus] = useState<OrderStatus | "ALL">("ALL");
-  const [sortStatus, setSortStatus] = useState<OrderStatus | "NONE">("NONE");
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
+  const [sortBy, setSortBy] = useState<"DATE" | "STATUS">("DATE");
+  const [statusFilter, setStatusFilter] = useState<TourSessionDto["status"][]>(
+    []
+  );
+  const [statusFilterOpen, setStatusFilterOpen] = useState(false);
+  const statusFilterRef = useRef<HTMLDivElement | null>(null);
+  const hasDateFilter = Boolean(fromDate || toDate);
 
   const { user } = useAuth();
 
+  const [sessionList, setSessionList] = useState<TourSessionDto[]>(sessions);
+  const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
+    null
+  );
+
+  const showClearDates = fromDate || toDate;
+
+  //Default “From” date = today (first navigation)
   useEffect(() => {
-    setItems(orderItems);
-  }, [orderItems]);
-
-  const selectedItem = selectedItemId
-    ? items.find((i) => i.id === selectedItemId) || null
-    : null;
-
-  const updateLocalItem = (updated: OrderItemResponseDto) => {
-    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
-  };
-
-  const refreshAfterReassign = async (itemId: number) => {
-    try {
-      const updated = await OrderService.getOrderItemById(itemId);
-      updateLocalItem(updated);
-    } catch {
-      toast.error("Failed to refresh item");
-    }
-  };
-
-  const handleConfirm = async (id: number) => {
-    if (!user?.id) {
-      toast.error("User not authenticated");
-      return;
-    }
-
-    try {
-      const updated = await OrderService.confirmOrderItem(id, user.id);
-      updateLocalItem(updated);
-      toast.success("Order confirmed and assigned ✅");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to confirm order");
-    }
-  };
-
-  const handleConfirmCancellation = async (id: number) => {
-    try {
-      const updated = await OrderService.updateItemStatus(
-        id,
-        "CANCELLED_CONFIRMED"
-      );
-      updateLocalItem(updated);
-      toast.success("Cancellation confirmed 🚫");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to confirm cancellation");
-    }
-  };
-
-  const handleComplete = async (id: number) => {
-    try {
-      const updated = await OrderService.updateItemStatus(id, "COMPLETED");
-      updateLocalItem(updated);
-      toast.success("Order marked as completed 🎉");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to mark as completed");
-    }
-  };
-
-  // ✅ Filtering + Sorting logic (same as before)
-  let filteredItems = items;
-
-  // today
-  if (activeTab === "today") {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
+    setFromDate(today);
+  }, []);
 
-    filteredItems = filteredItems.filter((i) => {
-      const dt = new Date(i.scheduledAt);
-      return dt >= today && dt < tomorrow;
+  // ⬇️ sync when parent updates
+  useEffect(() => {
+    setSessionList(sessions);
+  }, [sessions]);
+
+  useEffect(() => {
+    if (!statusFilterOpen) return;
+
+    const onPointerDown = (e: PointerEvent) => {
+      const el = statusFilterRef.current;
+      if (!el) return;
+
+      // if click is outside dropdown wrapper → close
+      if (!el.contains(e.target as Node)) {
+        setStatusFilterOpen(false);
+      }
+    };
+
+    // pointerdown catches it early and avoids “open then instantly close”
+    window.addEventListener("pointerdown", onPointerDown);
+    return () => window.removeEventListener("pointerdown", onPointerDown);
+  }, [statusFilterOpen]);
+
+  // ⬇️ reload sessions from backend
+  const reloadSessions = async () => {
+    if (!shopId) return;
+    const updated = await TourSessionService.getByShopId(shopId);
+    setSessionList(updated);
+  };
+
+  // ⬇️ confirm session: assign manager + change status
+  const handleConfirmSession = async (sessionId: number) => {
+    if (!user?.id) return;
+
+    await TourSessionService.assignManager(sessionId, user.id);
+    await TourSessionService.updateStatus(sessionId, "CONFIRMED");
+    toast.success("Session confirmed");
+    await reloadSessions();
+  };
+
+  // ⬇️ complete session
+  const handleCompleteSession = async (sessionId: number) => {
+    await TourSessionService.updateStatus(sessionId, "COMPLETED");
+    toast.success("Session marked as completed");
+    await reloadSessions();
+  };
+
+  const handleSessionUpdated = (updated: TourSessionDto) => {
+    setSessionList((prev) =>
+      prev.map((s) => (s.id === updated.id ? updated : s))
+    );
+  };
+
+  // ============================
+  //  Filter sessions
+  // ============================
+  let filtered = [...sessionList];
+  const now = new Date();
+
+  // 🔹 Tab logic
+  if (activeTab === "today") {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+
+    filtered = filtered.filter((s) => {
+      const dt = new Date(`${s.date}T${s.time}`);
+      return dt >= start && dt <= end;
     });
   }
 
-  // active
   if (activeTab === "active") {
-    filteredItems = filteredItems.sort(
-      (a, b) =>
-        new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
-    );
+    filtered = filtered.filter((s) => ACTIVE_STATUSES.includes(s.status));
   }
 
-  // past
   if (activeTab === "past") {
-    filteredItems = filteredItems.filter(
-      (i) => i.status === "COMPLETED" || i.status === "CANCELLED_CONFIRMED"
-    );
+    filtered = filtered.filter((s) => PAST_STATUSES.includes(s.status));
   }
-  if (filterStatus !== "ALL") {
-    filteredItems = filteredItems.filter((i) => i.status === filterStatus);
-  }
+  // Date range filter
   if (fromDate) {
-    const fromStart = new Date(fromDate);
-    fromStart.setHours(0, 0, 0, 0);
-    filteredItems = filteredItems.filter(
-      (i) => new Date(i.scheduledAt) >= fromStart
+    filtered = filtered.filter(
+      (s) => new Date(`${s.date}T${s.time}`) >= fromDate
     );
-  }
-  if (toDate) {
-    const toEnd = new Date(toDate);
-    toEnd.setHours(23, 59, 59, 999);
-    filteredItems = filteredItems.filter(
-      (i) => new Date(i.scheduledAt) <= toEnd
-    );
-  }
-  if (sortStatus !== "NONE") {
-    filteredItems = [...filteredItems].sort((a, b) => {
-      if (a.status === sortStatus && b.status !== sortStatus) return -1;
-      if (b.status === sortStatus && a.status !== sortStatus) return 1;
-      return 0;
-    });
   }
 
-  const statusOptions =
-    activeTab === "active" ? ACTIVE_STATUSES : PAST_STATUSES;
+  if (statusFilter.length > 0) {
+    filtered = filtered.filter((s) => statusFilter.includes(s.status));
+  }
+
+  if (fromDate) {
+    filtered = filtered.filter(
+      (s) => new Date(`${s.date}T${s.time}`) >= fromDate
+    );
+  }
+
+  if (toDate) {
+    const end = new Date(toDate);
+    end.setHours(23, 59, 59, 999);
+
+    filtered = filtered.filter((s) => new Date(`${s.date}T${s.time}`) <= end);
+  }
+
+  if (sortBy === "DATE") {
+    filtered.sort(
+      (a, b) =>
+        new Date(`${a.date}T${a.time}`).getTime() -
+        new Date(`${b.date}T${b.time}`).getTime()
+    );
+  }
+
+  if (sortBy === "STATUS") {
+    filtered.sort((a, b) => a.status.localeCompare(b.status));
+  }
 
   return (
     <section className="mb-12">
       <CardFrame>
         <div className="p-4">
-          <h2 className="text-2xl font-bold mb-4">Manage Bookings</h2>
+          <h2 className="text-2xl font-bold mb-4">Manage Sessions</h2>
 
-          {/* Filters + Tabs (same logic) */}
+          {/* Tabs */}
           <div className="sticky top-0 z-10 bg-base-200 pb-3">
             <div className="tabs tabs-boxed mb-3">
               <button
@@ -190,43 +212,6 @@ export default function ManagerOrderSection({ orderItems, tours }: Props) {
               >
                 Past
               </button>
-            </div>
-
-            <div className="flex flex-wrap gap-4 items-center mb-2">
-              <select
-                className="select select-bordered select-sm"
-                value={filterStatus}
-                onChange={(e) =>
-                  setFilterStatus(e.target.value as OrderStatus | "ALL")
-                }
-              >
-                {statusOptions.map((status) => (
-                  <option key={status} value={status}>
-                    {status === "ALL"
-                      ? "All statuses"
-                      : status === "CANCELLED_CONFIRMED"
-                      ? "CANCELLED"
-                      : status}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                className="select select-bordered select-sm"
-                value={sortStatus}
-                onChange={(e) =>
-                  setSortStatus(e.target.value as OrderStatus | "NONE")
-                }
-              >
-                <option value="NONE">No sorting</option>
-                {statusOptions
-                  .filter((s) => s !== "ALL")
-                  .map((status) => (
-                    <option key={status} value={status}>
-                      Sort by {status}
-                    </option>
-                  ))}
-              </select>
             </div>
 
             {/* Date pickers */}
@@ -262,44 +247,111 @@ export default function ManagerOrderSection({ orderItems, tours }: Props) {
                   }
                 />
               </div>
+              {/* CLEAR DATES (STATIC, DISABLED WHEN EMPTY) */}
+              <button
+                className="btn btn-sm btn-outline"
+                disabled={!hasDateFilter}
+                onClick={() => {
+                  setFromDate(null);
+                  setToDate(null);
+                }}
+              >
+                Clear dates
+              </button>
+            </div>
+          </div>
+
+          {/* SORT + FILTER CONTROLS */}
+          <div className="flex flex-wrap gap-4 items-center mt-4 mb-4">
+            {/* SORT */}
+            <select
+              className="select select-bordered select-sm"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+            >
+              <option value="DATE">Sort by date</option>
+              <option value="STATUS">Sort by status</option>
+            </select>
+
+            {/* STATUS FILTER DROPDOWN */}
+            <div className="relative" ref={statusFilterRef}>
+              <button
+                className="btn btn-sm btn-outline min-w-[180px] justify-between"
+                onClick={() => setStatusFilterOpen((v) => !v)}
+              >
+                {statusFilter.length === 0
+                  ? "All statuses"
+                  : `${statusFilter.length} status${
+                      statusFilter.length > 1 ? "es" : ""
+                    }`}
+              </button>
+
+              {statusFilterOpen && (
+                <div
+                  className="absolute left-0 mt-2 w-52 bg-base-100 border shadow-md rounded-lg z-30 p-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {ALL_STATUSES.map((st) => {
+                    const checked = statusFilter.includes(st);
+                    return (
+                      <label
+                        key={st}
+                        className="flex items-center gap-2 px-2 py-1 rounded hover:bg-base-200 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          className="checkbox checkbox-sm"
+                          checked={checked}
+                          onChange={() =>
+                            setStatusFilter((prev) =>
+                              checked
+                                ? prev.filter((s) => s !== st)
+                                : [...prev, st]
+                            )
+                          }
+                        />
+                        <span className="text-sm">{st}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
 
           {/* List */}
           <div className="space-y-3 min-h-[465px] max-h-[465px] overflow-y-auto pr-2">
-            {filteredItems.length > 0 ? (
-              filteredItems.map((item) => (
-                <OrderItemCard
-                  key={item.id}
-                  item={item}
-                  onConfirm={handleConfirm}
-                  onConfirmCancellation={handleConfirmCancellation}
-                  onComplete={handleComplete}
-                  onClick={() => setSelectedItemId(item.id)}
+            {filtered.length > 0 ? (
+              filtered.map((session) => (
+                <SessionCard
+                  key={session.id}
+                  session={session}
+                  tour={tours.find((t) => t.id === session.tourId)}
+                  onClick={() => setSelectedSessionId(session.id!)}
+                  onConfirmSession={handleConfirmSession}
+                  onCompleteSession={handleCompleteSession}
                 />
               ))
             ) : (
-              <p className="text-sm text-gray-500">No bookings to display.</p>
+              <p className="text-sm text-gray-500">No sessions to display.</p>
             )}
           </div>
 
-          {/* Details modal */}
-          <OrderDetailsModal
-            isOpen={!!selectedItem}
-            onClose={() => setSelectedItemId(null)}
-            orderItem={selectedItem}
-            tour={
-              selectedItem
-                ? tours.find((t) => t.id === selectedItem.tourId)
-                : undefined
-            }
-            onConfirm={handleConfirm}
-            onConfirmCancellation={handleConfirmCancellation}
-            onComplete={handleComplete}
-            onReassigned={() =>
-              selectedItem && refreshAfterReassign(selectedItem.id)
-            }
-          />
+          {/* Modal */}
+          {selectedSessionId && (
+            <SessionDetailsModal
+              session={sessionList.find((s) => s.id === selectedSessionId)!}
+              tour={tours.find(
+                (t) =>
+                  t.id ===
+                  sessionList.find((s) => s.id === selectedSessionId)!.tourId
+              )}
+              onClose={() => setSelectedSessionId(null)}
+              onConfirmSession={handleConfirmSession}
+              onCompleteSession={handleCompleteSession}
+              onSessionUpdated={handleSessionUpdated}
+            />
+          )}
         </div>
       </CardFrame>
     </section>

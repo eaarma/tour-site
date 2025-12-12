@@ -4,14 +4,16 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { ShopUserService } from "@/lib/shopUserService";
 import { ShopService } from "@/lib/shopService";
-import { OrderService } from "@/lib/orderService";
+import { TourSessionService } from "@/lib/tourSessionService";
+import { TourService } from "@/lib/tourService";
 import { ShopDto } from "@/types/shop";
 import { UserResponseDto } from "@/types/user";
 import ManagerProfileStatisticSection from "./ManagerProfileStatisticSection";
 import ProfileSection from "./ProfileSection";
 import ManagerProfileShopsSection from "./ManagerProfileShopsSections";
 import ManagerProfileOrderSection from "./ManagerProfileOrderSection";
-import { OrderItemResponseDto } from "@/types";
+import { Tour } from "@/types";
+import { TourSessionDto } from "@/types/tourSession";
 
 interface ManagerProfilePageProps {
   profile: UserResponseDto;
@@ -26,9 +28,13 @@ export default function ManagerProfilePage({
   const [toursGiven, setToursGiven] = useState<number>(0);
   const [upcomingTours, setUpcomingTours] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [managerOrders, setManagerOrders] = useState<OrderItemResponseDto[]>(
-    []
-  );
+  const [totalSessions, setTotalSessions] = useState(0);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [totalParticipants, setTotalParticipants] = useState(0);
+
+  const [managerSessions, setManagerSessions] = useState<TourSessionDto[]>([]);
+  const [tours, setTours] = useState<Tour[]>([]);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -52,53 +58,83 @@ export default function ManagerProfilePage({
     fetchShops();
   }, []);
 
-  // 🔹 Fetch tours managed by the current user
+  // ✅ Fetch sessions assigned to current manager
   useEffect(() => {
-    const fetchManagerTours = async () => {
+    const fetchManagerSessions = async () => {
       if (!profile?.id) return;
-      try {
-        const orderItems = await OrderService.getItemsByManagerId(profile.id);
-        setManagerOrders(orderItems);
-        const completedTours = orderItems.filter(
-          (item) => item.status === "COMPLETED"
-        );
-        setToursGiven(completedTours.length);
 
-        // Optional: count upcoming confirmed toursf
-        const upcoming = orderItems.filter(
-          (item) =>
-            item.status === "CONFIRMED" &&
-            new Date(item.scheduledAt) > new Date()
-        );
+      try {
+        const sessions = await TourSessionService.getByManagerId(profile.id);
+        setManagerSessions(sessions);
+
+        // Stats
+        const completed = sessions.filter((s) => s.status === "COMPLETED");
+        setToursGiven(completed.length);
+
+        const now = new Date();
+        const upcoming = sessions.filter((s) => {
+          if (s.status !== "CONFIRMED") return false;
+          const dt = new Date(`${s.date}T${s.time}`);
+          return dt > now;
+        });
         setUpcomingTours(upcoming.length);
+
+        // Total sessions
+        setTotalSessions(sessions.length);
+
+        // Total orders (order items count)
+        const orders = sessions.reduce(
+          (sum, s) => sum + (s.participants?.length ?? 0),
+          0
+        );
+        setTotalOrders(orders);
+
+        // Total participants
+        const participants = sessions.reduce(
+          (sum, s) =>
+            sum +
+            (s.participants?.reduce((pSum, p) => pSum + p.participants, 0) ??
+              0),
+          0
+        );
+
+        setTotalParticipants(participants);
+
+        // Fetch tours needed for cards/modals
+        const uniqueTourIds = Array.from(
+          new Set(sessions.map((s) => s.tourId))
+        );
+        const tourDetails = await Promise.all(
+          uniqueTourIds.map((id) => TourService.getById(id))
+        );
+        setTours(tourDetails);
       } catch (err) {
-        console.error("Failed to fetch manager order items", err);
+        console.error("Failed to fetch manager sessions", err);
       }
     };
 
-    fetchManagerTours();
+    fetchManagerSessions();
   }, [profile?.id]);
 
   return (
     <main className="bg-base-200 min-h-screen p-6">
       <div className="max-w-5xl mx-auto flex flex-col gap-8">
-        {/* Profile info */}
         <ProfileSection user={profile} onProfileUpdated={setProfile} />
 
-        {/* Stats */}
         <ManagerProfileStatisticSection
           shopsCount={shops.length}
           toursGiven={toursGiven}
           upcomingTours={upcomingTours}
+          totalSessions={totalSessions}
+          totalOrders={totalOrders}
+          totalParticipants={totalParticipants}
         />
 
-        {/* Orders Section */}
-        <ManagerProfileOrderSection orderItems={managerOrders} />
+        {/* ✅ Sessions section (replaces orderitems section) */}
+        <ManagerProfileOrderSection sessions={managerSessions} tours={tours} />
 
-        {/* Shops */}
         <ManagerProfileShopsSection shops={shops} loading={loading} />
 
-        {/* Go to Shops Page */}
         <button
           className="btn btn-primary self-start"
           onClick={() => router.push("/shops")}

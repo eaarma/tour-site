@@ -1,8 +1,7 @@
 "use client";
 
 import { OrderItemResponseDto, OrderStatus } from "@/types/order";
-import { Circle } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { Users, Euro, Dot } from "lucide-react";
 
 interface Props {
   item: OrderItemResponseDto;
@@ -19,19 +18,15 @@ export default function OrderItemCard({
   onComplete,
   onClick,
 }: Props) {
-  const { user } = useAuth();
-
-  const isOwner = item.managerId && user?.id === item.managerId;
-
-  const statusColor =
+  const statusStyle =
     item.status === "CONFIRMED"
-      ? "text-green-500"
+      ? "text-green-600"
       : item.status === "PENDING"
-      ? "text-yellow-500"
+      ? "text-yellow-600"
       : item.status === "CANCELLED"
-      ? "text-red-500"
+      ? "text-red-600"
       : item.status === "CANCELLED_CONFIRMED"
-      ? "text-gray-600"
+      ? "text-gray-500"
       : "text-gray-400";
 
   const renderActions = () => {
@@ -48,6 +43,7 @@ export default function OrderItemCard({
             Confirm
           </button>
         );
+
       case "CANCELLED":
         return (
           <button
@@ -60,20 +56,20 @@ export default function OrderItemCard({
             Confirm Cancellation
           </button>
         );
+
       case "CONFIRMED":
         return (
-          isOwner && (
-            <button
-              className="btn btn-sm btn-success"
-              onClick={(e) => {
-                e.stopPropagation();
-                onComplete(item.id);
-              }}
-            >
-              Completed
-            </button>
-          )
+          <button
+            className="btn btn-sm btn-success"
+            onClick={(e) => {
+              e.stopPropagation();
+              onComplete(item.id);
+            }}
+          >
+            Completed
+          </button>
         );
+
       default:
         return null;
     }
@@ -81,52 +77,42 @@ export default function OrderItemCard({
 
   return (
     <div
-      className="flex items-start justify-between bg-base-100 shadow-md border rounded-lg p-4 hover:shadow-lg transition cursor-pointer"
       onClick={onClick}
+      className="cursor-pointer rounded-xl border border-base-300 bg-base-100 
+        hover:border-primary/60 hover:shadow-lg transition-all p-4 flex justify-between items-start gap-4"
     >
-      {/* Status icon */}
-      <Circle className={`w-4 h-4 mt-1 ${statusColor}`} fill="currentColor" />
+      {/* Left: Name + meta */}
+      <div className="flex-1">
+        {/* Name */}
+        <h3 className="text-base font-semibold text-gray-800 tracking-wide mb-1">
+          {item.name}
+        </h3>
 
-      {/* Left: main info */}
-      <div className="flex flex-col flex-1 ml-4">
-        {/* Top row — name + date + price */}
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-          <h3 className="font-semibold text-base truncate">{item.name}</h3>
+        {/* Participants + Price */}
+        <div className="flex items-center gap-5 text-sm mt-1 text-gray-600">
+          <div className="flex items-center gap-1 font-medium text-gray-700">
+            <Users className="w-4 h-4" />
+            {item.participants}
+          </div>
 
-          <div className="flex flex-wrap items-center gap-x-3 text-sm text-gray-600">
-            <span>
-              <strong>Tour:</strong> {item.tourTitle}
-            </span>
-            <span>
-              <strong>Price:</strong> €{item.pricePaid.toFixed(2)}
-            </span>
-            <span>
-              <strong>Scheduled:</strong>{" "}
-              {new Date(item.scheduledAt).toLocaleString()}
-            </span>
+          <div className="flex items-center gap-1 font-medium text-gray-700">
+            <Euro className="w-4 h-4" />
+            {item.pricePaid}
+          </div>
+
+          {/* Status Indicator */}
+          <div className={`flex items-center gap-1 font-medium ${statusStyle}`}>
+            <Dot className="w-5 h-5" />
+            {item.status}
           </div>
         </div>
 
-        {/* Bottom row — IDs and assigned */}
-        <div className="text-sm text-gray-500 mt-1 flex flex-wrap gap-x-4 gap-y-1">
-          <span>
-            <strong>ID:</strong> #{item.id}
-          </span>
-          <span>
-            <strong>Assigned to:</strong>{" "}
-            {item.managerName ? (
-              <span className="text-gray-700 font-medium">
-                {item.managerName}
-              </span>
-            ) : (
-              "Unassigned"
-            )}
-          </span>
-        </div>
+        {/* Order ID */}
+        <p className="text-xs text-gray-400 mt-2">Order Item #{item.id}</p>
       </div>
 
-      {/* Right: buttons */}
-      <div className="flex items-end gap-2 ml-4">
+      {/* Actions */}
+      <div className="flex flex-row items-end gap-2 shrink-0">
         <button
           className="btn btn-sm btn-outline"
           onClick={(e) => {
@@ -134,9 +120,8 @@ export default function OrderItemCard({
             onClick();
           }}
         >
-          View Order
+          View
         </button>
-        {renderActions()}
       </div>
     </div>
   );

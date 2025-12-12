@@ -38,6 +38,8 @@ dependencies {
   	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
    implementation 'com.bucket4j:bucket4j-core:8.7.0'
+
+   implementation 'org.hibernate.orm:hibernate-envers'
    
    //If you later want Redis-based cluster rate limiting:
 //implementation 'com.bucket4j:bucket4j-redis:8.7.0'

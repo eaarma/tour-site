@@ -3,6 +3,8 @@ package com.example.store_manager.model;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.envers.Audited;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -22,6 +24,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Audited
 public class User {
 
     @Id

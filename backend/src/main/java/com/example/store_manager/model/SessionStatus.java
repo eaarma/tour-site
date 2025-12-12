@@ -1,6 +1,6 @@
 package com.example.store_manager.model;
 
-public enum OrderStatus {
+public enum SessionStatus {
     // Before payment
     PENDING, // User has placed order but not paid yet
     EXPIRED, // Payment window expired or reservation not completed

@@ -134,7 +134,19 @@ public class ShopAccessAspect {
             }
         }
 
+        // tour session (sessionId)
+        for (int i = 0; i < params.length; i++) {
+            if ((params[i].getName().equals("sessionId") || params[i].getName().equals("id"))
+                    && args[i] instanceof Long sessionId) {
+                Long shopId = tourRepository.findShopIdBySessionId(sessionId);
+                if (shopId != null) {
+                    return shopId;
+                }
+            }
+        }
+
         return null;
+
     }
 
 }

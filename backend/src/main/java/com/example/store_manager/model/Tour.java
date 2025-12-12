@@ -27,12 +27,15 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.envers.Audited;
+
 @Entity
 @Table(name = "tours")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Audited
 public class Tour {
 
     @Id

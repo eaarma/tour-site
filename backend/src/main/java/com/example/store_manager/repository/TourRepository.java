@@ -65,4 +65,11 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
       """)
   Long findTourIdByScheduleId(@Param("scheduleId") Long scheduleId);
 
+  @Query("""
+          select t.shop.id
+          from TourSession s
+          join s.tour t
+          where s.id = :sessionId
+      """)
+  Long findShopIdBySessionId(@Param("sessionId") Long sessionId);
 }

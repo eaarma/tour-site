@@ -4,14 +4,17 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 
+import org.hibernate.envers.Audited;
+
 @Entity
 @Table(name = "shop_users", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"shop_id", "user_id"})
+        @UniqueConstraint(columnNames = { "shop_id", "user_id" })
 })
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Audited
 public class ShopUser {
 
     @Id
@@ -28,7 +31,7 @@ public class ShopUser {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ShopUserRole role;  // e.g., ADMIN, MANAGER, GUIDE
+    private ShopUserRole role; // e.g., ADMIN, MANAGER, GUIDE
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

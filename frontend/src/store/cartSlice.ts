@@ -43,20 +43,22 @@ const cartSlice = createSlice({
         scheduleId: number;
         date: string;
         time: string;
-        participants?: number;
+        participants: number;
+        preferredLanguage?: string;
+        comment?: string;
       }>
     ) => {
-      const it = state.items.find(
+      const item = state.items.find(
         (i) => i.cartItemId === action.payload.cartItemId
       );
-      if (it) {
-        it.scheduleId = action.payload.scheduleId;
-        it.selectedDate = action.payload.date;
-        it.selectedTime = action.payload.time;
-        if (typeof action.payload.participants === "number") {
-          it.participants = action.payload.participants;
-        }
-      }
+      if (!item) return;
+
+      item.scheduleId = action.payload.scheduleId;
+      item.selectedDate = action.payload.date;
+      item.selectedTime = action.payload.time;
+      item.participants = action.payload.participants;
+      item.preferredLanguage = action.payload.preferredLanguage;
+      item.comment = action.payload.comment;
     },
 
     removeItemFromCart: (state, action: PayloadAction<string>) => {

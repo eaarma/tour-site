@@ -10,10 +10,12 @@ import { Tour } from "@/types";
 import { OrderItemResponseDto } from "@/types/order";
 import { TourService } from "@/lib/tourService";
 import { OrderService } from "@/lib/orderService";
-import RequireAuth from "@/components/common/RequireAuth";
 import { useShopAccess } from "@/hooks/useShopAccess";
 import Unauthorized from "@/components/common/Unauthorized";
 import { Navigation, Package } from "lucide-react";
+
+import { TourSessionDto } from "@/types/tourSession";
+import { TourSessionService } from "@/lib/tourSessionService";
 
 export default function ShopManagerPage() {
   const router = useRouter();
@@ -27,7 +29,18 @@ export default function ShopManagerPage() {
   const [tours, setTours] = useState<Tour[]>([]);
   const [orderItems, setOrderItems] = useState<OrderItemResponseDto[]>([]);
 
+  const [sessions, setSessions] = useState<TourSessionDto[]>([]);
+
   const [activeTab, setActiveTab] = useState<"orders" | "tours">("orders");
+
+  const [stats, setStats] = useState({
+    totalTours: 0,
+    totalSessions: 0,
+    upcomingSessions: 0,
+    completedSessions: 0,
+    totalOrders: 0,
+    totalParticipants: 0,
+  });
 
   // ============================
   // 🔍 Fetch shop data only if allowed
@@ -39,8 +52,62 @@ export default function ShopManagerPage() {
       try {
         const shopTours = await TourService.getByShopId(shopId);
         setTours(shopTours);
+
         const shopOrderItems = await OrderService.getItemsByShopId(shopId);
         setOrderItems(shopOrderItems);
+
+        // ⭐ NEW — fetch sessions for each tour
+        const allSessions: TourSessionDto[] = [];
+        for (const t of shopTours) {
+          const tourSessions = await TourSessionService.getByTour(t.id);
+          allSessions.push(...tourSessions);
+        }
+
+        // ⭐ Filter: only sessions with participants
+        const bookedSessions = allSessions.filter(
+          (s) => (s.participants?.length ?? 0) > 0
+        );
+
+        setSessions(bookedSessions);
+        const now = new Date();
+
+        const totalTours = shopTours.filter(
+          (t) => t.status === "ACTIVE"
+        ).length;
+
+        const totalSessions = bookedSessions.length;
+
+        const upcomingSessions = bookedSessions.filter((s) => {
+          if (s.status !== "CONFIRMED") return false;
+          const dt = new Date(`${s.date}T${s.time}`);
+          return dt > now;
+        }).length;
+
+        const completedSessions = bookedSessions.filter(
+          (s) => s.status === "COMPLETED"
+        ).length;
+
+        const totalOrders = bookedSessions.reduce(
+          (sum, s) => sum + (s.participants?.length ?? 0),
+          0
+        );
+
+        const totalParticipants = bookedSessions.reduce(
+          (sum, s) =>
+            sum +
+            (s.participants?.reduce((pSum, p) => pSum + p.participants, 0) ??
+              0),
+          0
+        );
+
+        setStats({
+          totalTours,
+          totalSessions,
+          upcomingSessions,
+          completedSessions,
+          totalOrders,
+          totalParticipants,
+        });
       } catch (err) {
         console.error("Error loading manager page data", err);
       }
@@ -89,7 +156,14 @@ export default function ShopManagerPage() {
       <ManagerShopSection shopId={shopId} />
 
       {/* 📊 Statistics */}
-      <ManagerStatisticsSection tours={tours} orderItems={orderItems} />
+      <ManagerStatisticsSection
+        totalTours={stats.totalTours}
+        totalSessions={stats.totalSessions}
+        upcomingSessions={stats.upcomingSessions}
+        completedSessions={stats.completedSessions}
+        totalOrders={stats.totalOrders}
+        totalParticipants={stats.totalParticipants}
+      />
 
       {/* ===== Tabs ===== */}
       <div className="mt-6">
@@ -127,7 +201,11 @@ export default function ShopManagerPage() {
 
         {/* Tab panels */}
         {activeTab === "orders" && (
-          <ManagerOrderSection orderItems={orderItems} tours={tours} />
+          <ManagerOrderSection
+            sessions={sessions}
+            tours={tours}
+            shopId={shopId}
+          />
         )}
 
         {activeTab === "tours" && (

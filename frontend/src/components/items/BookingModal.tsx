@@ -87,6 +87,7 @@ export default function BookingModal({
           scheduleId: chosenSchedule.id,
           selectedDate: chosenSchedule.date,
           selectedTime: chosenSchedule.time || "",
+          availableLanguage: item.language,
           preferredLanguage: preferredLanguage || undefined,
           comment: comment || undefined,
         })
