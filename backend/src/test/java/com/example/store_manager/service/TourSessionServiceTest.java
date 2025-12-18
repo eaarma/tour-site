@@ -3,6 +3,7 @@ package com.example.store_manager.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -12,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,9 +26,11 @@ import com.example.store_manager.mapper.TourSessionMapper;
 import com.example.store_manager.model.SessionStatus;
 import com.example.store_manager.model.Tour;
 import com.example.store_manager.model.TourSession;
+import com.example.store_manager.model.User;
 import com.example.store_manager.repository.TourRepository;
 import com.example.store_manager.repository.TourSessionRepository;
 import com.example.store_manager.repository.UserRepository;
+import com.example.store_manager.utility.Result;
 
 @ExtendWith(MockitoExtension.class)
 class TourSessionServiceTest {
@@ -47,7 +51,7 @@ class TourSessionServiceTest {
     private TourSessionService service;
 
     @Test
-    void getSession_returnsDto_whenSessionExists() {
+    void getSession_returnsOk_whenSessionExists() {
         TourSession session = new TourSession();
         session.setId(1L);
 
@@ -56,20 +60,22 @@ class TourSessionServiceTest {
         when(repo.findById(1L)).thenReturn(Optional.of(session));
         when(mapper.toDto(session)).thenReturn(dto);
 
-        TourSessionDto result = service.getSession(1L);
+        Result<TourSessionDto> result = service.getSession(1L);
 
-        assertNotNull(result);
+        assertTrue(result.isOk());
+        assertNotNull(result.get());
         verify(repo).findById(1L);
         verify(mapper).toDto(session);
-
     }
 
     @Test
-    void getSession_throws_whenSessionNotFound() {
+    void assignManager_returnsFail_whenSessionNotFound() {
         when(repo.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class,
-                () -> service.getSession(99L));
+        Result<TourSessionDto> result = service.assignManager(99L, UUID.randomUUID());
+
+        assertTrue(result.isFail());
+        assertEquals("Session not found", result.error().message());
     }
 
     @Test
@@ -84,10 +90,10 @@ class TourSessionServiceTest {
         when(repo.save(session)).thenReturn(session);
         when(mapper.toDto(session)).thenReturn(new TourSessionDto());
 
-        service.assignManager(1L, managerId);
+        Result<TourSessionDto> result = service.assignManager(1L, managerId);
 
+        assertTrue(result.isOk());
         assertEquals(manager, session.getManager());
-        verify(repo).save(session);
     }
 
     @Test
@@ -105,12 +111,13 @@ class TourSessionServiceTest {
     }
 
     @Test
-    void getSessionsForShop_returnsEmpty_whenNoTours() {
+    void getSessionsForShop_returnsEmptyOkResult_whenNoTours() {
         when(tourRepository.findByShopId(1L)).thenReturn(List.of());
 
-        List<TourSessionDto> result = service.getSessionsForShop(1L);
+        Result<List<TourSessionDto>> result = service.getSessionsForShop(1L);
 
-        assertTrue(result.isEmpty());
+        assertTrue(result.isOk());
+        assertTrue(result.get().isEmpty());
         verify(repo, never()).findByTourIdIn(any());
     }
 
@@ -123,14 +130,129 @@ class TourSessionServiceTest {
         tour2.setId(2L);
 
         TourSession session = new TourSession();
+        TourSessionDto dto = new TourSessionDto();
 
         when(tourRepository.findByShopId(1L)).thenReturn(List.of(tour1, tour2));
         when(repo.findByTourIdIn(List.of(1L, 2L))).thenReturn(List.of(session));
+        when(mapper.toDto(session)).thenReturn(dto);
+
+        Result<List<TourSessionDto>> result = service.getSessionsForShop(1L);
+
+        assertTrue(result.isOk());
+        assertEquals(1, result.get().size());
+        assertSame(dto, result.get().get(0));
+    }
+
+    @Test
+    void updateStatus_updatesSessionStatus() {
+        TourSession session = new TourSession();
+        session.setStatus(SessionStatus.PLANNED);
+
+        when(repo.findById(1L)).thenReturn(Optional.of(session));
+        when(repo.save(session)).thenReturn(session);
         when(mapper.toDto(session)).thenReturn(new TourSessionDto());
 
-        List<TourSessionDto> result = service.getSessionsForShop(1L);
+        service.updateStatus(1L, SessionStatus.COMPLETED);
 
-        assertEquals(1, result.size());
+        Result<TourSessionDto> result = service.updateStatus(99L, SessionStatus.CONFIRMED);
+
+        assertTrue(result.isFail());
+        assertEquals("NOT_FOUND", result.error().code());
+    }
+
+    @Test
+    void getSessions_returnsEmptyOkResult_whenNoSessionsExist() {
+        when(repo.findByTourId(1L)).thenReturn(List.of());
+
+        Result<List<TourSessionDto>> result = service.getSessions(1L);
+
+        assertTrue(result.isOk());
+        assertTrue(result.get().isEmpty());
+        verify(mapper, never()).toDto(any());
+    }
+
+    @Test
+    void getSessions_returnsMappedSessions_whenSessionsExist() {
+        TourSession session = new TourSession();
+        TourSessionDto dto = new TourSessionDto();
+
+        when(repo.findByTourId(1L)).thenReturn(List.of(session));
+        when(mapper.toDto(session)).thenReturn(dto);
+
+        Result<List<TourSessionDto>> result = service.getSessions(1L);
+
+        assertTrue(result.isOk());
+        assertEquals(1, result.get().size());
+        assertSame(dto, result.get().get(0));
+    }
+
+    @Test
+    void getSessionsForManager_returnsSessions_whenManagerExists() {
+        UUID managerId = UUID.randomUUID();
+
+        TourSession session = new TourSession();
+        TourSessionDto dto = new TourSessionDto();
+
+        when(userRepository.existsById(managerId)).thenReturn(true);
+        when(repo.findByManagerId(managerId)).thenReturn(List.of(session));
+        when(mapper.toDto(session)).thenReturn(dto);
+
+        Result<List<TourSessionDto>> result = service.getSessionsForManager(managerId);
+
+        assertTrue(result.isOk());
+        assertEquals(1, result.get().size());
+    }
+
+    @Test
+    void getSessionsForManager_returnsFail_whenManagerNotFound() {
+        UUID managerId = UUID.randomUUID();
+
+        when(userRepository.existsById(managerId)).thenReturn(false);
+
+        Result<List<TourSessionDto>> result = service.getSessionsForManager(managerId);
+
+        assertTrue(result.isFail());
+        assertEquals("NOT_FOUND", result.error().code());
+    }
+
+    @Test
+    void updateStatus_updatesSessionStatus_whenValid() {
+        TourSession session = new TourSession();
+        session.setStatus(SessionStatus.CONFIRMED);
+
+        when(repo.findById(1L)).thenReturn(Optional.of(session));
+        when(mapper.toDto(session)).thenReturn(new TourSessionDto());
+
+        Result<TourSessionDto> result = service.updateStatus(1L, SessionStatus.COMPLETED);
+
+        assertTrue(result.isOk());
+        assertEquals(SessionStatus.COMPLETED, session.getStatus());
+        verify(repo).save(session);
+    }
+
+    @Test
+    void updateStatus_returnsFail_whenSessionNotFound() {
+        when(repo.findById(99L)).thenReturn(Optional.empty());
+
+        Result<TourSessionDto> result = service.updateStatus(99L, SessionStatus.CONFIRMED);
+
+        assertTrue(result.isFail());
+        assertEquals("NOT_FOUND", result.error().code());
+    }
+
+    @Test
+    void updateStatus_returnsFail_whenSessionAlreadyCompleted() {
+        TourSession session = new TourSession();
+        session.setStatus(SessionStatus.COMPLETED);
+
+        when(repo.findById(1L)).thenReturn(Optional.of(session));
+
+        Result<TourSessionDto> result = service.updateStatus(1L, SessionStatus.CONFIRMED);
+
+        assertTrue(result.isFail());
+        assertEquals("BAD_REQUEST", result.error().code());
+
+        verify(repo, never()).save(any());
     }
 
 }

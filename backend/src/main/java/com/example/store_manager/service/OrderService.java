@@ -38,6 +38,8 @@ import com.example.store_manager.security.CurrentUserService;
 import com.example.store_manager.security.CustomUserDetails;
 import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
+import com.example.store_manager.utility.ApiError;
+import com.example.store_manager.utility.Result;
 import com.example.store_manager.repository.TourScheduleRepository;
 import com.example.store_manager.repository.TourSessionRepository;
 
@@ -63,54 +65,67 @@ public class OrderService {
          */
 
         @Transactional
-        public OrderResponseDto createOrder(OrderCreateRequestDto dto, UUID userId) {
+        public Result<OrderResponseDto> createOrder(OrderCreateRequestDto dto, UUID userId) {
+
                 User user = null;
 
                 if (userId != null) {
                         user = userRepository.findById(userId)
-                                        .orElseThrow(() -> new RuntimeException("User not found"));
+                                        .orElse(null);
+
+                        if (user == null) {
+                                return Result.fail(ApiError.notFound("User not found"));
+                        }
                 }
 
-                // 1. Create main Order
                 Order order = Order.builder()
                                 .user(user)
                                 .paymentMethod(dto.getPaymentMethod())
                                 .status(OrderStatus.PENDING)
                                 .build();
 
-                // 2. For each order item
-                // 2. For each order item
                 for (OrderItemCreateRequestDto itemDto : dto.getItems()) {
 
-                        // Load tour & schedule
                         Tour tour = tourRepository.findById(itemDto.getTourId())
-                                        .orElseThrow(() -> new RuntimeException("Tour not found"));
+                                        .orElse(null);
 
-                        TourSchedule schedule = tourScheduleRepository.findById(itemDto.getScheduleId())
-                                        .orElseThrow(() -> new RuntimeException("Schedule not found"));
-
-                        // Prevent overbooking
-                        int newBooked = schedule.getBookedParticipants() + itemDto.getParticipants();
-                        if (newBooked > schedule.getMaxParticipants()) {
-                                throw new RuntimeException("Not enough spots available for this schedule.");
+                        if (tour == null) {
+                                return Result.fail(ApiError.notFound("Tour not found"));
                         }
 
-                        // Update schedule
+                        TourSchedule schedule = tourScheduleRepository.findById(itemDto.getScheduleId())
+                                        .orElse(null);
+
+                        if (schedule == null) {
+                                return Result.fail(ApiError.notFound("Schedule not found"));
+                        }
+
+                        int newBooked = schedule.getBookedParticipants() + itemDto.getParticipants();
+                        if (newBooked > schedule.getMaxParticipants()) {
+                                return Result.fail(
+                                                ApiError.badRequest("Not enough spots available for this schedule"));
+                        }
+
                         schedule.setBookedParticipants(newBooked);
+
                         if ("PRIVATE".equalsIgnoreCase(tour.getType())) {
                                 schedule.setStatus("BOOKED");
                         } else {
-                                schedule.setStatus(newBooked >= schedule.getMaxParticipants() ? "BOOKED" : "ACTIVE");
+                                schedule.setStatus(
+                                                newBooked >= schedule.getMaxParticipants() ? "BOOKED" : "ACTIVE");
                         }
+
                         tourScheduleRepository.save(schedule);
 
-                        // ⭐ NEW SESSION logic
-                        TourSession session = getOrCreateSession(
-                                        tour,
-                                        itemDto.getScheduledAt(),
+                        Result<TourSession> sessionResult = createOrUpdateSession(tour, itemDto.getScheduledAt(),
                                         itemDto.getParticipants());
 
-                        // Snapshot
+                        if (sessionResult.isFail()) {
+                                return Result.fail(sessionResult.error());
+                        }
+
+                        TourSession session = sessionResult.get();
+
                         TourSnapshotDto snapshot = TourSnapshotDto.builder()
                                         .id(tour.getId())
                                         .title(tour.getTitle())
@@ -118,14 +133,13 @@ public class OrderService {
                                         .price(tour.getPrice())
                                         .build();
 
-                        // Create item
                         OrderItem item = OrderItem.builder()
                                         .order(order)
                                         .tour(tour)
-                                        .session(session) // ⭐ NEW
+                                        .session(session)
                                         .shopId(tour.getShop().getId())
                                         .tourTitle(tour.getTitle())
-                                        .scheduledAt(itemDto.getScheduledAt()) // keep for now
+                                        .scheduledAt(itemDto.getScheduledAt())
                                         .participants(itemDto.getParticipants())
                                         .name(dto.getName())
                                         .email(dto.getEmail())
@@ -144,246 +158,297 @@ public class OrderService {
                         order.getOrderItems().add(item);
                 }
 
-                // 3. Calculate total price
                 BigDecimal totalPrice = order.getOrderItems().stream()
                                 .map(OrderItem::getPricePaid)
                                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+
                 order.setTotalPrice(totalPrice);
 
-                // 4. Save everything
                 Order saved = orderRepository.save(order);
 
-                return orderMapper.toDto(saved);
+                return Result.ok(orderMapper.toDto(saved));
         }
 
-        /**
-         * Get a single order by ID.
-         */
+        private Result<TourSession> createOrUpdateSession(
+                        Tour tour,
+                        LocalDateTime scheduledAt,
+                        int participants) {
+
+                LocalDate date = scheduledAt.toLocalDate();
+                LocalTime time = scheduledAt.toLocalTime();
+
+                Optional<TourSession> existing = tourSessionRepository.findByTourIdAndDateAndTime(
+                                tour.getId(), date, time);
+
+                if (existing.isPresent()) {
+                        TourSession session = existing.get();
+
+                        if (session.getRemaining() < participants) {
+                                return Result.fail(
+                                                ApiError.badRequest("Not enough spots available in this session"));
+                        }
+
+                        session.setRemaining(session.getRemaining() - participants);
+                        return Result.ok(tourSessionRepository.save(session));
+                }
+
+                TourSession session = TourSession.builder()
+                                .tour(tour)
+                                .date(date)
+                                .time(time)
+                                .capacity(participants)
+                                .remaining(0)
+                                .build();
+
+                return Result.ok(tourSessionRepository.save(session));
+        }
+
+        /* Get a single order by ID. */
         @Transactional(readOnly = true)
-        public OrderResponseDto getOrderById(Long orderId) {
-                Order order = orderRepository.findById(orderId)
-                                .orElseThrow(() -> new RuntimeException("Order not found"));
-                return orderMapper.toDto(order);
+        public Result<OrderResponseDto> getOrderById(Long orderId) {
+
+                return orderRepository.findById(orderId)
+                                .map(orderMapper::toDto)
+                                .map(Result::ok)
+                                .orElseGet(() -> Result.fail(ApiError.notFound("Order not found")));
         }
 
         @Transactional(readOnly = true)
-        public OrderItemResponseDto getOrderItemById(Long itemId) {
-                OrderItem item = orderItemRepository.findById(itemId)
-                                .orElseThrow(() -> new RuntimeException("OrderItem not found"));
+        public Result<OrderItemResponseDto> getOrderItemById(Long itemId) {
 
-                return orderItemMapper.toDto(item);
+                return orderItemRepository.findById(itemId)
+                                .map(orderItemMapper::toDto)
+                                .map(Result::ok)
+                                .orElseGet(() -> Result.fail(ApiError.notFound("OrderItem not found")));
         }
 
-        /**
-         * List all orders for a specific user.
-         */
+        /* List all orders for a specific user. */
         @Transactional(readOnly = true)
         @ShopAccess(AccessLevel.MANAGER)
-        public List<OrderResponseDto> getOrdersByUser(UUID userId) {
-                return orderRepository.findByUserId(userId)
+        public Result<List<OrderResponseDto>> getOrdersByUser(UUID userId) {
+
+                if (userId == null) {
+                        return Result.fail(ApiError.badRequest("User ID is required"));
+                }
+
+                List<OrderResponseDto> orders = orderRepository.findByUserId(userId)
                                 .stream()
                                 .map(orderMapper::toDto)
-                                .collect(Collectors.toList());
+                                .toList();
+
+                return Result.ok(orders);
         }
 
-        /**
-         * List all OrderItems for a given shop (provider) across all orders.
-         */
+        /* List all OrderItems for a given shop (provider) across all orders. */
         @Transactional(readOnly = true)
         @ShopAccess(AccessLevel.GUIDE)
-        public List<OrderItemResponseDto> getOrderItemsByShop(Long shopId) {
-                List<OrderItem> items = orderItemRepository.findByShopId(shopId);
+        public Result<List<OrderItemResponseDto>> getOrderItemsByShop(Long shopId) {
 
-                return items.stream()
+                if (shopId == null) {
+                        return Result.fail(ApiError.badRequest("Shop ID is required"));
+                }
+
+                List<OrderItemResponseDto> items = orderItemRepository.findByShopId(shopId)
+                                .stream()
                                 .map(orderItemMapper::toDto)
-                                .collect(Collectors.toList());
+                                .toList();
+
+                return Result.ok(items);
+        }
+
+        @Transactional(readOnly = true)
+        public Result<List<OrderItemResponseDto>> getOrderItemsByManager(UUID managerId) {
+
+                if (managerId == null) {
+                        return Result.fail(ApiError.badRequest("Manager ID is required"));
+                }
+
+                UUID currentUserId = currentUserService.getCurrentUserId();
+
+                if (!currentUserId.equals(managerId)) {
+                        return Result.fail(ApiError.forbidden(
+                                        "Not allowed to view another manager's orders"));
+                }
+
+                List<OrderItemResponseDto> items = orderItemRepository.findByManagerId(managerId)
+                                .stream()
+                                .map(orderItemMapper::toDto)
+                                .toList();
+
+                return Result.ok(items);
+        }
+
+        @Transactional(readOnly = true)
+        public Result<List<OrderItemResponseDto>> getOrderItemsByUser(UUID userId) {
+
+                if (userId == null) {
+                        return Result.fail(ApiError.badRequest("User ID is required"));
+                }
+
+                try {
+                        assertSelfOrAdmin(userId);
+                } catch (AccessDeniedException ex) {
+                        return Result.fail(ApiError.forbidden(ex.getMessage()));
+                }
+
+                List<OrderItemResponseDto> items = orderItemRepository.findByUserId(userId)
+                                .stream()
+                                .map(orderItemMapper::toDto)
+                                .toList();
+
+                return Result.ok(items);
         }
 
         @Transactional
         @ShopAccess(AccessLevel.MANAGER)
-        public OrderItemResponseDto assignManagerToOrderItem(Long itemId,
+        public Result<OrderItemResponseDto> assignManagerToOrderItem(
+                        Long itemId,
                         UUID newManagerId,
                         UUID actingUserId,
                         String actingUserRole) {
-                OrderItem item = orderItemRepository.findById(itemId)
-                                .orElseThrow(() -> new RuntimeException("Order item not found"));
+                // 1️⃣ Load order item
+                OrderItem item = orderItemRepository.findById(itemId).orElse(null);
 
-                // 1️⃣ Authorization check
+                if (item == null) {
+                        return Result.fail(ApiError.notFound("Order item not found"));
+                }
+
+                // 2️⃣ Authorization check
                 boolean isAssignedManager = item.getManager() != null &&
                                 item.getManager().getId().equals(actingUserId);
 
-                boolean isPrivilegedRole = actingUserRole.equals("ADMIN") ||
-                                actingUserRole.equals("MANAGER") ||
-                                actingUserRole.equals("OWNER");
+                boolean isPrivilegedRole = "ADMIN".equals(actingUserRole) ||
+                                "MANAGER".equals(actingUserRole) ||
+                                "OWNER".equals(actingUserRole);
 
                 if (!isAssignedManager && !isPrivilegedRole) {
-                        throw new RuntimeException("You are not authorized to reassign this order item.");
+                        return Result.fail(ApiError.forbidden(
+                                        "You are not authorized to reassign this order item."));
                 }
 
-                // 2️⃣ Handle null (unassign)
+                // 3️⃣ Handle unassign
                 if (newManagerId == null) {
                         item.setManager(null);
-                        item.setStatus(OrderStatus.PENDING); // optional: reset status if unassigned
+                        item.setStatus(OrderStatus.PENDING);
                 } else {
-                        User newManager = userRepository.findById(newManagerId)
-                                        .orElseThrow(() -> new RuntimeException("Manager not found"));
+                        User newManager = userRepository.findById(newManagerId).orElse(null);
+
+                        if (newManager == null) {
+                                return Result.fail(ApiError.notFound("Manager not found"));
+                        }
+
                         item.setManager(newManager);
                 }
 
+                // 4️⃣ Save and return
                 OrderItem saved = orderItemRepository.save(item);
-                return orderItemMapper.toDto(saved);
+                return Result.ok(orderItemMapper.toDto(saved));
         }
 
         @Transactional
         @ShopAccess(AccessLevel.GUIDE)
-        public OrderItemResponseDto confirmOrderItem(Long itemId, UUID managerId) {
-                // 1️⃣ Get authenticated user
-                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        public Result<OrderItemResponseDto> confirmOrderItem(Long itemId, UUID managerId) {
 
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
                 if (auth == null || !(auth.getPrincipal() instanceof CustomUserDetails userDetails)) {
-                        throw new AccessDeniedException("Unauthorized: No valid authentication found");
+                        return Result.fail(ApiError.forbidden(
+                                        "Unauthorized: No valid authentication found"));
                 }
 
                 UUID currentUserId = userDetails.getId();
 
-                // 2️⃣ Ensure manager ID matches the logged-in user
+                // 1️⃣ Manager ID check
                 if (!currentUserId.equals(managerId)) {
-                        throw new AccessDeniedException("You cannot confirm on behalf of another manager");
+                        return Result.fail(ApiError.forbidden(
+                                        "You cannot confirm on behalf of another manager"));
                 }
 
-                // 3️⃣ Optional: verify user has MANAGER role
-                if (!userDetails.getAuthorities().stream()
-                                .anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER"))) {
-                        throw new AccessDeniedException("Only managers can confirm orders");
+                // 2️⃣ Role check
+                boolean isManager = userDetails.getAuthorities().stream()
+                                .anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER"));
+
+                if (!isManager) {
+                        return Result.fail(ApiError.forbidden(
+                                        "Only managers can confirm orders"));
                 }
 
-                // 4️⃣ Fetch order item and manager entity
+                // 3️⃣ ONLY NOW hit the database
                 OrderItem item = orderItemRepository.findById(itemId)
-                                .orElseThrow(() -> new RuntimeException("OrderItem not found"));
+                                .orElse(null);
+
+                if (item == null) {
+                        return Result.fail(ApiError.notFound("OrderItem not found"));
+                }
 
                 User manager = userRepository.findById(managerId)
-                                .orElseThrow(() -> new RuntimeException("Manager not found"));
+                                .orElse(null);
 
-                // 5️⃣ Assign manager and confirm
+                if (manager == null) {
+                        return Result.fail(ApiError.notFound("Manager not found"));
+                }
+
                 item.setManager(manager);
                 item.setStatus(OrderStatus.CONFIRMED);
 
                 orderItemRepository.save(item);
 
-                return orderItemMapper.toDto(item);
+                return Result.ok(orderItemMapper.toDto(item));
         }
 
         @Transactional
         @ShopAccess(AccessLevel.GUIDE)
-        public OrderItemResponseDto updateOrderItemStatus(Long itemId, OrderStatus status) {
-                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        public Result<OrderItemResponseDto> updateOrderItemStatus(Long itemId, OrderStatus status) {
 
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
                 if (auth == null || !(auth.getPrincipal() instanceof CustomUserDetails userDetails)) {
-                        throw new AccessDeniedException("Unauthorized: No valid authentication found");
+                        return Result.fail(ApiError.forbidden("Unauthorized: No valid authentication found"));
                 }
 
                 UUID currentUserId = userDetails.getId();
+
                 boolean isManager = userDetails.getAuthorities().stream()
                                 .anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER"));
+
                 boolean isAdmin = userDetails.getAuthorities().stream()
                                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-                OrderItem item = orderItemRepository.findById(itemId)
-                                .orElseThrow(() -> new RuntimeException("OrderItem not found"));
+                if (!isManager && !isAdmin) {
+                        return Result.fail(ApiError.forbidden("Only managers or admins can update order items"));
+                }
 
-                // Only assigned manager or admin can update
+                OrderItem item = orderItemRepository.findById(itemId)
+                                .orElse(null);
+
+                if (item == null) {
+                        return Result.fail(ApiError.notFound("OrderItem not found"));
+                }
+
+                // Assigned manager OR admin
                 if (item.getManager() != null &&
                                 !item.getManager().getId().equals(currentUserId) &&
                                 !isAdmin) {
-                        throw new AccessDeniedException("You cannot modify this order item");
-                }
-
-                if (!isManager && !isAdmin) {
-                        throw new AccessDeniedException("Only managers or admins can update order items");
+                        return Result.fail(ApiError.forbidden("You cannot modify this order item"));
                 }
 
                 item.setStatus(status);
                 orderItemRepository.save(item);
 
-                return orderItemMapper.toDto(item);
-        }
-
-        @Transactional(readOnly = true)
-        public List<OrderItemResponseDto> getOrderItemsByManager(UUID managerId) {
-
-                UUID currentUserId = currentUserService.getCurrentUserId();
-                if (!currentUserId.equals(managerId)) {
-                        throw new AccessDeniedException("Not allowed to view another manager's orders.");
-                }
-                List<OrderItem> items = orderItemRepository.findByManagerId(managerId);
-
-                return items.stream()
-                                .map(orderItemMapper::toDto)
-                                .collect(Collectors.toList());
-        }
-
-        @Transactional(readOnly = true)
-        public List<OrderItemResponseDto> getOrderItemsByUser(UUID userId) {
-                if (userId == null) {
-                        throw new RuntimeException("User ID is required");
-                }
-
-                // ✅ Check access before proceeding
-                assertSelfOrAdmin(userId);
-
-                List<OrderItem> items = orderItemRepository.findByUserId(userId);
-
-                return items.stream()
-                                .map(orderItemMapper::toDto)
-                                .collect(Collectors.toList());
+                return Result.ok(orderItemMapper.toDto(item));
         }
 
         private void assertSelfOrAdmin(UUID userId) {
-                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-                if (auth == null || !(auth.getPrincipal() instanceof CustomUserDetails userDetails)) {
+                UUID currentUserId = currentUserService.getCurrentUserId();
+
+                if (currentUserId == null) {
                         throw new AccessDeniedException("Unauthorized");
                 }
 
-                boolean isAdmin = userDetails.getAuthorities().stream()
-                                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                boolean isAdmin = currentUserService.hasRole("ADMIN");
 
-                if (!isAdmin && !userDetails.getId().equals(userId)) {
+                if (!isAdmin && !currentUserId.equals(userId)) {
                         throw new AccessDeniedException("You are not allowed to access these items");
                 }
-        }
-
-        private TourSession getOrCreateSession(Tour tour, LocalDateTime scheduledAt, int participants) {
-
-                LocalDate date = scheduledAt.toLocalDate();
-                LocalTime time = scheduledAt.toLocalTime();
-
-                // 1️⃣ Check if session exists
-                Optional<TourSession> existing = tourSessionRepository
-                                .findByTourIdAndDateAndTime(tour.getId(), date, time);
-
-                if (existing.isPresent()) {
-                        TourSession session = existing.get();
-
-                        // Prevent overbooking
-                        if (session.getRemaining() < participants) {
-                                throw new RuntimeException("Not enough spots available in this session");
-                        }
-
-                        session.setRemaining(session.getRemaining() - participants);
-                        return tourSessionRepository.save(session);
-                }
-
-                // 2️⃣ If session doesn't exist → create one
-                TourSession session = TourSession.builder()
-                                .tour(tour)
-                                .date(date)
-                                .time(time)
-                                .capacity(participants) // fallback only; normally session is created from schedule
-                                .remaining(0) // fully used because no schedule? You may adjust this behavior.
-                                .build();
-
-                return tourSessionRepository.save(session);
         }
 
 }

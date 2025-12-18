@@ -9,6 +9,7 @@ import com.example.store_manager.dto.user.UserResponseDto;
 import com.example.store_manager.dto.user.UserUpdateDto;
 import com.example.store_manager.security.CurrentUserService;
 import com.example.store_manager.service.UserService;
+import com.example.store_manager.utility.ResultResponseMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,20 +22,26 @@ public class UserController {
     private final CurrentUserService currentUserService;
 
     @GetMapping("/me")
-    public ResponseEntity<UserResponseDto> getProfile() {
+    public ResponseEntity<?> getProfile() {
         UUID userId = currentUserService.getCurrentUserId();
-        return ResponseEntity.ok(userService.getUserProfile(userId));
+
+        return ResultResponseMapper.toResponse(
+                userService.getUserProfile(userId));
     }
 
     @PutMapping("/me")
-    public ResponseEntity<UserResponseDto> updateProfile(@RequestBody UserUpdateDto dto) {
+    public ResponseEntity<?> updateProfile(
+            @RequestBody UserUpdateDto dto) {
+
         UUID userId = currentUserService.getCurrentUserId();
-        return ResponseEntity.ok(userService.updateProfile(userId, dto));
+
+        return ResultResponseMapper.toResponse(
+                userService.updateProfile(userId, dto));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponseDto> getUserById(@PathVariable UUID id) {
-        return ResponseEntity.ok(userService.getUserProfile(id));
+    public ResponseEntity<?> getUserById(@PathVariable UUID id) {
+        return ResultResponseMapper.toResponse(
+                userService.getUserProfile(id));
     }
-
 }

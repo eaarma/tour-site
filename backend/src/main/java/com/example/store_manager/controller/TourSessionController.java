@@ -3,8 +3,12 @@ package com.example.store_manager.controller;
 import com.example.store_manager.dto.tourSession.TourSessionDto;
 import com.example.store_manager.model.SessionStatus;
 import com.example.store_manager.service.TourSessionService;
+import com.example.store_manager.utility.ResultResponseMapper;
+
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -17,38 +21,48 @@ public class TourSessionController {
 
     // GET all sessions for a tour
     @GetMapping("/tour/{tourId}")
-    public List<TourSessionDto> getByTour(@PathVariable Long tourId) {
-        return service.getSessions(tourId);
+    public ResponseEntity<?> getByTour(@PathVariable Long tourId) {
+        return ResultResponseMapper.toResponse(service.getSessions(tourId));
     }
 
-    // GET single session (with participants)
+    // GET single session
     @GetMapping("/{id}")
-    public TourSessionDto getById(@PathVariable Long id) {
-        return service.getSession(id);
+    public ResponseEntity<?> getById(@PathVariable Long id) {
+        return ResultResponseMapper.toResponse(service.getSession(id));
     }
 
+    // Assign manager
     @PatchMapping("/{sessionId}/assign-manager")
-    public TourSessionDto assignManager(
+    public ResponseEntity<?> assignManager(
             @PathVariable Long sessionId,
             @RequestParam(required = false) UUID managerId) {
-        return service.assignManager(sessionId, managerId);
+
+        return ResultResponseMapper.toResponse(
+                service.assignManager(sessionId, managerId));
     }
 
+    // Update status
     @PatchMapping("/{sessionId}/status")
-    public TourSessionDto updateStatus(
+    public ResponseEntity<?> updateStatus(
             @PathVariable Long sessionId,
             @RequestParam SessionStatus status) {
-        return service.updateStatus(sessionId, status);
+
+        return ResultResponseMapper.toResponse(
+                service.updateStatus(sessionId, status));
     }
 
+    // Sessions for shop
     @GetMapping("/shop/{shopId}")
-    public List<TourSessionDto> getSessionsForShop(@PathVariable Long shopId) {
-        return service.getSessionsForShop(shopId);
+    public ResponseEntity<?> getSessionsForShop(@PathVariable Long shopId) {
+        return ResultResponseMapper.toResponse(
+                service.getSessionsForShop(shopId));
     }
 
+    // Sessions for manager
     @GetMapping("/manager/{managerId}")
-    public List<TourSessionDto> getSessionsForManager(@PathVariable UUID managerId) {
-        return service.getSessionsForManager(managerId);
+    public ResponseEntity<?> getSessionsForManager(@PathVariable UUID managerId) {
+        return ResultResponseMapper.toResponse(
+                service.getSessionsForManager(managerId));
     }
 
 }

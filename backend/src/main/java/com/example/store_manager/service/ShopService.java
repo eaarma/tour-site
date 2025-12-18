@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.store_manager.dto.shop.ShopCreateRequestDto;
 import com.example.store_manager.dto.shop.ShopDto;
@@ -22,6 +23,8 @@ import com.example.store_manager.repository.ShopUserRepository;
 import com.example.store_manager.repository.UserRepository;
 import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
+import com.example.store_manager.utility.ApiError;
+import com.example.store_manager.utility.Result;
 
 import lombok.RequiredArgsConstructor;
 
@@ -35,19 +38,28 @@ public class ShopService {
         private final ShopUserRepository shopUserRepository;
         private final UserRepository userRepository;
 
-        public ShopDto createShop(ShopCreateRequestDto dto, UUID currentUserId) {
+        @Transactional
+        public Result<ShopDto> createShop(ShopCreateRequestDto dto, UUID currentUserId) {
+
+                // 1️⃣ Create and save shop
                 Shop shop = Shop.builder()
                                 .name(dto.getName())
                                 .description(dto.getDescription())
                                 .build();
-                Shop saved = shopRepository.save(shop);
 
-                // Automatically add current user as MANAGER with ACTIVE status
+                Shop savedShop = shopRepository.save(shop);
+
+                // 2️⃣ Load current user
                 User user = userRepository.findById(currentUserId)
-                                .orElseThrow(() -> new RuntimeException("User not found"));
+                                .orElse(null);
 
+                if (user == null) {
+                        return Result.fail(ApiError.notFound("User not found"));
+                }
+
+                // 3️⃣ Create OWNER ShopUser
                 ShopUser shopUser = ShopUser.builder()
-                                .shop(saved)
+                                .shop(savedShop)
                                 .user(user)
                                 .role(ShopUserRole.OWNER)
                                 .status(ShopUserStatus.ACTIVE)
@@ -56,28 +68,43 @@ public class ShopService {
 
                 shopUserRepository.save(shopUser);
 
-                return shopMapper.toDto(saved);
+                // 4️⃣ Return DTO
+                return Result.ok(shopMapper.toDto(savedShop));
         }
 
-        public ShopDto getShop(Long id) {
-                Shop shop = shopRepository.findById(id)
-                                .orElseThrow(() -> new RuntimeException("Shop not found"));
-                return shopMapper.toDto(shop);
+        @Transactional(readOnly = true)
+        public Result<ShopDto> getShop(Long id) {
+
+                return shopRepository.findById(id)
+                                .map(shopMapper::toDto)
+                                .map(Result::ok)
+                                .orElseGet(() -> Result.fail(ApiError.notFound("Shop not found")));
         }
 
+        @Transactional
         @ShopAccess(AccessLevel.OWNER)
-        public ShopDto updateShop(Long shopId, ShopCreateRequestDto dto) {
+        public Result<ShopDto> updateShop(Long shopId, ShopCreateRequestDto dto) {
 
                 Shop shop = shopRepository.findById(shopId)
-                                .orElseThrow(() -> new RuntimeException("Shop not found"));
+                                .orElse(null);
+
+                if (shop == null) {
+                        return Result.fail(ApiError.notFound("Shop not found"));
+                }
 
                 shopMapper.updateShopFromDto(dto, shop);
-                return shopMapper.toDto(shopRepository.save(shop));
+                Shop saved = shopRepository.save(shop);
+
+                return Result.ok(shopMapper.toDto(saved));
         }
 
-        public List<ShopDto> getAllShops() {
-                return shopRepository.findAll().stream()
+        @Transactional(readOnly = true)
+        public Result<List<ShopDto>> getAllShops() {
+
+                List<ShopDto> shops = shopRepository.findAll().stream()
                                 .map(shopMapper::toDto)
-                                .collect(Collectors.toList());
+                                .toList();
+
+                return Result.ok(shops);
         }
 }

@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.store_manager.dto.tour.TourCreateDto;
 import com.example.store_manager.dto.tour.TourResponseDto;
@@ -23,8 +24,9 @@ import com.example.store_manager.repository.ShopRepository;
 import com.example.store_manager.repository.TourRepository;
 import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
+import com.example.store_manager.utility.ApiError;
+import com.example.store_manager.utility.Result;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -35,44 +37,64 @@ public class TourService {
     private final TourMapper tourMapper;
     private final ShopRepository shopRepository;
 
+    @Transactional
     @ShopAccess(AccessLevel.MANAGER)
-    public TourResponseDto createTour(Long shopId, TourCreateDto dto, Principal principal) {
+    public Result<TourResponseDto> createTour(
+            Long shopId,
+            TourCreateDto dto,
+            Principal principal) {
+
         Shop shop = shopRepository.findById(dto.getShopId())
-                .orElseThrow(() -> new RuntimeException("Shop not found"));
+                .orElse(null);
+
+        if (shop == null) {
+            return Result.fail(ApiError.notFound("Shop not found"));
+        }
 
         Tour tour = tourMapper.toEntity(dto);
         tour.setShop(shop);
         tour.setMadeBy(principal.getName());
 
-        return tourMapper.toDto(tourRepository.save(tour));
+        Tour saved = tourRepository.save(tour);
+        return Result.ok(tourMapper.toDto(saved));
     }
 
     @Transactional
     @ShopAccess(AccessLevel.MANAGER)
-    public TourResponseDto updateTour(Long tourId, TourCreateDto dto) {
+    public Result<TourResponseDto> updateTour(Long tourId, TourCreateDto dto) {
+
         Tour tour = tourRepository.findById(tourId)
-                .orElseThrow(() -> new RuntimeException("Tour not found"));
+                .orElse(null);
+
+        if (tour == null) {
+            return Result.fail(ApiError.notFound("Tour not found"));
+        }
 
         // Update simple fields
         tourMapper.updateTourFromDto(dto, tour);
 
-        // Reattach categories safely (prevent null crash)
+        // Reattach categories safely
         if (dto.getCategories() != null) {
             tour.setCategories(dto.getCategories());
         }
 
-        return tourMapper.toDto(tourRepository.save(tour));
+        Tour saved = tourRepository.save(tour);
+        return Result.ok(tourMapper.toDto(saved));
     }
 
-    // ✅ fetch all (no pagination)
-    public List<TourResponseDto> getAllTours() {
-        return tourRepository.findAll()
+    @Transactional(readOnly = true)
+    public Result<List<TourResponseDto>> getAllTours() {
+
+        List<TourResponseDto> tours = tourRepository.findAll()
                 .stream()
                 .map(tourMapper::toDto)
                 .toList();
+
+        return Result.ok(tours);
     }
 
-    public Page<TourResponseDto> getAllByQuery(
+    @Transactional(readOnly = true)
+    public Result<Page<TourResponseDto>> getAllByQuery(
             List<String> categories,
             String type,
             List<String> language,
@@ -81,7 +103,11 @@ public class TourService {
             int page,
             int size,
             String[] sort) {
-        Sort sortSpec = Sort.by(Sort.Direction.fromString(sort[1]), sort[0]);
+
+        Sort sortSpec = Sort.by(
+                Sort.Direction.fromString(sort[1]),
+                sort[0]);
+
         Pageable pageable = PageRequest.of(page, size, sortSpec);
 
         if (keyword != null && keyword.isBlank())
@@ -91,40 +117,65 @@ public class TourService {
 
         List<TourCategory> categoryEnums = null;
         if (categories != null && !categories.isEmpty()) {
-            categoryEnums = categories.stream()
-                    .map(String::toUpperCase)
-                    .map(TourCategory::valueOf)
-                    .toList();
+            try {
+                categoryEnums = categories.stream()
+                        .map(String::toUpperCase)
+                        .map(TourCategory::valueOf)
+                        .toList();
+            } catch (IllegalArgumentException ex) {
+                return Result.fail(ApiError.badRequest("Invalid category"));
+            }
         }
 
         Page<Tour> tours = tourRepository.searchByFilters(
-                categoryEnums, type, language, keyword, date, pageable);
+                categoryEnums,
+                type,
+                language,
+                keyword,
+                date,
+                pageable);
 
-        return tours.map(tourMapper::toDto);
+        return Result.ok(tours.map(tourMapper::toDto));
     }
 
-    public TourResponseDto getTourById(Long id) {
-        Tour tour = tourRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tour not found"));
-        return tourMapper.toDto(tour);
+    @Transactional(readOnly = true)
+    public Result<TourResponseDto> getTourById(Long id) {
+
+        return tourRepository.findById(id)
+                .map(tourMapper::toDto)
+                .map(Result::ok)
+                .orElseGet(() -> Result.fail(ApiError.notFound("Tour not found")));
     }
 
-    public List<TourResponseDto> getToursByShopId(Long shopId) {
-        return tourRepository.findByShopId(shopId)
+    @Transactional(readOnly = true)
+    public Result<List<TourResponseDto>> getToursByShopId(Long shopId) {
+
+        List<TourResponseDto> tours = tourRepository.findByShopId(shopId)
                 .stream()
                 .map(tourMapper::toDto)
                 .toList();
+
+        return Result.ok(tours);
     }
 
-    public List<TourResponseDto> getRandomTours(int count) {
-        return tourRepository.findRandomActiveTours(count).stream()
+    @Transactional(readOnly = true)
+    public Result<List<TourResponseDto>> getRandomTours(int count) {
+
+        List<TourResponseDto> tours = tourRepository
+                .findRandomActiveTours(count)
+                .stream()
                 .map(tourMapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
+
+        return Result.ok(tours);
     }
 
-    public TourResponseDto getHighlightedTour() {
+    @Transactional(readOnly = true)
+    public Result<TourResponseDto> getHighlightedTour() {
+
         return tourRepository.findRandomActiveTour()
                 .map(tourMapper::toDto)
-                .orElseThrow(() -> new RuntimeException("No active tours found"));
+                .map(Result::ok)
+                .orElseGet(() -> Result.fail(ApiError.notFound("No active tours found")));
     }
 }

@@ -20,6 +20,7 @@ import com.example.store_manager.service.ShopService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import com.example.store_manager.utility.ResultResponseMapper;
 
 @RestController
 @RequestMapping("/shops")
@@ -30,27 +31,31 @@ public class ShopController {
     private final CurrentUserService currentUserService;
 
     @PostMapping
-    public ResponseEntity<ShopDto> createShop(@RequestBody ShopCreateRequestDto dto) {
+    public ResponseEntity<?> createShop(@RequestBody ShopCreateRequestDto dto) {
         UUID currentUserId = currentUserService.getCurrentUserId();
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(shopService.createShop(dto, currentUserId));
+
+        return ResultResponseMapper.toResponse(
+                shopService.createShop(dto, currentUserId));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ShopDto> getShop(@PathVariable Long id) {
-        return ResponseEntity.ok(shopService.getShop(id));
+    public ResponseEntity<?> getShop(@PathVariable Long id) {
+        return ResultResponseMapper.toResponse(
+                shopService.getShop(id));
     }
 
     @PutMapping("/{shopId}")
-    public ResponseEntity<ShopDto> updateShop(
+    public ResponseEntity<?> updateShop(
             @PathVariable Long shopId,
             @RequestBody ShopCreateRequestDto dto) {
-        ShopDto updatedShop = shopService.updateShop(shopId, dto);
-        return ResponseEntity.ok(updatedShop);
+
+        return ResultResponseMapper.toResponse(
+                shopService.updateShop(shopId, dto));
     }
 
     @GetMapping
-    public ResponseEntity<List<ShopDto>> getAllShops() {
-        return ResponseEntity.ok(shopService.getAllShops());
+    public ResponseEntity<?> getAllShops() {
+        return ResultResponseMapper.toResponse(
+                shopService.getAllShops());
     }
 }

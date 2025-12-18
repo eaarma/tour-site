@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.store_manager.dto.schedule.TourScheduleCreateDto;
 import com.example.store_manager.dto.schedule.TourScheduleResponseDto;
@@ -20,8 +21,9 @@ import com.example.store_manager.repository.TourScheduleRepository;
 import com.example.store_manager.repository.TourSessionRepository;
 import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
+import com.example.store_manager.utility.ApiError;
+import com.example.store_manager.utility.Result;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -34,45 +36,70 @@ public class TourScheduleService {
     private final TourSessionMapper sessionMapper;
     private final TourSessionRepository sessionRepository;
 
-    public List<TourScheduleResponseDto> getAllSchedulesForTour(Long tourId) {
-        return scheduleRepository.findByTourId(tourId).stream()
-                .map(scheduleMapper::toDto)
-                .collect(Collectors.toList());
-    }
+    @Transactional(readOnly = true)
+    public Result<List<TourScheduleResponseDto>> getAllSchedulesForTour(Long tourId) {
 
-    public List<TourScheduleResponseDto> getSchedulesForTour(Long tourId) {
-        return scheduleRepository.findByTourIdAndStatus(tourId, "ACTIVE")
+        List<TourScheduleResponseDto> schedules = scheduleRepository.findByTourId(tourId)
                 .stream()
                 .map(scheduleMapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
+
+        return Result.ok(schedules);
     }
 
-    public TourScheduleResponseDto getScheduleById(Long id) {
-        TourSchedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Schedule not found"));
-        return scheduleMapper.toDto(schedule);
+    @Transactional(readOnly = true)
+    public Result<List<TourScheduleResponseDto>> getSchedulesForTour(Long tourId) {
+
+        List<TourScheduleResponseDto> schedules = scheduleRepository.findByTourIdAndStatus(tourId, "ACTIVE")
+                .stream()
+                .map(scheduleMapper::toDto)
+                .toList();
+
+        return Result.ok(schedules);
     }
 
-    @ShopAccess(AccessLevel.GUIDE)
+    @Transactional(readOnly = true)
+    public Result<TourScheduleResponseDto> getScheduleById(Long id) {
+
+        return scheduleRepository.findById(id)
+                .map(scheduleMapper::toDto)
+                .map(Result::ok)
+                .orElseGet(() -> Result.fail(ApiError.notFound("Schedule not found")));
+    }
+
     @Transactional
-    public TourScheduleResponseDto createSchedule(TourScheduleCreateDto dto) {
+    @ShopAccess(AccessLevel.GUIDE)
+    public Result<TourScheduleResponseDto> createSchedule(TourScheduleCreateDto dto) {
+
         Tour tour = tourRepository.findById(dto.getTourId())
-                .orElseThrow(() -> new RuntimeException("Tour not found"));
+                .orElse(null);
+
+        if (tour == null) {
+            return Result.fail(ApiError.notFound("Tour not found"));
+        }
 
         TourSchedule schedule = scheduleMapper.fromCreateDto(dto, tour);
-        schedule = scheduleRepository.save(schedule);
+        TourSchedule savedSchedule = scheduleRepository.save(schedule);
 
         // ⭐ Automatically create matching session
-        TourSession session = sessionMapper.fromSchedule(schedule);
+        TourSession session = sessionMapper.fromSchedule(savedSchedule);
         sessionRepository.save(session);
 
-        return scheduleMapper.toDto(schedule);
+        return Result.ok(scheduleMapper.toDto(savedSchedule));
     }
 
+    @Transactional
     @ShopAccess(AccessLevel.GUIDE)
-    public TourScheduleResponseDto updateSchedule(Long id, TourScheduleUpdateDto dto) {
+    public Result<TourScheduleResponseDto> updateSchedule(
+            Long id,
+            TourScheduleUpdateDto dto) {
+
         TourSchedule schedule = scheduleRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Schedule not found"));
+                .orElse(null);
+
+        if (schedule == null) {
+            return Result.fail(ApiError.notFound("Schedule not found"));
+        }
 
         if (dto.getDate() != null)
             schedule.setDate(dto.getDate());
@@ -83,7 +110,7 @@ public class TourScheduleService {
         if (dto.getBookedParticipants() != null)
             schedule.setBookedParticipants(dto.getBookedParticipants());
 
-        // Auto-update status logic:
+        // Auto-update status logic
         int booked = schedule.getBookedParticipants();
         if (booked >= schedule.getMaxParticipants()) {
             schedule.setStatus("BOOKED");
@@ -91,20 +118,24 @@ public class TourScheduleService {
             schedule.setStatus("ACTIVE");
         }
 
-        // Optional: mark expired dates
+        // Expired overrides everything
         if (schedule.getDate().isBefore(LocalDate.now())) {
             schedule.setStatus("EXPIRED");
         }
 
         scheduleRepository.save(schedule);
-        return scheduleMapper.toDto(schedule);
+        return Result.ok(scheduleMapper.toDto(schedule));
     }
 
+    @Transactional
     @ShopAccess(AccessLevel.GUIDE)
-    public void deleteSchedule(Long id) {
+    public Result<Boolean> deleteSchedule(Long id) {
+
         if (!scheduleRepository.existsById(id)) {
-            throw new RuntimeException("Schedule not found");
+            return Result.fail(ApiError.notFound("Schedule not found"));
         }
+
         scheduleRepository.deleteById(id);
+        return Result.ok(true);
     }
 }

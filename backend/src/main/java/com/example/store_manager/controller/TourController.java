@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.store_manager.dto.tour.TourCreateDto;
 import com.example.store_manager.dto.tour.TourResponseDto;
 import com.example.store_manager.service.TourService;
+import com.example.store_manager.utility.ResultResponseMapper;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,26 +30,32 @@ public class TourController {
     private final TourService tourService;
 
     @PostMapping
-    public ResponseEntity<TourResponseDto> createTour(@RequestBody @Valid TourCreateDto dto,
+    public ResponseEntity<?> createTour(
+            @RequestBody @Valid TourCreateDto dto,
             Principal principal) {
-        long shopId = dto.getShopId();
-        return ResponseEntity.ok(tourService.createTour(shopId, dto, principal));
+
+        return ResultResponseMapper.toResponse(
+                tourService.createTour(dto.getShopId(), dto, principal));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TourResponseDto> updateTour(@PathVariable Long id,
+    public ResponseEntity<?> updateTour(
+            @PathVariable Long id,
             @RequestBody @Valid TourCreateDto dto) {
-        return ResponseEntity.ok(tourService.updateTour(id, dto));
+
+        return ResultResponseMapper.toResponse(
+                tourService.updateTour(id, dto));
     }
 
     // ✅ fetch literally everything
     @GetMapping
-    public ResponseEntity<List<TourResponseDto>> getAllTours() {
-        return ResponseEntity.ok(tourService.getAllTours());
+    public ResponseEntity<?> getAllTours() {
+        return ResultResponseMapper.toResponse(
+                tourService.getAllTours());
     }
 
     @GetMapping("/query")
-    public Page<TourResponseDto> getAllByQuery(
+    public ResponseEntity<?> getAllByQuery(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
             @RequestParam(defaultValue = "title,asc") String[] sort,
@@ -57,28 +64,44 @@ public class TourController {
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String date) {
-        return tourService.getAllByQuery(category, type, language, keyword, date, page, size, sort);
+
+        return ResultResponseMapper.toResponse(
+                tourService.getAllByQuery(
+                        category,
+                        type,
+                        language,
+                        keyword,
+                        date,
+                        page,
+                        size,
+                        sort));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TourResponseDto> getTourById(@PathVariable Long id) {
-        return ResponseEntity.ok(tourService.getTourById(id));
+    public ResponseEntity<?> getTourById(@PathVariable Long id) {
+        return ResultResponseMapper.toResponse(
+                tourService.getTourById(id));
     }
 
     @GetMapping("/shop/{shopId}")
-    public ResponseEntity<List<TourResponseDto>> getToursByShop(@PathVariable Long shopId) {
-        return ResponseEntity.ok(tourService.getToursByShopId(shopId));
+    public ResponseEntity<?> getToursByShop(@PathVariable Long shopId) {
+        return ResultResponseMapper.toResponse(
+                tourService.getToursByShopId(shopId));
     }
 
     // GET /tours/random?count=8
     @GetMapping("/random")
-    public ResponseEntity<List<TourResponseDto>> getRandomTours(@RequestParam(defaultValue = "8") int count) {
-        return ResponseEntity.ok(tourService.getRandomTours(count));
+    public ResponseEntity<?> getRandomTours(
+            @RequestParam(defaultValue = "8") int count) {
+
+        return ResultResponseMapper.toResponse(
+                tourService.getRandomTours(count));
     }
 
     // GET /tours/highlighted
     @GetMapping("/highlighted")
-    public ResponseEntity<TourResponseDto> getHighlightedTour() {
-        return ResponseEntity.ok(tourService.getHighlightedTour());
+    public ResponseEntity<?> getHighlightedTour() {
+        return ResultResponseMapper.toResponse(
+                tourService.getHighlightedTour());
     }
 }

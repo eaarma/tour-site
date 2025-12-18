@@ -6,21 +6,35 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+import org.springframework.security.access.AccessDeniedException;
+
 @Component
 public class CurrentUserService {
 
-    public UUID getCurrentUserId() {
+    public CustomUserDetails getCurrentUserDetails() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new RuntimeException("User not authenticated");
+            throw new AccessDeniedException("User not authenticated");
         }
 
         Object principal = authentication.getPrincipal();
-        if (principal instanceof CustomUserDetails customUserDetails) {
-            return customUserDetails.getId();
+        if (principal instanceof CustomUserDetails details) {
+            return details;
         }
 
-        throw new RuntimeException("Invalid authentication principal");
+        throw new AccessDeniedException("Invalid authentication principal");
+    }
+
+    public UUID getCurrentUserId() {
+        return getCurrentUserDetails().getId();
+    }
+
+    public boolean hasRole(String role) {
+        // Accept both "ADMIN" and "ROLE_ADMIN" safely
+        String normalized = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+
+        return getCurrentUserDetails().getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(normalized));
     }
 }

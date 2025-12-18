@@ -22,6 +22,7 @@ import com.example.store_manager.dto.shop.ShopUserStatusDto;
 import com.example.store_manager.security.CurrentUserService;
 import com.example.store_manager.security.CustomUserDetails;
 import com.example.store_manager.service.ShopUserService;
+import com.example.store_manager.utility.ResultResponseMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,67 +35,68 @@ public class ShopUserController {
     private final CurrentUserService currentUserService;
 
     @GetMapping("/shop/{shopId}")
-    public ResponseEntity<List<ShopUserDto>> getUsersForShop(@PathVariable Long shopId) {
-        return ResponseEntity.ok(shopUserService.getUsersByShopId(shopId));
+    public ResponseEntity<?> getUsersForShop(@PathVariable Long shopId) {
+        return ResultResponseMapper.toResponse(
+                shopUserService.getUsersByShopId(shopId));
     }
 
     @GetMapping("/shop/{shopId}/active")
-    public ResponseEntity<List<ShopUserDto>> getActiveMembers(@PathVariable Long shopId) {
-        return ResponseEntity.ok(shopUserService.getActiveMembersForShop(shopId));
+    public ResponseEntity<?> getActiveMembers(@PathVariable Long shopId) {
+        return ResultResponseMapper.toResponse(
+                shopUserService.getActiveMembersForShop(shopId));
     }
 
     @GetMapping("/user/me")
-    public ResponseEntity<List<ShopUserStatusDto>> getShopsForCurrentUser() {
+    public ResponseEntity<?> getShopsForCurrentUser() {
         UUID currentUserId = currentUserService.getCurrentUserId();
-        return ResponseEntity.ok(shopUserService.getShopsForUser(currentUserId));
+
+        return ResultResponseMapper.toResponse(
+                shopUserService.getShopsForUser(currentUserId));
     }
 
     @PostMapping("/{shopId}/{userId}")
-    public ResponseEntity<Void> addUserToShop(
+    public ResponseEntity<?> addUserToShop(
             @PathVariable Long shopId,
             @PathVariable UUID userId,
             @RequestParam String role) {
-        shopUserService.addUserToShop(shopId, userId, role);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+
+        return ResultResponseMapper.toResponse(
+                shopUserService.addUserToShop(shopId, userId, role));
     }
 
     @PatchMapping("/{shopId}/{userId}/status")
-    public ResponseEntity<Void> updateStatus(
+    public ResponseEntity<?> updateStatus(
             @PathVariable Long shopId,
             @PathVariable UUID userId,
             @RequestParam String status) {
-        shopUserService.updateUserStatus(shopId, userId, status);
-        return ResponseEntity.ok().build();
+
+        return ResultResponseMapper.toResponse(
+                shopUserService.updateUserStatus(shopId, userId, status));
     }
 
     @PatchMapping("/{shopId}/{userId}/role")
-    public ResponseEntity<Void> updateRole(
+    public ResponseEntity<?> updateRole(
             @PathVariable Long shopId,
             @PathVariable UUID userId,
             @RequestParam String role) {
-        shopUserService.updateUserRole(shopId, userId, role);
-        return ResponseEntity.ok().build();
+
+        return ResultResponseMapper.toResponse(
+                shopUserService.updateUserRole(shopId, userId, role));
     }
 
     @PostMapping("/shop/{shopId}/request")
-    public ResponseEntity<Void> requestJoinShop(@PathVariable Long shopId) {
+    public ResponseEntity<?> requestJoinShop(@PathVariable Long shopId) {
         UUID currentUserId = currentUserService.getCurrentUserId();
-        shopUserService.requestJoinShop(shopId, currentUserId);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+
+        return ResultResponseMapper.toResponse(
+                shopUserService.requestJoinShop(shopId, currentUserId));
     }
 
     @GetMapping("/membership/{shopId}")
-    public ShopMembershipStatusDto checkMembership(
-            @PathVariable Long shopId,
-            Authentication authentication) {
+    public ResponseEntity<?> checkMembership(@PathVariable Long shopId) {
+        UUID currentUserId = currentUserService.getCurrentUserId();
 
-        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
-            throw new IllegalArgumentException("Unauthenticated");
-        }
-
-        UUID currentUserId = userDetails.getId();
-
-        return shopUserService.getMembership(shopId, currentUserId);
+        return ResultResponseMapper.toResponse(
+                shopUserService.getMembership(shopId, currentUserId));
     }
-
 }

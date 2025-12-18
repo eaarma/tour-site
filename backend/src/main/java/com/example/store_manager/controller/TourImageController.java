@@ -2,6 +2,10 @@ package com.example.store_manager.controller;
 
 import com.example.store_manager.model.TourImage;
 import com.example.store_manager.service.TourImageService;
+import com.example.store_manager.utility.ApiError;
+import com.example.store_manager.utility.Result;
+import com.example.store_manager.utility.ResultResponseMapper;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,36 +20,42 @@ public class TourImageController {
     private final TourImageService tourImageService;
 
     @GetMapping("/{tourId}/images")
-    public ResponseEntity<List<TourImage>> getTourImages(@PathVariable Long tourId) {
-        return ResponseEntity.ok(tourImageService.getImagesByTour(tourId));
+    public ResponseEntity<?> getTourImages(@PathVariable Long tourId) {
+        return ResultResponseMapper.toResponse(
+                tourImageService.getImagesByTour(tourId));
     }
 
     @PostMapping("/{tourId}/images")
-    public ResponseEntity<TourImage> addImage(
+    public ResponseEntity<?> addImage(
             @PathVariable Long tourId,
             @RequestBody Map<String, String> body) {
 
         String imageUrl = body.get("imageUrl");
-        if (imageUrl == null || imageUrl.isEmpty()) {
-            throw new IllegalArgumentException("imageUrl is required");
+
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return ResultResponseMapper.toResponse(
+                    Result.fail(ApiError.badRequest("imageUrl is required")));
         }
 
-        return ResponseEntity.ok(tourImageService.addImageToTour(tourId, imageUrl));
+        return ResultResponseMapper.toResponse(
+                tourImageService.addImageToTour(tourId, imageUrl));
     }
 
     @DeleteMapping("/{tourId}/images/{imageId}")
-    public ResponseEntity<Void> deleteImage(
+    public ResponseEntity<?> deleteImage(
             @PathVariable Long tourId,
             @PathVariable Long imageId) {
-        tourImageService.deleteImage(tourId, imageId);
-        return ResponseEntity.noContent().build();
+
+        return ResultResponseMapper.toResponse(
+                tourImageService.deleteImage(tourId, imageId));
     }
 
     @PutMapping("/{tourId}/images/reorder")
-    public ResponseEntity<Void> reorderImages(
+    public ResponseEntity<?> reorderImages(
             @PathVariable Long tourId,
             @RequestBody List<Long> orderedImageIds) {
-        tourImageService.updateImageOrder(tourId, orderedImageIds);
-        return ResponseEntity.ok().build();
+
+        return ResultResponseMapper.toResponse(
+                tourImageService.updateImageOrder(tourId, orderedImageIds));
     }
 }

@@ -10,6 +10,7 @@ import com.example.store_manager.repository.TourSessionRepository;
 import com.example.store_manager.repository.UserRepository;
 import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
+import com.example.store_manager.utility.ApiError;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.UUID;
 import com.example.store_manager.model.User;
+import com.example.store_manager.utility.Result;
 
 @Service
 @RequiredArgsConstructor
@@ -30,78 +32,112 @@ public class TourSessionService {
     private final TourRepository tourRepository;
 
     @Transactional(readOnly = true)
-    public List<TourSessionDto> getSessions(Long tourId) {
-        return repo.findByTourId(tourId).stream()
+    public Result<List<TourSessionDto>> getSessions(Long tourId) {
+        List<TourSessionDto> sessions = repo.findByTourId(tourId).stream()
                 .map(mapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
+
+        return Result.ok(sessions);
     }
 
     @Transactional(readOnly = true)
-    public TourSessionDto getSession(Long sessionId) {
+    public Result<TourSessionDto> getSession(Long sessionId) {
         return repo.findById(sessionId)
                 .map(mapper::toDto)
-                .orElseThrow(() -> new RuntimeException("Session not found"));
+                .map(Result::ok)
+                .orElseGet(() -> Result.fail(ApiError.notFound("Session not found")));
     }
 
     @Transactional
     @ShopAccess(AccessLevel.GUIDE)
-    public TourSessionDto assignManager(Long sessionId, UUID managerId) {
-        TourSession session = repo.findById(sessionId)
-                .orElseThrow(() -> new RuntimeException("Session not found"));
+    public Result<TourSessionDto> assignManager(Long sessionId, UUID managerId) {
 
+        // 1️⃣ Load session
+        TourSession session = repo.findById(sessionId)
+                .orElse(null);
+
+        if (session == null) {
+            return Result.fail(ApiError.notFound("Session not found"));
+        }
+
+        // 2️⃣ Handle manager assignment
         if (managerId == null) {
             session.setManager(null);
         } else {
             User manager = userRepository.findById(managerId)
-                    .orElseThrow(() -> new RuntimeException("Manager not found"));
+                    .orElse(null);
+
+            if (manager == null) {
+                return Result.fail(ApiError.notFound("Manager not found"));
+            }
+
             session.setManager(manager);
         }
 
-        return mapper.toDto(repo.save(session));
+        // 3️⃣ Save + map
+        TourSession saved = repo.save(session);
+        return Result.ok(mapper.toDto(saved));
     }
 
     @Transactional
     @ShopAccess(AccessLevel.GUIDE)
+    public Result<TourSessionDto> updateStatus(Long sessionId, SessionStatus newStatus) {
 
-    public TourSessionDto updateStatus(Long sessionId, SessionStatus newStatus) {
         TourSession session = repo.findById(sessionId)
-                .orElseThrow(() -> new RuntimeException("Session not found"));
+                .orElse(null);
+
+        if (session == null) {
+            return Result.fail(ApiError.notFound("Session not found"));
+        }
+
+        // (Optional but recommended) Prevent invalid transitions
+        if (session.getStatus() == SessionStatus.COMPLETED) {
+            return Result.fail(
+                    ApiError.badRequest("Completed sessions cannot change status"));
+        }
 
         session.setStatus(newStatus);
-
         repo.save(session);
-        return mapper.toDto(session);
+
+        return Result.ok(mapper.toDto(session));
     }
 
     @Transactional(readOnly = true)
-    public List<TourSessionDto> getSessionsForShop(Long shopId) {
+    public Result<List<TourSessionDto>> getSessionsForShop(Long shopId) {
 
-        // 1) Find all tours that belong to this shop
+        // 1️⃣ Find all tours for the shop
         List<Tour> tours = tourRepository.findByShopId(shopId);
 
         if (tours.isEmpty()) {
-            return Collections.emptyList();
+            return Result.ok(Collections.emptyList());
         }
 
-        // 2) Extract all tour IDs
+        // 2️⃣ Extract tour IDs
         List<Long> tourIds = tours.stream()
                 .map(Tour::getId)
-                .collect(Collectors.toList());
+                .toList();
 
-        // 3) Fetch all sessions belonging to all those tours
-        List<TourSession> sessions = repo.findByTourIdIn(tourIds);
-
-        // 4) Map to DTO
-        return sessions.stream()
+        // 3️⃣ Fetch sessions for all tours
+        List<TourSessionDto> sessions = repo.findByTourIdIn(tourIds).stream()
                 .map(mapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
+
+        // 4️⃣ Always OK (empty list is fine)
+        return Result.ok(sessions);
     }
 
     @Transactional(readOnly = true)
-    public List<TourSessionDto> getSessionsForManager(UUID managerId) {
-        return repo.findByManagerId(managerId).stream()
+    public Result<List<TourSessionDto>> getSessionsForManager(UUID managerId) {
+
+        if (!userRepository.existsById(managerId)) {
+            return Result.fail(ApiError.notFound("Manager not found"));
+        }
+
+        List<TourSessionDto> sessions = repo.findByManagerId(managerId).stream()
                 .map(mapper::toDto)
                 .toList();
+
+        return Result.ok(sessions);
     }
 
 }
