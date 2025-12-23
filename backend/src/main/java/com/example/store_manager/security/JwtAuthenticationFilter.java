@@ -33,11 +33,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
-        log.info("🔥 JwtAuthenticationFilter - filter entered");
 
         String token = extractToken(request);
-
-        log.info("🔥 Incoming JWT token = {}" + token);
 
         if (token != null && jwtService.validateAccessToken(token)) {
             UUID userId = jwtService.getUserId(token);

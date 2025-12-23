@@ -41,18 +41,14 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthenticationController {
-        private final AuthenticationManager authManager;
-        private final JwtService jwtService;
-        private final PasswordEncoder passwordEncoder;
-        private final UserRepository userRepository;
-        private final ShopAssignmentUtil shopAssignmentUtil;
-        private final ShopUserRepository shopUserRepository;
-        private final RefreshTokenService refreshTokenService;
-        private final AuthService authService;
-        private final RegistrationService registrationService;
 
-        @Value("${spring.profiles.active:dev}")
-        private String activeProfile;
+        private final JwtService jwtService;
+
+        private final UserRepository userRepository;
+
+        private final AuthService authService;
+
+        private final RegistrationService registrationService;
 
         @PostMapping("/register/user")
         public ResponseEntity<?> registerUser(

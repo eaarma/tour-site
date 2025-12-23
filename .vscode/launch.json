@@ -1,0 +1,18 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Spring Boot (dev)",
+      "request": "launch",
+      "mainClass": "com.example.store_manager.StoreManagerApplication",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "dev",
+        "JWT_SECRET": "your-super-long-random-secret-at-least-32-bytes",
+        "DB_URL": "jdbc:postgresql://localhost:5432/tourdb",
+        "DB_USERNAME": "postgres",
+        "DB_PASSWORD": "600060"
+      }
+    }
+  ]
+}

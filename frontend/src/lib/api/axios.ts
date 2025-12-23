@@ -1,4 +1,3 @@
-// src/lib/axios.ts
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import toast from "react-hot-toast";
 import { ApiError } from "./ApiError";
@@ -6,16 +5,33 @@ import { store } from "@/store/store";
 import { markExpired } from "@/store/sessionSlice";
 import { clearUser } from "@/store/authSlice";
 import qs from "qs";
+import Cookies from "js-cookie"; // 🔑 ADD THIS
 
 const NETWORK_ERROR_TOAST_ID = "network-error";
 
 const api = axios.create({
   baseURL: "http://localhost:8080",
   withCredentials: true,
+  xsrfCookieName: "XSRF-TOKEN", // keep (harmless)
+  xsrfHeaderName: "X-XSRF-TOKEN", // keep (harmless)
   paramsSerializer: (params) =>
     qs.stringify(params, {
-      arrayFormat: "repeat", // <-- no [] in URL
+      arrayFormat: "repeat",
     }),
+});
+
+// ========================================================
+// CSRF REQUEST INTERCEPTOR (🔥 THIS IS THE FIX)
+// ========================================================
+api.interceptors.request.use((config) => {
+  const csrfToken = Cookies.get("XSRF-TOKEN");
+
+  if (csrfToken) {
+    config.headers = config.headers ?? {};
+    config.headers["X-XSRF-TOKEN"] = csrfToken;
+  }
+
+  return config;
 });
 
 // ========================================================
@@ -77,11 +93,9 @@ api.interceptors.response.use(
     // 401 UNAUTHORIZED — attempt token refresh (ONLY if logged in)
     // ====================================================
     if (status === 401 && !originalRequest._retry && !isAuthEndpoint) {
-      // 🔍 Check if we actually have a logged-in user
       const state = store.getState();
       const isLoggedIn = !!state.auth.user;
 
-      // ❗ Guest 401: don't treat as "session expired", just propagate error
       if (!isLoggedIn) {
         throw new ApiError(status, response.data);
       }
@@ -104,11 +118,10 @@ api.interceptors.response.use(
         onAccessTokenRefreshed();
 
         return api(originalRequest);
-      } catch (refreshError) {
+      } catch {
         isRefreshing = false;
         refreshSubscribers = [];
 
-        // ❗ No redirect here — just mark session as expired
         store.dispatch(clearUser());
         store.dispatch(markExpired());
 
@@ -123,25 +136,20 @@ api.interceptors.response.use(
       case 400:
         toast.error(response.data?.message || "Bad request.");
         break;
-
       case 403:
         toast.error("You do not have permission to do that.");
         break;
-
       case 404:
         toast.error("Resource not found.");
         break;
-
       case 500:
         toast.error("Server error. Please try again later.");
         break;
-
       default:
         toast.error("Unexpected error occurred.");
         break;
     }
 
-    // Throw normalized error to component
     throw new ApiError(status, response.data);
   }
 );

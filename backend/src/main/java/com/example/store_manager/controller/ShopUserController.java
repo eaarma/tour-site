@@ -1,13 +1,7 @@
 package com.example.store_manager.controller;
 
-import java.security.Principal;
-import java.util.List;
 import java.util.UUID;
-
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,15 +9,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.example.store_manager.dto.shop.ShopMembershipStatusDto;
-import com.example.store_manager.dto.shop.ShopUserDto;
-import com.example.store_manager.dto.shop.ShopUserStatusDto;
 import com.example.store_manager.security.CurrentUserService;
-import com.example.store_manager.security.CustomUserDetails;
 import com.example.store_manager.service.ShopUserService;
 import com.example.store_manager.utility.ResultResponseMapper;
-
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -31,72 +19,72 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ShopUserController {
 
-    private final ShopUserService shopUserService;
-    private final CurrentUserService currentUserService;
+        private final ShopUserService shopUserService;
+        private final CurrentUserService currentUserService;
 
-    @GetMapping("/shop/{shopId}")
-    public ResponseEntity<?> getUsersForShop(@PathVariable Long shopId) {
-        return ResultResponseMapper.toResponse(
-                shopUserService.getUsersByShopId(shopId));
-    }
+        @GetMapping("/shop/{shopId}")
+        public ResponseEntity<?> getUsersForShop(@PathVariable Long shopId) {
+                return ResultResponseMapper.toResponse(
+                                shopUserService.getUsersByShopId(shopId));
+        }
 
-    @GetMapping("/shop/{shopId}/active")
-    public ResponseEntity<?> getActiveMembers(@PathVariable Long shopId) {
-        return ResultResponseMapper.toResponse(
-                shopUserService.getActiveMembersForShop(shopId));
-    }
+        @GetMapping("/shop/{shopId}/active")
+        public ResponseEntity<?> getActiveMembers(@PathVariable Long shopId) {
+                return ResultResponseMapper.toResponse(
+                                shopUserService.getActiveMembersForShop(shopId));
+        }
 
-    @GetMapping("/user/me")
-    public ResponseEntity<?> getShopsForCurrentUser() {
-        UUID currentUserId = currentUserService.getCurrentUserId();
+        @GetMapping("/user/me")
+        public ResponseEntity<?> getShopsForCurrentUser() {
+                UUID currentUserId = currentUserService.getCurrentUserId();
 
-        return ResultResponseMapper.toResponse(
-                shopUserService.getShopsForUser(currentUserId));
-    }
+                return ResultResponseMapper.toResponse(
+                                shopUserService.getShopsForUser(currentUserId));
+        }
 
-    @PostMapping("/{shopId}/{userId}")
-    public ResponseEntity<?> addUserToShop(
-            @PathVariable Long shopId,
-            @PathVariable UUID userId,
-            @RequestParam String role) {
+        @PostMapping("/{shopId}/{userId}")
+        public ResponseEntity<?> addUserToShop(
+                        @PathVariable Long shopId,
+                        @PathVariable UUID userId,
+                        @RequestParam String role) {
 
-        return ResultResponseMapper.toResponse(
-                shopUserService.addUserToShop(shopId, userId, role));
-    }
+                return ResultResponseMapper.toResponse(
+                                shopUserService.addUserToShop(shopId, userId, role));
+        }
 
-    @PatchMapping("/{shopId}/{userId}/status")
-    public ResponseEntity<?> updateStatus(
-            @PathVariable Long shopId,
-            @PathVariable UUID userId,
-            @RequestParam String status) {
+        @PatchMapping("/{shopId}/{userId}/status")
+        public ResponseEntity<?> updateStatus(
+                        @PathVariable Long shopId,
+                        @PathVariable UUID userId,
+                        @RequestParam String status) {
 
-        return ResultResponseMapper.toResponse(
-                shopUserService.updateUserStatus(shopId, userId, status));
-    }
+                return ResultResponseMapper.toResponse(
+                                shopUserService.updateUserStatus(shopId, userId, status));
+        }
 
-    @PatchMapping("/{shopId}/{userId}/role")
-    public ResponseEntity<?> updateRole(
-            @PathVariable Long shopId,
-            @PathVariable UUID userId,
-            @RequestParam String role) {
+        @PatchMapping("/{shopId}/{userId}/role")
+        public ResponseEntity<?> updateRole(
+                        @PathVariable Long shopId,
+                        @PathVariable UUID userId,
+                        @RequestParam String role) {
 
-        return ResultResponseMapper.toResponse(
-                shopUserService.updateUserRole(shopId, userId, role));
-    }
+                return ResultResponseMapper.toResponse(
+                                shopUserService.updateUserRole(shopId, userId, role));
+        }
 
-    @PostMapping("/shop/{shopId}/request")
-    public ResponseEntity<?> requestJoinShop(@PathVariable Long shopId) {
-        UUID currentUserId = currentUserService.getCurrentUserId();
+        @PostMapping("/shop/{shopId}/request")
+        public ResponseEntity<?> requestJoinShop(@PathVariable Long shopId) {
+                UUID currentUserId = currentUserService.getCurrentUserId();
 
-        return ResultResponseMapper.toResponse(
-                shopUserService.requestJoinShop(shopId, currentUserId));
-    }
+                return ResultResponseMapper.toResponse(
+                                shopUserService.requestJoinShop(shopId, currentUserId));
+        }
 
-    @GetMapping("/membership/{shopId}")
-    public ResponseEntity<?> checkMembership(@PathVariable Long shopId) {
-        UUID currentUserId = currentUserService.getCurrentUserId();
+        @GetMapping("/membership/{shopId}")
+        public ResponseEntity<?> checkMembership(@PathVariable Long shopId) {
+                UUID currentUserId = currentUserService.getCurrentUserId();
 
-        return ResultResponseMapper.toResponse(
-                shopUserService.getMembership(shopId, currentUserId));
-    }
+                return ResultResponseMapper.toResponse(
+                                shopUserService.getMembership(shopId, currentUserId));
+        }
 }

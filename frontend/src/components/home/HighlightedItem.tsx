@@ -16,7 +16,7 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ item }) => {
   const mainImage =
     (Array.isArray((item as any).images) && (item as any).images[0]) ||
     (item as any).image ||
-    "/images/default.jpg";
+    "/images/item_placeholder.jpg";
 
   const handleNavigate = () => router.push(`/items/${item.id}`);
 
@@ -32,7 +32,7 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ item }) => {
           <img
             src={mainImage}
             alt={item.title || "Tour Image"}
-            className="object-cover w-full h-full"
+            className="object-cover w-full h-full opacity-70 grayscale blur-[1px]"
           />
         </figure>
 

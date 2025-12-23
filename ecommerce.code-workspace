@@ -1,0 +1,7 @@
+{
+  "folders": [
+    { "path": "." }, // 👈 parent (git root)
+    { "path": "backend" },
+    { "path": "frontend" }
+  ]
+}
