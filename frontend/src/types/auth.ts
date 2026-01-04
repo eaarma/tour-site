@@ -1,7 +1,10 @@
-import { UserResponseDto } from "./user"; // adjust path as needed
+import { UserResponseDto } from "./user";
 
-export interface JwtResponseDto {
-  token: string;
-  refreshToken: string;
+export interface AuthResponseDto {
+  accessToken: string;
   user: UserResponseDto;
+}
+
+export interface RefreshResponseDto {
+  accessToken: string;
 }

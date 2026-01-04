@@ -21,44 +21,44 @@ import com.example.store_manager.dto.schedule.TourScheduleUpdateDto;
 @RequiredArgsConstructor
 public class TourScheduleController {
 
-    private final TourScheduleService service;
+        private final TourScheduleService service;
 
-    @PostMapping
-    public ResponseEntity<?> create(
-            @Valid @RequestBody TourScheduleCreateDto dto) {
+        @PostMapping
+        public ResponseEntity<?> create(
+                        @Valid @RequestBody TourScheduleCreateDto dto) {
 
-        return ResultResponseMapper.toResponse(
-                service.createSchedule(dto));
-    }
+                return ResultResponseMapper.toResponse(
+                                service.createSchedule(dto));
+        }
 
-    @GetMapping("/tour/{tourId}")
-    public ResponseEntity<?> getSchedulesForTour(
-            @PathVariable Long tourId) {
+        @GetMapping("/tour/{tourId}")
+        public ResponseEntity<?> getSchedulesForTour(
+                        @PathVariable("tourId") Long tourId) {
 
-        return ResultResponseMapper.toResponse(
-                service.getSchedulesForTour(tourId));
-    }
+                return ResultResponseMapper.toResponse(
+                                service.getSchedulesForTour(tourId));
+        }
 
-    @PatchMapping("/{id}")
-    public ResponseEntity<?> update(
-            @PathVariable Long id,
-            @Valid @RequestBody TourScheduleUpdateDto dto) {
+        @PatchMapping("/{id}")
+        public ResponseEntity<?> update(
+                        @PathVariable("id") Long id,
+                        @Valid @RequestBody TourScheduleUpdateDto dto) {
 
-        return ResultResponseMapper.toResponse(
-                service.updateSchedule(id, dto));
-    }
+                return ResultResponseMapper.toResponse(
+                                service.updateSchedule(id, dto));
+        }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
+        @DeleteMapping("/{id}")
+        public ResponseEntity<?> delete(@PathVariable("id") Long id) {
 
-        return ResultResponseMapper.toResponse(
-                service.deleteSchedule(id));
-    }
+                return ResultResponseMapper.toResponse(
+                                service.deleteSchedule(id));
+        }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getById(@PathVariable Long id) {
+        @GetMapping("/{id}")
+        public ResponseEntity<?> getById(@PathVariable("id") Long id) {
 
-        return ResultResponseMapper.toResponse(
-                service.getScheduleById(id));
-    }
+                return ResultResponseMapper.toResponse(
+                                service.getScheduleById(id));
+        }
 }

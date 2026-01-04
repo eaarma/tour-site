@@ -23,13 +23,13 @@ public class ShopUserController {
         private final CurrentUserService currentUserService;
 
         @GetMapping("/shop/{shopId}")
-        public ResponseEntity<?> getUsersForShop(@PathVariable Long shopId) {
+        public ResponseEntity<?> getUsersForShop(@PathVariable("shopId") Long shopId) {
                 return ResultResponseMapper.toResponse(
                                 shopUserService.getUsersByShopId(shopId));
         }
 
         @GetMapping("/shop/{shopId}/active")
-        public ResponseEntity<?> getActiveMembers(@PathVariable Long shopId) {
+        public ResponseEntity<?> getActiveMembers(@PathVariable("shopId") Long shopId) {
                 return ResultResponseMapper.toResponse(
                                 shopUserService.getActiveMembersForShop(shopId));
         }
@@ -44,8 +44,8 @@ public class ShopUserController {
 
         @PostMapping("/{shopId}/{userId}")
         public ResponseEntity<?> addUserToShop(
-                        @PathVariable Long shopId,
-                        @PathVariable UUID userId,
+                        @PathVariable("shopId") Long shopId,
+                        @PathVariable("userId") UUID userId,
                         @RequestParam String role) {
 
                 return ResultResponseMapper.toResponse(
@@ -54,9 +54,9 @@ public class ShopUserController {
 
         @PatchMapping("/{shopId}/{userId}/status")
         public ResponseEntity<?> updateStatus(
-                        @PathVariable Long shopId,
-                        @PathVariable UUID userId,
-                        @RequestParam String status) {
+                        @PathVariable("shopId") Long shopId,
+                        @PathVariable("userId") UUID userId,
+                        @RequestParam("status") String status) {
 
                 return ResultResponseMapper.toResponse(
                                 shopUserService.updateUserStatus(shopId, userId, status));
@@ -64,16 +64,16 @@ public class ShopUserController {
 
         @PatchMapping("/{shopId}/{userId}/role")
         public ResponseEntity<?> updateRole(
-                        @PathVariable Long shopId,
-                        @PathVariable UUID userId,
-                        @RequestParam String role) {
+                        @PathVariable("shopId") Long shopId,
+                        @PathVariable("userId") UUID userId,
+                        @RequestParam("role") String role) {
 
                 return ResultResponseMapper.toResponse(
                                 shopUserService.updateUserRole(shopId, userId, role));
         }
 
         @PostMapping("/shop/{shopId}/request")
-        public ResponseEntity<?> requestJoinShop(@PathVariable Long shopId) {
+        public ResponseEntity<?> requestJoinShop(@PathVariable("shopId") Long shopId) {
                 UUID currentUserId = currentUserService.getCurrentUserId();
 
                 return ResultResponseMapper.toResponse(
@@ -81,7 +81,7 @@ public class ShopUserController {
         }
 
         @GetMapping("/membership/{shopId}")
-        public ResponseEntity<?> checkMembership(@PathVariable Long shopId) {
+        public ResponseEntity<?> checkMembership(@PathVariable("shopId") Long shopId) {
                 UUID currentUserId = currentUserService.getCurrentUserId();
 
                 return ResultResponseMapper.toResponse(

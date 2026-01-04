@@ -33,7 +33,7 @@ export const TourSessionService = {
     // ✅ unassign: don't send the param at all
     if (!managerId) {
       const res = await api.patch<TourSessionDto>(
-        `/sessions/${sessionId}/assign-manager`,
+        `/api/sessions/${sessionId}/assign-manager`,
         null
       );
       return res.data;

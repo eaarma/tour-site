@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { setUser, clearUser } from "@/store/authSlice";
+import { clearUser, setAuth } from "@/store/authSlice";
 import { AuthService } from "@/lib/authService";
 import { UserResponseDto } from "@/types";
 import { useRouter } from "next/navigation";
@@ -14,16 +14,17 @@ export default function AuthProvider({
 }) {
   const dispatch = useDispatch();
   const router = useRouter();
-
   const [loading, setLoading] = useState(true);
 
-  // 🔹 1. Load user on first page render (your original logic)
+  // 1️⃣ Initial user load (NO accessToken here)
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const user: UserResponseDto | null = await AuthService.getCurrentUser();
+
         if (user) {
-          dispatch(setUser(user));
+          // ⚠️ accessToken is intentionally null here
+          dispatch(setAuth({ user, accessToken: null }));
         } else {
           dispatch(clearUser());
         }
@@ -37,24 +38,22 @@ export default function AuthProvider({
     fetchUser();
   }, [dispatch]);
 
-  // 🔹 2. Background session checker (added)
+  // 2️⃣ Background session checker (optional but valid)
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
-        // Try to validate access token
         await AuthService.getCurrentUser();
       } catch {
-        // Token invalid → attempt refresh
         try {
-          await AuthService.refresh();
+          const { accessToken } = await AuthService.refresh();
+          dispatch(setAuth({ user: null as any, accessToken })); // TEMP token update
           await AuthService.getCurrentUser();
         } catch {
-          // Refresh failed → session expired
           dispatch(clearUser());
           router.push("/auth/login?sessionExpired=1");
         }
       }
-    }, 60000); // check every 60 seconds
+    }, 60000);
 
     return () => clearInterval(interval);
   }, [dispatch, router]);

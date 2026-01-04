@@ -14,6 +14,7 @@ import { CartItem as CartItemType } from "@/types/cart";
 import { tourScheduleService } from "@/lib/tourScheduleService";
 import ItemModal from "@/components/items/ItemModal";
 import { useAuth } from "@/hooks/useAuth";
+import api from "@/lib/api/axios";
 
 export default function PaymentPage() {
   const cartItems = useSelector((state: RootState) =>
@@ -103,10 +104,8 @@ export default function PaymentPage() {
       const order = await OrderService.create(orderRequest, isGuest);
 
       // ✅ Step 3: Send email confirmation
-      await fetch("/api/send-confirmation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ order }),
+      await api.post("/send-confirmation", {
+        order,
       });
 
       toast.success("Order confirmed ✅");

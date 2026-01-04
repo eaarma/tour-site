@@ -9,10 +9,13 @@ import checkoutReducer from "./checkoutSlice";
 import loadingReducer from "./loadingSlice";
 import sessionReducer from "./sessionSlice";
 
+import { authTransform } from "./persistTransforms";
+
 const persistConfig = {
   key: "root",
   storage,
   whitelist: ["cart", "auth"],
+  transforms: [authTransform],
 };
 
 const rootReducer = combineReducers({
@@ -23,7 +26,10 @@ const rootReducer = combineReducers({
   session: sessionReducer,
 });
 
-const persistedReducer = persistReducer(persistConfig, rootReducer);
+const persistedReducer = persistReducer<ReturnType<typeof rootReducer>>(
+  persistConfig,
+  rootReducer
+);
 
 export const store = configureStore({
   reducer: persistedReducer,

@@ -17,45 +17,45 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class TourImageController {
 
-    private final TourImageService tourImageService;
+        private final TourImageService tourImageService;
 
-    @GetMapping("/{tourId}/images")
-    public ResponseEntity<?> getTourImages(@PathVariable Long tourId) {
-        return ResultResponseMapper.toResponse(
-                tourImageService.getImagesByTour(tourId));
-    }
-
-    @PostMapping("/{tourId}/images")
-    public ResponseEntity<?> addImage(
-            @PathVariable Long tourId,
-            @RequestBody Map<String, String> body) {
-
-        String imageUrl = body.get("imageUrl");
-
-        if (imageUrl == null || imageUrl.isBlank()) {
-            return ResultResponseMapper.toResponse(
-                    Result.fail(ApiError.badRequest("imageUrl is required")));
+        @GetMapping("/{tourId}/images")
+        public ResponseEntity<?> getTourImages(@PathVariable("tourId") Long tourId) {
+                return ResultResponseMapper.toResponse(
+                                tourImageService.getImagesByTour(tourId));
         }
 
-        return ResultResponseMapper.toResponse(
-                tourImageService.addImageToTour(tourId, imageUrl));
-    }
+        @PostMapping("/{tourId}/images")
+        public ResponseEntity<?> addImage(
+                        @PathVariable("tourId") Long tourId,
+                        @RequestBody Map<String, String> body) {
 
-    @DeleteMapping("/{tourId}/images/{imageId}")
-    public ResponseEntity<?> deleteImage(
-            @PathVariable Long tourId,
-            @PathVariable Long imageId) {
+                String imageUrl = body.get("imageUrl");
 
-        return ResultResponseMapper.toResponse(
-                tourImageService.deleteImage(tourId, imageId));
-    }
+                if (imageUrl == null || imageUrl.isBlank()) {
+                        return ResultResponseMapper.toResponse(
+                                        Result.fail(ApiError.badRequest("imageUrl is required")));
+                }
 
-    @PutMapping("/{tourId}/images/reorder")
-    public ResponseEntity<?> reorderImages(
-            @PathVariable Long tourId,
-            @RequestBody List<Long> orderedImageIds) {
+                return ResultResponseMapper.toResponse(
+                                tourImageService.addImageToTour(tourId, imageUrl));
+        }
 
-        return ResultResponseMapper.toResponse(
-                tourImageService.updateImageOrder(tourId, orderedImageIds));
-    }
+        @DeleteMapping("/{tourId}/images/{imageId}")
+        public ResponseEntity<?> deleteImage(
+                        @PathVariable("tourId") Long tourId,
+                        @PathVariable("imageId") Long imageId) {
+
+                return ResultResponseMapper.toResponse(
+                                tourImageService.deleteImage(tourId, imageId));
+        }
+
+        @PutMapping("/{tourId}/images/reorder")
+        public ResponseEntity<?> reorderImages(
+                        @PathVariable("tourId") Long tourId,
+                        @RequestBody List<Long> orderedImageIds) {
+
+                return ResultResponseMapper.toResponse(
+                                tourImageService.updateImageOrder(tourId, orderedImageIds));
+        }
 }

@@ -7,6 +7,8 @@ plugins {
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
 
+
+
 java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(21)
@@ -56,7 +58,9 @@ dependencies {
 
 tasks.withType(JavaCompile).configureEach {
     options.annotationProcessorPath = configurations.annotationProcessor
+    options.compilerArgs += "-parameters"
 }
+
 
 tasks.named('test') {
 	useJUnitPlatform()

@@ -1,5 +1,6 @@
 "use client";
 
+import api from "@/lib/api/axios";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -23,23 +24,20 @@ export default function ContactPage() {
     }
 
     try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, subject, message }),
+      await api.post("/contact", {
+        name,
+        email,
+        subject,
+        message,
       });
 
-      if (response.ok) {
-        toast.success("Message sent successfully!");
-        setName("");
-        setEmail("");
-        setSubject("");
-        setMessage("");
-      } else {
-        throw new Error("Failed to send message");
-      }
+      toast.success("Message sent successfully!");
+      setName("");
+      setEmail("");
+      setSubject("");
+      setMessage("");
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error(error.message ?? "Failed to send message");
     } finally {
       setIsSubmitting(false);
     }

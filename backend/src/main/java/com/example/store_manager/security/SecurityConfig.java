@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -17,12 +16,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
-import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
-import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
+import org.springframework.security.web.context.NullSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
+import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 import com.example.store_manager.security.filters.GlobalRateLimitFilter;
 
@@ -39,16 +39,18 @@ public class SecurityConfig {
     private final GlobalRateLimitFilter globalRateLimitFilter;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, HandlerMappingIntrospector introspector)
+            throws Exception {
+
+        MvcRequestMatcher.Builder mvc = new MvcRequestMatcher.Builder(introspector);
         return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                        .csrfTokenRequestHandler(csrfTokenRequestHandler()).ignoringRequestMatchers(
-                                "/auth/login",
-                                "/auth/register/**",
-                                "/orders/guest"))
+                .securityContext(sc -> sc.securityContextRepository(securityContextRepository()))
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .csrf(csrf -> csrf.disable())
 
+                .securityContext(security -> security
+                        .requireExplicitSave(false))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/error").permitAll()
@@ -74,10 +76,10 @@ public class SecurityConfig {
                         .hasAnyRole("MANAGER", "OWNER", "ADMIN")
 
                         // Shops & Shop Users
-                        .requestMatchers(HttpMethod.POST, "/shops/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/shop-users/**").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/shops/**").authenticated()
-                        .requestMatchers(HttpMethod.PATCH, "/shop-users/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/shops/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/shop-users/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/shops/**").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/shop-users/**").authenticated()
 
                         // Tour Schedules
                         .requestMatchers(HttpMethod.GET, "/schedules/**").permitAll() // anyone can view
@@ -85,17 +87,21 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/schedules/**").hasRole("MANAGER")
                         .requestMatchers(HttpMethod.DELETE, "/schedules/**").hasRole("MANAGER")
 
+                        // Tour Images
+                        .requestMatchers(HttpMethod.GET, "/tourimages/**").permitAll() // anyone can view
+                        .requestMatchers(HttpMethod.POST, "/tourimages/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/tourimages/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.PUT, "/tourimages/**").hasRole("MANAGER")
+
                         // Tour Sessions
-                        .requestMatchers(HttpMethod.GET, "/sessions/**").permitAll() // anyone can view
-                        .requestMatchers(HttpMethod.POST, "/sessions/**").hasRole("MANAGER")
-                        .requestMatchers(HttpMethod.PATCH, "/sessions/**").hasRole("MANAGER")
-                        .requestMatchers(HttpMethod.DELETE, "/sessions/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.GET, "/api/sessions/**").permitAll() // anyone can view
+                        .requestMatchers(HttpMethod.POST, "/api/sessions/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/sessions/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/sessions/**").hasRole("MANAGER")
 
                         // All other requests require authentication
                         .anyRequest().authenticated())
 
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 
@@ -111,11 +117,13 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOriginPatterns(List.of("http://localhost:3000", "http://127.0.0.1:3000"));
+        config.setAllowedOrigins(List.of(
+                "http://localhost:3000", "http://127.0.0.1:3000"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Cookie", "X-XSRF-TOKEN"));
-        config.setExposedHeaders(List.of("Authorization", HttpHeaders.SET_COOKIE));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-XSRF-TOKEN"));
 
+        config.setExposedHeaders(List.of(
+                "Set-Cookie"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
@@ -140,8 +148,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CsrfTokenRequestHandler csrfTokenRequestHandler() {
-        return new CsrfTokenRequestAttributeHandler();
+    public SecurityContextRepository securityContextRepository() {
+        return new NullSecurityContextRepository();
     }
 
 }

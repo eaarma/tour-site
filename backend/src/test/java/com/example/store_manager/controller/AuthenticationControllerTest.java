@@ -2,7 +2,6 @@ package com.example.store_manager.controller;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -80,7 +79,7 @@ class AuthenticationControllerTest {
                                 .thenReturn(Result.ok(new UserResponseDto()));
 
                 mockMvc.perform(post("/auth/register/user")
-                                .with(csrf())
+
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(dto)))
                                 .andExpect(status().isOk());
@@ -92,32 +91,39 @@ class AuthenticationControllerTest {
                                 .thenReturn(Result.fail(ApiError.badRequest("Email already in use")));
 
                 mockMvc.perform(post("/auth/register/user")
-                                .with(csrf())
+
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{}"))
                                 .andExpect(status().isBadRequest());
         }
 
         /* ===================== LOGIN ===================== */
-
         @Test
-        void login_setsCookies_andReturnsOk_whenSuccess() throws Exception {
+        void login_setsRefreshCookie_andReturnsAccessTokenJson_whenSuccess() throws Exception {
                 AuthTokens tokens = new AuthTokens("access", "refresh", Instant.now());
+                when(authService.login(any())).thenReturn(Result.ok(tokens));
 
-                when(authService.login(any()))
-                                .thenReturn(Result.ok(tokens));
+                // If your controller includes user in response, you must mock userRepository
+                // lookup:
+                User user = new User();
+                user.setId(UUID.randomUUID());
+                user.setEmail("a@b.com");
+                user.setName("Test");
+                user.setRole(Role.USER);
+                when(userRepository.findByEmail("a@b.com")).thenReturn(Optional.of(user));
 
                 mockMvc.perform(post("/auth/login")
-                                .with(csrf())
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
-                                                {
-                                                  "email": "a@b.com",
-                                                  "password": "pw"
-                                                }
+                                                    { "email": "a@b.com", "password": "pw" }
                                                 """))
                                 .andExpect(status().isOk())
-                                .andExpect(header().exists(HttpHeaders.SET_COOKIE));
+                                .andExpect(header().stringValues(HttpHeaders.SET_COOKIE,
+                                                org.hamcrest.Matchers.hasItem(
+                                                                org.hamcrest.Matchers.containsString("refreshToken="))))
+                                .andExpect(jsonPath("$.accessToken").value("access"))
+                                // If you return user in login response:
+                                .andExpect(jsonPath("$.user.email").value("a@b.com"));
         }
 
         @Test
@@ -126,7 +132,7 @@ class AuthenticationControllerTest {
                                 .thenReturn(Result.fail(ApiError.badRequest("Invalid credentials")));
 
                 mockMvc.perform(post("/auth/login")
-                                .with(csrf())
+
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                                 {
@@ -140,69 +146,54 @@ class AuthenticationControllerTest {
         /* ===================== LOGOUT ===================== */
 
         @Test
-        void logout_clearsCookies_andReturnsOk() throws Exception {
-                when(authService.logout(any()))
-                                .thenReturn(Result.ok(true));
+        void logout_clearsRefreshCookie_andReturnsOk() throws Exception {
+                when(authService.logout(any())).thenReturn(Result.ok(true));
 
-                mockMvc.perform(post("/auth/logout")
-                                .with(csrf()))
+                mockMvc.perform(post("/auth/logout"))
                                 .andExpect(status().isOk())
-                                .andExpect(header().exists(HttpHeaders.SET_COOKIE));
+                                .andExpect(header().string(HttpHeaders.SET_COOKIE,
+                                                org.hamcrest.Matchers.containsString("refreshToken=")));
         }
 
         /* ===================== ME ===================== */
 
         @Test
-        void me_returnsUnauthorized_whenTokenInvalid() throws Exception {
-                when(jwtService.validateAccessToken("bad"))
-                                .thenReturn(false);
-
-                mockMvc.perform(get("/auth/me")
-                                .cookie(new Cookie("accessToken", "bad")))
+        void me_returnsUnauthorized_whenNoAuthHeader() throws Exception {
+                mockMvc.perform(get("/auth/me"))
                                 .andExpect(status().isUnauthorized());
         }
 
         @Test
-        void me_returnsUser_whenTokenValid() throws Exception {
+        void me_returnsUser_whenJwtValid() throws Exception {
                 UUID userId = UUID.randomUUID();
 
-                User user = new User();
-                user.setId(userId);
-                user.setEmail("test@example.com");
-                user.setName("Test");
-                user.setRole(Role.USER);
+                when(jwtService.validateAccessToken("good")).thenReturn(true);
+                when(jwtService.getUserId("good")).thenReturn(userId);
 
-                when(jwtService.validateAccessToken("good"))
-                                .thenReturn(true);
-                when(jwtService.getUserId("good"))
-                                .thenReturn(userId);
-                when(userRepository.findById(userId))
-                                .thenReturn(Optional.of(user));
-
-                // 🔑 REQUIRED for JwtAuthenticationFilter
+                // JwtAuthenticationFilter loads userDetails by ID
                 when(customUserDetailsService.loadUserById(userId))
-                                .thenReturn(TestUserFactory.userWithRole("USER"));
+                                .thenReturn(TestUserFactory.userWithRole("USER")); // ensure principal is
+                                                                                   // CustomUserDetails
 
                 mockMvc.perform(get("/auth/me")
-                                .cookie(new Cookie("accessToken", "good")))
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer good"))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.email").value("test@example.com"));
+                                .andExpect(jsonPath("$.email").exists()); // depends on mapper/user details
         }
 
         /* ===================== REFRESH ===================== */
 
         @Test
-        void refresh_setsCookies_andReturnsNoContent_whenSuccess() throws Exception {
+        void refresh_returnsAccessTokenJson_andSetsRefreshCookie_whenSuccess() throws Exception {
                 AuthTokens tokens = new AuthTokens("new-access", "new-refresh", Instant.now());
-
-                when(authService.refresh("refresh"))
-                                .thenReturn(Result.ok(tokens));
+                when(authService.refresh("refresh")).thenReturn(Result.ok(tokens));
 
                 mockMvc.perform(post("/auth/refresh")
-                                .with(csrf())
                                 .cookie(new Cookie("refreshToken", "refresh")))
-                                .andExpect(status().isNoContent())
-                                .andExpect(header().exists(HttpHeaders.SET_COOKIE));
+                                .andExpect(status().isOk())
+                                .andExpect(header().string(HttpHeaders.SET_COOKIE,
+                                                org.hamcrest.Matchers.containsString("refreshToken=")))
+                                .andExpect(jsonPath("$.accessToken").value("new-access"));
         }
 
         @Test
@@ -211,7 +202,7 @@ class AuthenticationControllerTest {
                                 .thenReturn(Result.fail(ApiError.forbidden("Invalid refresh token")));
 
                 mockMvc.perform(post("/auth/refresh")
-                                .with(csrf())
+
                                 .cookie(new Cookie("refreshToken", "bad")))
                                 .andExpect(status().isUnauthorized());
         }

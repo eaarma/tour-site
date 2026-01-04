@@ -103,8 +103,7 @@ export default function SessionOwnershipModal({
               value={selectedManagerId ?? ""}
               onChange={(e) => setSelectedManagerId(e.target.value)}
             >
-              <option value="">Select manager</option>
-              <option value="null">Unassigned</option>
+              <option value="">Unassigned</option>
 
               {shopMembers.map((m) => (
                 <option key={m.userId} value={m.userId}>

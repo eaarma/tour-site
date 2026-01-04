@@ -3,5 +3,5 @@ spring:
     name: store_manager
 
 jwt:
-  access-expiration-ms: 900000 # 15 minutes
-  refresh-expiration-ms: 604800000 # 7 days
+  access-expiration-ms: 30000 # 10 minutes
+  refresh-expiration-ms: 86400000 # 1 day

@@ -55,14 +55,14 @@ public class OrderController {
 
     // Get single order by ID
     @GetMapping("/{id}")
-    public ResponseEntity<?> getOrderById(@PathVariable Long id) {
+    public ResponseEntity<?> getOrderById(@PathVariable("id") Long id) {
         return ResultResponseMapper.toResponse(
                 orderService.getOrderById(id));
     }
 
     // Guest-safe order view
     @GetMapping("/guest/{id}")
-    public ResponseEntity<?> getGuestOrder(@PathVariable Long id) {
+    public ResponseEntity<?> getGuestOrder(@PathVariable("id") Long id) {
 
         Result<OrderResponseDto> result = orderService.getOrderById(id);
 
@@ -104,13 +104,13 @@ public class OrderController {
 
     // Get all order items for a given shop (provider)
     @GetMapping("/shop/{shopId}/items")
-    public ResponseEntity<?> getOrderItemsByShop(@PathVariable Long shopId) {
+    public ResponseEntity<?> getOrderItemsByShop(@PathVariable("shopId") Long shopId) {
         return ResultResponseMapper.toResponse(
                 orderService.getOrderItemsByShop(shopId));
     }
 
     @GetMapping("/items/{id}")
-    public ResponseEntity<?> getOrderItem(@PathVariable Long id) {
+    public ResponseEntity<?> getOrderItem(@PathVariable("id") Long id) {
         return ResultResponseMapper.toResponse(
                 orderService.getOrderItemById(id));
     }
@@ -127,7 +127,7 @@ public class OrderController {
     // Get order items by manager
     @GetMapping("/manager/{managerId}/items")
     public ResponseEntity<?> getOrderItemsByManager(
-            @PathVariable UUID managerId) {
+            @PathVariable("managerId") UUID managerId) {
 
         return ResultResponseMapper.toResponse(
                 orderService.getOrderItemsByManager(managerId));
@@ -136,8 +136,8 @@ public class OrderController {
     // ✅ Confirm order item by manager and set status to CONFIRMED
     @PatchMapping("/items/{itemId}/confirm/{managerId}")
     public ResponseEntity<?> confirmOrderItem(
-            @PathVariable Long itemId,
-            @PathVariable UUID managerId) {
+            @PathVariable("itemId") Long itemId,
+            @PathVariable("managerId") UUID managerId) {
 
         return ResultResponseMapper.toResponse(
                 orderService.confirmOrderItem(itemId, managerId));
@@ -145,7 +145,7 @@ public class OrderController {
 
     @PatchMapping("/items/{itemId}/assign")
     public ResponseEntity<?> assignManagerToOrderItem(
-            @PathVariable Long itemId,
+            @PathVariable("itemId") Long itemId,
             @RequestBody(required = false) Map<String, UUID> body) {
 
         UUID managerId = body != null ? body.get("managerId") : null;
@@ -168,7 +168,7 @@ public class OrderController {
     }
 
     @GetMapping("/user/{userId}/items")
-    public ResponseEntity<?> getOrderItemsByUser(@PathVariable UUID userId) {
+    public ResponseEntity<?> getOrderItemsByUser(@PathVariable("userId") UUID userId) {
         return ResultResponseMapper.toResponse(
                 orderService.getOrderItemsByUser(userId));
     }

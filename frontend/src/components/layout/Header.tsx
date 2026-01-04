@@ -10,6 +10,7 @@ import TitleText from "../common/TitleText";
 import HorizontalMenu from "../common/HorizontalMenu";
 import MarginContainer from "../common/MarginContainer";
 import { useState, useEffect, useRef } from "react";
+import api from "@/lib/api/axios";
 
 const Header: React.FC = () => {
   const menuItems = [
@@ -33,18 +34,18 @@ const Header: React.FC = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const [searchId, setSearchId] = useState("");
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     dispatch(clearUser());
-    fetch("http://localhost:8080/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    }).finally(() => {
+
+    try {
+      await api.post("/auth/logout");
+    } finally {
       if (pathname?.startsWith("/user") || pathname?.startsWith("/manager")) {
         router.push("/");
       } else {
         router.refresh();
       }
-    });
+    }
   };
 
   useEffect(() => {

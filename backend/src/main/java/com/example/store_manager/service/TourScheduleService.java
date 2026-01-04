@@ -21,6 +21,7 @@ import com.example.store_manager.repository.TourScheduleRepository;
 import com.example.store_manager.repository.TourSessionRepository;
 import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
+import com.example.store_manager.security.annotations.ShopIdSource;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
 
@@ -68,7 +69,7 @@ public class TourScheduleService {
     }
 
     @Transactional
-    @ShopAccess(AccessLevel.GUIDE)
+    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.DTO_TOUR_ID)
     public Result<TourScheduleResponseDto> createSchedule(TourScheduleCreateDto dto) {
 
         Tour tour = tourRepository.findById(dto.getTourId())
@@ -89,7 +90,7 @@ public class TourScheduleService {
     }
 
     @Transactional
-    @ShopAccess(AccessLevel.GUIDE)
+    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.ITEM_ID)
     public Result<TourScheduleResponseDto> updateSchedule(
             Long id,
             TourScheduleUpdateDto dto) {
@@ -128,7 +129,7 @@ public class TourScheduleService {
     }
 
     @Transactional
-    @ShopAccess(AccessLevel.GUIDE)
+    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.ITEM_ID)
     public Result<Boolean> deleteSchedule(Long id) {
 
         if (!scheduleRepository.existsById(id)) {

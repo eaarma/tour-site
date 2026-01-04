@@ -9,12 +9,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.example.store_manager.security.CustomUserDetailsService;
-import com.example.store_manager.security.JwtService;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -56,21 +52,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String extractToken(HttpServletRequest request) {
-        // 1. Try Bearer header
         String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return null;
         }
 
-        // 2. Try cookie
-        if (request.getCookies() != null) {
-            for (Cookie c : request.getCookies()) {
-                if ("accessToken".equals(c.getName())) {
-                    return c.getValue();
-                }
-            }
-        }
-
-        return null;
+        String token = authHeader.substring(7).trim();
+        return token.isEmpty() ? null : token;
     }
+
 }

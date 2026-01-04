@@ -9,11 +9,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "ui-avatars.com", // optional, for your fallback
+        hostname: "ui-avatars.com",
       },
     ],
   },
-  /* config options here */
 };
 
 export default nextConfig;

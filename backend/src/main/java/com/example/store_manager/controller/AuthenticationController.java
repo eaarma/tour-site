@@ -1,15 +1,13 @@
 package com.example.store_manager.controller;
 
+import java.util.Map;
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,21 +15,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.store_manager.dto.auth.AuthResponseDto;
 import com.example.store_manager.dto.auth.AuthTokens;
-import com.example.store_manager.dto.user.ManagerRegisterRequestDto;
 import com.example.store_manager.dto.user.LoginRequestDto;
+import com.example.store_manager.dto.user.ManagerRegisterRequestDto;
 import com.example.store_manager.dto.user.UserRegisterRequestDto;
 import com.example.store_manager.dto.user.UserResponseDto;
+import com.example.store_manager.mapper.UserMapper;
 import com.example.store_manager.model.User;
-import com.example.store_manager.repository.ShopUserRepository;
 import com.example.store_manager.repository.UserRepository;
+import com.example.store_manager.security.CustomUserDetails;
 import com.example.store_manager.security.JwtService;
 import com.example.store_manager.service.AuthService;
-import com.example.store_manager.service.RefreshTokenService;
 import com.example.store_manager.service.RegistrationService;
 import com.example.store_manager.utility.Result;
 import com.example.store_manager.utility.ResultResponseMapper;
-import com.example.store_manager.utility.ShopAssignmentUtil;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -45,6 +43,8 @@ public class AuthenticationController {
         private final JwtService jwtService;
 
         private final UserRepository userRepository;
+
+        private final UserMapper userMapper;
 
         private final AuthService authService;
 
@@ -79,13 +79,16 @@ public class AuthenticationController {
 
                 AuthTokens tokens = result.get();
 
-                response.addHeader(HttpHeaders.SET_COOKIE,
-                                buildCookie("accessToken", tokens.accessToken(), 15 * 60, true).toString());
-
+                // Refresh token as HttpOnly cookie
                 response.addHeader(HttpHeaders.SET_COOKIE,
                                 buildCookie("refreshToken", tokens.refreshToken(), 7 * 24 * 60 * 60, true).toString());
 
-                return ResponseEntity.ok().build();
+                User user = userRepository.findByEmail(dto.getEmail().trim().toLowerCase())
+                                .orElseThrow();
+                return ResponseEntity.ok(
+                                new AuthResponseDto(
+                                                tokens.accessToken(),
+                                                userMapper.toDto(user)));
         }
 
         @PostMapping("/logout")
@@ -96,34 +99,21 @@ public class AuthenticationController {
                 authService.logout(refreshToken);
 
                 response.addHeader(HttpHeaders.SET_COOKIE,
-                                buildCookie("accessToken", "", 0, true).toString());
-
-                response.addHeader(HttpHeaders.SET_COOKIE,
                                 buildCookie("refreshToken", "", 0, true).toString());
 
                 return ResponseEntity.ok().build();
         }
 
         @GetMapping("/me")
-        public ResponseEntity<UserResponseDto> getCurrentUser(
-                        @CookieValue(name = "accessToken", required = false) String token) {
+        public ResponseEntity<UserResponseDto> getCurrentUser(Authentication authentication) {
 
-                if (token == null || !jwtService.validateAccessToken(token)) {
+                if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails cud)) {
                         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
                 }
 
-                UUID userId = jwtService.getUserId(token);
-                User user = userRepository.findById(userId)
-                                .orElseThrow(() -> new RuntimeException("User not found"));
+                User user = cud.getUser();
 
-                UserResponseDto dto = UserResponseDto.builder()
-                                .id(user.getId())
-                                .name(user.getName())
-                                .email(user.getEmail())
-                                .role(user.getRole().name())
-                                .build();
-
-                return ResponseEntity.ok(dto);
+                return ResponseEntity.ok(userMapper.toDto(user));
         }
 
         private ResponseCookie buildCookie(String name, String value, long maxAgeSeconds, boolean httpOnly) {
@@ -151,12 +141,10 @@ public class AuthenticationController {
                 AuthTokens tokens = result.get();
 
                 response.addHeader(HttpHeaders.SET_COOKIE,
-                                buildCookie("accessToken", tokens.accessToken(), 15 * 60, true).toString());
-
-                response.addHeader(HttpHeaders.SET_COOKIE,
                                 buildCookie("refreshToken", tokens.refreshToken(), 7 * 24 * 60 * 60, true).toString());
 
-                return ResponseEntity.noContent().build();
+                return ResponseEntity.ok(Map.of(
+                                "accessToken", tokens.accessToken()));
         }
 
 }

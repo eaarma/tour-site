@@ -5,8 +5,12 @@ import {
   UserRegisterRequestDto,
   LoginRequestDto,
 } from "@/types/user";
+import { AuthResponseDto, RefreshResponseDto } from "@/types/auth";
 
 export const AuthService = {
+  // ===============================
+  // Registration
+  // ===============================
   registerUser: async (
     data: UserRegisterRequestDto
   ): Promise<UserResponseDto> => {
@@ -25,7 +29,10 @@ export const AuthService = {
     return res.data;
   },
 
-  login: async (data: LoginRequestDto): Promise<UserResponseDto> => {
+  // ===============================
+  // Authentication
+  // ===============================
+  login: async (data: LoginRequestDto): Promise<AuthResponseDto> => {
     const res = await api.post("/auth/login", data);
     return res.data;
   },
@@ -34,13 +41,17 @@ export const AuthService = {
     await api.post("/auth/logout");
   },
 
-  // You can keep this if you ever call refresh manually,
-  // but axios.interceptor already does it automatically.
-  refresh: async () => {
+  // ===============================
+  // Token refresh
+  // ===============================
+  refresh: async (): Promise<RefreshResponseDto> => {
     const res = await api.post("/auth/refresh");
     return res.data;
   },
 
+  // ===============================
+  // Session
+  // ===============================
   getCurrentUser: async (): Promise<UserResponseDto | null> => {
     try {
       const res = await api.get("/auth/me");

@@ -12,7 +12,9 @@ import org.springframework.data.repository.query.Param;
 
 import com.example.store_manager.model.Tour;
 import com.example.store_manager.model.TourCategory;
+import org.springframework.stereotype.Repository;
 
+@Repository
 public interface TourRepository extends JpaRepository<Tour, Long> {
 
   List<Tour> findByShopId(Long shopId);
@@ -72,4 +74,13 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
           where s.id = :sessionId
       """)
   Long findShopIdBySessionId(@Param("sessionId") Long sessionId);
+
+  @Query("""
+    SELECT t.shop.id
+    FROM TourSchedule s
+    JOIN s.tour t
+    WHERE s.id = :scheduleId
+""")
+Long findShopIdByScheduleId(@Param("scheduleId") Long scheduleId);
+
 }

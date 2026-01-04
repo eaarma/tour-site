@@ -29,6 +29,8 @@ import java.util.Set;
 
 import org.hibernate.envers.Audited;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @Entity
 @Table(name = "tours")
 @Data
@@ -71,5 +73,7 @@ public class Tour {
 
     @ManyToOne
     @JoinColumn(name = "shop_id", nullable = false)
+    @JsonIgnoreProperties({ "tours" })
     private Shop shop;
+
 }

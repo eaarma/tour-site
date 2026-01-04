@@ -3,5 +3,8 @@
     { "path": "." }, // 👈 parent (git root)
     { "path": "backend" },
     { "path": "frontend" }
-  ]
+  ],
+  "settings": {
+    "java.configuration.updateBuildConfiguration": "interactive"
+  }
 }

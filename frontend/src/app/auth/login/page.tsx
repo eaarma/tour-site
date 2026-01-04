@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AuthService } from "@/lib/authService";
 import { useDispatch, useSelector } from "react-redux";
-import { clearUser, setUser } from "@/store/authSlice";
+import { clearUser, setAuth, setUser } from "@/store/authSlice";
 import toast from "react-hot-toast";
+import api from "@/lib/api/axios";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,18 +34,18 @@ export default function LoginPage() {
     }
   }, [searchParams, router]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     dispatch(clearUser());
-    fetch("http://localhost:8080/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    }).finally(() => {
+
+    try {
+      await api.post("/auth/logout");
+    } finally {
       if (pathname?.startsWith("/user") || pathname?.startsWith("/manager")) {
         router.push("/");
       } else {
         router.refresh();
       }
-    });
+    }
   };
 
   // 🔹 If already logged in → show message instead of login form
@@ -80,8 +81,12 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const user = await AuthService.login({ email, password });
-      dispatch(setUser(user));
+      const { accessToken, user } = await AuthService.login({
+        email,
+        password,
+      });
+
+      dispatch(setAuth({ user, accessToken }));
 
       const redirect =
         user.role === "ADMIN" || user.role === "MANAGER" ? "/shops" : "/user";

@@ -14,8 +14,10 @@ import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class AuthService {
 
@@ -76,6 +78,7 @@ public class AuthService {
         }
 
         User user = userResult.get();
+        log.info("Refreshing token for user {}", user.getId());
 
         refreshTokenService.revoke(refreshToken);
 

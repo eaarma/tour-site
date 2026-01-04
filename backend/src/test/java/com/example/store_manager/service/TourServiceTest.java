@@ -235,30 +235,33 @@ class TourServiceTest {
         assertSame(dto, result.get().get(0));
     }
 
-    @Test
-    void getHighlightedTour_returnsOk_whenExists() {
-        Tour tour = new Tour();
-        TourResponseDto dto = new TourResponseDto();
+@Test
+void getHighlightedTour_returnsOk_whenExists() {
+    Tour tour = new Tour();
+    TourResponseDto dto = new TourResponseDto();
 
-        when(tourRepository.findRandomActiveTour())
-                .thenReturn(Optional.of(tour));
-        when(tourMapper.toDto(tour)).thenReturn(dto);
+    when(tourRepository.findRandomActiveTour())
+            .thenReturn(Optional.of(tour));
+    when(tourMapper.toDto(tour)).thenReturn(dto);
 
-        Result<TourResponseDto> result = tourService.getHighlightedTour();
+    Result<TourResponseDto> result = tourService.getHighlightedTour();
 
-        assertTrue(result.isOk());
-        assertSame(dto, result.get());
-    }
+    assertTrue(result.isOk());
+    assertSame(dto, result.get());
+}
 
-    @Test
-    void getHighlightedTour_returnsFail_whenNoneExist() {
-        when(tourRepository.findRandomActiveTour())
-                .thenReturn(Optional.empty());
 
-        Result<TourResponseDto> result = tourService.getHighlightedTour();
+@Test
+void getHighlightedTour_returnsFail_whenNoneExist() {
+    when(tourRepository.findRandomActiveTour())
+            .thenReturn(Optional.empty());
 
-        assertTrue(result.isFail());
-        assertEquals("NOT_FOUND", result.error().code());
-        assertEquals("No active tours found", result.error().message());
-    }
+    Result<TourResponseDto> result = tourService.getHighlightedTour();
+
+    assertTrue(result.isFail());
+    assertEquals("NOT_FOUND", result.error().code());
+    assertEquals("No active tours found", result.error().message());
+}
+
+
 }

@@ -1,66 +1,63 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import axios, {
+  AxiosError,
+  AxiosHeaders,
+  InternalAxiosRequestConfig,
+} from "axios";
 import toast from "react-hot-toast";
-import { ApiError } from "./ApiError";
-import { store } from "@/store/store";
-import { markExpired } from "@/store/sessionSlice";
-import { clearUser } from "@/store/authSlice";
 import qs from "qs";
-import Cookies from "js-cookie"; // 🔑 ADD THIS
+
+import { store } from "@/store/store";
+import { clearUser, setAccessToken } from "@/store/authSlice";
+import { markExpired } from "@/store/sessionSlice";
+import { ApiError } from "./ApiError";
 
 const NETWORK_ERROR_TOAST_ID = "network-error";
 
 const api = axios.create({
   baseURL: "http://localhost:8080",
-  withCredentials: true,
-  xsrfCookieName: "XSRF-TOKEN", // keep (harmless)
-  xsrfHeaderName: "X-XSRF-TOKEN", // keep (harmless)
-  paramsSerializer: (params) =>
-    qs.stringify(params, {
-      arrayFormat: "repeat",
-    }),
+  withCredentials: true, // needed for refreshToken cookie
+  paramsSerializer: (params) => qs.stringify(params, { arrayFormat: "repeat" }),
 });
 
-// ========================================================
-// CSRF REQUEST INTERCEPTOR (🔥 THIS IS THE FIX)
-// ========================================================
-api.interceptors.request.use((config) => {
-  const csrfToken = Cookies.get("XSRF-TOKEN");
+/* =====================================================
+   REQUEST INTERCEPTOR
+   - attach Authorization header ONLY
+   ===================================================== */
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  const headers = AxiosHeaders.from(config.headers);
 
-  if (csrfToken) {
-    config.headers = config.headers ?? {};
-    config.headers["X-XSRF-TOKEN"] = csrfToken;
+  const accessToken = store.getState().auth.accessToken;
+  if (accessToken) {
+    headers.set("Authorization", `Bearer ${accessToken}`);
   }
 
+  config.headers = headers;
   return config;
 });
 
-// ========================================================
-// Refresh Token Coordination
-// ========================================================
+/* =====================================================
+   REFRESH COORDINATION
+   ===================================================== */
 let isRefreshing = false;
-let refreshSubscribers: Array<() => void> = [];
+let refreshSubscribers: Array<(token: string) => void> = [];
 
-function onAccessTokenRefreshed() {
-  refreshSubscribers.forEach((cb) => cb());
+function onRefreshed(token: string) {
+  refreshSubscribers.forEach((cb) => cb(token));
   refreshSubscribers = [];
 }
 
-function addRefreshSubscriber(callback: () => void) {
-  refreshSubscribers.push(callback);
+function addRefreshSubscriber(cb: (token: string) => void) {
+  refreshSubscribers.push(cb);
 }
 
-// ========================================================
-// Response Interceptor
-// ========================================================
+/* =====================================================
+   RESPONSE INTERCEPTOR
+   - refresh access token on 401
+   ===================================================== */
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-
+  (response) => response,
   async (error: AxiosError) => {
     const { response, config } = error;
-
-    console.log("🔥 Interceptor got", response?.status, config?.url);
 
     if (!response) {
       toast.error("Network error. Please check your connection.", {
@@ -70,41 +67,34 @@ api.interceptors.response.use(
     }
 
     const status = response.status;
-
     const originalRequest = config as InternalAxiosRequestConfig & {
       _retry?: boolean;
     };
 
-    // Prevent toast spam on auth pages
-    if (typeof window !== "undefined") {
-      const publicPaths = ["/auth/login", "/auth/register"];
-      if (publicPaths.includes(window.location.pathname)) {
-        throw new ApiError(status, response.data);
-      }
-    }
-
-    // Skip refresh logic for auth routes
     const isAuthEndpoint =
       originalRequest.url?.includes("/auth/login") ||
       originalRequest.url?.includes("/auth/refresh") ||
       originalRequest.url?.includes("/auth/logout");
 
-    // ====================================================
-    // 401 UNAUTHORIZED — attempt token refresh (ONLY if logged in)
-    // ====================================================
+    /* =============================
+       401 → REFRESH FLOW
+       ============================= */
     if (status === 401 && !originalRequest._retry && !isAuthEndpoint) {
-      const state = store.getState();
-      const isLoggedIn = !!state.auth.user;
+      const { user } = store.getState().auth;
 
-      if (!isLoggedIn) {
+      if (!user) {
         throw new ApiError(status, response.data);
       }
 
       originalRequest._retry = true;
 
+      // ⏳ If refresh already running, wait
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
-          addRefreshSubscriber(() => {
+          addRefreshSubscriber((token: string) => {
+            const headers = AxiosHeaders.from(originalRequest.headers);
+            headers.set("Authorization", `Bearer ${token}`);
+            originalRequest.headers = headers;
             api(originalRequest).then(resolve).catch(reject);
           });
         });
@@ -113,28 +103,33 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        await api.post("/auth/refresh", null, { withCredentials: true });
+        const refreshRes = await api.post("/auth/refresh");
+        const { accessToken } = refreshRes.data as { accessToken: string };
+
+        store.dispatch(setAccessToken(accessToken));
+        onRefreshed(accessToken);
         isRefreshing = false;
-        onAccessTokenRefreshed();
+
+        const headers = AxiosHeaders.from(originalRequest.headers);
+        headers.set("Authorization", `Bearer ${accessToken}`);
+        originalRequest.headers = headers;
 
         return api(originalRequest);
       } catch {
         isRefreshing = false;
         refreshSubscribers = [];
-
         store.dispatch(clearUser());
         store.dispatch(markExpired());
-
         throw new ApiError(status, response.data);
       }
     }
 
-    // ====================================================
-    // Global Error Toasts
-    // ====================================================
+    /* =============================
+       STANDARD ERROR HANDLING
+       ============================= */
     switch (status) {
       case 400:
-        toast.error(response.data?.message || "Bad request.");
+        toast.error((response.data as any)?.message || "Bad request.");
         break;
       case 403:
         toast.error("You do not have permission to do that.");

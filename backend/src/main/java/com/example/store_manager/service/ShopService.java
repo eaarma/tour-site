@@ -25,6 +25,7 @@ import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
+import com.example.store_manager.security.annotations.ShopIdSource;
 
 import lombok.RequiredArgsConstructor;
 
@@ -82,7 +83,7 @@ public class ShopService {
         }
 
         @Transactional
-        @ShopAccess(AccessLevel.OWNER)
+        @ShopAccess(value = AccessLevel.OWNER, source = ShopIdSource.SHOP_ID)
         public Result<ShopDto> updateShop(Long shopId, ShopCreateRequestDto dto) {
 
                 Shop shop = shopRepository.findById(shopId)

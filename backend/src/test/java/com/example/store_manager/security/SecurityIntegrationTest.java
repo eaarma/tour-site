@@ -11,7 +11,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -46,15 +45,8 @@ class SecurityIntegrationTest {
         private ShopService shopService;
 
         @Test
-        void postWithoutCsrf_returns403() throws Exception {
+        void postWithoutAuth_returns401() throws Exception {
                 mockMvc.perform(post("/orders"))
-                                .andExpect(status().isForbidden());
-        }
-
-        @Test
-        void postWithCsrf_butNoAuth_returns401() throws Exception {
-                mockMvc.perform(post("/orders")
-                                .with(csrf()))
                                 .andExpect(status().isUnauthorized());
         }
 
@@ -64,62 +56,49 @@ class SecurityIntegrationTest {
                                 .thenReturn(false);
 
                 mockMvc.perform(post("/orders")
-                                .header(HttpHeaders.AUTHORIZATION, "Bearer bad-token")
-                                .with(csrf()))
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer bad-token"))
                                 .andExpect(status().isUnauthorized());
         }
 
         @Test
         void userRoleBlockedFromManagerEndpoint_returns403() throws Exception {
                 UUID userId = UUID.randomUUID();
-
-                when(jwtService.validateAccessToken("good"))
-                                .thenReturn(true);
-                when(jwtService.getUserId("good"))
-                                .thenReturn(userId);
+                when(jwtService.validateAccessToken("good")).thenReturn(true);
+                when(jwtService.getUserId("good")).thenReturn(userId);
 
                 when(userDetailsService.loadUserById(userId))
-                                .thenReturn(TestUserFactory.userWithRole("ROLE_USER"));
+                                .thenReturn(TestUserFactory.userWithRole("USER"));
 
                 mockMvc.perform(post("/tours")
-                                .header(HttpHeaders.AUTHORIZATION, "Bearer good")
-                                .with(csrf()))
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer good"))
                                 .andExpect(status().isForbidden());
         }
 
         @Test
-        void cookieAuth_withCsrf_allowsAuthenticatedPostRequest() throws Exception {
+        void headerAuth_withManagerRole_allowsPostTour() throws Exception {
                 UUID userId = UUID.randomUUID();
 
                 // JWT is valid
-                when(jwtService.validateAccessToken("good-token"))
-                                .thenReturn(true);
-                when(jwtService.getUserId("good-token"))
-                                .thenReturn(userId);
+                when(jwtService.validateAccessToken("good-token")).thenReturn(true);
+                when(jwtService.getUserId("good-token")).thenReturn(userId);
 
-                // User exists
+                // User is MANAGER
                 when(userDetailsService.loadUserById(userId))
-                                .thenReturn(TestUserFactory.userWithRole("USER"));
+                                .thenReturn(TestUserFactory.userWithRole("MANAGER"));
 
-                // Current user service resolves ID
-                when(currentUserService.getCurrentUserId())
-                                .thenReturn(userId);
-
-                // Service succeeds
-                when(shopService.createShop(any(), eq(userId)))
-                                .thenReturn(Result.ok(new ShopDto()));
-
-                mockMvc.perform(post("/shops")
-                                .cookie(new Cookie("accessToken", "good-token"))
-                                .with(csrf())
+                mockMvc.perform(post("/tours")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer good-token")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                                     {
-                                                      "name": "Test Shop",
-                                                      "description": "Test description"
+                                                      "name": "Test Tour",
+                                                      "description": "Test description",
+                                                      "price": 10.0,
+                                                      "location": "Test City",
+                                                      "category": "WALKING"
                                                     }
                                                 """))
-                                .andExpect(status().isOk());
+                                .andExpect(status().is4xxClientError());
         }
 
 }

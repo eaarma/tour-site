@@ -38,6 +38,7 @@ import com.example.store_manager.security.CurrentUserService;
 import com.example.store_manager.security.CustomUserDetails;
 import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
+import com.example.store_manager.security.annotations.ShopIdSource;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
 import com.example.store_manager.repository.TourScheduleRepository;
@@ -224,7 +225,7 @@ public class OrderService {
 
         /* List all orders for a specific user. */
         @Transactional(readOnly = true)
-        @ShopAccess(AccessLevel.MANAGER)
+        @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.DTO_TOUR_ID)
         public Result<List<OrderResponseDto>> getOrdersByUser(UUID userId) {
 
                 if (userId == null) {
@@ -241,7 +242,7 @@ public class OrderService {
 
         /* List all OrderItems for a given shop (provider) across all orders. */
         @Transactional(readOnly = true)
-        @ShopAccess(AccessLevel.GUIDE)
+        @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.SHOP_ID)
         public Result<List<OrderItemResponseDto>> getOrderItemsByShop(Long shopId) {
 
                 if (shopId == null) {
@@ -300,7 +301,7 @@ public class OrderService {
         }
 
         @Transactional
-        @ShopAccess(AccessLevel.MANAGER)
+        @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.ITEM_ID)
         public Result<OrderItemResponseDto> assignManagerToOrderItem(
                         Long itemId,
                         UUID newManagerId,
@@ -346,7 +347,7 @@ public class OrderService {
         }
 
         @Transactional
-        @ShopAccess(AccessLevel.GUIDE)
+        @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.ITEM_ID)
         public Result<OrderItemResponseDto> confirmOrderItem(Long itemId, UUID managerId) {
 
                 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -396,7 +397,7 @@ public class OrderService {
         }
 
         @Transactional
-        @ShopAccess(AccessLevel.GUIDE)
+        @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.ITEM_ID)
         public Result<OrderItemResponseDto> updateOrderItemStatus(Long itemId, OrderStatus status) {
 
                 Authentication auth = SecurityContextHolder.getContext().getAuthentication();

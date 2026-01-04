@@ -10,6 +10,7 @@ import com.example.store_manager.repository.TourSessionRepository;
 import com.example.store_manager.repository.UserRepository;
 import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
+import com.example.store_manager.security.annotations.ShopIdSource;
 import com.example.store_manager.utility.ApiError;
 
 import lombok.RequiredArgsConstructor;
@@ -49,7 +50,7 @@ public class TourSessionService {
     }
 
     @Transactional
-    @ShopAccess(AccessLevel.GUIDE)
+    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.SESSION_ID)
     public Result<TourSessionDto> assignManager(Long sessionId, UUID managerId) {
 
         // 1️⃣ Load session
@@ -80,7 +81,7 @@ public class TourSessionService {
     }
 
     @Transactional
-    @ShopAccess(AccessLevel.GUIDE)
+    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.SESSION_ID)
     public Result<TourSessionDto> updateStatus(Long sessionId, SessionStatus newStatus) {
 
         TourSession session = repo.findById(sessionId)
@@ -103,6 +104,7 @@ public class TourSessionService {
     }
 
     @Transactional(readOnly = true)
+    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.SHOP_ID)
     public Result<List<TourSessionDto>> getSessionsForShop(Long shopId) {
 
         // 1️⃣ Find all tours for the shop

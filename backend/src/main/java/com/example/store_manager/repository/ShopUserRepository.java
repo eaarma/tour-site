@@ -15,18 +15,39 @@ import com.example.store_manager.model.ShopUserStatus;
 
 @Repository
 public interface ShopUserRepository extends JpaRepository<ShopUser, Long> {
+
+  /*
+   * -----------------------------
+   * Basic lookups
+   * -----------------------------
+   */
+
   List<ShopUser> findByShopId(Long shopId);
 
   List<ShopUser> findByUserId(UUID userId);
 
   Optional<ShopUser> findByShopIdAndUserId(Long shopId, UUID userId);
 
-  @Query("SELECT su FROM ShopUser su JOIN FETCH su.user WHERE su.shop.id = :shopId")
-  List<ShopUser> findByShopIdWithUser(@Param("shopId") Long shopId);
+  List<ShopUser> findByShopIdAndStatus(Long shopId, ShopUserStatus status);
+
+  /*
+   * -----------------------------
+   * Existence checks (fast paths)
+   * -----------------------------
+   */
 
   boolean existsByUserIdAndShopId(UUID userId, Long shopId);
 
-  boolean existsByUserIdAndShopIdAndRole(UUID userId, Long shopId, ShopUserRole role);
+  boolean existsByUserIdAndShopIdAndRole(
+      UUID userId,
+      Long shopId,
+      ShopUserRole role);
+
+  /*
+   * -----------------------------
+   * Role lookup (authorization)
+   * -----------------------------
+   */
 
   @Query("""
           SELECT su.role
@@ -34,8 +55,21 @@ public interface ShopUserRepository extends JpaRepository<ShopUser, Long> {
           WHERE su.user.id = :userId
             AND su.shop.id = :shopId
       """)
-  ShopUserRole findRole(@Param("userId") UUID userId, @Param("shopId") Long shopId);
+  Optional<ShopUserRole> findRole(
+      @Param("userId") UUID userId,
+      @Param("shopId") Long shopId);
 
-  List<ShopUser> findByShopIdAndStatus(Long shopId, ShopUserStatus status);
+  /*
+   * -----------------------------
+   * Fetch joins (avoid N+1)
+   * -----------------------------
+   */
 
+  @Query("""
+          SELECT su
+          FROM ShopUser su
+          JOIN FETCH su.user
+          WHERE su.shop.id = :shopId
+      """)
+  List<ShopUser> findByShopIdWithUser(@Param("shopId") Long shopId);
 }

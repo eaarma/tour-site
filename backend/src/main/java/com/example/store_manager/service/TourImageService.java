@@ -6,6 +6,7 @@ import com.example.store_manager.repository.TourImageRepository;
 import com.example.store_manager.repository.TourRepository;
 import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
+import com.example.store_manager.security.annotations.ShopIdSource;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
 
@@ -32,7 +33,7 @@ public class TourImageService {
     }
 
     @Transactional
-    @ShopAccess(AccessLevel.MANAGER)
+    @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.ITEM_ID)
     public Result<TourImage> addImageToTour(Long tourId, String imageUrl) {
 
         Tour tour = tourRepository.findById(tourId).orElse(null);
@@ -52,7 +53,7 @@ public class TourImageService {
     }
 
     @Transactional
-    @ShopAccess(AccessLevel.MANAGER)
+    @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.ITEM_ID)
     public Result<Boolean> deleteImage(Long tourId, Long imageId) {
 
         if (!tourImageRepository.existsById(imageId)) {
@@ -64,7 +65,7 @@ public class TourImageService {
     }
 
     @Transactional
-    @ShopAccess(AccessLevel.MANAGER)
+    @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.ITEM_ID)
     public Result<Boolean> updateImageOrder(
             Long tourId,
             List<Long> orderedImageIds) {

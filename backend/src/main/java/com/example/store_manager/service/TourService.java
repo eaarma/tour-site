@@ -26,6 +26,7 @@ import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
+import com.example.store_manager.security.annotations.ShopIdSource;
 
 import lombok.RequiredArgsConstructor;
 
@@ -38,7 +39,7 @@ public class TourService {
     private final ShopRepository shopRepository;
 
     @Transactional
-    @ShopAccess(AccessLevel.MANAGER)
+    @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.SHOP_ID)
     public Result<TourResponseDto> createTour(
             Long shopId,
             TourCreateDto dto,
@@ -60,7 +61,7 @@ public class TourService {
     }
 
     @Transactional
-    @ShopAccess(AccessLevel.MANAGER)
+    @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.TOUR_ID)
     public Result<TourResponseDto> updateTour(Long tourId, TourCreateDto dto) {
 
         Tour tour = tourRepository.findById(tourId)
@@ -178,4 +179,5 @@ public class TourService {
                 .map(Result::ok)
                 .orElseGet(() -> Result.fail(ApiError.notFound("No active tours found")));
     }
+
 }

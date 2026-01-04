@@ -25,8 +25,10 @@ import com.example.store_manager.repository.ShopUserRepository;
 import com.example.store_manager.repository.UserRepository;
 import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
+import com.example.store_manager.security.annotations.ShopIdSource;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
+import com.example.store_manager.security.annotations.ShopIdSource;
 
 import lombok.RequiredArgsConstructor;
 
@@ -70,7 +72,7 @@ public class ShopUserService {
         }
 
         @Transactional
-        @ShopAccess(AccessLevel.MANAGER)
+        @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.SHOP_ID)
         public Result<Boolean> addUserToShop(Long shopId, UUID userIdToAdd, String role) {
 
                 Shop shop = shopRepository.findById(shopId).orElse(null);
@@ -103,7 +105,7 @@ public class ShopUserService {
         }
 
         @Transactional
-        @ShopAccess(AccessLevel.MANAGER)
+        @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.SHOP_ID)
         public Result<Boolean> updateUserStatus(Long shopId, UUID userId, String status) {
 
                 ShopUser shopUser = shopUserRepository.findByShopIdAndUserId(shopId, userId).orElse(null);
@@ -123,7 +125,7 @@ public class ShopUserService {
         }
 
         @Transactional
-        @ShopAccess(AccessLevel.MANAGER)
+        @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.SHOP_ID)
         public Result<Boolean> updateUserRole(Long shopId, UUID userId, String role) {
 
                 ShopUser shopUser = shopUserRepository.findByShopIdAndUserId(shopId, userId).orElse(null);

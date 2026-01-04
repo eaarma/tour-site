@@ -39,14 +39,14 @@ public class ShopController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getShop(@PathVariable Long id) {
+    public ResponseEntity<?> getShop(@PathVariable("id") Long id) {
         return ResultResponseMapper.toResponse(
                 shopService.getShop(id));
     }
 
     @PutMapping("/{shopId}")
     public ResponseEntity<?> updateShop(
-            @PathVariable Long shopId,
+            @PathVariable("shopId") Long shopId,
             @RequestBody ShopCreateRequestDto dto) {
 
         return ResultResponseMapper.toResponse(

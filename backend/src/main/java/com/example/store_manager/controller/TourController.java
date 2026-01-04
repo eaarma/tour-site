@@ -27,81 +27,81 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TourController {
 
-    private final TourService tourService;
+        private final TourService tourService;
 
-    @PostMapping
-    public ResponseEntity<?> createTour(
-            @RequestBody @Valid TourCreateDto dto,
-            Principal principal) {
+        @PostMapping
+        public ResponseEntity<?> createTour(
+                        @RequestBody @Valid TourCreateDto dto,
+                        Principal principal) {
 
-        return ResultResponseMapper.toResponse(
-                tourService.createTour(dto.getShopId(), dto, principal));
-    }
+                return ResultResponseMapper.toResponse(
+                                tourService.createTour(dto.getShopId(), dto, principal));
+        }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateTour(
-            @PathVariable Long id,
-            @RequestBody @Valid TourCreateDto dto) {
+        @PutMapping("/{id}")
+        public ResponseEntity<?> updateTour(
+                        @PathVariable("id") Long id,
+                        @RequestBody @Valid TourCreateDto dto) {
 
-        return ResultResponseMapper.toResponse(
-                tourService.updateTour(id, dto));
-    }
+                return ResultResponseMapper.toResponse(
+                                tourService.updateTour(id, dto));
+        }
 
-    // ✅ fetch literally everything
-    @GetMapping
-    public ResponseEntity<?> getAllTours() {
-        return ResultResponseMapper.toResponse(
-                tourService.getAllTours());
-    }
+        // ✅ fetch literally everything
+        @GetMapping
+        public ResponseEntity<?> getAllTours() {
+                return ResultResponseMapper.toResponse(
+                                tourService.getAllTours());
+        }
 
-    @GetMapping("/query")
-    public ResponseEntity<?> getAllByQuery(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "12") int size,
-            @RequestParam(defaultValue = "title,asc") String[] sort,
-            @RequestParam(required = false) List<String> category,
-            @RequestParam(required = false) List<String> language,
-            @RequestParam(required = false) String type,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String date) {
+        @GetMapping("/query")
+        public ResponseEntity<?> getAllByQuery(
+                        @RequestParam(name = "page", defaultValue = "0") int page,
+                        @RequestParam(name = "size", defaultValue = "12") int size,
+                        @RequestParam(name = "sort", defaultValue = "title,asc") String[] sort,
+                        @RequestParam(name = "category", required = false) List<String> category,
+                        @RequestParam(name = "language", required = false) List<String> language,
+                        @RequestParam(name = "type", required = false) String type,
+                        @RequestParam(name = "keyword", required = false) String keyword,
+                        @RequestParam(name = "date", required = false) String date) {
 
-        return ResultResponseMapper.toResponse(
-                tourService.getAllByQuery(
-                        category,
-                        type,
-                        language,
-                        keyword,
-                        date,
-                        page,
-                        size,
-                        sort));
-    }
+                return ResultResponseMapper.toResponse(
+                                tourService.getAllByQuery(
+                                                category,
+                                                type,
+                                                language,
+                                                keyword,
+                                                date,
+                                                page,
+                                                size,
+                                                sort));
+        }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getTourById(@PathVariable Long id) {
-        return ResultResponseMapper.toResponse(
-                tourService.getTourById(id));
-    }
+        @GetMapping("/{id}")
+        public ResponseEntity<?> getTourById(@PathVariable("id") Long id) {
+                return ResultResponseMapper.toResponse(
+                                tourService.getTourById(id));
+        }
 
-    @GetMapping("/shop/{shopId}")
-    public ResponseEntity<?> getToursByShop(@PathVariable Long shopId) {
-        return ResultResponseMapper.toResponse(
-                tourService.getToursByShopId(shopId));
-    }
+        @GetMapping("/shop/{shopId}")
+        public ResponseEntity<?> getToursByShop(@PathVariable("shopId") Long shopId) {
+                return ResultResponseMapper.toResponse(
+                                tourService.getToursByShopId(shopId));
+        }
 
-    // GET /tours/random?count=8
-    @GetMapping("/random")
-    public ResponseEntity<?> getRandomTours(
-            @RequestParam(defaultValue = "8") int count) {
+        // GET /tours/random?count=8
+        @GetMapping("/random")
+        public ResponseEntity<?> getRandomTours(
+                        @RequestParam(name = "count", defaultValue = "8") int count) {
 
-        return ResultResponseMapper.toResponse(
-                tourService.getRandomTours(count));
-    }
+                return ResultResponseMapper.toResponse(
+                                tourService.getRandomTours(count));
+        }
 
-    // GET /tours/highlighted
-    @GetMapping("/highlighted")
-    public ResponseEntity<?> getHighlightedTour() {
-        return ResultResponseMapper.toResponse(
-                tourService.getHighlightedTour());
-    }
+        // GET /tours/highlighted
+        @GetMapping("/highlighted")
+        public ResponseEntity<?> getHighlightedTour() {
+                return ResultResponseMapper.toResponse(
+                                tourService.getHighlightedTour());
+        }
 }

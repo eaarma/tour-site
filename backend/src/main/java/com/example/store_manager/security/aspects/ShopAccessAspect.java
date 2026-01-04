@@ -23,7 +23,7 @@ import com.example.store_manager.repository.TourRepository;
 import com.example.store_manager.security.CustomUserDetails;
 import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
-
+import com.example.store_manager.security.annotations.ShopIdSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,117 +36,85 @@ public class ShopAccessAspect {
     private final ShopUserRepository shopUserRepository;
     private final TourRepository tourRepository;
     private final OrderItemRepository orderItemRepository;
-    private final ShopRepository shopRepository;
 
-    @Before("@annotation(com.example.store_manager.security.annotations.ShopAccess)")
-    public void checkShopAccess(JoinPoint joinPoint) {
+    @Before("@annotation(shopAccess)")
+    public void checkShopAccess(JoinPoint jp, ShopAccess shopAccess) {
 
-        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-        ShopAccess annotation = signature.getMethod().getAnnotation(ShopAccess.class);
-        AccessLevel requiredLevel = annotation.value();
-
-        // -------------------------
-        // 1️⃣ Extract shopId
-        // -------------------------
-        Long shopId = extractShopId(joinPoint);
+        Long shopId = resolveShopId(jp.getArgs(), shopAccess.source());
 
         if (shopId == null) {
-            throw new AccessDeniedException("Shop ID could not be determined.");
+            throw new AccessDeniedException("Shop ID could not be resolved");
         }
 
-        // -------------------------
-        // 2️⃣ Get authenticated user
-        // -------------------------
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth == null || !(auth.getPrincipal() instanceof CustomUserDetails userDetails)) {
+        if (auth == null || !(auth.getPrincipal() instanceof CustomUserDetails user)) {
             throw new AccessDeniedException("Unauthorized");
         }
 
-        UUID userId = userDetails.getId();
-
-        // -------------------------
-        // 3️⃣ Load membership (must exist)
-        // -------------------------
         ShopUser membership = shopUserRepository
-                .findByShopIdAndUserId(shopId, userId)
-                .orElseThrow(() -> new AccessDeniedException("You are not a member of this shop."));
+                .findByShopIdAndUserId(shopId, user.getId())
+                .orElseThrow(() -> new AccessDeniedException("Not a shop member"));
 
-        // -------------------------
-        // 4️⃣ Enforce membership status
-        // -------------------------
         if (membership.getStatus() != ShopUserStatus.ACTIVE) {
-            throw new AccessDeniedException("Membership is not approved.");
+            throw new AccessDeniedException("Membership not approved");
         }
 
-        // -------------------------
-        // 5️⃣ Enforce role
-        ShopUserRole role = membership.getRole();
-
-        if (role.getLevel() < requiredLevel.getLevel()) {
-            throw new AccessDeniedException("Access level too low");
+        if (membership.getRole().getLevel() < shopAccess.value().getLevel()) {
+            throw new AccessDeniedException("Insufficient access level");
         }
-
     }
 
-    // -------------------------------------------------------------------
-    // Extract shopId from parameters: shopId → tourId → scheduleId → itemId
-    // -------------------------------------------------------------------
-    private Long extractShopId(JoinPoint jp) {
-        Object[] args = jp.getArgs();
-        Parameter[] params = ((MethodSignature) jp.getSignature()).getMethod().getParameters();
+    private Long resolveShopId(Object[] args, ShopIdSource source) {
 
-        // shopId
-        for (int i = 0; i < params.length; i++) {
-            if (params[i].getName().equals("shopId") && args[i] instanceof Long id) {
-                return id;
-            }
+        if (args.length == 0) {
+            return null;
         }
 
-        // tourId
-        for (int i = 0; i < params.length; i++) {
-            if (params[i].getName().equals("tourId") && args[i] instanceof Long tourId) {
-                return tourRepository.findShopIdByTourId(tourId);
-            }
-        }
+        return switch (source) {
 
-        // scheduleId (path variable "id")
-        for (int i = 0; i < params.length; i++) {
-            if (params[i].getName().equals("id") && args[i] instanceof Long scheduleId) {
-                Long tourId = tourRepository.findTourIdByScheduleId(scheduleId);
-                if (tourId != null) {
-                    return tourRepository.findShopIdByTourId(tourId);
+            case SHOP_ID -> {
+                if (args[0] instanceof Long shopId) {
+                    yield shopId;
                 }
+                yield null;
             }
-        }
 
-        // order item
-        for (int i = 0; i < params.length; i++) {
-            if (params[i].getName().equals("itemId") && args[i] instanceof Long itemId) {
-                return orderItemRepository.findShopIdByItemId(itemId);
-            }
-        }
-
-        // DTO containing tourId → schedule creation, schedule update, etc.
-        for (Object arg : args) {
-            if (arg instanceof TourScheduleCreateDto scheduleDto) {
-                return tourRepository.findShopIdByTourId(scheduleDto.getTourId());
-            }
-        }
-
-        // tour session (sessionId)
-        for (int i = 0; i < params.length; i++) {
-            if ((params[i].getName().equals("sessionId") || params[i].getName().equals("id"))
-                    && args[i] instanceof Long sessionId) {
-                Long shopId = tourRepository.findShopIdBySessionId(sessionId);
-                if (shopId != null) {
-                    return shopId;
+            case TOUR_ID -> {
+                if (args[0] instanceof Long tourId) {
+                    yield tourRepository.findShopIdByTourId(tourId);
                 }
+                yield null;
             }
-        }
 
-        return null;
+            case SESSION_ID -> {
+                if (args[0] instanceof Long sessionId) {
+                    yield tourRepository.findShopIdBySessionId(sessionId);
+                }
+                yield null;
+            }
 
+            case ITEM_ID -> {
+                if (args[0] instanceof Long itemId) {
+                    yield orderItemRepository.findShopIdByItemId(itemId);
+                }
+                yield null;
+            }
+
+            case DTO_TOUR_ID -> {
+                for (Object arg : args) {
+                    if (arg instanceof TourScheduleCreateDto dto && dto.getTourId() != null) {
+                        yield tourRepository.findShopIdByTourId(dto.getTourId());
+                    }
+                }
+                yield null;
+            }
+            case SCHEDULE_ID -> {
+                if (args[0] instanceof Long scheduleId) {
+                    yield tourRepository.findShopIdByScheduleId(scheduleId);
+                }
+                yield null;
+            }
+
+        };
     }
-
 }
