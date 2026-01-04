@@ -5,3 +5,11 @@ spring:
 jwt:
   access-expiration-ms: 30000 # 10 minutes
   refresh-expiration-ms: 86400000 # 1 day
+
+
+security:
+  refresh:
+    allowed-origins:
+      - http://localhost:3000
+      - https://your-frontend-domain.com
+    

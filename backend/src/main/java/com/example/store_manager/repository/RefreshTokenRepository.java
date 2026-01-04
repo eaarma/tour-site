@@ -15,6 +15,8 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long
     // ✅ Used during refresh
     Optional<RefreshToken> findByTokenAndRevokedFalse(String token);
 
+    Optional<RefreshToken> findByToken(String token);
+
     // ✅ Revoke a single token
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""

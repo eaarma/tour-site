@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,11 +27,13 @@ import com.example.store_manager.model.User;
 import com.example.store_manager.repository.UserRepository;
 import com.example.store_manager.security.CustomUserDetails;
 import com.example.store_manager.security.JwtService;
+import com.example.store_manager.security.RefreshSecurityProperties;
 import com.example.store_manager.service.AuthService;
 import com.example.store_manager.service.RegistrationService;
 import com.example.store_manager.utility.Result;
 import com.example.store_manager.utility.ResultResponseMapper;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +52,8 @@ public class AuthenticationController {
         private final AuthService authService;
 
         private final RegistrationService registrationService;
+
+        private final RefreshSecurityProperties refreshSecurityProperties;
 
         @PostMapping("/register/user")
         public ResponseEntity<?> registerUser(
@@ -129,9 +134,21 @@ public class AuthenticationController {
 
         @PostMapping("/refresh")
         public ResponseEntity<?> refresh(
+                        HttpServletRequest request,
                         @CookieValue(name = "refreshToken", required = false) String refreshToken,
                         HttpServletResponse response) {
 
+                // 1) Require custom header
+                if (!"true".equals(request.getHeader("X-Refresh-Request"))) {
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+
+                 // 2️) Validate Origin
+    String origin = request.getHeader("Origin");
+    if (origin == null || !refreshSecurityProperties.getAllowedOrigins().contains(origin)) {
+        throw new AccessDeniedException("Invalid origin");
+    }
+                // 3) Existing refresh logic
                 Result<AuthTokens> result = authService.refresh(refreshToken);
 
                 if (result.isFail()) {
@@ -143,8 +160,7 @@ public class AuthenticationController {
                 response.addHeader(HttpHeaders.SET_COOKIE,
                                 buildCookie("refreshToken", tokens.refreshToken(), 7 * 24 * 60 * 60, true).toString());
 
-                return ResponseEntity.ok(Map.of(
-                                "accessToken", tokens.accessToken()));
+                return ResponseEntity.ok(Map.of("accessToken", tokens.accessToken()));
         }
 
 }

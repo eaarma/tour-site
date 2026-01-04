@@ -114,6 +114,7 @@ public class JwtService {
                 .setClaims(claims)
                 .setSubject(user.getId().toString()) // ✔️ UUID as subject
                 .setIssuedAt(new Date())
+                .setId(UUID.randomUUID().toString())
                 .setExpiration(new Date(System.currentTimeMillis() + refreshExpirationMs))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();

@@ -45,7 +45,9 @@ export const AuthService = {
   // Token refresh
   // ===============================
   refresh: async (): Promise<RefreshResponseDto> => {
-    const res = await api.post("/auth/refresh");
+    const res = await api.post("/auth/refresh", null, {
+      headers: { "X-Refresh-Request": "true" },
+    });
     return res.data;
   },
 

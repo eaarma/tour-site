@@ -1,5 +1,7 @@
 package com.example.store_manager.service;
 
+import java.time.Instant;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
@@ -7,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.store_manager.dto.auth.AuthTokens;
 import com.example.store_manager.dto.user.LoginRequestDto;
+import com.example.store_manager.model.RefreshToken;
 import com.example.store_manager.model.User;
 import com.example.store_manager.repository.UserRepository;
 import com.example.store_manager.security.JwtService;
@@ -67,19 +70,36 @@ public class AuthService {
     @Transactional
     public Result<AuthTokens> refresh(String refreshToken) {
 
-        if (refreshToken == null || !jwtService.validateRefreshToken(refreshToken)) {
+        if (refreshToken == null || refreshToken.isBlank()) {
             return Result.fail(ApiError.forbidden("Invalid refresh token"));
         }
 
-        Result<User> userResult = refreshTokenService.validateAndGetUser(refreshToken);
-
-        if (userResult.isFail()) {
-            return Result.fail(userResult.error());
+        // Optional JWT structure validation (keeps garbage out)
+        if (!jwtService.validateRefreshToken(refreshToken)) {
+            return Result.fail(ApiError.forbidden("Invalid refresh token"));
         }
 
-        User user = userResult.get();
-        log.info("Refreshing token for user {}", user.getId());
+        // ✅ MUST resolve from DB even if revoked (reuse detection)
+        Result<RefreshToken> tokenResult = refreshTokenService.resolve(refreshToken);
+        if (tokenResult.isFail()) {
+            return Result.fail(tokenResult.error());
+        }
 
+        RefreshToken rt = tokenResult.get();
+        User user = rt.getUser();
+
+        // ✅ REUSE DETECTION
+        if (rt.isRevoked()) {
+            refreshTokenService.revokeAllForUser(user);
+            return Result.fail(ApiError.forbidden("Refresh token reuse detected"));
+        }
+
+        if (rt.getExpiresAt().isBefore(Instant.now())) {
+            refreshTokenService.revoke(refreshToken); // mark expired token revoked
+            return Result.fail(ApiError.forbidden("Refresh token expired"));
+        }
+
+        // ✅ ROTATE: revoke old, create new
         refreshTokenService.revoke(refreshToken);
 
         String newAccess = jwtService.generateAccessToken(user);

@@ -103,7 +103,10 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshRes = await api.post("/auth/refresh");
+        const refreshRes = await api.post("/auth/refresh", null, {
+          headers: { "X-Refresh-Request": "true" },
+        });
+
         const { accessToken } = refreshRes.data as { accessToken: string };
 
         store.dispatch(setAccessToken(accessToken));
