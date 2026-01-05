@@ -13,20 +13,18 @@ import org.springframework.stereotype.Repository;
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
 
     // ✅ Used during refresh
-    Optional<RefreshToken> findByTokenAndRevokedFalse(String token);
+    Optional<RefreshToken> findByTokenHashAndRevokedFalse(String tokenHash);
 
-    Optional<RefreshToken> findByToken(String token);
+    Optional<RefreshToken> findByTokenHash(String tokenHash);
 
-    // ✅ Revoke a single token
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
                 UPDATE RefreshToken r
                 SET r.revoked = true
-                WHERE r.token = :token
+                WHERE r.tokenHash = :tokenHash
             """)
-    void revokeByToken(@Param("token") String token);
+    void revokeByTokenHash(@Param("tokenHash") String tokenHash);
 
-    // ✅ Revoke all tokens for a user (logout everywhere)
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
                 UPDATE RefreshToken r

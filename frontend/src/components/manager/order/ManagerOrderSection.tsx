@@ -60,8 +60,6 @@ export default function ManagerOrderSection({
     null
   );
 
-  const showClearDates = fromDate || toDate;
-
   //Default “From” date = today (first navigation)
   useEffect(() => {
     const today = new Date();
@@ -96,7 +94,12 @@ export default function ManagerOrderSection({
   const reloadSessions = async () => {
     if (!shopId) return;
     const updated = await TourSessionService.getByShopId(shopId);
-    setSessionList(updated);
+    // ⭐ Filter: only sessions with participants
+    const updatedFiltered = updated.filter(
+      (s) => (s.participants?.length ?? 0) > 0
+    );
+
+    setSessionList(updatedFiltered);
   };
 
   // ⬇️ confirm session: assign manager + change status

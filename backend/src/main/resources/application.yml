@@ -4,7 +4,7 @@ spring:
 
 jwt:
   access-expiration-ms: 30000 # 10 minutes
-  refresh-expiration-ms: 86400000 # 1 day
+  refresh-expiration-ms: 60000 # 1 day
 
 
 security:

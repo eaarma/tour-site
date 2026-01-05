@@ -183,27 +183,32 @@ class AuthenticationControllerTest {
 
         /* ===================== REFRESH ===================== */
 
-        @Test
-        void refresh_returnsAccessTokenJson_andSetsRefreshCookie_whenSuccess() throws Exception {
-                AuthTokens tokens = new AuthTokens("new-access", "new-refresh", Instant.now());
-                when(authService.refresh("refresh")).thenReturn(Result.ok(tokens));
+@Test
+void refresh_returnsAccessTokenJson_andSetsRefreshCookie_whenSuccess() throws Exception {
+    AuthTokens tokens = new AuthTokens("new-access", "new-refresh", Instant.now());
+    when(authService.refresh("refresh")).thenReturn(Result.ok(tokens));
 
-                mockMvc.perform(post("/auth/refresh")
-                                .cookie(new Cookie("refreshToken", "refresh")))
-                                .andExpect(status().isOk())
-                                .andExpect(header().string(HttpHeaders.SET_COOKIE,
-                                                org.hamcrest.Matchers.containsString("refreshToken=")))
-                                .andExpect(jsonPath("$.accessToken").value("new-access"));
-        }
+    mockMvc.perform(post("/auth/refresh")
+            .header("X-Refresh-Request", "true")
+            .header("Origin", "http://localhost:3000") 
+            .cookie(new Cookie("refreshToken", "refresh")))
+        .andExpect(status().isOk())
+        .andExpect(header().string(HttpHeaders.SET_COOKIE,
+                org.hamcrest.Matchers.containsString("refreshToken=")))
+        .andExpect(jsonPath("$.accessToken").value("new-access"));
+}
 
-        @Test
-        void refresh_returnsUnauthorized_whenServiceFails() throws Exception {
-                when(authService.refresh(any()))
-                                .thenReturn(Result.fail(ApiError.forbidden("Invalid refresh token")));
+@Test
+void refresh_returnsUnauthorized_whenServiceFails() throws Exception {
+    when(authService.refresh(any()))
+        .thenReturn(Result.fail(ApiError.forbidden("Invalid refresh token")));
 
-                mockMvc.perform(post("/auth/refresh")
+    mockMvc.perform(post("/auth/refresh")
+            .header("X-Refresh-Request", "true")
+            .header("Origin", "http://localhost:3000") 
+            .cookie(new Cookie("refreshToken", "bad")))
+        .andExpect(status().isUnauthorized());
+}
 
-                                .cookie(new Cookie("refreshToken", "bad")))
-                                .andExpect(status().isUnauthorized());
-        }
+
 }
