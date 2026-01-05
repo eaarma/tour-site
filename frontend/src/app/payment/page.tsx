@@ -104,8 +104,12 @@ export default function PaymentPage() {
       const order = await OrderService.create(orderRequest, isGuest);
 
       // ✅ Step 3: Send email confirmation
-      await api.post("/send-confirmation", {
-        order,
+      await fetch("/api/send-confirmation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ order }),
       });
 
       toast.success("Order confirmed ✅");
