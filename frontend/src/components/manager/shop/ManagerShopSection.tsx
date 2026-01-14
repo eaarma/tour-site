@@ -41,6 +41,12 @@ export default function ManagerShopSection({ shopId }: Props) {
     fetchData();
   }, [shopId]);
 
+  const handleUserUpdated = (updatedUser: ShopUserDto) => {
+    setMembers((prev) =>
+      prev.map((m) => (m.userId === updatedUser.userId ? updatedUser : m))
+    );
+  };
+
   if (!shop) return null;
 
   return (
@@ -121,7 +127,9 @@ export default function ManagerShopSection({ shopId }: Props) {
         isOpen={isUsersModalOpen}
         onClose={() => setIsUsersModalOpen(false)}
         members={members.filter((m) => m.status === "ACTIVE")}
-        shopId={shopId} // ✅ Pass the shopId explicitly
+        shopId={shopId}
+        currentUserRole="MANAGER"
+        onUserUpdated={handleUserUpdated}
       />
 
       {/* Pending Requests modal */}

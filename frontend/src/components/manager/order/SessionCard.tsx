@@ -83,7 +83,7 @@ export default function SessionCard({
 
             <div className="flex items-center gap-1 text-primary font-semibold mt-1">
               <Users className="w-4 h-4" />
-              {totalParticipants}/{session.capacity}
+              {totalParticipants}/{session.maxParticipants}
             </div>
           </div>
         </div>

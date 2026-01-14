@@ -17,12 +17,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Table(name = "tour_session")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Audited
-@Table(name = "tour_session")
 public class TourSession {
 
     @Id
@@ -30,20 +30,14 @@ public class TourSession {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tour_id", nullable = false)
-    private Tour tour;
-
-    private LocalDate date;
-    private LocalTime time;
-
-    private Integer capacity; // max participants
-    private Integer remaining; // current remaining spots
+    @JoinColumn(name = "schedule_id", nullable = false, unique = true)
+    private TourSchedule schedule;
 
     @OneToMany(mappedBy = "session")
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
-    private SessionStatus status; // PLANNED, CONFIRMED, COMPLETED, CANCELLED, CANCELLED_CONFIRMED
+    private SessionStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "manager_id")

@@ -15,9 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import com.example.store_manager.dto.tour.TourCreateDto;
 import com.example.store_manager.dto.tour.TourResponseDto;
 import com.example.store_manager.mapper.TourMapper;
@@ -235,33 +233,31 @@ class TourServiceTest {
         assertSame(dto, result.get().get(0));
     }
 
-@Test
-void getHighlightedTour_returnsOk_whenExists() {
-    Tour tour = new Tour();
-    TourResponseDto dto = new TourResponseDto();
+    @Test
+    void getHighlightedTour_returnsOk_whenExists() {
+        Tour tour = new Tour();
+        TourResponseDto dto = new TourResponseDto();
 
-    when(tourRepository.findRandomActiveTour())
-            .thenReturn(Optional.of(tour));
-    when(tourMapper.toDto(tour)).thenReturn(dto);
+        when(tourRepository.findRandomActiveTour())
+                .thenReturn(Optional.of(tour));
+        when(tourMapper.toDto(tour)).thenReturn(dto);
 
-    Result<TourResponseDto> result = tourService.getHighlightedTour();
+        Result<TourResponseDto> result = tourService.getHighlightedTour();
 
-    assertTrue(result.isOk());
-    assertSame(dto, result.get());
-}
+        assertTrue(result.isOk());
+        assertSame(dto, result.get());
+    }
 
+    @Test
+    void getHighlightedTour_returnsFail_whenNoneExist() {
+        when(tourRepository.findRandomActiveTour())
+                .thenReturn(Optional.empty());
 
-@Test
-void getHighlightedTour_returnsFail_whenNoneExist() {
-    when(tourRepository.findRandomActiveTour())
-            .thenReturn(Optional.empty());
+        Result<TourResponseDto> result = tourService.getHighlightedTour();
 
-    Result<TourResponseDto> result = tourService.getHighlightedTour();
-
-    assertTrue(result.isFail());
-    assertEquals("NOT_FOUND", result.error().code());
-    assertEquals("No active tours found", result.error().message());
-}
-
+        assertTrue(result.isFail());
+        assertEquals("NOT_FOUND", result.error().code());
+        assertEquals("No active tours found", result.error().message());
+    }
 
 }

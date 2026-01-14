@@ -30,7 +30,8 @@ export interface TourSessionDto {
   date: string;
   time: string;
 
-  capacity: number;
+  maxParticipants: number; // ✅ renamed
+  bookedParticipants: number;
   remaining: number;
 
   participants: OrderItemParticipantDto[];

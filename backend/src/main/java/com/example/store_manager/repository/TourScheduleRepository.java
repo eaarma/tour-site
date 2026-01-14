@@ -5,6 +5,7 @@ import java.time.LocalTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 import com.example.store_manager.model.TourSchedule;
 
+import jakarta.persistence.LockModeType;
+
 @Repository
 public interface TourScheduleRepository extends JpaRepository<TourSchedule, Long> {
 
@@ -22,6 +25,10 @@ public interface TourScheduleRepository extends JpaRepository<TourSchedule, Long
      * Basic queries
      * -----------------------------
      */
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select s from TourSchedule s where s.id = :id")
+    Optional<TourSchedule> findByIdForUpdate(@Param("id") Long id);
 
     List<TourSchedule> findByTourId(Long tourId);
 

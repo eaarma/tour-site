@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ShopUserDto } from "@/types";
 import Modal from "../../common/Modal";
 import ManagerShopUserViewModal from "./ManagerShopUserViewModal";
@@ -10,8 +10,9 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   members: ShopUserDto[];
-  currentUserRole?: string; // pass MANAGER role from parent if available
+  currentUserRole?: string;
   shopId: number;
+  onUserUpdated: (user: ShopUserDto) => void;
 }
 
 export default function ManagerShopUsersModal({
@@ -20,6 +21,7 @@ export default function ManagerShopUsersModal({
   members,
   currentUserRole,
   shopId,
+  onUserUpdated,
 }: Props) {
   const [selectedUser, setSelectedUser] = useState<ShopUserDto | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -99,14 +101,18 @@ export default function ManagerShopUsersModal({
       </div>
 
       {/* View Modal */}
-      {selectedUser && (
-        <ManagerShopUserViewModal
-          isOpen={isViewModalOpen}
-          onClose={() => setIsViewModalOpen(false)}
-          user={selectedUser}
-          shopId={shopId}
-        />
-      )}
+  {selectedUser && (
+  <ManagerShopUserViewModal
+    isOpen={isViewModalOpen}
+    onClose={() => setIsViewModalOpen(false)}
+    user={selectedUser}
+    shopId={shopId}
+    onUserUpdated={(updatedUser) => {
+      setSelectedUser(updatedUser);
+      onUserUpdated(updatedUser);
+    }}
+  />
+)}
 
       {/* Edit Modal */}
       {selectedUser && canEdit && (
@@ -114,6 +120,10 @@ export default function ManagerShopUsersModal({
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           user={selectedUser}
+          onUserUpdated={(updatedUser) => {
+            setSelectedUser(updatedUser);
+            onUserUpdated(updatedUser);
+          }}
         />
       )}
     </Modal>

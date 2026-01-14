@@ -21,7 +21,7 @@ public class TourScheduleUpdateDto {
     @Min(value = 1, message = "Maximum participants must be at least 1")
     private Integer maxParticipants; // optional
 
-    private Integer BookedParticipants;
+    private Integer bookedParticipants;
 
     private String status;
 

@@ -4,13 +4,7 @@ import { useEffect, useState } from "react";
 import Modal from "@/components/common/Modal";
 import { Tour } from "@/types";
 import { TourSessionDto } from "@/types/tourSession";
-import {
-  Users,
-  Calendar,
-  Clock,
-  CircleUserRound,
-  MoreHorizontal,
-} from "lucide-react";
+import { Users, Calendar, Clock, CircleUserRound } from "lucide-react";
 
 import OrderItemCard from "./OrderItemCard";
 import OrderDetailsModal from "./OrderDetailsModal";
@@ -117,7 +111,7 @@ export default function SessionDetailsModal({
         <div className="bg-base-200 px-4 py-3 rounded-lg mb-5 flex items-center justify-between">
           <div className="flex items-center gap-2 text-primary font-semibold text-lg">
             <Users className="w-5 h-5" />
-            {totalParticipants} / {session.capacity} booked
+            {session.bookedParticipants} / {session.maxParticipants} booked
           </div>
 
           <div className="text-gray-700 font-medium">

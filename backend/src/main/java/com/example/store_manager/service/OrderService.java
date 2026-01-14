@@ -26,6 +26,7 @@ import com.example.store_manager.mapper.OrderMapper;
 import com.example.store_manager.model.Order;
 import com.example.store_manager.model.OrderItem;
 import com.example.store_manager.model.OrderStatus;
+import com.example.store_manager.model.SessionStatus;
 import com.example.store_manager.model.Tour;
 import com.example.store_manager.model.TourSchedule;
 import com.example.store_manager.model.TourSession;
@@ -69,11 +70,8 @@ public class OrderService {
         public Result<OrderResponseDto> createOrder(OrderCreateRequestDto dto, UUID userId) {
 
                 User user = null;
-
                 if (userId != null) {
-                        user = userRepository.findById(userId)
-                                        .orElse(null);
-
+                        user = userRepository.findById(userId).orElse(null);
                         if (user == null) {
                                 return Result.fail(ApiError.notFound("User not found"));
                         }
@@ -87,14 +85,14 @@ public class OrderService {
 
                 for (OrderItemCreateRequestDto itemDto : dto.getItems()) {
 
-                        Tour tour = tourRepository.findById(itemDto.getTourId())
-                                        .orElse(null);
-
+                        Tour tour = tourRepository.findById(itemDto.getTourId()).orElse(null);
                         if (tour == null) {
                                 return Result.fail(ApiError.notFound("Tour not found"));
                         }
 
-                        TourSchedule schedule = tourScheduleRepository.findById(itemDto.getScheduleId())
+                        // 🔒 LOCK schedule row
+                        TourSchedule schedule = tourScheduleRepository
+                                        .findByIdForUpdate(itemDto.getScheduleId())
                                         .orElse(null);
 
                         if (schedule == null) {
@@ -107,32 +105,26 @@ public class OrderService {
                                                 ApiError.badRequest("Not enough spots available for this schedule"));
                         }
 
+                        // ✅ Update schedule (single source of truth)
                         schedule.setBookedParticipants(newBooked);
 
-                        if ("PRIVATE".equalsIgnoreCase(tour.getType())) {
+                        if ("PRIVATE".equalsIgnoreCase(tour.getType()) ||
+                                        newBooked >= schedule.getMaxParticipants()) {
                                 schedule.setStatus("BOOKED");
                         } else {
-                                schedule.setStatus(
-                                                newBooked >= schedule.getMaxParticipants() ? "BOOKED" : "ACTIVE");
+                                schedule.setStatus("ACTIVE");
                         }
 
                         tourScheduleRepository.save(schedule);
 
-                        Result<TourSession> sessionResult = createOrUpdateSession(tour, itemDto.getScheduledAt(),
-                                        itemDto.getParticipants());
-
-                        if (sessionResult.isFail()) {
-                                return Result.fail(sessionResult.error());
-                        }
-
-                        TourSession session = sessionResult.get();
-
-                        TourSnapshotDto snapshot = TourSnapshotDto.builder()
-                                        .id(tour.getId())
-                                        .title(tour.getTitle())
-                                        .description(tour.getDescription())
-                                        .price(tour.getPrice())
-                                        .build();
+                        // ✅ Create or reuse session
+                        TourSession session = tourSessionRepository
+                                        .findByScheduleId(schedule.getId())
+                                        .orElseGet(() -> tourSessionRepository.save(
+                                                        TourSession.builder()
+                                                                        .schedule(schedule)
+                                                                        .status(SessionStatus.PLANNED)
+                                                                        .build()));
 
                         OrderItem item = OrderItem.builder()
                                         .order(order)
@@ -153,7 +145,13 @@ public class OrderService {
                                         .pricePaid(
                                                         tour.getPrice().multiply(
                                                                         BigDecimal.valueOf(itemDto.getParticipants())))
-                                        .tourSnapshot(orderMapper.toJsonSnapshot(snapshot))
+                                        .tourSnapshot(orderMapper.toJsonSnapshot(
+                                                        TourSnapshotDto.builder()
+                                                                        .id(tour.getId())
+                                                                        .title(tour.getTitle())
+                                                                        .description(tour.getDescription())
+                                                                        .price(tour.getPrice())
+                                                                        .build()))
                                         .build();
 
                         order.getOrderItems().add(item);
@@ -166,42 +164,7 @@ public class OrderService {
                 order.setTotalPrice(totalPrice);
 
                 Order saved = orderRepository.save(order);
-
                 return Result.ok(orderMapper.toDto(saved));
-        }
-
-        private Result<TourSession> createOrUpdateSession(
-                        Tour tour,
-                        LocalDateTime scheduledAt,
-                        int participants) {
-
-                LocalDate date = scheduledAt.toLocalDate();
-                LocalTime time = scheduledAt.toLocalTime();
-
-                Optional<TourSession> existing = tourSessionRepository.findByTourIdAndDateAndTime(
-                                tour.getId(), date, time);
-
-                if (existing.isPresent()) {
-                        TourSession session = existing.get();
-
-                        if (session.getRemaining() < participants) {
-                                return Result.fail(
-                                                ApiError.badRequest("Not enough spots available in this session"));
-                        }
-
-                        session.setRemaining(session.getRemaining() - participants);
-                        return Result.ok(tourSessionRepository.save(session));
-                }
-
-                TourSession session = TourSession.builder()
-                                .tour(tour)
-                                .date(date)
-                                .time(time)
-                                .capacity(participants)
-                                .remaining(0)
-                                .build();
-
-                return Result.ok(tourSessionRepository.save(session));
         }
 
         /* Get a single order by ID. */

@@ -81,18 +81,6 @@ public class RegistrationService {
 
         User saved = userRepository.save(manager);
 
-        Shop shop = shopAssignmentUtil.assignRandomShopToManager();
-
-        ShopUser shopUser = ShopUser.builder()
-                .shop(shop)
-                .user(saved)
-                .role(ShopUserRole.MANAGER)
-                .status(ShopUserStatus.ACTIVE)
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        shopUserRepository.save(shopUser);
-
         return Result.ok(UserResponseDto.builder()
                 .id(saved.getId())
                 .name(saved.getName())

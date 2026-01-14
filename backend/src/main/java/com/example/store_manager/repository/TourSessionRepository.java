@@ -12,12 +12,12 @@ import java.util.List;
 
 public interface TourSessionRepository extends JpaRepository<TourSession, Long> {
 
-    Optional<TourSession> findByTourIdAndDateAndTime(Long tourId, LocalDate date, LocalTime time);
+    Optional<TourSession> findByScheduleId(Long scheduleId);
 
-    List<TourSession> findByTourId(Long tourId);
+    List<TourSession> findBySchedule_Tour_Id(Long tourId);
 
-    List<TourSession> findByTourIdIn(List<Long> tourIds);
+    List<TourSession> findBySchedule_Tour_IdIn(List<Long> tourIds);
 
-    @EntityGraph(attributePaths = { "tour", "orderItems" })
+    @EntityGraph(attributePaths = { "schedule", "orderItems", "manager" })
     List<TourSession> findByManagerId(UUID managerId);
 }

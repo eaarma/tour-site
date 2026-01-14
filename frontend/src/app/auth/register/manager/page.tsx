@@ -1,10 +1,25 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AuthService } from "@/lib/authService";
 import { ManagerRegisterRequestDto } from "@/types/user";
 import toast from "react-hot-toast";
+
+const LANGUAGE_OPTIONS = [
+  "English",
+  "German",
+  "Spanish",
+  "Estonian",
+  "French",
+  "Italian",
+  "Portuguese",
+  "Dutch",
+  "Polish",
+  "Czech",
+  "Hungarian",
+  "Greek",
+];
 
 export default function ManagerRegisterPage() {
   const [email, setEmail] = useState("");
@@ -13,12 +28,23 @@ export default function ManagerRegisterPage() {
   const [phone, setPhone] = useState("");
   const [nationality, setNationality] = useState("");
   const [experience, setExperience] = useState("");
-  const [languages, setLanguages] = useState("");
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [languageToAdd, setLanguageToAdd] = useState("");
+
   const [bio, setBio] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   const router = useRouter();
+
+  useEffect(() => {
+    if (selectedLanguages.length > 0) {
+      setErrors((prev) => {
+        const { languages, ...rest } = prev;
+        return rest;
+      });
+    }
+  }, [selectedLanguages]);
 
   // 🔹 Inline validation
   const validate = () => {
@@ -42,9 +68,10 @@ export default function ManagerRegisterPage() {
     if (!experience || Number(experience) < 0) {
       newErrors.experience = "Experience must be a positive number.";
     }
-    if (!languages.trim()) {
-      newErrors.languages = "Languages field is required.";
+    if (selectedLanguages.length === 0) {
+      newErrors.languages = "Please select at least one language.";
     }
+
     if (!bio.trim()) {
       newErrors.bio = "Bio field is required.";
     }
@@ -69,7 +96,7 @@ export default function ManagerRegisterPage() {
       phone,
       nationality,
       experience,
-      languages,
+      languages: selectedLanguages.join(","),
       bio,
     };
 
@@ -190,17 +217,61 @@ export default function ManagerRegisterPage() {
                 <p className="text-red-500 text-sm mt-1">{errors.experience}</p>
               )}
             </div>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <select
+                  className="select select-bordered w-full"
+                  value={languageToAdd}
+                  onChange={(e) => setLanguageToAdd(e.target.value)}
+                >
+                  <option value="">Select language</option>
+                  {LANGUAGE_OPTIONS.filter(
+                    (lang) => !selectedLanguages.includes(lang)
+                  ).map((lang) => (
+                    <option key={lang} value={lang}>
+                      {lang}
+                    </option>
+                  ))}
+                </select>
 
-            <div>
-              <input
-                type="text"
-                placeholder="Languages Spoken (comma separated)"
-                className="input input-bordered w-full"
-                value={languages}
-                onChange={(e) => setLanguages(e.target.value)}
-              />
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={!languageToAdd}
+                  onClick={() => {
+                    setSelectedLanguages((prev) => [...prev, languageToAdd]);
+                    setLanguageToAdd("");
+                  }}
+                >
+                  Add
+                </button>
+              </div>
+
               {errors.languages && (
-                <p className="text-red-500 text-sm mt-1">{errors.languages}</p>
+                <p className="text-red-500 text-sm">{errors.languages}</p>
+              )}
+              {selectedLanguages.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {selectedLanguages.map((lang) => (
+                    <span
+                      key={lang}
+                      className="badge badge-outline flex items-center gap-1 px-3 py-2"
+                    >
+                      {lang}
+                      <button
+                        type="button"
+                        className="ml-1 text-xs hover:text-red-500"
+                        onClick={() =>
+                          setSelectedLanguages((prev) =>
+                            prev.filter((l) => l !== lang)
+                          )
+                        }
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
+                </div>
               )}
             </div>
 

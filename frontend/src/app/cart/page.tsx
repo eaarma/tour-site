@@ -41,8 +41,6 @@ export default function CartPage() {
             images: viewItem.images,
             status: "ACTIVE",
             timeRequired: 60,
-
-            // 🔥 IMPORTANT
             language: viewItem.availableLanguages,
           }}
           cartItemId={viewItem.cartItemId}

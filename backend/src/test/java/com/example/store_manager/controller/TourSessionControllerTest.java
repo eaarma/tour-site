@@ -1,6 +1,6 @@
 package com.example.store_manager.controller;
 
-import com.example.store_manager.dto.tourSession.TourSessionDto;
+import com.example.store_manager.dto.tourSession.TourSessionDetailsDto;
 import com.example.store_manager.model.SessionStatus;
 import com.example.store_manager.service.TourSessionService;
 import com.example.store_manager.utility.ApiError;
@@ -25,157 +25,157 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class TourSessionControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private TourSessionService service;
+        @MockitoBean
+        private TourSessionService service;
 
-    // Security deps (present but inactive)
-    @MockitoBean
-    private JwtService jwtService;
+        // Security deps (present but inactive)
+        @MockitoBean
+        private JwtService jwtService;
 
-    @MockitoBean
-    private CustomUserDetailsService customUserDetailsService;
+        @MockitoBean
+        private CustomUserDetailsService customUserDetailsService;
 
-    // ------------------------
-    // Helpers
-    // ------------------------
+        // ------------------------
+        // Helpers
+        // ------------------------
 
-    private TourSessionDto sessionDto() {
-        return TourSessionDto.builder()
-                .id(1L)
-                .status(SessionStatus.PLANNED)
-                .build();
-    }
+        private TourSessionDetailsDto sessionDto() {
+                return TourSessionDetailsDto.builder()
+                                .id(1L)
+                                .status(SessionStatus.PLANNED)
+                                .build();
+        }
 
-    // ------------------------
-    // GET sessions for tour
-    // ------------------------
+        // ------------------------
+        // GET sessions for tour
+        // ------------------------
 
-    @Test
-    void getByTour_returnsOk() throws Exception {
-        when(service.getSessions(1L))
-                .thenReturn(Result.ok(List.of(sessionDto())));
+        @Test
+        void getByTour_returnsOk() throws Exception {
+                when(service.getSessions(1L))
+                                .thenReturn(Result.ok(List.of(sessionDto())));
 
-        mockMvc.perform(get("/api/sessions/tour/{tourId}", 1L))
-                .andExpect(status().isOk());
-    }
+                mockMvc.perform(get("/api/sessions/tour/{tourId}", 1L))
+                                .andExpect(status().isOk());
+        }
 
-    // ------------------------
-    // GET by id
-    // ------------------------
+        // ------------------------
+        // GET by id
+        // ------------------------
 
-    @Test
-    void getById_returnsOk_whenFound() throws Exception {
-        when(service.getSession(1L))
-                .thenReturn(Result.ok(sessionDto()));
+        @Test
+        void getById_returnsOk_whenFound() throws Exception {
+                when(service.getSession(1L))
+                                .thenReturn(Result.ok(sessionDto()));
 
-        mockMvc.perform(get("/api/sessions/{id}", 1L))
-                .andExpect(status().isOk());
-    }
+                mockMvc.perform(get("/api/sessions/{id}", 1L))
+                                .andExpect(status().isOk());
+        }
 
-    @Test
-    void getById_returnsNotFound_whenMissing() throws Exception {
-        when(service.getSession(1L))
-                .thenReturn(Result.fail(ApiError.notFound("Session not found")));
+        @Test
+        void getById_returnsNotFound_whenMissing() throws Exception {
+                when(service.getSession(1L))
+                                .thenReturn(Result.fail(ApiError.notFound("Session not found")));
 
-        mockMvc.perform(get("/api/sessions/{id}", 1L))
-                .andExpect(status().isNotFound());
-    }
+                mockMvc.perform(get("/api/sessions/{id}", 1L))
+                                .andExpect(status().isNotFound());
+        }
 
-    // ------------------------
-    // Assign manager
-    // ------------------------
+        // ------------------------
+        // Assign manager
+        // ------------------------
 
-    @Test
-    void assignManager_returnsOk_whenSuccess() throws Exception {
-        UUID managerId = UUID.randomUUID();
+        @Test
+        void assignManager_returnsOk_whenSuccess() throws Exception {
+                UUID managerId = UUID.randomUUID();
 
-        when(service.assignManager(1L, managerId))
-                .thenReturn(Result.ok(sessionDto()));
+                when(service.assignManager(1L, managerId))
+                                .thenReturn(Result.ok(sessionDto()));
 
-        mockMvc.perform(patch("/api/sessions/{id}/assign-manager", 1L)
-                .param("managerId", managerId.toString()))
-                .andExpect(status().isOk());
-    }
+                mockMvc.perform(patch("/api/sessions/{id}/assign-manager", 1L)
+                                .param("managerId", managerId.toString()))
+                                .andExpect(status().isOk());
+        }
 
-    @Test
-    void assignManager_returnsNotFound_whenSessionMissing() throws Exception {
-        UUID managerId = UUID.randomUUID();
+        @Test
+        void assignManager_returnsNotFound_whenSessionMissing() throws Exception {
+                UUID managerId = UUID.randomUUID();
 
-        when(service.assignManager(1L, managerId))
-                .thenReturn(Result.fail(ApiError.notFound("Session not found")));
+                when(service.assignManager(1L, managerId))
+                                .thenReturn(Result.fail(ApiError.notFound("Session not found")));
 
-        mockMvc.perform(patch("/api/sessions/{id}/assign-manager", 1L)
-                .param("managerId", managerId.toString()))
-                .andExpect(status().isNotFound());
-    }
+                mockMvc.perform(patch("/api/sessions/{id}/assign-manager", 1L)
+                                .param("managerId", managerId.toString()))
+                                .andExpect(status().isNotFound());
+        }
 
-    // ------------------------
-    // Update status
-    // ------------------------
+        // ------------------------
+        // Update status
+        // ------------------------
 
-    @Test
-    void updateStatus_returnsOk_whenSuccess() throws Exception {
-        when(service.updateStatus(1L, SessionStatus.PLANNED))
-                .thenReturn(Result.ok(sessionDto()));
+        @Test
+        void updateStatus_returnsOk_whenSuccess() throws Exception {
+                when(service.updateStatus(1L, SessionStatus.PLANNED))
+                                .thenReturn(Result.ok(sessionDto()));
 
-        mockMvc.perform(patch("/api/sessions/{id}/status", 1L)
-                .param("status", "PLANNED"))
-                .andExpect(status().isOk());
-    }
+                mockMvc.perform(patch("/api/sessions/{id}/status", 1L)
+                                .param("status", "PLANNED"))
+                                .andExpect(status().isOk());
+        }
 
-    @Test
-    void updateStatus_returnsBadRequest_whenInvalidTransition() throws Exception {
-        when(service.updateStatus(1L, SessionStatus.COMPLETED))
-                .thenReturn(Result.fail(
-                        ApiError.badRequest("Completed sessions cannot change status")));
+        @Test
+        void updateStatus_returnsBadRequest_whenInvalidTransition() throws Exception {
+                when(service.updateStatus(1L, SessionStatus.COMPLETED))
+                                .thenReturn(Result.fail(
+                                                ApiError.badRequest("Completed sessions cannot change status")));
 
-        mockMvc.perform(patch("/api/sessions/{id}/status", 1L)
-                .param("status", "COMPLETED"))
-                .andExpect(status().isBadRequest());
-    }
+                mockMvc.perform(patch("/api/sessions/{id}/status", 1L)
+                                .param("status", "COMPLETED"))
+                                .andExpect(status().isBadRequest());
+        }
 
-    // ------------------------
-    // Sessions for shop
-    // ------------------------
+        // ------------------------
+        // Sessions for shop
+        // ------------------------
 
-    @Test
-    void getSessionsForShop_returnsOk() throws Exception {
-        when(service.getSessionsForShop(1L))
-                .thenReturn(Result.ok(List.of(sessionDto())));
+        @Test
+        void getSessionsForShop_returnsOk() throws Exception {
+                when(service.getSessionsForShop(1L))
+                                .thenReturn(Result.ok(List.of(sessionDto())));
 
-        mockMvc.perform(get("/api/sessions/shop/{shopId}", 1L))
-                .andExpect(status().isOk());
-    }
+                mockMvc.perform(get("/api/sessions/shop/{shopId}", 1L))
+                                .andExpect(status().isOk());
+        }
 
-    // ------------------------
-    // Sessions for manager
-    // ------------------------
+        // ------------------------
+        // Sessions for manager
+        // ------------------------
 
-    @Test
-    void getSessionsForManager_returnsOk() throws Exception {
-        UUID managerId = UUID.randomUUID();
+        @Test
+        void getSessionsForManager_returnsOk() throws Exception {
+                UUID managerId = UUID.randomUUID();
 
-        when(service.getSessionsForManager(managerId))
-                .thenReturn(Result.ok(List.of(sessionDto())));
+                when(service.getSessionsForManager(managerId))
+                                .thenReturn(Result.ok(List.of(sessionDto())));
 
-        mockMvc.perform(get("/api/sessions/manager/{id}", managerId))
-                .andExpect(status().isOk());
-    }
+                mockMvc.perform(get("/api/sessions/manager/{id}", managerId))
+                                .andExpect(status().isOk());
+        }
 
-    @Test
-    void getSessionsForManager_returnsNotFound_whenManagerMissing() throws Exception {
-        UUID managerId = UUID.randomUUID();
+        @Test
+        void getSessionsForManager_returnsNotFound_whenManagerMissing() throws Exception {
+                UUID managerId = UUID.randomUUID();
 
-        when(service.getSessionsForManager(managerId))
-                .thenReturn(Result.fail(ApiError.notFound("Manager not found")));
+                when(service.getSessionsForManager(managerId))
+                                .thenReturn(Result.fail(ApiError.notFound("Manager not found")));
 
-        mockMvc.perform(get("/api/sessions/manager/{id}", managerId))
-                .andExpect(status().isNotFound());
-    }
+                mockMvc.perform(get("/api/sessions/manager/{id}", managerId))
+                                .andExpect(status().isNotFound());
+        }
 }

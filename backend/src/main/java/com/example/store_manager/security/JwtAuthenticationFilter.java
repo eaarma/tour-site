@@ -3,6 +3,7 @@ package com.example.store_manager.security;
 import java.io.IOException;
 import java.util.UUID;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,6 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+@Profile("!schema")
 @Slf4j
 @Component
 @RequiredArgsConstructor

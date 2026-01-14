@@ -34,29 +34,25 @@ public class TourScheduleService {
     private final TourScheduleRepository scheduleRepository;
     private final TourRepository tourRepository;
     private final TourScheduleMapper scheduleMapper;
-    private final TourSessionMapper sessionMapper;
-    private final TourSessionRepository sessionRepository;
 
     @Transactional(readOnly = true)
     public Result<List<TourScheduleResponseDto>> getAllSchedulesForTour(Long tourId) {
 
-        List<TourScheduleResponseDto> schedules = scheduleRepository.findByTourId(tourId)
-                .stream()
-                .map(scheduleMapper::toDto)
-                .toList();
-
-        return Result.ok(schedules);
+        return Result.ok(
+                scheduleRepository.findByTourId(tourId)
+                        .stream()
+                        .map(scheduleMapper::toDto)
+                        .toList());
     }
 
     @Transactional(readOnly = true)
     public Result<List<TourScheduleResponseDto>> getSchedulesForTour(Long tourId) {
 
-        List<TourScheduleResponseDto> schedules = scheduleRepository.findByTourIdAndStatus(tourId, "ACTIVE")
-                .stream()
-                .map(scheduleMapper::toDto)
-                .toList();
-
-        return Result.ok(schedules);
+        return Result.ok(
+                scheduleRepository.findByTourIdAndStatus(tourId, "ACTIVE")
+                        .stream()
+                        .map(scheduleMapper::toDto)
+                        .toList());
     }
 
     @Transactional(readOnly = true)
@@ -80,13 +76,11 @@ public class TourScheduleService {
         }
 
         TourSchedule schedule = scheduleMapper.fromCreateDto(dto, tour);
-        TourSchedule savedSchedule = scheduleRepository.save(schedule);
+        schedule.setBookedParticipants(0);
+        schedule.setStatus("ACTIVE");
 
-        // ⭐ Automatically create matching session
-        TourSession session = sessionMapper.fromSchedule(savedSchedule);
-        sessionRepository.save(session);
-
-        return Result.ok(scheduleMapper.toDto(savedSchedule));
+        TourSchedule saved = scheduleRepository.save(schedule);
+        return Result.ok(scheduleMapper.toDto(saved));
     }
 
     @Transactional
@@ -104,24 +98,20 @@ public class TourScheduleService {
 
         if (dto.getDate() != null)
             schedule.setDate(dto.getDate());
+
         if (dto.getTime() != null)
             schedule.setTime(dto.getTime());
+
         if (dto.getMaxParticipants() != null)
             schedule.setMaxParticipants(dto.getMaxParticipants());
-        if (dto.getBookedParticipants() != null)
-            schedule.setBookedParticipants(dto.getBookedParticipants());
 
-        // Auto-update status logic
-        int booked = schedule.getBookedParticipants();
-        if (booked >= schedule.getMaxParticipants()) {
+        // ✅ status derived, never manually set bookedParticipants
+        if (schedule.getDate().isBefore(LocalDate.now())) {
+            schedule.setStatus("EXPIRED");
+        } else if (schedule.getBookedParticipants() >= schedule.getMaxParticipants()) {
             schedule.setStatus("BOOKED");
         } else {
             schedule.setStatus("ACTIVE");
-        }
-
-        // Expired overrides everything
-        if (schedule.getDate().isBefore(LocalDate.now())) {
-            schedule.setStatus("EXPIRED");
         }
 
         scheduleRepository.save(schedule);

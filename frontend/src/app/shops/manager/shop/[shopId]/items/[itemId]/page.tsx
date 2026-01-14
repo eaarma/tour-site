@@ -15,6 +15,8 @@ import { TourCategory, TourImage } from "@/types/tour";
 
 import TourImagesManager from "@/components/manager/item/TourImagesManager";
 import CategorySelector from "@/components/manager/shop/CategorySelector";
+import Unauthorized from "@/components/common/Unauthorized";
+import { useShopAccess } from "@/hooks/useShopAccess";
 
 const INTENSITY_OPTIONS = ["Easy", "Moderate", "Hard"];
 const STATUS_OPTIONS = ["ACTIVE", "ON_HOLD", "CANCELLED"];
@@ -25,6 +27,7 @@ export default function ManagerItemPage() {
   const shopId = Number(params.shopId); //number
   const itemId = params.itemId as string;
   const router = useRouter();
+  const access = useShopAccess(shopId ?? 0);
 
   const isNew = itemId === "new";
 
@@ -140,6 +143,10 @@ export default function ManagerItemPage() {
       console.error("Failed to save", err);
     }
   };
+
+  if (access === false) {
+    return <Unauthorized />;
+  }
 
   if (loading) {
     return <div className="text-center mt-10 text-lg">Loading...</div>;

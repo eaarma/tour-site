@@ -1,6 +1,6 @@
 package com.example.store_manager.service;
 
-import com.example.store_manager.dto.tourSession.TourSessionDto;
+import com.example.store_manager.dto.tourSession.TourSessionDetailsDto;
 import com.example.store_manager.mapper.TourSessionMapper;
 import com.example.store_manager.model.SessionStatus;
 import com.example.store_manager.model.Tour;
@@ -33,16 +33,16 @@ public class TourSessionService {
     private final TourRepository tourRepository;
 
     @Transactional(readOnly = true)
-    public Result<List<TourSessionDto>> getSessions(Long tourId) {
-        List<TourSessionDto> sessions = repo.findByTourId(tourId).stream()
-                .map(mapper::toDto)
-                .toList();
-
-        return Result.ok(sessions);
+    public Result<List<TourSessionDetailsDto>> getSessions(Long tourId) {
+        return Result.ok(
+                repo.findBySchedule_Tour_Id(tourId)
+                        .stream()
+                        .map(mapper::toDto)
+                        .toList());
     }
 
     @Transactional(readOnly = true)
-    public Result<TourSessionDto> getSession(Long sessionId) {
+    public Result<TourSessionDetailsDto> getSession(Long sessionId) {
         return repo.findById(sessionId)
                 .map(mapper::toDto)
                 .map(Result::ok)
@@ -51,9 +51,8 @@ public class TourSessionService {
 
     @Transactional
     @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.SESSION_ID)
-    public Result<TourSessionDto> assignManager(Long sessionId, UUID managerId) {
+    public Result<TourSessionDetailsDto> assignManager(Long sessionId, UUID managerId) {
 
-        // 1️⃣ Load session
         TourSession session = repo.findById(sessionId)
                 .orElse(null);
 
@@ -61,7 +60,6 @@ public class TourSessionService {
             return Result.fail(ApiError.notFound("Session not found"));
         }
 
-        // 2️⃣ Handle manager assignment
         if (managerId == null) {
             session.setManager(null);
         } else {
@@ -75,14 +73,12 @@ public class TourSessionService {
             session.setManager(manager);
         }
 
-        // 3️⃣ Save + map
-        TourSession saved = repo.save(session);
-        return Result.ok(mapper.toDto(saved));
+        return Result.ok(mapper.toDto(repo.save(session)));
     }
 
     @Transactional
     @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.SESSION_ID)
-    public Result<TourSessionDto> updateStatus(Long sessionId, SessionStatus newStatus) {
+    public Result<TourSessionDetailsDto> updateStatus(Long sessionId, SessionStatus newStatus) {
 
         TourSession session = repo.findById(sessionId)
                 .orElse(null);
@@ -91,55 +87,48 @@ public class TourSessionService {
             return Result.fail(ApiError.notFound("Session not found"));
         }
 
-        // (Optional but recommended) Prevent invalid transitions
         if (session.getStatus() == SessionStatus.COMPLETED) {
-            return Result.fail(
-                    ApiError.badRequest("Completed sessions cannot change status"));
+            return Result.fail(ApiError.badRequest("Completed sessions cannot change status"));
         }
 
         session.setStatus(newStatus);
-        repo.save(session);
-
-        return Result.ok(mapper.toDto(session));
+        return Result.ok(mapper.toDto(repo.save(session)));
     }
 
     @Transactional(readOnly = true)
     @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.SHOP_ID)
-    public Result<List<TourSessionDto>> getSessionsForShop(Long shopId) {
+    public Result<List<TourSessionDetailsDto>> getSessionsForShop(Long shopId) {
 
-        // 1️⃣ Find all tours for the shop
         List<Tour> tours = tourRepository.findByShopId(shopId);
 
         if (tours.isEmpty()) {
             return Result.ok(Collections.emptyList());
         }
 
-        // 2️⃣ Extract tour IDs
         List<Long> tourIds = tours.stream()
                 .map(Tour::getId)
                 .toList();
 
-        // 3️⃣ Fetch sessions for all tours
-        List<TourSessionDto> sessions = repo.findByTourIdIn(tourIds).stream()
+        List<TourSessionDetailsDto> sessions = repo
+                .findBySchedule_Tour_IdIn(tourIds)
+                .stream()
                 .map(mapper::toDto)
                 .toList();
 
-        // 4️⃣ Always OK (empty list is fine)
         return Result.ok(sessions);
     }
 
     @Transactional(readOnly = true)
-    public Result<List<TourSessionDto>> getSessionsForManager(UUID managerId) {
+    public Result<List<TourSessionDetailsDto>> getSessionsForManager(UUID managerId) {
 
         if (!userRepository.existsById(managerId)) {
             return Result.fail(ApiError.notFound("Manager not found"));
         }
 
-        List<TourSessionDto> sessions = repo.findByManagerId(managerId).stream()
-                .map(mapper::toDto)
-                .toList();
-
-        return Result.ok(sessions);
+        return Result.ok(
+                repo.findByManagerId(managerId)
+                        .stream()
+                        .map(mapper::toDto)
+                        .toList());
     }
-
 }

@@ -20,24 +20,24 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
   List<Tour> findByShopId(Long shopId);
 
   @Query("""
-        SELECT DISTINCT t FROM Tour t
-        LEFT JOIN t.categories c
-        LEFT JOIN t.language l
-        WHERE (:type IS NULL OR t.type = :type)
-          AND (:language IS NULL OR l IN :language)
-          AND (:categories IS NULL OR c IN :categories)
-          AND t.status = 'ACTIVE'
-          AND (
-            COALESCE(:keyword, '') = '' OR (
-              LOWER(t.title) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%')) OR
-              LOWER(t.description) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%')) OR
-              LOWER(t.location) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%'))
+          SELECT DISTINCT t FROM Tour t
+          LEFT JOIN t.categories c
+          LEFT JOIN t.language l
+          WHERE (:type IS NULL OR t.type = :type)
+            AND (:language IS NULL OR l IN :language)
+            AND (:categories IS NULL OR c IN :categories)
+            AND t.status = 'ACTIVE'
+            AND (
+              COALESCE(:keyword, '') = '' OR (
+                LOWER(t.title) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%')) OR
+                LOWER(t.description) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%')) OR
+                LOWER(t.location) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%'))
+              )
             )
-          )
-          AND (:date IS NULL OR EXISTS (
-               SELECT ts.id FROM TourSchedule ts
-               WHERE ts.tour = t AND ts.date = :date
-          ))
+            AND (:date IS NULL OR EXISTS (
+                 SELECT ts.id FROM TourSchedule ts
+                 WHERE ts.tour = t AND ts.date = :date
+            ))
       """)
   Page<Tour> searchByFilters(
       @Param("categories") List<TourCategory> categories,
@@ -68,19 +68,18 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
   Long findTourIdByScheduleId(@Param("scheduleId") Long scheduleId);
 
   @Query("""
-          select t.shop.id
+          select sch.tour.shop.id
           from TourSession s
-          join s.tour t
+          join s.schedule sch
           where s.id = :sessionId
       """)
   Long findShopIdBySessionId(@Param("sessionId") Long sessionId);
 
   @Query("""
-    SELECT t.shop.id
-    FROM TourSchedule s
-    JOIN s.tour t
-    WHERE s.id = :scheduleId
-""")
-Long findShopIdByScheduleId(@Param("scheduleId") Long scheduleId);
-
+          SELECT t.shop.id
+          FROM TourSchedule s
+          JOIN s.tour t
+          WHERE s.id = :scheduleId
+      """)
+  Long findShopIdByScheduleId(@Param("scheduleId") Long scheduleId);
 }

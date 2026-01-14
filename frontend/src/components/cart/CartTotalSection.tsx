@@ -6,8 +6,8 @@ import { RootState } from "@/store/store";
 import { useRouter } from "next/navigation";
 
 import toast from "react-hot-toast";
-import { CartItem } from "@/store/cartSlice";
-import { tourScheduleService } from "@/lib/tourScheduleService";
+import { CartItem } from "@/types";
+import { validateSchedulesAgainstCapacity } from "@/lib/validateSchedulesAgainstCapacity";
 
 interface Props {
   // optional callback after successful validation/checkout
@@ -27,28 +27,6 @@ const CartTotalSection: React.FC<Props> = ({ onCheckoutSuccess }) => {
     0
   );
 
-  const validateSchedules = async (): Promise<{
-    ok: boolean;
-    badItems: CartItem[];
-  }> => {
-    const bad: CartItem[] = [];
-
-    for (const it of selectedItems) {
-      try {
-        const schedule = await tourScheduleService.getById(it.scheduleId);
-        // adjust check depending on your backend response; earlier you used schedule.status === 'ACTIVE'
-        if (!schedule || schedule.status !== "ACTIVE") {
-          bad.push(it);
-        }
-      } catch (err) {
-        // network or 4xx/5xx -> treat as unavailable
-        bad.push(it);
-      }
-    }
-
-    return { ok: bad.length === 0, badItems: bad };
-  };
-
   const handleProceedToCheckout = async () => {
     if (selectedItems.length === 0) {
       toast.error("Select at least one item to proceed.");
@@ -56,7 +34,9 @@ const CartTotalSection: React.FC<Props> = ({ onCheckoutSuccess }) => {
     }
 
     setLoading(true);
-    const { ok, badItems } = await validateSchedules();
+    const { ok, badItems } = await validateSchedulesAgainstCapacity(
+      selectedItems
+    );
     setLoading(false);
 
     if (!ok) {

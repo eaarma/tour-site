@@ -1,15 +1,30 @@
 spring:
   application:
     name: store_manager
+  
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
+    baseline-version: 1
+    locations: classpath:db/migration
+
 
 jwt:
-  access-expiration-ms: 30000 # 10 minutes
-  refresh-expiration-ms: 60000 # 1 day
-
+  access-expiration-ms: 30000
+  refresh-expiration-ms: 600000
 
 security:
   refresh:
     allowed-origins:
       - http://localhost:3000
       - https://your-frontend-domain.com
-    
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true

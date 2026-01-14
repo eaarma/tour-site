@@ -10,22 +10,29 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   user: ShopUserDto;
+  onUserUpdated: (updated: ShopUserDto) => void; // ✅ NEW
 }
 
 export default function ManagerShopUserEditModal({
   isOpen,
   onClose,
   user,
+  onUserUpdated,
 }: Props) {
   const [role, setRole] = useState(user.role);
   const [status, setStatus] = useState(user.status);
-
   const handleSave = async () => {
     try {
-      // Update status
       await ShopUserService.updateStatus(user.shopId, user.userId, status);
-      // Optional: Implement updateRole endpoint similarly
+
       toast.success("User updated successfully!");
+
+      onUserUpdated({
+        ...user,
+        status, // update locally
+        role, // include if role editing is enabled
+      });
+
       onClose();
     } catch (err) {
       console.error("Failed to update user", err);

@@ -1,6 +1,7 @@
 package com.example.store_manager.service;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,8 +23,11 @@ import com.example.store_manager.repository.TourSessionRepository;
 import com.example.store_manager.utility.Result;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+
+import com.example.store_manager.model.SessionStatus;
 
 @ExtendWith(MockitoExtension.class)
 class TourScheduleServiceTest {
@@ -104,26 +108,32 @@ class TourScheduleServiceTest {
     }
 
     @Test
-    void createSchedule_returnsOk_andCreatesSession() {
+    void createSchedule_returnsOk() {
+
         TourScheduleCreateDto dto = new TourScheduleCreateDto();
         dto.setTourId(1L);
+        dto.setDate(LocalDate.of(2026, 1, 31));
+        dto.setTime(LocalTime.of(19, 0));
+        dto.setMaxParticipants(10);
 
         Tour tour = new Tour();
+        tour.setId(1L);
+
         TourSchedule schedule = new TourSchedule();
-        TourSession session = new TourSession();
         TourScheduleResponseDto responseDto = new TourScheduleResponseDto();
 
         when(tourRepository.findById(1L)).thenReturn(Optional.of(tour));
         when(scheduleMapper.fromCreateDto(dto, tour)).thenReturn(schedule);
         when(scheduleRepository.save(schedule)).thenReturn(schedule);
-        when(sessionMapper.fromSchedule(schedule)).thenReturn(session);
         when(scheduleMapper.toDto(schedule)).thenReturn(responseDto);
 
         Result<TourScheduleResponseDto> result = service.createSchedule(dto);
 
         assertTrue(result.isOk());
         assertSame(responseDto, result.get());
-        verify(sessionRepository).save(session);
+
+        verify(scheduleRepository).save(schedule);
+        verifyNoInteractions(sessionRepository); // ✅ important
     }
 
     @Test

@@ -13,25 +13,29 @@ import java.util.UUID;
 
 import com.example.store_manager.model.SessionStatus;
 
-@Getter
-@Setter
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class TourSessionDto {
+public class TourSessionDetailsDto {
+
     private Long id;
     private Long tourId;
 
+    // Schedule (source of truth)
     private LocalDate date;
     private LocalTime time;
-
-    private int capacity;
+    private int maxParticipants;
+    private int bookedParticipants;
     private int remaining;
 
-    private List<OrderItemParticipantDto> participants;
+    // Session
+    private SessionStatus status;
 
-    private SessionStatus status; // PLANNED/CONFIRMED/COMPLETED/CANCELLED/CANCELLED_CONFIRMED
+    // Manager
     private UUID managerId;
     private String managerName;
+
+    // Bookings
+    private List<OrderItemParticipantDto> participants;
 }

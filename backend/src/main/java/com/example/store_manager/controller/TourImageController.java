@@ -1,16 +1,24 @@
 package com.example.store_manager.controller;
 
-import com.example.store_manager.model.TourImage;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.example.store_manager.service.TourImageService;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
 import com.example.store_manager.utility.ResultResponseMapper;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/tours")

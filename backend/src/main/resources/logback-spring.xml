@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <springProperty scope="context" name="appName" source="spring.application.name"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+
+                <timestamp>
+                    <timeZone>UTC</timeZone>
+                </timestamp>
+
+                <logLevel />
+                <loggerName />
+                <threadName />
+
+                <message />
+
+                <arguments />
+
+                <stackTrace />
+
+                <provider class="net.logstash.logback.composite.loggingevent.MdcJsonProvider"/>
+                
+                <pattern>
+                    <pattern>
+                        {
+                          "service":"${appName}",
+                          "environment":"${SPRING_PROFILES_ACTIVE:-local}"
+                        }
+                    </pattern>
+                </pattern>
+
+            </providers>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+</configuration>

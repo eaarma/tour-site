@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -29,6 +30,7 @@ import com.example.store_manager.security.filters.GlobalRateLimitFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
+@Profile("!schema")
 @Configuration
 @RequiredArgsConstructor
 @EnableMethodSecurity
@@ -98,6 +100,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/sessions/**").hasRole("MANAGER")
                         .requestMatchers(HttpMethod.PATCH, "/api/sessions/**").hasRole("MANAGER")
                         .requestMatchers(HttpMethod.DELETE, "/api/sessions/**").hasRole("MANAGER")
+
+                        // Actuator
+                        .requestMatchers("/actuator/**").permitAll()
 
                         // All other requests require authentication
                         .anyRequest().authenticated())

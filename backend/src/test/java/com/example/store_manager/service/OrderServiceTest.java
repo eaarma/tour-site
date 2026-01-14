@@ -46,6 +46,7 @@ import com.example.store_manager.mapper.OrderMapper;
 import com.example.store_manager.model.Order;
 import com.example.store_manager.model.OrderItem;
 import com.example.store_manager.model.OrderStatus;
+import com.example.store_manager.model.SessionStatus;
 import com.example.store_manager.model.Shop;
 import com.example.store_manager.model.Tour;
 import com.example.store_manager.model.TourSchedule;
@@ -488,26 +489,6 @@ public class OrderServiceTest {
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
 
-    private void mockLoggedInUserWithRoles(UUID userId, String... roles) {
-        CustomUserDetails userDetails = mock(CustomUserDetails.class);
-        when(userDetails.getId()).thenReturn(userId);
-
-        List<GrantedAuthority> auths = Arrays.stream(roles)
-                .map(SimpleGrantedAuthority::new)
-                .map(a -> (GrantedAuthority) a)
-                .toList();
-
-        @SuppressWarnings({ "rawtypes", "unchecked" })
-        Collection<? extends GrantedAuthority> casted = (Collection) auths;
-
-        doReturn(casted).when(userDetails).getAuthorities();
-
-        Authentication auth = mock(Authentication.class);
-        when(auth.getPrincipal()).thenReturn(userDetails);
-
-        SecurityContextHolder.getContext().setAuthentication(auth);
-    }
-
     @Test
     void confirmOrderItem_throws_whenUnauthenticated() {
         SecurityContextHolder.clearContext();
@@ -725,39 +706,48 @@ public class OrderServiceTest {
         assertEquals("FORBIDDEN", result.error().code());
     }
 
-    // createOrder
     @Test
     void createOrder_returnsOk_whenGuestOrderIsValid() {
 
         OrderCreateRequestDto dto = validCreateOrderDto();
 
+        // --- Tour ---
         Tour tour = new Tour();
         tour.setId(1L);
         tour.setType("PUBLIC");
         tour.setPrice(BigDecimal.TEN);
+
         Shop shop = new Shop();
         shop.setId(1L);
         tour.setShop(shop);
 
+        // --- Schedule (SOURCE OF TRUTH) ---
         TourSchedule schedule = new TourSchedule();
+        schedule.setId(1L);
+        schedule.setTour(tour);
         schedule.setBookedParticipants(0);
         schedule.setMaxParticipants(10);
+        schedule.setStatus("ACTIVE");
 
-        TourSession session = new TourSession();
-        session.setId(1L);
-        session.setTour(tour);
-        session.setRemaining(10);
+        // --- Session (DERIVED) ---
+        TourSession session = TourSession.builder()
+                .id(1L)
+                .schedule(schedule)
+                .status(SessionStatus.PLANNED)
+                .build();
 
-        when(tourSessionRepository.findByTourIdAndDateAndTime(
-                eq(1L),
-                any(LocalDate.class),
-                any(LocalTime.class))).thenReturn(Optional.empty());
+        // --- Mocks ---
+        when(tourRepository.findById(1L))
+                .thenReturn(Optional.of(tour));
+
+        when(tourScheduleRepository.findByIdForUpdate(1L))
+                .thenReturn(Optional.of(schedule));
+
+        when(tourSessionRepository.findByScheduleId(1L))
+                .thenReturn(Optional.empty());
 
         when(tourSessionRepository.save(any(TourSession.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
-
-        when(tourRepository.findById(1L)).thenReturn(Optional.of(tour));
-        when(tourScheduleRepository.findById(1L)).thenReturn(Optional.of(schedule));
 
         when(orderRepository.save(any(Order.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
@@ -765,9 +755,16 @@ public class OrderServiceTest {
         when(orderMapper.toDto(any(Order.class)))
                 .thenReturn(new OrderResponseDto());
 
+        // --- Execute ---
         Result<OrderResponseDto> result = service.createOrder(dto, null);
 
+        // --- Assert ---
         assertTrue(result.isOk());
+
+        verify(tourScheduleRepository).findByIdForUpdate(1L);
+        verify(tourScheduleRepository).save(any(TourSchedule.class));
+        verify(tourSessionRepository).save(any(TourSession.class));
+        verify(orderRepository).save(any(Order.class));
     }
 
     @Test
@@ -779,21 +776,30 @@ public class OrderServiceTest {
         tour.setId(1L);
         tour.setType("PUBLIC");
         tour.setPrice(BigDecimal.TEN);
+
         Shop shop = new Shop();
         shop.setId(1L);
         tour.setShop(shop);
 
         TourSchedule schedule = new TourSchedule();
+        schedule.setId(1L);
         schedule.setBookedParticipants(10);
         schedule.setMaxParticipants(10);
 
-        when(tourRepository.findById(1L)).thenReturn(Optional.of(tour));
-        when(tourScheduleRepository.findById(1L)).thenReturn(Optional.of(schedule));
+        when(tourRepository.findById(1L))
+                .thenReturn(Optional.of(tour));
+
+        when(tourScheduleRepository.findByIdForUpdate(1L))
+                .thenReturn(Optional.of(schedule));
 
         Result<OrderResponseDto> result = service.createOrder(dto, null);
 
         assertTrue(result.isFail());
         assertEquals("BAD_REQUEST", result.error().code());
+
+        // Optional but good: ensure session logic was NOT touched
+        verify(tourSessionRepository, never()).findByScheduleId(any());
+        verify(tourSessionRepository, never()).save(any());
     }
 
     @Test
