@@ -37,10 +37,12 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Build and run tests
+        working-directory: backend
         run: ./gradlew clean test
 
       # 🔥 Production-parity schema check
       - name: Flyway migrate + schema validation
+        working-directory: backend
         env:
           SPRING_PROFILES_ACTIVE: prod
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/app
@@ -52,4 +54,5 @@ jobs:
             --no-daemon
 
       - name: Docker build
+        working-directory: backend
         run: docker build -t store-manager-backend:ci .
