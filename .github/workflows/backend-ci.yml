@@ -45,9 +45,12 @@ jobs:
         working-directory: backend
         env:
           SPRING_PROFILES_ACTIVE: prod
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/app
-          SPRING_DATASOURCE_USERNAME: app
-          SPRING_DATASOURCE_PASSWORD: app
+
+          DB_URL: jdbc:postgresql://localhost:5432/app
+          DB_USERNAME: app
+          DB_PASSWORD: app
+
+          JWT_SECRET: ci-super-secret-at-least-32-bytes
         run: |
           ./gradlew bootRun \
             --args="--spring.main.web-application-type=none" \
