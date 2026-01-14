@@ -50,6 +50,7 @@ jobs:
           SPRING_DATASOURCE_PASSWORD: app
         run: |
           ./gradlew bootRun \
+            --stacktrace
             --args="--spring.profiles.active=prod" \
             --no-daemon
 
