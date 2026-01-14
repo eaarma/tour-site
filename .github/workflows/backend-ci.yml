@@ -49,11 +49,7 @@ jobs:
           SPRING_DATASOURCE_USERNAME: app
           SPRING_DATASOURCE_PASSWORD: app
           JWT_SECRET: ci-super-secret-at-least-32-bytes-long-123456
-        run: |
-          ./gradlew bootRun \
-            --stacktrace
-            --args="--spring.profiles.active=prod" \
-            --no-daemon
+        run: ./gradlew flywayValidate --no-daemon --stacktrace
 
       - name: Docker build
         working-directory: backend

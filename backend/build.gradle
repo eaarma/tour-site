@@ -2,7 +2,16 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.3'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id "org.flywaydb.flyway" version "10.13.0"
 }
+
+flyway {
+    url = System.getenv("SPRING_DATASOURCE_URL") ?: ""
+    user = System.getenv("SPRING_DATASOURCE_USERNAME") ?: ""
+    password = System.getenv("SPRING_DATASOURCE_PASSWORD") ?: ""
+}
+
+
 
 group = 'com.example'
 version = '0.0.1-SNAPSHOT'
