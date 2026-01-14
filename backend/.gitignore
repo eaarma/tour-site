@@ -38,7 +38,6 @@ out/
 
 
 # Environment-specific configs
-application-prod.yml
 application-dev.yml
 
 
