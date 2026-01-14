@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    username: sa
+    password: ""
+
+  flyway:
+    enabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+jwt:
+  secret: your-super-long-random-secret-at-least-32-bytes

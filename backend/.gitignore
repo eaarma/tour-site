@@ -40,10 +40,7 @@ out/
 # Environment-specific configs
 application-prod.yml
 application-dev.yml
-application-test.yml
 
-# Optional: ignore all profile-specific configs
-application-*.yml
 
 # VS Code local settings (optional)
 .vscode/settings.json
