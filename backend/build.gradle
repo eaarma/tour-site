@@ -52,8 +52,10 @@ dependencies {
 	implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 
 
-implementation "org.flywaydb:flyway-core:10.13.0"
-implementation "org.flywaydb:flyway-database-postgresql:10.13.0"
+	implementation "org.flywaydb:flyway-core:10.13.0"
+	implementation "org.flywaydb:flyway-database-postgresql:10.13.0"
+
+	implementation "io.micrometer:micrometer-registry-prometheus"
 
 	runtimeOnly 'org.postgresql:postgresql'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -61,7 +63,7 @@ implementation "org.flywaydb:flyway-database-postgresql:10.13.0"
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-	 testImplementation 'com.h2database:h2'
+	testImplementation 'com.h2database:h2'
 
 	compileOnly("org.projectlombok:lombok:1.18.38")
 	annotationProcessor("org.projectlombok:lombok:1.18.38")
@@ -73,9 +75,9 @@ implementation "org.flywaydb:flyway-database-postgresql:10.13.0"
 	implementation 'org.hibernate.validator:hibernate-validator:8.0.1.Final'
   	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
-   implementation 'com.bucket4j:bucket4j-core:8.7.0'
+implementation 'com.bucket4j:bucket4j-core:8.7.0'
 
-   implementation 'org.hibernate.orm:hibernate-envers'
+    implementation 'org.hibernate.orm:hibernate-envers'
    
    //If you later want Redis-based cluster rate limiting:
 //implementation 'com.bucket4j:bucket4j-redis:8.7.0'

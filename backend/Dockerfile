@@ -23,9 +23,12 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-# Copy built jar
+RUN useradd -r -u 1001 spring
+USER spring
+
 COPY --from=builder /app/build/libs/*.jar app.jar
 
 EXPOSE 8080
 
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+ENTRYPOINT ["java","-XX:+UseContainerSupport","-XX:MaxRAMPercentage=75","-jar","/app/app.jar"]
+

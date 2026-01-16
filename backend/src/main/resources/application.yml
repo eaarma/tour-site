@@ -1,13 +1,12 @@
 spring:
   application:
     name: store_manager
-  
+
   flyway:
     enabled: true
     baseline-on-migrate: false
     baseline-version: 1
     locations: classpath:db/migration
-
 
 jwt:
   access-expiration-ms: 30000
@@ -24,7 +23,20 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus
+
   endpoint:
+    prometheus:
+      enabled: true
+
     health:
       probes:
+        enabled: true
+
+  metrics:
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+
+    export:
+      prometheus:
         enabled: true

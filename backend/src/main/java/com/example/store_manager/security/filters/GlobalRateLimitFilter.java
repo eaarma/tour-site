@@ -3,15 +3,19 @@ package com.example.store_manager.security.filters;
 import com.example.store_manager.security.CustomUserDetails;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
 import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
@@ -19,27 +23,50 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class GlobalRateLimitFilter extends OncePerRequestFilter {
 
-    // Cache of buckets
+    private final MeterRegistry meterRegistry;
+
     private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
 
-    private Bucket resolveBucket(String key) {
-        return cache.computeIfAbsent(key, k -> Bucket.builder()
-                .addLimit(Bandwidth.simple(50, Duration.ofMinutes(1))) // 50 req/min
-                .build());
+    /* -------------------- Bucket factory -------------------- */
+
+    private Bucket newBucket(long capacityPerMinute) {
+        return Bucket.builder()
+                .addLimit(Bandwidth.simple(capacityPerMinute, Duration.ofMinutes(1)))
+                .build();
     }
+
+    /* -------------------- Micrometer counters -------------------- */
+
+    private Counter allowedCounter(String scope) {
+        return Counter.builder("rate_limit_requests_allowed_total")
+                .tag("application", "store_manager")
+                .tag("scope", scope)
+                .register(meterRegistry);
+    }
+
+    private Counter rejectedCounter(String scope) {
+        return Counter.builder("rate_limit_requests_rejected_total")
+                .tag("application", "store_manager")
+                .tag("scope", scope)
+                .register(meterRegistry);
+    }
+
+    /* -------------------- Filter logic -------------------- */
 
     @Override
     protected void doFilterInternal(
             HttpServletRequest request,
             HttpServletResponse response,
-            FilterChain filterChain) throws ServletException, IOException {
+            FilterChain filterChain
+    ) throws ServletException, IOException {
 
         String path = request.getRequestURI();
         String key;
+        String scope;
 
-        // Determine user identity or fallback IP
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getPrincipal() instanceof CustomUserDetails user) {
             key = "USER_" + user.getId();
@@ -49,33 +76,34 @@ public class GlobalRateLimitFilter extends OncePerRequestFilter {
 
         Bucket bucket;
 
-        // 🎯 SPECIAL LIMITS FOR AUTH ENDPOINTS
         if (path.equals("/auth/login")) {
-            bucket = cache.computeIfAbsent("LOGIN_" + key, k -> Bucket.builder()
-                    .addLimit(Bandwidth.simple(5, Duration.ofMinutes(1))) // 5 attempts/min
-                    .build());
-        }
-
-        else if (path.equals("/auth/register")) {
-            bucket = cache.computeIfAbsent("REGISTER_" + key, k -> Bucket.builder()
-                    .addLimit(Bandwidth.simple(3, Duration.ofMinutes(1))) // 3/min
-                    .build());
-        }
-
-        // ⭐ DEFAULT LIMIT FOR EVERYTHING ELSE
-        else {
-            bucket = cache.computeIfAbsent("DEFAULT_" + key, k -> Bucket.builder()
-                    .addLimit(Bandwidth.simple(50, Duration.ofMinutes(1))) // 50/min
-                    .build());
+            scope = "login";
+            bucket = cache.computeIfAbsent(
+                    "LOGIN_" + key,
+                    k -> newBucket(5)
+            );
+        } else if (path.equals("/auth/register")) {
+            scope = "register";
+            bucket = cache.computeIfAbsent(
+                    "REGISTER_" + key,
+                    k -> newBucket(3)
+            );
+        } else {
+            scope = "default";
+            bucket = cache.computeIfAbsent(
+                    "DEFAULT_" + key,
+                    k -> newBucket(50)
+            );
         }
 
         if (bucket.tryConsume(1)) {
+            allowedCounter(scope).increment();
             filterChain.doFilter(request, response);
         } else {
+            rejectedCounter(scope).increment();
             response.setStatus(429);
             response.setContentType("text/plain");
             response.getWriter().write("Too many requests. Slow down.");
         }
     }
-
 }

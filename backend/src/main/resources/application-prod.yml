@@ -20,6 +20,15 @@ logging:
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql: WARN
 
+management:
+  metrics:
+    tags:
+      application: store_manager
+
+  endpoint:
+    health:
+      show-details: never
+
 app:
   cookie:
     secure: true

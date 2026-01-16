@@ -104,6 +104,8 @@ public class SecurityConfig {
                         // Actuator
                         .requestMatchers("/actuator/**").permitAll()
 
+                        
+
                         // All other requests require authentication
                         .anyRequest().authenticated())
 
