@@ -44,7 +44,6 @@ public class RegistrationService {
                 .name(request.getName().trim())
                 .phone(request.getPhone() != null ? request.getPhone().trim() : null)
                 .nationality(request.getNationality())
-                .createdAt(LocalDateTime.now())
                 .role(Role.USER)
                 .build();
 

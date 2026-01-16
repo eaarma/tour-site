@@ -5,6 +5,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 import org.hibernate.envers.Audited;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Table(name = "shop_users", uniqueConstraints = {
@@ -15,6 +17,7 @@ import org.hibernate.envers.Audited;
 @AllArgsConstructor
 @Builder
 @Audited
+@EntityListeners(AuditingEntityListener.class)
 public class ShopUser {
 
     @Id
@@ -37,6 +40,7 @@ public class ShopUser {
     @Column(nullable = false)
     private ShopUserStatus status; // e.g., ACTIVE, PENDING, REJECTED
 
-    @Column(name = "created_at", nullable = false)
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 }
