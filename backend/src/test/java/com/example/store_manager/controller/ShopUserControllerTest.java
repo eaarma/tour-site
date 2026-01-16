@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfi
 import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -27,128 +28,133 @@ import com.example.store_manager.security.JwtService;
 import com.example.store_manager.service.ShopUserService;
 import com.example.store_manager.utility.Result;
 
+import io.micrometer.core.instrument.MeterRegistry;
+
 @WebMvcTest(controllers = ShopUserController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class ShopUserControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @MockitoBean
-    private ShopUserService shopUserService;
+        @MockitoBean
+        private ShopUserService shopUserService;
 
-    @MockitoBean
-    private CurrentUserService currentUserService;
+        @MockitoBean
+        private CurrentUserService currentUserService;
 
-    @MockitoBean
-    private JwtService jwtService;
+        @MockitoBean
+        private JwtService jwtService;
 
-    @MockitoBean
-    private CustomUserDetailsService customUserDetailsService;
+        @MockitoBean
+        private CustomUserDetailsService customUserDetailsService;
 
-    // ----------------------------
-    // Tests
-    // ----------------------------
+        @MockBean
+        MeterRegistry meterRegistry;
 
-    @Test
-    void getUsersForShop_returnsOk() throws Exception {
-        when(shopUserService.getUsersByShopId(1L))
-                .thenReturn(Result.ok(List.of()));
+        // ----------------------------
+        // Tests
+        // ----------------------------
 
-        mockMvc.perform(get("/api/shop-users/shop/{shopId}", 1L))
-                .andExpect(status().isOk());
-    }
+        @Test
+        void getUsersForShop_returnsOk() throws Exception {
+                when(shopUserService.getUsersByShopId(1L))
+                                .thenReturn(Result.ok(List.of()));
 
-    @Test
-    void getActiveMembers_returnsOk() throws Exception {
-        when(shopUserService.getActiveMembersForShop(1L))
-                .thenReturn(Result.ok(List.of()));
+                mockMvc.perform(get("/api/shop-users/shop/{shopId}", 1L))
+                                .andExpect(status().isOk());
+        }
 
-        mockMvc.perform(get("/api/shop-users/shop/{shopId}/active", 1L))
-                .andExpect(status().isOk());
-    }
+        @Test
+        void getActiveMembers_returnsOk() throws Exception {
+                when(shopUserService.getActiveMembersForShop(1L))
+                                .thenReturn(Result.ok(List.of()));
 
-    @Test
-    void getShopsForCurrentUser_returnsOk() throws Exception {
-        UUID userId = UUID.randomUUID();
+                mockMvc.perform(get("/api/shop-users/shop/{shopId}/active", 1L))
+                                .andExpect(status().isOk());
+        }
 
-        when(currentUserService.getCurrentUserId())
-                .thenReturn(userId);
+        @Test
+        void getShopsForCurrentUser_returnsOk() throws Exception {
+                UUID userId = UUID.randomUUID();
 
-        when(shopUserService.getShopsForUser(userId))
-                .thenReturn(Result.ok(List.of()));
+                when(currentUserService.getCurrentUserId())
+                                .thenReturn(userId);
 
-        mockMvc.perform(get("/api/shop-users/user/me"))
-                .andExpect(status().isOk());
-    }
+                when(shopUserService.getShopsForUser(userId))
+                                .thenReturn(Result.ok(List.of()));
 
-    @Test
-    void addUserToShop_returnsOk() throws Exception {
-        UUID userId = UUID.randomUUID();
+                mockMvc.perform(get("/api/shop-users/user/me"))
+                                .andExpect(status().isOk());
+        }
 
-        when(shopUserService.addUserToShop(1L, userId, "MANAGER"))
-                .thenReturn(Result.ok(true));
+        @Test
+        void addUserToShop_returnsOk() throws Exception {
+                UUID userId = UUID.randomUUID();
 
-        mockMvc.perform(post("/api/shop-users/{shopId}/{userId}", 1L, userId)
-                .param("role", "MANAGER"))
-                .andExpect(status().isOk());
-    }
+                when(shopUserService.addUserToShop(1L, userId, "MANAGER"))
+                                .thenReturn(Result.ok(true));
 
-    @Test
-    void updateStatus_returnsOk() throws Exception {
-        UUID userId = UUID.randomUUID();
+                mockMvc.perform(post("/api/shop-users/{shopId}/{userId}", 1L, userId)
+                                .param("role", "MANAGER"))
+                                .andExpect(status().isOk());
+        }
 
-        when(shopUserService.updateUserStatus(1L, userId, "ACTIVE"))
-                .thenReturn(Result.ok(true));
+        @Test
+        void updateStatus_returnsOk() throws Exception {
+                UUID userId = UUID.randomUUID();
 
-        mockMvc.perform(patch("/api/shop-users/{shopId}/{userId}/status", 1L, userId)
-                .param("status", "ACTIVE"))
-                .andExpect(status().isOk());
-    }
+                when(shopUserService.updateUserStatus(1L, userId, "ACTIVE"))
+                                .thenReturn(Result.ok(true));
 
-    @Test
-    void updateRole_returnsOk() throws Exception {
-        UUID userId = UUID.randomUUID();
+                mockMvc.perform(patch("/api/shop-users/{shopId}/{userId}/status", 1L, userId)
+                                .param("status", "ACTIVE"))
+                                .andExpect(status().isOk());
+        }
 
-        when(shopUserService.updateUserRole(1L, userId, "ADMIN"))
-                .thenReturn(Result.ok(true));
+        @Test
+        void updateRole_returnsOk() throws Exception {
+                UUID userId = UUID.randomUUID();
 
-        mockMvc.perform(patch("/api/shop-users/{shopId}/{userId}/role", 1L, userId)
-                .param("role", "ADMIN"))
-                .andExpect(status().isOk());
-    }
+                when(shopUserService.updateUserRole(1L, userId, "ADMIN"))
+                                .thenReturn(Result.ok(true));
 
-    @Test
-    void requestJoinShop_returnsOk() throws Exception {
-        UUID userId = UUID.randomUUID();
+                mockMvc.perform(patch("/api/shop-users/{shopId}/{userId}/role", 1L, userId)
+                                .param("role", "ADMIN"))
+                                .andExpect(status().isOk());
+        }
 
-        when(currentUserService.getCurrentUserId())
-                .thenReturn(userId);
+        @Test
+        void requestJoinShop_returnsOk() throws Exception {
+                UUID userId = UUID.randomUUID();
 
-        when(shopUserService.requestJoinShop(1L, userId))
-                .thenReturn(Result.ok(true));
+                when(currentUserService.getCurrentUserId())
+                                .thenReturn(userId);
 
-        mockMvc.perform(post("/api/shop-users/shop/{shopId}/request", 1L))
-                .andExpect(status().isOk());
-    }
+                when(shopUserService.requestJoinShop(1L, userId))
+                                .thenReturn(Result.ok(true));
 
-    @Test
-    void checkMembership_returnsOk() throws Exception {
-        UUID userId = UUID.randomUUID();
+                mockMvc.perform(post("/api/shop-users/shop/{shopId}/request", 1L))
+                                .andExpect(status().isOk());
+        }
 
-        when(currentUserService.getCurrentUserId())
-                .thenReturn(userId);
+        @Test
+        void checkMembership_returnsOk() throws Exception {
+                UUID userId = UUID.randomUUID();
 
-        ShopMembershipStatusDto dto = ShopMembershipStatusDto.builder()
-                .status(ShopUserStatus.ACTIVE)
-                .role(ShopUserRole.CUSTOMER)
-                .build();
+                when(currentUserService.getCurrentUserId())
+                                .thenReturn(userId);
 
-        when(shopUserService.getMembership(1L, userId))
-                .thenReturn(Result.ok(dto));
+                ShopMembershipStatusDto dto = ShopMembershipStatusDto.builder()
+                                .status(ShopUserStatus.ACTIVE)
+                                .role(ShopUserRole.CUSTOMER)
+                                .build();
 
-        mockMvc.perform(get("/api/shop-users/membership/{shopId}", 1L))
-                .andExpect(status().isOk());
-    }
+                when(shopUserService.getMembership(1L, userId))
+                                .thenReturn(Result.ok(dto));
+
+                mockMvc.perform(get("/api/shop-users/membership/{shopId}", 1L))
+                                .andExpect(status().isOk());
+        }
 
 }

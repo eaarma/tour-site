@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
@@ -34,179 +35,184 @@ import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.micrometer.core.instrument.MeterRegistry;
+
 @WebMvcTest(controllers = OrderController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class OrderControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @MockitoBean
-    private OrderService orderService;
+        @MockitoBean
+        private OrderService orderService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private JwtService jwtService;
+        @MockitoBean
+        private JwtService jwtService;
 
-    @MockitoBean
-    private CustomUserDetailsService customUserDetailsService;
+        @MockitoBean
+        private CustomUserDetailsService customUserDetailsService;
 
-    /* ---------------- CREATE ORDER ---------------- */
+        @MockBean
+        MeterRegistry meterRegistry;
 
-    @Test
-    void createOrder_returnsOk_whenServiceSucceeds() throws Exception {
-        OrderCreateRequestDto dto = validOrderCreateDto();
+        /* ---------------- CREATE ORDER ---------------- */
 
-        when(orderService.createOrder(any(), any()))
-                .thenReturn(Result.ok(new OrderResponseDto()));
+        @Test
+        void createOrder_returnsOk_whenServiceSucceeds() throws Exception {
+                OrderCreateRequestDto dto = validOrderCreateDto();
 
-        mockMvc.perform(post("/orders")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isOk());
-    }
+                when(orderService.createOrder(any(), any()))
+                                .thenReturn(Result.ok(new OrderResponseDto()));
 
-    @Test
-    void createOrder_returnsBadRequest_whenValidationFails() throws Exception {
-        mockMvc.perform(post("/orders")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{}"))
-                .andExpect(status().isBadRequest());
-    }
+                mockMvc.perform(post("/orders")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(dto)))
+                                .andExpect(status().isOk());
+        }
 
-    /* ---------------- GET ORDER ---------------- */
+        @Test
+        void createOrder_returnsBadRequest_whenValidationFails() throws Exception {
+                mockMvc.perform(post("/orders")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{}"))
+                                .andExpect(status().isBadRequest());
+        }
 
-    @Test
-    void getOrderById_returnsOk_whenFound() throws Exception {
-        when(orderService.getOrderById(1L))
-                .thenReturn(Result.ok(new OrderResponseDto()));
+        /* ---------------- GET ORDER ---------------- */
 
-        mockMvc.perform(get("/orders/1"))
-                .andExpect(status().isOk());
-    }
+        @Test
+        void getOrderById_returnsOk_whenFound() throws Exception {
+                when(orderService.getOrderById(1L))
+                                .thenReturn(Result.ok(new OrderResponseDto()));
 
-    @Test
-    void getOrderById_returnsNotFound_whenMissing() throws Exception {
-        when(orderService.getOrderById(1L))
-                .thenReturn(Result.fail(ApiError.notFound("Order not found")));
+                mockMvc.perform(get("/orders/1"))
+                                .andExpect(status().isOk());
+        }
 
-        mockMvc.perform(get("/orders/1"))
-                .andExpect(status().isNotFound());
-    }
+        @Test
+        void getOrderById_returnsNotFound_whenMissing() throws Exception {
+                when(orderService.getOrderById(1L))
+                                .thenReturn(Result.fail(ApiError.notFound("Order not found")));
 
-    /* ---------------- GUEST ORDER VIEW ---------------- */
+                mockMvc.perform(get("/orders/1"))
+                                .andExpect(status().isNotFound());
+        }
 
-    @Test
-    void getGuestOrder_stripsSensitiveFields_andReturnsOk() throws Exception {
-        OrderItemResponseDto item = new OrderItemResponseDto();
-        item.setEmail("test@example.com");
-        item.setPhone("+123");
+        /* ---------------- GUEST ORDER VIEW ---------------- */
 
-        OrderResponseDto response = new OrderResponseDto();
-        response.setItems(List.of(item));
+        @Test
+        void getGuestOrder_stripsSensitiveFields_andReturnsOk() throws Exception {
+                OrderItemResponseDto item = new OrderItemResponseDto();
+                item.setEmail("test@example.com");
+                item.setPhone("+123");
 
-        when(orderService.getOrderById(1L))
-                .thenReturn(Result.ok(response));
+                OrderResponseDto response = new OrderResponseDto();
+                response.setItems(List.of(item));
 
-        mockMvc.perform(get("/orders/guest/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.items[0].email").doesNotExist())
-                .andExpect(jsonPath("$.items[0].phone").doesNotExist());
-    }
+                when(orderService.getOrderById(1L))
+                                .thenReturn(Result.ok(response));
 
-    /* ---------------- USER ORDERS ---------------- */
+                mockMvc.perform(get("/orders/guest/1"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.items[0].email").doesNotExist())
+                                .andExpect(jsonPath("$.items[0].phone").doesNotExist());
+        }
 
-    @Test
-    void getUserOrders_returnsOk() throws Exception {
-        when(orderService.getOrdersByUser(any()))
-                .thenReturn(Result.ok(List.of()));
+        /* ---------------- USER ORDERS ---------------- */
 
-        mockMvc.perform(get("/orders"))
-                .andExpect(status().isOk());
-    }
+        @Test
+        void getUserOrders_returnsOk() throws Exception {
+                when(orderService.getOrdersByUser(any()))
+                                .thenReturn(Result.ok(List.of()));
 
-    /* ---------------- ORDER ITEMS ---------------- */
+                mockMvc.perform(get("/orders"))
+                                .andExpect(status().isOk());
+        }
 
-    @Test
-    void getOrderItem_returnsOk_whenFound() throws Exception {
-        when(orderService.getOrderItemById(1L))
-                .thenReturn(Result.ok(new OrderItemResponseDto()));
+        /* ---------------- ORDER ITEMS ---------------- */
 
-        mockMvc.perform(get("/orders/items/1"))
-                .andExpect(status().isOk());
-    }
+        @Test
+        void getOrderItem_returnsOk_whenFound() throws Exception {
+                when(orderService.getOrderItemById(1L))
+                                .thenReturn(Result.ok(new OrderItemResponseDto()));
 
-    @Test
-    void updateOrderItemStatus_returnsOk_whenSuccess() throws Exception {
-        StatusUpdateRequestDto dto = new StatusUpdateRequestDto();
-        dto.setStatus(OrderStatus.CONFIRMED);
+                mockMvc.perform(get("/orders/items/1"))
+                                .andExpect(status().isOk());
+        }
 
-        when(orderService.updateOrderItemStatus(1L, OrderStatus.CONFIRMED))
-                .thenReturn(Result.ok(new OrderItemResponseDto()));
+        @Test
+        void updateOrderItemStatus_returnsOk_whenSuccess() throws Exception {
+                StatusUpdateRequestDto dto = new StatusUpdateRequestDto();
+                dto.setStatus(OrderStatus.CONFIRMED);
 
-        mockMvc.perform(patch("/orders/items/1/status")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isOk());
-    }
+                when(orderService.updateOrderItemStatus(1L, OrderStatus.CONFIRMED))
+                                .thenReturn(Result.ok(new OrderItemResponseDto()));
 
-    /* ---------------- MANAGER / SHOP ---------------- */
+                mockMvc.perform(patch("/orders/items/1/status")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(dto)))
+                                .andExpect(status().isOk());
+        }
 
-    @Test
-    void getOrderItemsByShop_returnsOk() throws Exception {
-        when(orderService.getOrderItemsByShop(1L))
-                .thenReturn(Result.ok(List.of()));
+        /* ---------------- MANAGER / SHOP ---------------- */
 
-        mockMvc.perform(get("/orders/shop/1/items"))
-                .andExpect(status().isOk());
-    }
+        @Test
+        void getOrderItemsByShop_returnsOk() throws Exception {
+                when(orderService.getOrderItemsByShop(1L))
+                                .thenReturn(Result.ok(List.of()));
 
-    @Test
-    void getOrderItemsByManager_returnsOk() throws Exception {
-        UUID managerId = UUID.randomUUID();
+                mockMvc.perform(get("/orders/shop/1/items"))
+                                .andExpect(status().isOk());
+        }
 
-        when(orderService.getOrderItemsByManager(managerId))
-                .thenReturn(Result.ok(List.of()));
+        @Test
+        void getOrderItemsByManager_returnsOk() throws Exception {
+                UUID managerId = UUID.randomUUID();
 
-        mockMvc.perform(get("/orders/manager/" + managerId + "/items"))
-                .andExpect(status().isOk());
-    }
+                when(orderService.getOrderItemsByManager(managerId))
+                                .thenReturn(Result.ok(List.of()));
 
-    /* ---------------- GUEST CHECKOUT ---------------- */
+                mockMvc.perform(get("/orders/manager/" + managerId + "/items"))
+                                .andExpect(status().isOk());
+        }
 
-    @Test
-    void createGuestOrder_returnsOk_whenSuccess() throws Exception {
-        OrderCreateRequestDto dto = validOrderCreateDto();
+        /* ---------------- GUEST CHECKOUT ---------------- */
 
-        when(orderService.createOrder(any(), isNull()))
-                .thenReturn(Result.ok(new OrderResponseDto()));
+        @Test
+        void createGuestOrder_returnsOk_whenSuccess() throws Exception {
+                OrderCreateRequestDto dto = validOrderCreateDto();
 
-        mockMvc.perform(post("/orders/guest")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(dto)))
-                .andExpect(status().isOk());
-    }
+                when(orderService.createOrder(any(), isNull()))
+                                .thenReturn(Result.ok(new OrderResponseDto()));
 
-    private OrderCreateRequestDto validOrderCreateDto() {
-        OrderItemCreateRequestDto item = OrderItemCreateRequestDto.builder()
-                .tourId(1L)
-                .scheduleId(10L)
-                .scheduledAt(LocalDateTime.now().plusDays(1))
-                .participants(2)
-                .preferredLanguage("EN")
-                .comment("Test booking")
-                .build();
+                mockMvc.perform(post("/orders/guest")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(dto)))
+                                .andExpect(status().isOk());
+        }
 
-        return OrderCreateRequestDto.builder()
-                .items(List.of(item))
-                .paymentMethod("CARD")
-                .name("John Doe")
-                .email("john.doe@example.com")
-                .phone("+1234567890")
-                .nationality("US")
-                .build();
-    }
+        private OrderCreateRequestDto validOrderCreateDto() {
+                OrderItemCreateRequestDto item = OrderItemCreateRequestDto.builder()
+                                .tourId(1L)
+                                .scheduleId(10L)
+                                .scheduledAt(LocalDateTime.now().plusDays(1))
+                                .participants(2)
+                                .preferredLanguage("EN")
+                                .comment("Test booking")
+                                .build();
+
+                return OrderCreateRequestDto.builder()
+                                .items(List.of(item))
+                                .paymentMethod("CARD")
+                                .name("John Doe")
+                                .email("john.doe@example.com")
+                                .phone("+1234567890")
+                                .nationality("US")
+                                .build();
+        }
 
 }

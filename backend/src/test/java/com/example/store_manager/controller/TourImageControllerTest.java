@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,6 +25,8 @@ import com.example.store_manager.service.TourImageService;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.micrometer.core.instrument.MeterRegistry;
 
 @WebMvcTest(TourImageController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -43,6 +46,9 @@ class TourImageControllerTest {
 
         @MockitoBean
         private CustomUserDetailsService customUserDetailsService;
+
+        @MockitoBean
+        MeterRegistry meterRegistry;
 
         // ----------------------------
         // Helpers

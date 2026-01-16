@@ -10,6 +10,9 @@ import com.example.store_manager.service.UserService;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.micrometer.core.instrument.MeterRegistry;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -29,135 +32,138 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class UserControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private UserService userService;
+        @MockitoBean
+        private UserService userService;
 
-    @MockitoBean
-    private CurrentUserService currentUserService;
+        @MockitoBean
+        private CurrentUserService currentUserService;
 
-    // Security beans (present but inactive)
-    @MockitoBean
-    private JwtService jwtService;
+        // Security beans (present but inactive)
+        @MockitoBean
+        private JwtService jwtService;
 
-    @MockitoBean
-    private CustomUserDetailsService customUserDetailsService;
+        @MockitoBean
+        MeterRegistry meterRegistry;
 
-    // ------------------------
-    // Helpers
-    // ------------------------
+        @MockitoBean
+        private CustomUserDetailsService customUserDetailsService;
 
-    private UserResponseDto userDto(UUID id) {
-        return UserResponseDto.builder()
-                .id(id)
-                .email("test@example.com")
-                .name("Test User")
-                .build();
-    }
+        // ------------------------
+        // Helpers
+        // ------------------------
 
-    private UserUpdateDto updateDto() {
-        return UserUpdateDto.builder()
-                .name("Updated Name")
-                .build();
-    }
+        private UserResponseDto userDto(UUID id) {
+                return UserResponseDto.builder()
+                                .id(id)
+                                .email("test@example.com")
+                                .name("Test User")
+                                .build();
+        }
 
-    // ------------------------
-    // GET /me
-    // ------------------------
+        private UserUpdateDto updateDto() {
+                return UserUpdateDto.builder()
+                                .name("Updated Name")
+                                .build();
+        }
 
-    @Test
-    void getProfile_returnsOk_whenUserExists() throws Exception {
-        UUID userId = UUID.randomUUID();
+        // ------------------------
+        // GET /me
+        // ------------------------
 
-        when(currentUserService.getCurrentUserId())
-                .thenReturn(userId);
+        @Test
+        void getProfile_returnsOk_whenUserExists() throws Exception {
+                UUID userId = UUID.randomUUID();
 
-        when(userService.getUserProfile(userId))
-                .thenReturn(Result.ok(userDto(userId)));
+                when(currentUserService.getCurrentUserId())
+                                .thenReturn(userId);
 
-        mockMvc.perform(get("/api/users/me"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("test@example.com"));
-    }
+                when(userService.getUserProfile(userId))
+                                .thenReturn(Result.ok(userDto(userId)));
 
-    @Test
-    void getProfile_returnsNotFound_whenMissing() throws Exception {
-        UUID userId = UUID.randomUUID();
+                mockMvc.perform(get("/api/users/me"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.email").value("test@example.com"));
+        }
 
-        when(currentUserService.getCurrentUserId())
-                .thenReturn(userId);
+        @Test
+        void getProfile_returnsNotFound_whenMissing() throws Exception {
+                UUID userId = UUID.randomUUID();
 
-        when(userService.getUserProfile(userId))
-                .thenReturn(Result.fail(ApiError.notFound("User not found")));
+                when(currentUserService.getCurrentUserId())
+                                .thenReturn(userId);
 
-        mockMvc.perform(get("/api/users/me"))
-                .andExpect(status().isNotFound());
-    }
+                when(userService.getUserProfile(userId))
+                                .thenReturn(Result.fail(ApiError.notFound("User not found")));
 
-    // ------------------------
-    // PUT /me
-    // ------------------------
+                mockMvc.perform(get("/api/users/me"))
+                                .andExpect(status().isNotFound());
+        }
 
-    @Test
-    void updateProfile_returnsOk_whenSuccess() throws Exception {
-        UUID userId = UUID.randomUUID();
+        // ------------------------
+        // PUT /me
+        // ------------------------
 
-        when(currentUserService.getCurrentUserId())
-                .thenReturn(userId);
+        @Test
+        void updateProfile_returnsOk_whenSuccess() throws Exception {
+                UUID userId = UUID.randomUUID();
 
-        when(userService.updateProfile(eq(userId), any()))
-                .thenReturn(Result.ok(userDto(userId)));
+                when(currentUserService.getCurrentUserId())
+                                .thenReturn(userId);
 
-        mockMvc.perform(put("/api/users/me")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateDto())))
-                .andExpect(status().isOk());
-    }
+                when(userService.updateProfile(eq(userId), any()))
+                                .thenReturn(Result.ok(userDto(userId)));
 
-    @Test
-    void updateProfile_returnsNotFound_whenMissing() throws Exception {
-        UUID userId = UUID.randomUUID();
+                mockMvc.perform(put("/api/users/me")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updateDto())))
+                                .andExpect(status().isOk());
+        }
 
-        when(currentUserService.getCurrentUserId())
-                .thenReturn(userId);
+        @Test
+        void updateProfile_returnsNotFound_whenMissing() throws Exception {
+                UUID userId = UUID.randomUUID();
 
-        when(userService.updateProfile(eq(userId), any()))
-                .thenReturn(Result.fail(ApiError.notFound("User not found")));
+                when(currentUserService.getCurrentUserId())
+                                .thenReturn(userId);
 
-        mockMvc.perform(put("/api/users/me")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(updateDto())))
-                .andExpect(status().isNotFound());
-    }
+                when(userService.updateProfile(eq(userId), any()))
+                                .thenReturn(Result.fail(ApiError.notFound("User not found")));
 
-    // ------------------------
-    // GET /{id}
-    // ------------------------
+                mockMvc.perform(put("/api/users/me")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updateDto())))
+                                .andExpect(status().isNotFound());
+        }
 
-    @Test
-    void getUserById_returnsOk_whenFound() throws Exception {
-        UUID userId = UUID.randomUUID();
+        // ------------------------
+        // GET /{id}
+        // ------------------------
 
-        when(userService.getUserProfile(userId))
-                .thenReturn(Result.ok(userDto(userId)));
+        @Test
+        void getUserById_returnsOk_whenFound() throws Exception {
+                UUID userId = UUID.randomUUID();
 
-        mockMvc.perform(get("/api/users/{id}", userId))
-                .andExpect(status().isOk());
-    }
+                when(userService.getUserProfile(userId))
+                                .thenReturn(Result.ok(userDto(userId)));
 
-    @Test
-    void getUserById_returnsNotFound_whenMissing() throws Exception {
-        UUID userId = UUID.randomUUID();
+                mockMvc.perform(get("/api/users/{id}", userId))
+                                .andExpect(status().isOk());
+        }
 
-        when(userService.getUserProfile(userId))
-                .thenReturn(Result.fail(ApiError.notFound("User not found")));
+        @Test
+        void getUserById_returnsNotFound_whenMissing() throws Exception {
+                UUID userId = UUID.randomUUID();
 
-        mockMvc.perform(get("/api/users/{id}", userId))
-                .andExpect(status().isNotFound());
-    }
+                when(userService.getUserProfile(userId))
+                                .thenReturn(Result.fail(ApiError.notFound("User not found")));
+
+                mockMvc.perform(get("/api/users/{id}", userId))
+                                .andExpect(status().isNotFound());
+        }
 }

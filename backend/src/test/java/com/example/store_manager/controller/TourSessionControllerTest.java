@@ -8,6 +8,9 @@ import com.example.store_manager.utility.Result;
 import com.example.store_manager.security.CustomUserDetailsService;
 import com.example.store_manager.security.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.micrometer.core.instrument.MeterRegistry;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -33,6 +36,9 @@ class TourSessionControllerTest {
 
         @MockitoBean
         private TourSessionService service;
+
+        @MockitoBean
+        MeterRegistry meterRegistry;
 
         // Security deps (present but inactive)
         @MockitoBean

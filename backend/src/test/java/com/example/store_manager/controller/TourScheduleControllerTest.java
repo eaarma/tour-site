@@ -29,166 +29,171 @@ import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.micrometer.core.instrument.MeterRegistry;
+
 @WebMvcTest(controllers = TourScheduleController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class TourScheduleControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+        @Autowired
+        private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+        @Autowired
+        private ObjectMapper objectMapper;
 
-    @MockitoBean
-    private TourScheduleService service;
+        @MockitoBean
+        private TourScheduleService service;
 
-    // Security deps (present but inactive)
-    @MockitoBean
-    private JwtService jwtService;
+        // Security deps (present but inactive)
+        @MockitoBean
+        private JwtService jwtService;
 
-    @MockitoBean
-    private CustomUserDetailsService customUserDetailsService;
+        @MockitoBean
+        MeterRegistry meterRegistry;
 
-    // ------------------------
-    // Helpers
-    // ------------------------
+        @MockitoBean
+        private CustomUserDetailsService customUserDetailsService;
 
-    private TourScheduleCreateDto validCreateDto() {
-        return TourScheduleCreateDto.builder()
-                .tourId(1L)
-                .date(LocalDate.now().plusDays(1))
-                .time(LocalTime.of(10, 0))
-                .maxParticipants(10)
-                .build();
-    }
+        // ------------------------
+        // Helpers
+        // ------------------------
 
-    private TourScheduleUpdateDto validUpdateDto() {
-        return TourScheduleUpdateDto.builder()
-                .maxParticipants(12)
-                .build();
-    }
+        private TourScheduleCreateDto validCreateDto() {
+                return TourScheduleCreateDto.builder()
+                                .tourId(1L)
+                                .date(LocalDate.now().plusDays(1))
+                                .time(LocalTime.of(10, 0))
+                                .maxParticipants(10)
+                                .build();
+        }
 
-    private TourScheduleResponseDto responseDto() {
-        return TourScheduleResponseDto.builder()
-                .id(1L)
-                .status("ACTIVE")
-                .build();
-    }
+        private TourScheduleUpdateDto validUpdateDto() {
+                return TourScheduleUpdateDto.builder()
+                                .maxParticipants(12)
+                                .build();
+        }
 
-    // ------------------------
-    // CREATE
-    // ------------------------
+        private TourScheduleResponseDto responseDto() {
+                return TourScheduleResponseDto.builder()
+                                .id(1L)
+                                .status("ACTIVE")
+                                .build();
+        }
 
-    @Test
-    void create_returnsOk_whenSuccess() throws Exception {
-        when(service.createSchedule(any()))
-                .thenReturn(Result.ok(responseDto()));
+        // ------------------------
+        // CREATE
+        // ------------------------
 
-        mockMvc.perform(post("/schedules")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validCreateDto())))
-                .andExpect(status().isOk());
-    }
+        @Test
+        void create_returnsOk_whenSuccess() throws Exception {
+                when(service.createSchedule(any()))
+                                .thenReturn(Result.ok(responseDto()));
 
-    @Test
-    void create_returnsNotFound_whenTourMissing() throws Exception {
-        when(service.createSchedule(any()))
-                .thenReturn(Result.fail(ApiError.notFound("Tour not found")));
+                mockMvc.perform(post("/schedules")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(validCreateDto())))
+                                .andExpect(status().isOk());
+        }
 
-        mockMvc.perform(post("/schedules")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validCreateDto())))
-                .andExpect(status().isNotFound());
-    }
+        @Test
+        void create_returnsNotFound_whenTourMissing() throws Exception {
+                when(service.createSchedule(any()))
+                                .thenReturn(Result.fail(ApiError.notFound("Tour not found")));
 
-    @Test
-    void create_returnsBadRequest_whenValidationFails() throws Exception {
-        mockMvc.perform(post("/schedules")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{}"))
-                .andExpect(status().isBadRequest());
-    }
+                mockMvc.perform(post("/schedules")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(validCreateDto())))
+                                .andExpect(status().isNotFound());
+        }
 
-    // ------------------------
-    // GET FOR TOUR
-    // ------------------------
+        @Test
+        void create_returnsBadRequest_whenValidationFails() throws Exception {
+                mockMvc.perform(post("/schedules")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{}"))
+                                .andExpect(status().isBadRequest());
+        }
 
-    @Test
-    void getSchedulesForTour_returnsOk() throws Exception {
-        when(service.getSchedulesForTour(1L))
-                .thenReturn(Result.ok(List.of(responseDto())));
+        // ------------------------
+        // GET FOR TOUR
+        // ------------------------
 
-        mockMvc.perform(get("/schedules/tour/{tourId}", 1L))
-                .andExpect(status().isOk());
-    }
+        @Test
+        void getSchedulesForTour_returnsOk() throws Exception {
+                when(service.getSchedulesForTour(1L))
+                                .thenReturn(Result.ok(List.of(responseDto())));
 
-    // ------------------------
-    // GET BY ID
-    // ------------------------
+                mockMvc.perform(get("/schedules/tour/{tourId}", 1L))
+                                .andExpect(status().isOk());
+        }
 
-    @Test
-    void getById_returnsOk_whenFound() throws Exception {
-        when(service.getScheduleById(1L))
-                .thenReturn(Result.ok(responseDto()));
+        // ------------------------
+        // GET BY ID
+        // ------------------------
 
-        mockMvc.perform(get("/schedules/{id}", 1L))
-                .andExpect(status().isOk());
-    }
+        @Test
+        void getById_returnsOk_whenFound() throws Exception {
+                when(service.getScheduleById(1L))
+                                .thenReturn(Result.ok(responseDto()));
 
-    @Test
-    void getById_returnsNotFound_whenMissing() throws Exception {
-        when(service.getScheduleById(1L))
-                .thenReturn(Result.fail(ApiError.notFound("Schedule not found")));
+                mockMvc.perform(get("/schedules/{id}", 1L))
+                                .andExpect(status().isOk());
+        }
 
-        mockMvc.perform(get("/schedules/{id}", 1L))
-                .andExpect(status().isNotFound());
-    }
+        @Test
+        void getById_returnsNotFound_whenMissing() throws Exception {
+                when(service.getScheduleById(1L))
+                                .thenReturn(Result.fail(ApiError.notFound("Schedule not found")));
 
-    // ------------------------
-    // UPDATE
-    // ------------------------
+                mockMvc.perform(get("/schedules/{id}", 1L))
+                                .andExpect(status().isNotFound());
+        }
 
-    @Test
-    void update_returnsOk_whenSuccess() throws Exception {
-        when(service.updateSchedule(eq(1L), any()))
-                .thenReturn(Result.ok(responseDto()));
+        // ------------------------
+        // UPDATE
+        // ------------------------
 
-        mockMvc.perform(patch("/schedules/{id}", 1L)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validUpdateDto())))
-                .andExpect(status().isOk());
-    }
+        @Test
+        void update_returnsOk_whenSuccess() throws Exception {
+                when(service.updateSchedule(eq(1L), any()))
+                                .thenReturn(Result.ok(responseDto()));
 
-    @Test
-    void update_returnsNotFound_whenMissing() throws Exception {
-        when(service.updateSchedule(eq(1L), any()))
-                .thenReturn(Result.fail(ApiError.notFound("Schedule not found")));
+                mockMvc.perform(patch("/schedules/{id}", 1L)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(validUpdateDto())))
+                                .andExpect(status().isOk());
+        }
 
-        mockMvc.perform(patch("/schedules/{id}", 1L)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(validUpdateDto())))
-                .andExpect(status().isNotFound());
-    }
+        @Test
+        void update_returnsNotFound_whenMissing() throws Exception {
+                when(service.updateSchedule(eq(1L), any()))
+                                .thenReturn(Result.fail(ApiError.notFound("Schedule not found")));
 
-    // ------------------------
-    // DELETE
-    // ------------------------
+                mockMvc.perform(patch("/schedules/{id}", 1L)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(validUpdateDto())))
+                                .andExpect(status().isNotFound());
+        }
 
-    @Test
-    void delete_returnsOk_whenSuccess() throws Exception {
-        when(service.deleteSchedule(1L))
-                .thenReturn(Result.ok(true));
+        // ------------------------
+        // DELETE
+        // ------------------------
 
-        mockMvc.perform(delete("/schedules/{id}", 1L))
-                .andExpect(status().isOk());
-    }
+        @Test
+        void delete_returnsOk_whenSuccess() throws Exception {
+                when(service.deleteSchedule(1L))
+                                .thenReturn(Result.ok(true));
 
-    @Test
-    void delete_returnsNotFound_whenMissing() throws Exception {
-        when(service.deleteSchedule(1L))
-                .thenReturn(Result.fail(ApiError.notFound("Schedule not found")));
+                mockMvc.perform(delete("/schedules/{id}", 1L))
+                                .andExpect(status().isOk());
+        }
 
-        mockMvc.perform(delete("/schedules/{id}", 1L))
-                .andExpect(status().isNotFound());
-    }
+        @Test
+        void delete_returnsNotFound_whenMissing() throws Exception {
+                when(service.deleteSchedule(1L))
+                                .thenReturn(Result.fail(ApiError.notFound("Schedule not found")));
+
+                mockMvc.perform(delete("/schedules/{id}", 1L))
+                                .andExpect(status().isNotFound());
+        }
 }

@@ -13,6 +13,7 @@ import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfi
 import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
@@ -29,6 +30,8 @@ import com.example.store_manager.service.ShopService;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.micrometer.core.instrument.MeterRegistry;
 
 @WebMvcTest(controllers = ShopController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -51,6 +54,9 @@ class ShopControllerTest {
 
         @MockitoBean
         private CustomUserDetailsService customUserDetailsService;
+
+        @MockitoBean
+        MeterRegistry meterRegistry;
 
         // ----------------------------
         // Helpers
