@@ -40,6 +40,9 @@ out/
 # Environment-specific configs
 application-dev.yml
 
+.env
+.env.*
+
 
 # VS Code local settings (optional)
 .vscode/settings.json
