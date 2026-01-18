@@ -4,6 +4,10 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   backend:
     runs-on: ubuntu-latest
@@ -53,6 +57,19 @@ jobs:
           ./gradlew flywayMigrate --no-daemon --stacktrace
           ./gradlew flywayValidate --no-daemon --stacktrace
 
-      - name: Docker build
+      # 🔐 Login to GitHub Container Registry
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      # 🐳 Build image with GHCR tag
+      - name: Build Docker image
         working-directory: backend
-        run: docker build -t store-manager-backend:ci .
+        run: |
+          docker build \
+            -t ghcr.io/${{ github.repository_owner }}/store-manager-backend:${{ github.sha }} \
+            .
+
+      # 🚀 Push image to GHCR
+      - name: Push Docker image
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/store-manager-backend:${{ github.sha }}
