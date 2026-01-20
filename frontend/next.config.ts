@@ -10,7 +10,10 @@ const securityHeaders = [
       style-src 'self' 'unsafe-inline';
       style-src-elem 'self' 'unsafe-inline';
       img-src 'self' data: https://firebasestorage.googleapis.com https://ui-avatars.com;
-      connect-src 'self' http://localhost:8080 https://firebasestorage.googleapis.com;      
+      connect-src 'self'
+      http://localhost:8080
+      http://65.21.111.205:8080
+      https://firebasestorage.googleapis.com;
       font-src 'self';
       object-src 'none';
       base-uri 'none';

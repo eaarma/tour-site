@@ -1,8 +1,8 @@
 package com.example.store_manager.controller;
 
 import java.util.Map;
-import java.util.UUID;
 
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -55,6 +55,8 @@ public class AuthenticationController {
 
         private final RefreshSecurityProperties refreshSecurityProperties;
 
+        private final Environment environment;
+
         @PostMapping("/register/user")
         public ResponseEntity<?> registerUser(
                         @RequestBody @Valid UserRegisterRequestDto request) {
@@ -76,6 +78,8 @@ public class AuthenticationController {
                         @RequestBody @Valid LoginRequestDto dto,
                         HttpServletResponse response) {
 
+                boolean isProd = environment.acceptsProfiles("prod");
+
                 Result<AuthTokens> result = authService.login(dto);
 
                 if (result.isFail()) {
@@ -86,7 +90,8 @@ public class AuthenticationController {
 
                 // Refresh token as HttpOnly cookie
                 response.addHeader(HttpHeaders.SET_COOKIE,
-                                buildCookie("refreshToken", tokens.refreshToken(), 7 * 24 * 60 * 60, true).toString());
+                                buildCookie("refreshToken", tokens.refreshToken(), 7 * 24 * 60 * 60, isProd)
+                                                .toString());
 
                 User user = userRepository.findByEmail(dto.getEmail().trim().toLowerCase())
                                 .orElseThrow();
@@ -121,13 +126,16 @@ public class AuthenticationController {
                 return ResponseEntity.ok(userMapper.toDto(user));
         }
 
-        private ResponseCookie buildCookie(String name, String value, long maxAgeSeconds, boolean httpOnly) {
-
+        private ResponseCookie buildCookie(
+                        String name,
+                        String value,
+                        long maxAgeSeconds,
+                        boolean secure) {
                 return ResponseCookie.from(name, value)
-                                .httpOnly(httpOnly)
+                                .httpOnly(true) // refresh token should ALWAYS be HttpOnly
+                                .secure(secure) // ✅ environment-controlled
+                                .sameSite("None") // required for cross-site cookies
                                 .path("/")
-                                .secure(true)
-                                .sameSite("None") // REQUIRED for cross-site cookies
                                 .maxAge(maxAgeSeconds)
                                 .build();
         }
@@ -143,11 +151,11 @@ public class AuthenticationController {
                         return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
                 }
 
-                 // 2️) Validate Origin
-    String origin = request.getHeader("Origin");
-    if (origin == null || !refreshSecurityProperties.getAllowedOrigins().contains(origin)) {
-        throw new AccessDeniedException("Invalid origin");
-    }
+                // 2️) Validate Origin
+                String origin = request.getHeader("Origin");
+                if (origin == null || !refreshSecurityProperties.getAllowedOrigins().contains(origin)) {
+                        throw new AccessDeniedException("Invalid origin");
+                }
                 // 3) Existing refresh logic
                 Result<AuthTokens> result = authService.refresh(refreshToken);
 

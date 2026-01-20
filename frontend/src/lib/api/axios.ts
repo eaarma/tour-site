@@ -14,7 +14,7 @@ import { ApiError } from "./ApiError";
 const NETWORK_ERROR_TOAST_ID = "network-error";
 
 const api = axios.create({
-  baseURL: "http://localhost:8080",
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
   withCredentials: true, // needed for refreshToken cookie
   paramsSerializer: (params) => qs.stringify(params, { arrayFormat: "repeat" }),
 });
@@ -149,7 +149,7 @@ api.interceptors.response.use(
     }
 
     throw new ApiError(status, response.data);
-  }
+  },
 );
 
 export default api;
