@@ -9,6 +9,7 @@ import ItemList from "@/components/items/ItemList";
 import { PageResponse, TourService } from "@/lib/tourService";
 import { ItemListSkeleton } from "@/components/items/ItemListSkeleton";
 import { FILTER_CATEGORIES } from "@/types/filterCategories";
+import { Tour } from "@/types";
 
 const PAGE_SIZE = 12;
 
@@ -17,7 +18,7 @@ export default function ItemsPage() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
-  const [pageData, setPageData] = useState<PageResponse<any> | null>(null);
+  const [pageData, setPageData] = useState<PageResponse<Tour> | null>(null);
   const currentPage = Number(params.get("page") || 0);
   // read query params
   const keyword = params.get("keyword") || "";
@@ -42,7 +43,7 @@ export default function ItemsPage() {
         sort,
         keyword: keyword || undefined,
         date: date || undefined,
-        category: selectedCategories.length ? selectedCategories : undefined,
+        categories: selectedCategories.length ? selectedCategories : undefined,
         language: selectedLanguages.length ? selectedLanguages : undefined,
         type: selectedTypes.length ? selectedTypes[0] : undefined,
       };

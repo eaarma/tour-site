@@ -10,6 +10,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   user: ShopUserDto;
+  shopId: number;
   onUserUpdated: (updated: ShopUserDto) => void; // ✅ NEW
 }
 
@@ -17,13 +18,14 @@ export default function ManagerShopUserEditModal({
   isOpen,
   onClose,
   user,
+  shopId,
   onUserUpdated,
 }: Props) {
   const [role, setRole] = useState(user.role);
   const [status, setStatus] = useState(user.status);
   const handleSave = async () => {
     try {
-      await ShopUserService.updateStatus(user.shopId, user.userId, status);
+      await ShopUserService.updateStatus(shopId, user.userId, status);
 
       toast.success("User updated successfully!");
 

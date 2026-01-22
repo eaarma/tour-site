@@ -2,7 +2,7 @@
 
 import Modal from "../common/Modal";
 import { useEffect, useState } from "react";
-import { Tour } from "@/types";
+import { ItemModalItem } from "@/types";
 import { TourScheduleResponseDto } from "@/types/tourSchedule";
 import SchedulePicker from "./SchedulePicker";
 import { useDispatch } from "react-redux";
@@ -14,13 +14,12 @@ import { useRouter } from "next/navigation";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  item: Tour;
-  cartItemId: string;
+  item: ItemModalItem;
   schedules?: TourScheduleResponseDto[];
+  cartItemId: string;
   initialScheduleId?: number;
   initialParticipants?: number;
   initialPreferredLanguage?: string;
-  language: string[];
   initialComment?: string;
 }
 
@@ -104,7 +103,7 @@ export default function ItemModal({
 
         preferredLanguage: preferredLanguage || undefined,
         comment: comment || undefined,
-      })
+      }),
     );
 
     toast.success("Cart item updated ✅");
@@ -149,7 +148,7 @@ export default function ItemModal({
               <option key={n} value={n}>
                 {n}
               </option>
-            )
+            ),
           )}
         </select>
       </div>

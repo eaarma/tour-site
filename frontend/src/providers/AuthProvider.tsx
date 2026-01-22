@@ -46,7 +46,7 @@ export default function AuthProvider({
       } catch {
         try {
           const { accessToken } = await AuthService.refresh();
-          dispatch(setAuth({ user: null as any, accessToken })); // TEMP token update
+          dispatch(setAuth({ user: null, accessToken }));
           await AuthService.getCurrentUser();
         } catch {
           dispatch(clearUser());

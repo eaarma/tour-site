@@ -11,7 +11,12 @@ import { formatDuration } from "@/utils/formatDuration";
 import { ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
 import { tourImageService } from "@/lib/tourImageService";
-import { TourCategory, TourImage } from "@/types/tour";
+import {
+  TourCategory,
+  TourFormDto,
+  TourImage,
+  TourUpdateDto,
+} from "@/types/tour";
 
 import TourImagesManager from "@/components/manager/item/TourImagesManager";
 import CategorySelector from "@/components/manager/shop/CategorySelector";
@@ -34,7 +39,7 @@ export default function ManagerItemPage() {
   const [item, setItem] = useState<Tour | null>(null);
   const [loading, setLoading] = useState(!isNew);
   const [isEditing, setIsEditing] = useState(isNew); // in add mode, editing by default
-  const [form, setForm] = useState<Partial<TourCreateDto>>(
+  const [form, setForm] = useState<TourFormDto>(
     isNew
       ? {
           shopId,
@@ -46,7 +51,7 @@ export default function ManagerItemPage() {
           price: 0,
           participants: 1,
         }
-      : {}
+      : {},
   );
 
   const [tourImages, setTourImages] = useState<TourImage[]>([]);
@@ -113,10 +118,26 @@ export default function ManagerItemPage() {
       toast.error("Please fix the errors before saving.");
       return;
     }
+
     try {
       if (isNew) {
-        // Create new tour
-        const dto: TourCreateDto = form as TourCreateDto;
+        // ✅ CREATE NEW TOUR
+        const dto: TourCreateDto = {
+          shopId: form.shopId!,
+          title: form.title!,
+          description: form.description!,
+          location: form.location!,
+          images: form.images ?? [],
+          price: form.price!,
+          timeRequired: form.timeRequired!,
+          intensity: form.intensity!,
+          participants: form.participants!,
+          categories: (form.categories ?? []).map((c) => c as TourCategory),
+          language: form.language!,
+          type: form.type!,
+          status: form.status!,
+        };
+
         const created = await TourService.create(dto);
 
         // Instead of navigating, switch to edit mode
@@ -124,16 +145,30 @@ export default function ManagerItemPage() {
         setForm(created);
         setIsEditing(true);
 
-        // Optional: show a popup/notification
-        toast.success(" Tour created! You can now add schedules.");
+        toast.success("Tour created! You can now add schedules.");
 
         // The page stays on the same route (itemId is still "new")
-        // Optionally, you could update URL with actual id if you want
         // router.replace(`/manager/shops/${shopId}/items/${created.id}`);
       } else if (item) {
-        // Update existing tour
-        const dto: TourCreateDto = { ...form, shopId: item.shopId };
+        // ✅ UPDATE EXISTING TOUR
+        const dto: TourUpdateDto = {
+          shopId: item.shopId,
+          title: form.title!,
+          description: form.description!,
+          location: form.location!,
+          images: form.images ?? [],
+          price: form.price!,
+          timeRequired: form.timeRequired!,
+          intensity: form.intensity!,
+          participants: form.participants!,
+          categories: form.categories!,
+          language: form.language!,
+          type: form.type!,
+          status: form.status!,
+        };
+
         const updated = await TourService.update(item.id, dto);
+
         setItem(updated);
         setIsEditing(false);
 
@@ -271,8 +306,8 @@ export default function ManagerItemPage() {
                       item?.status === "ACTIVE"
                         ? "badge-success"
                         : item?.status === "ON_HOLD"
-                        ? "badge-warning"
-                        : "badge-error"
+                          ? "badge-warning"
+                          : "badge-error"
                     }`}
                   >
                     {item?.status}
@@ -398,7 +433,7 @@ export default function ManagerItemPage() {
                             <option key={num} value={num}>
                               {num}
                             </option>
-                          )
+                          ),
                         )}
                       </select>
                       {errors.participants && (
@@ -459,9 +494,10 @@ export default function ManagerItemPage() {
                 {/* Category */}
                 <div className="col-span-2">
                   <span className="font-semibold">Categories</span>
+
                   {isEditing ? (
                     <CategorySelector
-                      selected={form.categories || []}
+                      selected={form.categories ?? []}
                       onChange={(newList: TourCategory[]) =>
                         setForm((prev) => ({
                           ...prev,
@@ -470,16 +506,18 @@ export default function ManagerItemPage() {
                       }
                     />
                   ) : (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {item.categories?.map((cat) => (
-                        <span
-                          key={cat}
-                          className="px-3 py-1 bg-gray-200 rounded-full text-sm"
-                        >
-                          {cat.replace(/_/g, " ")}
-                        </span>
-                      ))}
-                    </div>
+                    item && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {item.categories.map((cat) => (
+                          <span
+                            key={cat}
+                            className="px-3 py-1 bg-gray-200 rounded-full text-sm"
+                          >
+                            {cat.replace(/_/g, " ")}
+                          </span>
+                        ))}
+                      </div>
+                    )
                   )}
                 </div>
 

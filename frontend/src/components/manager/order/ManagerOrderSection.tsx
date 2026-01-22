@@ -41,13 +41,14 @@ export default function ManagerOrderSection({
   shopId,
 }: Props) {
   const [activeTab, setActiveTab] = useState<"today" | "active" | "past">(
-    "today"
+    "today",
   );
+
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
   const [sortBy, setSortBy] = useState<"DATE" | "STATUS">("DATE");
   const [statusFilter, setStatusFilter] = useState<TourSessionDto["status"][]>(
-    []
+    [],
   );
   const [statusFilterOpen, setStatusFilterOpen] = useState(false);
   const statusFilterRef = useRef<HTMLDivElement | null>(null);
@@ -57,8 +58,10 @@ export default function ManagerOrderSection({
 
   const [sessionList, setSessionList] = useState<TourSessionDto[]>(sessions);
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
-    null
+    null,
   );
+
+  type OrderSort = "DATE" | "STATUS";
 
   //Default “From” date = today (first navigation)
   useEffect(() => {
@@ -96,7 +99,7 @@ export default function ManagerOrderSection({
     const updated = await TourSessionService.getByShopId(shopId);
     // ⭐ Filter: only sessions with participants
     const updatedFiltered = updated.filter(
-      (s) => (s.participants?.length ?? 0) > 0
+      (s: TourSessionDto) => (s.participants?.length ?? 0) > 0,
     );
 
     setSessionList(updatedFiltered);
@@ -121,7 +124,7 @@ export default function ManagerOrderSection({
 
   const handleSessionUpdated = (updated: TourSessionDto) => {
     setSessionList((prev) =>
-      prev.map((s) => (s.id === updated.id ? updated : s))
+      prev.map((s) => (s.id === updated.id ? updated : s)),
     );
   };
 
@@ -129,7 +132,6 @@ export default function ManagerOrderSection({
   //  Filter sessions
   // ============================
   let filtered = [...sessionList];
-  const now = new Date();
 
   // 🔹 Tab logic
   if (activeTab === "today") {
@@ -155,7 +157,7 @@ export default function ManagerOrderSection({
   // Date range filter
   if (fromDate) {
     filtered = filtered.filter(
-      (s) => new Date(`${s.date}T${s.time}`) >= fromDate
+      (s) => new Date(`${s.date}T${s.time}`) >= fromDate,
     );
   }
 
@@ -165,7 +167,7 @@ export default function ManagerOrderSection({
 
   if (fromDate) {
     filtered = filtered.filter(
-      (s) => new Date(`${s.date}T${s.time}`) >= fromDate
+      (s) => new Date(`${s.date}T${s.time}`) >= fromDate,
     );
   }
 
@@ -180,7 +182,7 @@ export default function ManagerOrderSection({
     filtered.sort(
       (a, b) =>
         new Date(`${a.date}T${a.time}`).getTime() -
-        new Date(`${b.date}T${b.time}`).getTime()
+        new Date(`${b.date}T${b.time}`).getTime(),
     );
   }
 
@@ -270,7 +272,7 @@ export default function ManagerOrderSection({
             <select
               className="select select-bordered select-sm"
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as OrderSort)}
             >
               <option value="DATE">Sort by date</option>
               <option value="STATUS">Sort by status</option>
@@ -309,7 +311,7 @@ export default function ManagerOrderSection({
                             setStatusFilter((prev) =>
                               checked
                                 ? prev.filter((s) => s !== st)
-                                : [...prev, st]
+                                : [...prev, st],
                             )
                           }
                         />
@@ -347,7 +349,7 @@ export default function ManagerOrderSection({
               tour={tours.find(
                 (t) =>
                   t.id ===
-                  sessionList.find((s) => s.id === selectedSessionId)!.tourId
+                  sessionList.find((s) => s.id === selectedSessionId)!.tourId,
               )}
               onClose={() => setSelectedSessionId(null)}
               onConfirmSession={handleConfirmSession}

@@ -14,11 +14,10 @@ import { CartItem as CartItemType } from "@/types/cart";
 import { tourScheduleService } from "@/lib/tourScheduleService";
 import ItemModal from "@/components/items/ItemModal";
 import { useAuth } from "@/hooks/useAuth";
-import api from "@/lib/api/axios";
 
 export default function PaymentPage() {
   const cartItems = useSelector((state: RootState) =>
-    state.cart.items.filter((i) => i.selected)
+    state.cart.items.filter((i) => i.selected),
   );
   const checkoutInfo = useSelector((state: RootState) => state.checkout);
   const router = useRouter();
@@ -29,7 +28,7 @@ export default function PaymentPage() {
   >("credit-card");
   const [loading, setLoading] = useState(false);
 
-  const { user, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   // Map cart items to summary
   const summaryItems = cartItems.map((item) => ({
@@ -43,7 +42,7 @@ export default function PaymentPage() {
 
   const subtotal = cartItems.reduce(
     (sum, item) => sum + item.price * item.participants,
-    0
+    0,
   );
 
   const validateSchedules = async () => {
@@ -77,7 +76,7 @@ export default function PaymentPage() {
       const firstBad = badItems[0];
       setBadItem(firstBad);
       toast.error(
-        `Time ${firstBad.selectedDate} ${firstBad.selectedTime} for "${firstBad.title}" is no longer available.`
+        `Time ${firstBad.selectedDate} ${firstBad.selectedTime} for "${firstBad.title}" is no longer available.`,
       );
       setLoading(false);
       return;
@@ -159,6 +158,7 @@ export default function PaymentPage() {
             images: badItem.images,
             status: "ACTIVE",
             timeRequired: 60,
+            language: badItem.availableLanguages ?? [],
           }}
           cartItemId={badItem.cartItemId}
           initialScheduleId={badItem.scheduleId}

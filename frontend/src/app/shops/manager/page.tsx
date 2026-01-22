@@ -7,9 +7,7 @@ import ManagerOrderSection from "@/components/manager/order/ManagerOrderSection"
 import ManagerItemList from "@/components/manager/item/ManagerItemList";
 import ManagerStatisticsSection from "@/components/manager/statistics/ManagerStatisticsSection";
 import { Tour } from "@/types";
-import { OrderItemResponseDto } from "@/types/order";
 import { TourService } from "@/lib/tourService";
-import { OrderService } from "@/lib/orderService";
 import { useShopAccess } from "@/hooks/useShopAccess";
 import Unauthorized from "@/components/common/Unauthorized";
 import { Navigation, Package } from "lucide-react";
@@ -27,7 +25,6 @@ export default function ShopManagerPage() {
   const access = useShopAccess(shopId ?? 0); // null | true | false
 
   const [tours, setTours] = useState<Tour[]>([]);
-  const [orderItems, setOrderItems] = useState<OrderItemResponseDto[]>([]);
 
   const [sessions, setSessions] = useState<TourSessionDto[]>([]);
 
@@ -53,9 +50,6 @@ export default function ShopManagerPage() {
         const shopTours = await TourService.getByShopId(shopId);
         setTours(shopTours);
 
-        const shopOrderItems = await OrderService.getItemsByShopId(shopId);
-        setOrderItems(shopOrderItems);
-
         // ⭐ NEW — fetch sessions for each tour
         const allSessions: TourSessionDto[] = [];
         for (const t of shopTours) {
@@ -65,14 +59,14 @@ export default function ShopManagerPage() {
 
         // ⭐ Filter: only sessions with participants
         const bookedSessions = allSessions.filter(
-          (s) => (s.participants?.length ?? 0) > 0
+          (s) => (s.participants?.length ?? 0) > 0,
         );
 
         setSessions(bookedSessions);
         const now = new Date();
 
         const totalTours = shopTours.filter(
-          (t) => t.status === "ACTIVE"
+          (t) => t.status === "ACTIVE",
         ).length;
 
         const totalSessions = bookedSessions.length;
@@ -84,12 +78,12 @@ export default function ShopManagerPage() {
         }).length;
 
         const completedSessions = bookedSessions.filter(
-          (s) => s.status === "COMPLETED"
+          (s) => s.status === "COMPLETED",
         ).length;
 
         const totalOrders = bookedSessions.reduce(
           (sum, s) => sum + (s.participants?.length ?? 0),
-          0
+          0,
         );
 
         const totalParticipants = bookedSessions.reduce(
@@ -97,7 +91,7 @@ export default function ShopManagerPage() {
             sum +
             (s.participants?.reduce((pSum, p) => pSum + p.participants, 0) ??
               0),
-          0
+          0,
         );
 
         setStats({

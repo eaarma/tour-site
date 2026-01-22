@@ -1,22 +1,27 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Item } from "@/types";
 import { Clock, Globe, MapPin, Euro, Users } from "lucide-react";
 import { formatDuration } from "@/utils/formatDuration";
+import { Tour } from "@/types";
 
 interface HighlightedItemProps {
-  item: Item;
+  item: Tour;
 }
 
 const HighlightedItem: React.FC<HighlightedItemProps> = ({ item }) => {
   const router = useRouter();
   if (!item) return null;
 
+  type ItemWithImages = {
+    images?: string[];
+    image?: string;
+  };
+
+  const itemData = item as ItemWithImages;
+
   const mainImage =
-    (Array.isArray((item as any).images) && (item as any).images[0]) ||
-    (item as any).image ||
-    "/images/item_placeholder.jpg";
+    itemData.images?.[0] || itemData.image || "/images/item_placeholder.jpg";
 
   const handleNavigate = () => router.push(`/items/${item.id}`);
 

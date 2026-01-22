@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Modal from "@/components/common/Modal";
 import { Tour } from "@/types";
-import { TourSessionDto } from "@/types/tourSession";
+import { OrderItemParticipantDto, TourSessionDto } from "@/types/tourSession";
 import { Users, Calendar, Clock, CircleUserRound } from "lucide-react";
 
 import OrderItemCard from "./OrderItemCard";
@@ -28,7 +28,8 @@ export default function SessionDetailsModal({
   onCompleteSession,
   onSessionUpdated,
 }: Props) {
-  const [selectedItem, setSelectedItem] = useState<any | null>(null);
+  const [selectedItem, setSelectedItem] =
+    useState<OrderItemParticipantDto | null>(null);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [isOwnershipModalOpen, setIsOwnershipModalOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
@@ -36,11 +37,6 @@ export default function SessionDetailsModal({
   const participants = session.participants ?? [];
   const datetime = new Date(`${session.date}T${session.time}`);
   const [sessionData, setSessionData] = useState(session);
-
-  const totalParticipants = participants.reduce(
-    (sum, p) => sum + p.participants,
-    0
-  );
 
   useEffect(() => {
     setSessionData(session);
@@ -69,12 +65,12 @@ export default function SessionDetailsModal({
                     session.status === "PLANNED"
                       ? "text-yellow-600 font-semibold"
                       : session.status === "CONFIRMED"
-                      ? "text-blue-600 font-semibold"
-                      : session.status === "COMPLETED"
-                      ? "text-green-600 font-semibold"
-                      : session.status === "CANCELLED"
-                      ? "text-red-600 font-semibold"
-                      : "text-gray-600 font-semibold"
+                        ? "text-blue-600 font-semibold"
+                        : session.status === "COMPLETED"
+                          ? "text-green-600 font-semibold"
+                          : session.status === "CANCELLED"
+                            ? "text-red-600 font-semibold"
+                            : "text-gray-600 font-semibold"
                   }
                 >
                   {session.status}
@@ -267,10 +263,6 @@ export default function SessionDetailsModal({
           }}
           tour={tour}
           onClose={() => setSelectedItem(null)}
-          onConfirm={() => {}}
-          onConfirmCancellation={() => {}}
-          onComplete={() => {}}
-          onReassigned={() => {}}
         />
       )}
     </>

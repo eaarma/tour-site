@@ -32,12 +32,14 @@ export default function ProfileSection({
           alt="Profile"
           className="w-32 h-32 rounded-full object-cover border shadow-sm"
         />
-        <p className="mt-2 text-sm text-gray-500">
-          Member since:{" "}
-          <span className="font-medium">
-            {new Date(user.createdAt).toLocaleDateString()}
-          </span>
-        </p>
+        {user.createdAt && (
+          <p className="mt-2 text-sm text-gray-500">
+            Member since:{" "}
+            <span className="font-medium">
+              {new Date(user.createdAt).toLocaleDateString()}
+            </span>
+          </p>
+        )}
       </div>
 
       {/* Profile Info */}

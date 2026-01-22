@@ -33,7 +33,7 @@ export default function CheckoutPage() {
           let localNumber = user.phone || "";
           if (user.phone?.startsWith("+")) {
             const match = countryDialCodes.find((c) =>
-              user.phone?.startsWith(c.dial_code)
+              user.phone?.startsWith(c.dial_code),
             );
             if (match) {
               detectedCode = match.dial_code;
@@ -52,10 +52,10 @@ export default function CheckoutPage() {
               email: user.email || "",
               phone: `${detectedCode}${localNumber}` || "",
               nationality: user.nationality || "",
-            })
+            }),
           );
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.warn("User not logged in or failed to fetch profile:", err);
 
         // ✅ Reset checkout state for logged-out users
@@ -65,7 +65,7 @@ export default function CheckoutPage() {
             email: "",
             phone: "",
             nationality: "",
-          })
+          }),
         );
       }
     };
@@ -107,7 +107,7 @@ export default function CheckoutPage() {
         email: checkout.email.trim(),
         phone: `+${fullPhone}`,
         nationality: checkout.nationality,
-      })
+      }),
     );
 
     router.push("/payment");

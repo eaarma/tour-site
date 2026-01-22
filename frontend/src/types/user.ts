@@ -26,7 +26,7 @@ export interface UserResponseDto {
   id: string; // UUID
   name: string;
   email: string;
-  role: string;
+  role: Role;
   phone?: string | null;
   nationality?: string | null;
   bio?: string | null;
@@ -49,3 +49,5 @@ export interface UserUpdateDto {
   languages?: string;
   profileImageUrl?: string;
 }
+
+export type Role = "USER" | "MANAGER" | "ADMIN";

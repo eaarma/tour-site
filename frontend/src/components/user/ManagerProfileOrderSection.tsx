@@ -40,7 +40,7 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
 
   const [sortBy, setSortBy] = useState<"DATE" | "STATUS">("DATE");
   const [statusFilter, setStatusFilter] = useState<TourSessionDto["status"][]>(
-    []
+    [],
   );
 
   const [statusFilterOpen, setStatusFilterOpen] = useState(false);
@@ -48,8 +48,10 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
 
   const [sessionList, setSessionList] = useState<TourSessionDto[]>(sessions);
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(
-    null
+    null,
   );
+
+  type OrderSort = "DATE" | "STATUS";
 
   // default From = today
   useEffect(() => {
@@ -84,7 +86,7 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
 
     // update local immediately (no reload required)
     setSessionList((prev) =>
-      prev.map((s) => (s.id === sessionId ? { ...s, status: "CONFIRMED" } : s))
+      prev.map((s) => (s.id === sessionId ? { ...s, status: "CONFIRMED" } : s)),
     );
   };
 
@@ -95,13 +97,13 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
 
     // update local immediately (no reload required)
     setSessionList((prev) =>
-      prev.map((s) => (s.id === sessionId ? { ...s, status: "COMPLETED" } : s))
+      prev.map((s) => (s.id === sessionId ? { ...s, status: "COMPLETED" } : s)),
     );
   };
 
   const handleSessionUpdated = (updated: TourSessionDto) => {
     setSessionList((prev) =>
-      prev.map((s) => (s.id === updated.id ? updated : s))
+      prev.map((s) => (s.id === updated.id ? updated : s)),
     );
   };
 
@@ -113,7 +115,7 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
   filtered = filtered.filter((s) =>
     activeTab === "current"
       ? CURRENT_STATUSES.includes(s.status)
-      : PAST_STATUSES.includes(s.status)
+      : PAST_STATUSES.includes(s.status),
   );
 
   if (statusFilter.length > 0) {
@@ -122,7 +124,7 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
 
   if (fromDate) {
     filtered = filtered.filter(
-      (s) => new Date(`${s.date}T${s.time}`) >= fromDate
+      (s) => new Date(`${s.date}T${s.time}`) >= fromDate,
     );
   }
 
@@ -137,7 +139,7 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
     filtered.sort(
       (a, b) =>
         new Date(`${a.date}T${a.time}`).getTime() -
-        new Date(`${b.date}T${b.time}`).getTime()
+        new Date(`${b.date}T${b.time}`).getTime(),
     );
   } else {
     filtered.sort((a, b) => a.status.localeCompare(b.status));
@@ -214,7 +216,7 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
             <select
               className="select select-bordered select-sm"
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as OrderSort)}
             >
               <option value="DATE">Sort by date</option>
               <option value="STATUS">Sort by status</option>
@@ -247,7 +249,7 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
                             setStatusFilter((prev) =>
                               checked
                                 ? prev.filter((s) => s !== st)
-                                : [...prev, st]
+                                : [...prev, st],
                             )
                           }
                         />
@@ -285,7 +287,7 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
               tour={tours.find(
                 (t) =>
                   t.id ===
-                  sessionList.find((s) => s.id === selectedSessionId)!.tourId
+                  sessionList.find((s) => s.id === selectedSessionId)!.tourId,
               )}
               onClose={() => setSelectedSessionId(null)}
               onConfirmSession={() => {}}

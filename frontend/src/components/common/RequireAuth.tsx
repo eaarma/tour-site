@@ -4,9 +4,10 @@ import { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useRoleGuard } from "@/hooks/userRoleGuard";
+import { Role } from "@/types/user";
 interface RequireAuthProps {
   children: ReactNode;
-  requiredRole?: "USER" | "MANAGER" | ("USER" | "MANAGER")[];
+  requiredRole?: Role | Role[];
 }
 
 export default function RequireAuth({
@@ -40,7 +41,8 @@ export default function RequireAuth({
     const allowedRoles = Array.isArray(requiredRole)
       ? requiredRole
       : [requiredRole];
-    if (!allowedRoles.includes(role as string)) {
+
+    if (!role || !allowedRoles.includes(role)) {
       return (
         <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
           <h2 className="text-2xl font-bold mb-4">Access Denied</h2>

@@ -70,7 +70,7 @@ export default function BookingModal({
       if (!latest || latest.status !== "ACTIVE") {
         handleRemoveUnavailable(chosenSchedule.id);
         toast.error(
-          "Selected time is no longer available. Please pick another."
+          "Selected time is no longer available. Please pick another.",
         );
         return false;
       }
@@ -87,10 +87,10 @@ export default function BookingModal({
           scheduleId: chosenSchedule.id,
           selectedDate: chosenSchedule.date,
           selectedTime: chosenSchedule.time || "",
-          availableLanguage: item.language,
+          availableLanguages: item.language,
           preferredLanguage: preferredLanguage || undefined,
           comment: comment || undefined,
-        })
+        }),
       );
 
       toast.success(`${item.title} added to cart`);
@@ -148,7 +148,7 @@ export default function BookingModal({
               <option key={n} value={n}>
                 {n}
               </option>
-            )
+            ),
           )}
         </select>
       </div>

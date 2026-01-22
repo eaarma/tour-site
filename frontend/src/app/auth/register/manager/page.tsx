@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { AuthService } from "@/lib/authService";
 import { ManagerRegisterRequestDto } from "@/types/user";
 import toast from "react-hot-toast";
+import { ApiError } from "@/lib/api/ApiError";
 
 const LANGUAGE_OPTIONS = [
   "English",
@@ -41,6 +42,7 @@ export default function ManagerRegisterPage() {
     if (selectedLanguages.length > 0) {
       setErrors((prev) => {
         const { languages, ...rest } = prev;
+        void languages; // explicitly mark as intentionally unused
         return rest;
       });
     }
@@ -106,16 +108,19 @@ export default function ManagerRegisterPage() {
 
       toast.success("Manager registered successfully ✅");
       router.push("/auth/login");
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
 
-      const responseData = err.response?.data;
-      if (responseData?.errors && Array.isArray(responseData.errors)) {
-        setErrors({ general: responseData.errors.join(", ") });
-      } else if (responseData?.details) {
-        setErrors({ general: Object.values(responseData.details).join(", ") });
-      } else if (responseData?.message) {
-        setErrors({ general: responseData.message });
+      if (err instanceof ApiError && err.data) {
+        if (err.data.errors?.length) {
+          setErrors({ general: err.data.errors.join(", ") });
+        } else if (err.data.details) {
+          setErrors({ general: Object.values(err.data.details).join(", ") });
+        } else if (err.data.message) {
+          setErrors({ general: err.data.message });
+        } else {
+          setErrors({ general: "Registration failed." });
+        }
       } else {
         setErrors({ general: "Registration failed." });
       }
@@ -226,7 +231,7 @@ export default function ManagerRegisterPage() {
                 >
                   <option value="">Select language</option>
                   {LANGUAGE_OPTIONS.filter(
-                    (lang) => !selectedLanguages.includes(lang)
+                    (lang) => !selectedLanguages.includes(lang),
                   ).map((lang) => (
                     <option key={lang} value={lang}>
                       {lang}
@@ -263,7 +268,7 @@ export default function ManagerRegisterPage() {
                         className="ml-1 text-xs hover:text-red-500"
                         onClick={() =>
                           setSelectedLanguages((prev) =>
-                            prev.filter((l) => l !== lang)
+                            prev.filter((l) => l !== lang),
                           )
                         }
                       >

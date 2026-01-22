@@ -4,16 +4,17 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AuthService } from "@/lib/authService";
 import { useDispatch, useSelector } from "react-redux";
-import { clearUser, setAuth, setUser } from "@/store/authSlice";
+import { clearUser, setAuth } from "@/store/authSlice";
 import toast from "react-hot-toast";
 import api from "@/lib/api/axios";
+import { RootState } from "@/store/store";
 
 export default function LoginPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
 
-  const user = useSelector((state: any) => state.auth.user); // <-- logged-in check
+  const user = useSelector((state: RootState) => state.auth.user); // <-- logged-in check
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -93,7 +94,7 @@ export default function LoginPage() {
 
       router.push(redirect);
     } catch (err) {
-      setError("Invalid email or password");
+      setError("Invalid email or password: " + err);
     } finally {
       setLoading(false);
     }

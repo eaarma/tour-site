@@ -1,0 +1,24 @@
+# dependencies
+node_modules
+
+# Next.js build output
+.next
+out
+
+# env files
+.env*
+!.env.example
+
+# git
+.git
+.gitignore
+
+# OS / editor junk
+.DS_Store
+.vscode
+.idea
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

@@ -13,7 +13,6 @@ import {
   CalendarClock,
   Euro,
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
 
 export default function ViewOrderPage() {
   const { id } = useParams<{ id: string }>();
@@ -59,6 +58,8 @@ export default function ViewOrderPage() {
 
   return (
     <main className="min-h-screen bg-base-200 p-6 flex justify-center">
+      {error && <p className="text-red-500 mt-4">Failed to load booking.</p>}
+
       <div className="max-w-3xl w-full">
         <button onClick={() => router.back()} className="btn btn-outline mb-6">
           <ArrowLeft /> Back

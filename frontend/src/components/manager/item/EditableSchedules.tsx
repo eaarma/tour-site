@@ -23,7 +23,6 @@ export default function EditableSchedules({
 
   const [newDate, setNewDate] = useState<Date | null>(null);
   const [newTime, setNewTime] = useState<Date | null>(null);
-  const [newParticipants, setNewParticipants] = useState(10);
 
   // Group helper
   const groupByDate = (list: TourScheduleResponseDto[]) =>
@@ -36,7 +35,7 @@ export default function EditableSchedules({
   const schedulesByDate = useMemo(() => groupByDate(schedules), [schedules]);
   const dateKeys = useMemo(
     () => Object.keys(schedulesByDate).sort(),
-    [schedulesByDate]
+    [schedulesByDate],
   );
 
   // Initial load
@@ -75,7 +74,7 @@ export default function EditableSchedules({
     }
 
     const formattedDate = `${newDate.getFullYear()}-${String(
-      newDate.getMonth() + 1
+      newDate.getMonth() + 1,
     ).padStart(2, "0")}-${String(newDate.getDate()).padStart(2, "0")}`;
 
     const formattedTime = newTime.toLocaleTimeString("en-GB", {
@@ -93,7 +92,6 @@ export default function EditableSchedules({
       setSchedules((prev) => [...prev, created]);
       setNewDate(null);
       setNewTime(null);
-      setNewParticipants(participants);
       setSelectedDate(formattedDate); // focus the date we just added
     } catch (err) {
       console.error("Failed to add schedule", err);
@@ -126,7 +124,7 @@ export default function EditableSchedules({
   };
 
   const timesForSelected = selectedDate
-    ? schedulesByDate[selectedDate] ?? []
+    ? (schedulesByDate[selectedDate] ?? [])
     : [];
 
   return (

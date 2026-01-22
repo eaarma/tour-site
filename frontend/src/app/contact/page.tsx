@@ -36,8 +36,10 @@ export default function ContactPage() {
       setEmail("");
       setSubject("");
       setMessage("");
-    } catch (error: any) {
-      toast.error(error.message ?? "Failed to send message");
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "Failed to send message";
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

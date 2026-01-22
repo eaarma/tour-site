@@ -7,6 +7,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragEndEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -45,12 +46,12 @@ export default function TourImagesManager({
   const PLACEHOLDER = "/images/item_placeholder.jpg";
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
   );
 
   // Upload image
   const handleTourImageUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -64,7 +65,7 @@ export default function TourImagesManager({
         "state_changed",
         (snapshot) =>
           setUploadProgress(
-            (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
           ),
         () => {
           toast.error("Upload failed");
@@ -76,7 +77,7 @@ export default function TourImagesManager({
           setTourImages((prev) => [...prev, saved]);
           toast.success("Image uploaded");
           setUploading(false);
-        }
+        },
       );
     } catch {
       toast.error("Upload error");
@@ -104,18 +105,13 @@ export default function TourImagesManager({
       await tourImageService.deleteImage(tourId, id); // 👈 add tourId
       setTourImages((prev) => prev.filter((img) => img.id !== id));
       toast.success("Image deleted");
-    } catch (e) {
+    } catch {
       toast.error("Failed to delete image");
     }
   };
 
-  async function deleteFromFirebase(imageUrl: string) {
-    const fileRef = ref(storage, imageUrl);
-    await deleteObject(fileRef);
-  }
-
   // Drag reorder save
-  const handleDragEnd = async (event: any) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -126,7 +122,7 @@ export default function TourImagesManager({
     setTourImages(reordered);
     await tourImageService.updateOrder(
       tourId,
-      reordered.map((img) => img.id)
+      reordered.map((img) => img.id),
     );
   };
 

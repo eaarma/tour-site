@@ -20,8 +20,15 @@ const CartItem: React.FC<CartItemProps> = ({
   const totalPrice = item.price * item.participants;
 
   // ✅ Thumbnail logic (support new images array or fallback to single image field)
+  type ItemWithImages = {
+    images?: string[];
+    image?: string;
+  };
+
+  const itemData = item as ItemWithImages;
+
   const thumbnail =
-    (item as any).images?.[0] || (item as any).image || "/images/default.jpg";
+    itemData.images?.[0] || itemData.image || "/images/placeholder.jpg";
 
   return (
     <div className="w-full flex items-center gap-3 py-2">

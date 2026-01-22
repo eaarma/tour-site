@@ -10,6 +10,7 @@ import { store } from "@/store/store";
 import { clearUser, setAccessToken } from "@/store/authSlice";
 import { markExpired } from "@/store/sessionSlice";
 import { ApiError } from "./ApiError";
+import { ApiErrorData } from "@/types/ApiErrorData";
 
 const NETWORK_ERROR_TOAST_ID = "network-error";
 
@@ -131,9 +132,12 @@ api.interceptors.response.use(
        STANDARD ERROR HANDLING
        ============================= */
     switch (status) {
-      case 400:
-        toast.error((response.data as any)?.message || "Bad request.");
+      case 400: {
+        const data = response.data as ApiErrorData | undefined;
+        toast.error(data?.message || "Bad request.");
         break;
+      }
+
       case 403:
         toast.error("You do not have permission to do that.");
         break;

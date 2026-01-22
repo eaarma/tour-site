@@ -1,7 +1,7 @@
 "use client";
 
 import Modal from "@/components/common/Modal";
-import { Tour, OrderItemResponseDto } from "@/types";
+import { Tour, OrderDetailsModalDto } from "@/types";
 import {
   Users,
   Calendar,
@@ -16,7 +16,7 @@ import {
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  orderItem: OrderItemResponseDto | null;
+  orderItem: OrderDetailsModalDto | null;
   tour?: Tour;
 }
 
@@ -45,9 +45,9 @@ export default function OrderDetailsModal({
       {/* ===== TOUR PREVIEW ===== */}
       {tour && (
         <div className="mb-5">
-          {tour.image && (
+          {tour.images && (
             <img
-              src={tour.image}
+              src={tour.images[0]}
               alt={tour.title}
               className="w-full h-40 object-cover rounded-lg mb-2"
             />

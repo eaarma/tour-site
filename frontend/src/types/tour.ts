@@ -67,3 +67,53 @@ export type TourCategory =
   | "SLOW_PACED"
   | "INTENSE"
   | "BUDGET";
+
+// src/types/ItemModalItem.ts
+export interface ItemModalItem {
+  id: number;
+  title: string;
+  price: number;
+  participants: number;
+  images?: string[];
+  status: string;
+  timeRequired: number;
+  language: string[];
+}
+
+// types/tour/TourFormDto.ts
+// types/tour/TourFormDto.ts
+
+export interface TourFormDto {
+  shopId?: number;
+  title?: string;
+  description?: string;
+  location?: string;
+  images?: string[];
+  price?: number;
+  timeRequired?: number;
+  intensity?: string;
+  participants?: number;
+
+  categories?: TourCategory[];
+  language?: string[];
+
+  type?: string;
+  status?: string;
+}
+
+// types/tour/TourUpdateDto.ts
+export interface TourUpdateDto {
+  title: string;
+  description: string;
+  images: string[];
+  price: number;
+  timeRequired: number;
+  intensity: string;
+  participants: number;
+  categories: string[];
+  language: string[];
+  type: string;
+  location: string;
+  status: string;
+  shopId: number;
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { useRouter } from "next/navigation";
 
@@ -17,14 +17,13 @@ interface Props {
 const CartTotalSection: React.FC<Props> = ({ onCheckoutSuccess }) => {
   const cart = useSelector((state: RootState) => state.cart.items);
   const router = useRouter();
-  const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
 
   const selectedItems = cart.filter((i) => i.selected);
 
   const totalPrice = selectedItems.reduce(
     (acc, entry) => acc + entry.price * entry.participants,
-    0
+    0,
   );
 
   const handleProceedToCheckout = async () => {
@@ -34,16 +33,15 @@ const CartTotalSection: React.FC<Props> = ({ onCheckoutSuccess }) => {
     }
 
     setLoading(true);
-    const { ok, badItems } = await validateSchedulesAgainstCapacity(
-      selectedItems
-    );
+    const { ok, badItems } =
+      await validateSchedulesAgainstCapacity(selectedItems);
     setLoading(false);
 
     if (!ok) {
       // show message for first bad item and list count
       const first = badItems[0];
       toast.error(
-        `Time ${first.selectedDate} ${first.selectedTime} for "${first.title}" is no longer available. Please pick a different time.`
+        `Time ${first.selectedDate} ${first.selectedTime} for "${first.title}" is no longer available. Please pick a different time.`,
       );
       // optionally, you can remove bad items from cart:
       // badItems.forEach(i => dispatch(removeItemFromCart(i.id)));

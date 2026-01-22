@@ -1,79 +1,27 @@
 "use client";
 
-import { OrderItemResponseDto, OrderStatus } from "@/types/order";
+import { OrderItemCardDto } from "@/types/order";
 import { Users, Euro, Dot } from "lucide-react";
 
 interface Props {
-  item: OrderItemResponseDto;
+  item: OrderItemCardDto;
   onConfirm: (id: number) => void;
   onConfirmCancellation: (id: number) => void;
   onComplete: (id: number) => void;
   onClick: () => void;
 }
 
-export default function OrderItemCard({
-  item,
-  onConfirm,
-  onConfirmCancellation,
-  onComplete,
-  onClick,
-}: Props) {
+export default function OrderItemCard({ item, onClick }: Props) {
   const statusStyle =
     item.status === "CONFIRMED"
       ? "text-green-600"
       : item.status === "PENDING"
-      ? "text-yellow-600"
-      : item.status === "CANCELLED"
-      ? "text-red-600"
-      : item.status === "CANCELLED_CONFIRMED"
-      ? "text-gray-500"
-      : "text-gray-400";
-
-  const renderActions = () => {
-    switch (item.status as OrderStatus) {
-      case "PENDING":
-        return (
-          <button
-            className="btn btn-sm btn-primary"
-            onClick={(e) => {
-              e.stopPropagation();
-              onConfirm(item.id);
-            }}
-          >
-            Confirm
-          </button>
-        );
-
-      case "CANCELLED":
-        return (
-          <button
-            className="btn btn-sm btn-error"
-            onClick={(e) => {
-              e.stopPropagation();
-              onConfirmCancellation(item.id);
-            }}
-          >
-            Confirm Cancellation
-          </button>
-        );
-
-      case "CONFIRMED":
-        return (
-          <button
-            className="btn btn-sm btn-success"
-            onClick={(e) => {
-              e.stopPropagation();
-              onComplete(item.id);
-            }}
-          >
-            Completed
-          </button>
-        );
-
-      default:
-        return null;
-    }
-  };
+        ? "text-yellow-600"
+        : item.status === "CANCELLED"
+          ? "text-red-600"
+          : item.status === "CANCELLED_CONFIRMED"
+            ? "text-gray-500"
+            : "text-gray-400";
 
   return (
     <div

@@ -1,4 +1,4 @@
-import { TourCreateDto, Tour } from "@/types";
+import { TourCreateDto, Tour, TourUpdateDto } from "@/types";
 import api from "./api/axios";
 
 const BASE_URL = "/tours";
@@ -20,8 +20,8 @@ interface QueryParams {
   sort?: string; // e.g. "title,asc" or "price,desc"
   keyword?: string;
   date?: string;
-  category?: string;
-  language?: string;
+  categories?: string[];
+  language?: string[];
   type?: string;
 }
 
@@ -41,7 +41,7 @@ export const TourService = {
     return res.data;
   },
 
-  update: async (id: number, data: TourCreateDto): Promise<Tour> => {
+  update: async (id: number, data: TourUpdateDto): Promise<Tour> => {
     const res = await api.put(`${BASE_URL}/${id}`, data, {
       withCredentials: true,
     });

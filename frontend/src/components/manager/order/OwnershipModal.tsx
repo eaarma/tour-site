@@ -58,7 +58,7 @@ export default function OwnershipModal({
       toast.success("Ownership updated successfully");
       onReassigned();
       onClose();
-    } catch (err) {
+    } catch {
       toast.error("Failed to update ownership");
     } finally {
       setSaving(false);

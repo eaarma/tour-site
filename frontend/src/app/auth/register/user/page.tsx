@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AuthService } from "@/lib/authService";
 import { UserRegisterRequestDto } from "@/types/user";
 import toast from "react-hot-toast";
+import { ApiError } from "@/lib/api/ApiError";
 
 export default function UserRegisterPage() {
   const router = useRouter();
@@ -64,22 +65,26 @@ export default function UserRegisterPage() {
 
       toast.success("User registered successfully ✅");
       router.push("/auth/login");
-    } catch (err: any) {
-      console.error(err);
+    }  catch (err) {
+  console.error(err);
 
-      const responseData = err.response?.data;
-      if (responseData?.errors && Array.isArray(responseData.errors)) {
-        setErrors({ general: responseData.errors.join(", ") });
-      } else if (responseData?.details) {
-        setErrors({ general: Object.values(responseData.details).join(", ") });
-      } else if (responseData?.message) {
-        setErrors({ general: responseData.message });
-      } else {
-        setErrors({ general: "Registration failed." });
-      }
-    } finally {
-      setLoading(false);
+  if (err instanceof ApiError && err.data) {
+    if (err.data.errors?.length) {
+      setErrors({ general: err.data.errors.join(", ") });
+    } else if (err.data.details) {
+      setErrors({ general: Object.values(err.data.details).join(", ") });
+    } else if (err.data.message) {
+      setErrors({ general: err.data.message });
+    } else {
+      setErrors({ general: "Registration failed." });
     }
+  } else {
+    setErrors({ general: "Registration failed." });
+  }
+} finally {
+  setLoading(false);
+}
+
   };
 
   return (

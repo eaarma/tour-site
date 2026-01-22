@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ShopUserDto } from "@/types";
 import Modal from "../../common/Modal";
 import ManagerShopUserViewModal from "./ManagerShopUserViewModal";
@@ -101,18 +101,18 @@ export default function ManagerShopUsersModal({
       </div>
 
       {/* View Modal */}
-  {selectedUser && (
-  <ManagerShopUserViewModal
-    isOpen={isViewModalOpen}
-    onClose={() => setIsViewModalOpen(false)}
-    user={selectedUser}
-    shopId={shopId}
-    onUserUpdated={(updatedUser) => {
-      setSelectedUser(updatedUser);
-      onUserUpdated(updatedUser);
-    }}
-  />
-)}
+      {selectedUser && (
+        <ManagerShopUserViewModal
+          isOpen={isViewModalOpen}
+          onClose={() => setIsViewModalOpen(false)}
+          user={selectedUser}
+          shopId={shopId}
+          onUserUpdated={(updatedUser) => {
+            setSelectedUser(updatedUser);
+            onUserUpdated(updatedUser);
+          }}
+        />
+      )}
 
       {/* Edit Modal */}
       {selectedUser && canEdit && (
@@ -120,6 +120,7 @@ export default function ManagerShopUsersModal({
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           user={selectedUser}
+          shopId={shopId}
           onUserUpdated={(updatedUser) => {
             setSelectedUser(updatedUser);
             onUserUpdated(updatedUser);

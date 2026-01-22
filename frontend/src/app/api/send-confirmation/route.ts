@@ -1,16 +1,17 @@
 // /app/api/send-confirmation/route.ts
 
-import { NextResponse } from "next/server";
+import { Order, OrderItem } from "@/types";
 import nodemailer from "nodemailer";
+import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { order } = await req.json();
+    const { order }: { order: Order } = await req.json();
 
     if (!order || !order.items?.length) {
       return NextResponse.json(
         { error: "Order details missing" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -37,7 +38,7 @@ export async function POST(req: Request) {
         <ul>
           ${order.items
             .map(
-              (item: any) => `
+              (item: OrderItem) => `
             <li>
               <strong>${item.tourTitle}</strong><br/>
               📅 ${new Date(item.scheduledAt).toLocaleString()}<br/>
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
               📝 ${item.comment || "N/A"}
 
             </li>
-          `
+          `,
             )
             .join("")}
         </ul>
@@ -83,7 +84,7 @@ export async function POST(req: Request) {
     console.error("Email Error:", error);
     return NextResponse.json(
       { error: "Failed to send confirmation email." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

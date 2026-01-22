@@ -11,11 +11,7 @@ interface FilterMenuProps {
   onChange: (selection: Record<string, string[]>) => void; // tell parent to update URL
 }
 
-const FilterMenu: React.FC<FilterMenuProps> = ({
-  filters,
-  selected,
-  onChange,
-}) => {
+const FilterMenu: React.FC<FilterMenuProps> = ({ filters, onChange }) => {
   const [selectedFilters, setSelectedFilters] = useState<
     Record<string, Set<string>>
   >(() => {
