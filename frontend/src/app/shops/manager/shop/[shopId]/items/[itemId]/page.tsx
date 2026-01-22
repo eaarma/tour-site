@@ -10,7 +10,7 @@ import { DURATION_OPTIONS } from "@/utils/duration";
 import { formatDuration } from "@/utils/formatDuration";
 import { ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
-import { tourImageService } from "@/lib/tourImageService";
+import { TourImageService } from "@/lib/tourImageService";
 import {
   TourCategory,
   TourFormDto,
@@ -79,8 +79,7 @@ export default function ManagerItemPage() {
   // Load images only for existing tours
   useEffect(() => {
     if (!isNew) {
-      tourImageService
-        .getImages(Number(itemId))
+      TourImageService.getImages(Number(itemId))
         .then(setTourImages)
         .catch(() => console.error("Failed to load tour images"));
     }

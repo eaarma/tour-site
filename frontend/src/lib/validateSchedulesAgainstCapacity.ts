@@ -1,8 +1,8 @@
-import { tourScheduleService } from "@/lib/tourScheduleService";
+import { TourScheduleService } from "@/lib/tourScheduleService";
 import { CartItem } from "@/types";
 
 export async function validateSchedulesAgainstCapacity(
-  items: CartItem[]
+  items: CartItem[],
 ): Promise<{ ok: boolean; badItems: CartItem[] }> {
   const bad: CartItem[] = [];
 
@@ -17,7 +17,7 @@ export async function validateSchedulesAgainstCapacity(
 
   for (const [scheduleId, group] of grouped.entries()) {
     try {
-      const schedule = await tourScheduleService.getById(scheduleId);
+      const schedule = await TourScheduleService.getById(scheduleId);
 
       if (!schedule || schedule.status !== "ACTIVE") {
         bad.push(...group);

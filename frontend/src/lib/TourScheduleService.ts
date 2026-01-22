@@ -6,10 +6,10 @@ import {
 import api from "./api/axios";
 const BASE_URL = "/schedules";
 
-export const tourScheduleService = {
+export const TourScheduleService = {
   // Create new schedule
   create: async (
-    data: TourScheduleCreateDto
+    data: TourScheduleCreateDto,
   ): Promise<TourScheduleResponseDto> => {
     const res = await api.post(BASE_URL, data);
     return res.data;
@@ -30,7 +30,7 @@ export const tourScheduleService = {
   // Update schedule
   update: async (
     id: number,
-    data: TourScheduleUpdateDto
+    data: TourScheduleUpdateDto,
   ): Promise<TourScheduleResponseDto> => {
     const res = await api.patch(`${BASE_URL}/${id}`, data);
     return res.data;

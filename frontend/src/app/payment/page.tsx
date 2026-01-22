@@ -11,7 +11,7 @@ import { OrderService } from "@/lib/orderService";
 import { useRouter } from "next/navigation";
 import { OrderCreateRequestDto } from "@/types/order";
 import { CartItem as CartItemType } from "@/types/cart";
-import { tourScheduleService } from "@/lib/tourScheduleService";
+import { TourScheduleService } from "@/lib/tourScheduleService";
 import ItemModal from "@/components/items/ItemModal";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -49,7 +49,7 @@ export default function PaymentPage() {
     const bad: CartItemType[] = [];
     for (const it of cartItems) {
       try {
-        const schedule = await tourScheduleService.getById(it.scheduleId);
+        const schedule = await TourScheduleService.getById(it.scheduleId);
         if (!schedule || schedule.status !== "ACTIVE") {
           bad.push(it);
         }

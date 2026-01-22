@@ -17,7 +17,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { TourImage } from "@/types";
-import { tourImageService } from "@/lib/tourImageService";
+import { TourImageService } from "@/lib/tourImageService";
 import {
   ref,
   uploadBytesResumable,
@@ -73,7 +73,7 @@ export default function TourImagesManager({
         },
         async () => {
           const imageUrl = await getDownloadURL(uploadTask.snapshot.ref);
-          const saved = await tourImageService.addImage(tourId, imageUrl);
+          const saved = await TourImageService.addImage(tourId, imageUrl);
           setTourImages((prev) => [...prev, saved]);
           toast.success("Image uploaded");
           setUploading(false);
@@ -102,7 +102,7 @@ export default function TourImagesManager({
   const handleDeleteImage = async (id: number, imageUrl: string) => {
     try {
       await deleteFromStorageByUrl(imageUrl);
-      await tourImageService.deleteImage(tourId, id); // 👈 add tourId
+      await TourImageService.deleteImage(tourId, id); // 👈 add tourId
       setTourImages((prev) => prev.filter((img) => img.id !== id));
       toast.success("Image deleted");
     } catch {
@@ -120,7 +120,7 @@ export default function TourImagesManager({
     const reordered = arrayMove(tourImages, oldIndex, newIndex);
 
     setTourImages(reordered);
-    await tourImageService.updateOrder(
+    await TourImageService.updateOrder(
       tourId,
       reordered.map((img) => img.id),
     );

@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Tour } from "@/types";
 import { TourService } from "@/lib/tourService";
-import { tourScheduleService } from "@/lib/tourScheduleService";
+import { TourScheduleService } from "@/lib/tourScheduleService";
 import { TourScheduleResponseDto } from "@/types/tourSchedule";
 import BookingModal from "@/components/items/BookingModal";
 import { formatDuration } from "@/utils/formatDuration";
@@ -31,7 +31,7 @@ export default function ItemPage() {
         const tour = await TourService.getById(Number(itemId));
         setItem(tour);
 
-        const sch = await tourScheduleService.getByTourId(Number(itemId));
+        const sch = await TourScheduleService.getByTourId(Number(itemId));
         setSchedules(sch);
       } catch (err) {
         console.error("Error fetching item or schedules:", err);
@@ -83,8 +83,8 @@ export default function ItemPage() {
               item?.status === "ACTIVE"
                 ? "badge-success"
                 : item?.status === "ON HOLD"
-                ? "badge-warning"
-                : "badge-error"
+                  ? "badge-warning"
+                  : "badge-error"
             }`}
           >
             {item?.status}

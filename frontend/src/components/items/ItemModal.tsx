@@ -8,7 +8,7 @@ import SchedulePicker from "./SchedulePicker";
 import { useDispatch } from "react-redux";
 import { updateItemSchedule } from "@/store/cartSlice";
 import toast from "react-hot-toast";
-import { tourScheduleService } from "@/lib/tourScheduleService";
+import { TourScheduleService } from "@/lib/tourScheduleService";
 import { useRouter } from "next/navigation";
 
 interface Props {
@@ -61,7 +61,7 @@ export default function ItemModal({
     let cancelled = false;
     (async () => {
       try {
-        const data = await tourScheduleService.getByTourId(item.id);
+        const data = await TourScheduleService.getByTourId(item.id);
         if (!cancelled) setLocalSchedules(data);
       } catch (e) {
         console.error("Failed to load schedules in ItemModal", e);
