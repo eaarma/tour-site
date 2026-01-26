@@ -162,7 +162,7 @@ public class AuthenticationController {
                 Result<AuthTokens> result = authService.refresh(refreshToken);
 
                 if (result.isFail()) {
-                        return ResultResponseMapper.toResponse(result);
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
                 }
 
                 AuthTokens tokens = result.get();
