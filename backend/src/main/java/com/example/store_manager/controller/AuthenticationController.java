@@ -146,6 +146,8 @@ public class AuthenticationController {
                         @CookieValue(name = "refreshToken", required = false) String refreshToken,
                         HttpServletResponse response) {
 
+                boolean isProd = environment.acceptsProfiles("prod");
+
                 // 1) Require custom header
                 if (!"true".equals(request.getHeader("X-Refresh-Request"))) {
                         return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -160,13 +162,14 @@ public class AuthenticationController {
                 Result<AuthTokens> result = authService.refresh(refreshToken);
 
                 if (result.isFail()) {
-                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                        return ResultResponseMapper.toResponse(result);
                 }
 
                 AuthTokens tokens = result.get();
 
                 response.addHeader(HttpHeaders.SET_COOKIE,
-                                buildCookie("refreshToken", tokens.refreshToken(), 7 * 24 * 60 * 60, true).toString());
+                                buildCookie("refreshToken", tokens.refreshToken(), 7 * 24 * 60 * 60, isProd)
+                                                .toString());
 
                 return ResponseEntity.ok(Map.of("accessToken", tokens.accessToken()));
         }

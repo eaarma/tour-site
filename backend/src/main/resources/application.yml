@@ -16,7 +16,8 @@ security:
   refresh:
     allowed-origins:
       - http://localhost:3000
-      - https://your-frontend-domain.com
+      - https://tourhub.space
+      - "https://www.tourhub.space"
 
 management:
   endpoints:
