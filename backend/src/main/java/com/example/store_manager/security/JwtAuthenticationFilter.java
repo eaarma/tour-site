@@ -32,6 +32,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
 
+        String path = request.getServletPath();
+
+        // Never apply access-token validation to auth endpoints
+        if (path.startsWith("/auth/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String token = extractToken(request);
 
         if (token != null && jwtService.validateAccessToken(token)) {
