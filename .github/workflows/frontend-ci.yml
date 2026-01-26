@@ -52,8 +52,9 @@ jobs:
         working-directory: frontend
         run: |
           docker build \
+            --build-arg NEXT_PUBLIC_API_BASE_URL=https://api.tourhub.space \
             -t ghcr.io/${{ github.repository_owner }}/tourhub-frontend:${{ github.sha }} \
-            .
+           .
 
       # Push Docker image
       - name: Push Docker image
