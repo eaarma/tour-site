@@ -74,11 +74,10 @@ jobs:
 
             export FRONTEND_IMAGE_TAG=${{ github.sha }}
 
-            docker compose pull frontend
-            docker compose up -d --no-deps frontend
-            docker compose ps frontend
+            docker compose -f docker-compose.prod.yml pull frontend
+            docker compose -f docker-compose.prod.yml up -d --no-deps frontend
+            docker compose -f docker-compose.prod.yml ps frontend
 
-            # Verify frontend directly on the VM (bypass Nginx/Cloudflare)
             for i in {1..24}; do
               if curl -fsS http://127.0.0.1:3001 > /dev/null; then
                 echo "Frontend is healthy (origin)"
@@ -87,7 +86,6 @@ jobs:
               echo "Waiting for frontend..."
               sleep 5
             done
-
             echo "Frontend did not become healthy in time"
             docker logs tourhub-frontend --tail=200 || true
             exit 1
