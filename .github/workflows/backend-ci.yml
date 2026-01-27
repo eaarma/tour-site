@@ -2,6 +2,7 @@ name: backend-ci
 
 on:
   push:
+    branches: ["main"]
   pull_request:
 
 permissions:
@@ -73,3 +74,41 @@ jobs:
       - name: Push Docker image
         run: |
           docker push ghcr.io/${{ github.repository_owner }}/store-manager-backend:${{ github.sha }}
+
+  deploy-backend:
+    name: Deploy backend to production
+    runs-on: ubuntu-latest
+    needs: backend
+    if: github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+      - name: Deploy backend via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.DEPLOY_PATH }}
+
+            # Use the exact image built by CI for this commit
+            export BACKEND_IMAGE_TAG=${{ github.sha }}
+
+            docker compose -f docker-compose.prod.yml pull backend
+            docker compose -f docker-compose.prod.yml up -d --no-deps backend
+            docker compose -f docker-compose.prod.yml ps backend
+
+      - name: Verify backend health
+        run: |
+          for i in {1..12}; do
+            if curl -fsS https://api.tourhub.space/actuator/health > /dev/null; then
+              echo "Backend is healthy"
+              exit 0
+            fi
+            echo "Waiting for backend..."
+            sleep 5
+          done
+          echo "Backend did not become healthy in time"
+          exit 1

@@ -16,7 +16,7 @@ services:
     restart: always
 
   backend:
-    image: ghcr.io/<org>/store-manager-backend:${BACKEND_IMAGE_TAG}
+    image: ghcr.io/eaarma/store-manager-backend:${BACKEND_IMAGE_TAG}
     container_name: store_manager_backend
     depends_on:
       postgres:
