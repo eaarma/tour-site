@@ -35,7 +35,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getServletPath();
 
         // Never apply access-token validation to auth endpoints
-        if (path.startsWith("/auth/")) {
+        if (path.equals("/auth/login") ||
+                path.equals("/auth/refresh") ||
+                path.equals("/auth/logout") ||
+                path.startsWith("/auth/register")) {
             filterChain.doFilter(request, response);
             return;
         }

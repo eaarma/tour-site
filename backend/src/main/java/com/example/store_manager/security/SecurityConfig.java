@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -30,7 +29,6 @@ import com.example.store_manager.security.filters.GlobalRateLimitFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
-@Profile("!schema")
 @Configuration
 @RequiredArgsConstructor
 @EnableMethodSecurity
@@ -54,8 +52,9 @@ public class SecurityConfig {
                 .securityContext(security -> security
                         .requireExplicitSave(false))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers("/auth/me").authenticated()
+                        .requestMatchers("/auth/**").permitAll()
 
                         // Tours
                         .requestMatchers(HttpMethod.GET, "/tours").permitAll()

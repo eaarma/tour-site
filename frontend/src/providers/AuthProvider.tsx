@@ -55,7 +55,6 @@ export default function AuthProvider({
 
     return () => clearInterval(interval);
   }, [dispatch, router]); */
-
   if (loading) {
     return <div className="p-6 text-center">Loading authentication...</div>;
   }

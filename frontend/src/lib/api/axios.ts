@@ -88,8 +88,11 @@ api.interceptors.response.use(
        ============================= */
     if (status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       const { user } = store.getState().auth;
+      const isMeEndpoint = originalRequest.url?.includes("/auth/me");
 
-      if (!user) {
+      // After a hard refresh, user is null but refresh cookie may exist.
+      // Allow refresh attempt for /auth/me even when user is null.
+      if (!user && !isMeEndpoint) {
         throw new ApiError(status, response.data);
       }
 
