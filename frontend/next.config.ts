@@ -16,6 +16,7 @@ const securityHeaders = [
       https://tourhub.space
       https://api.tourhub.space
       https://firebasestorage.googleapis.com;
+      http://localhost:8080;
       font-src 'self';
       object-src 'none';
       base-uri 'none';

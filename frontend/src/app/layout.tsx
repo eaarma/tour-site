@@ -22,6 +22,8 @@ export const metadata: Metadata = {
   description: "Ease into your shopping experience with ShopEase",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({
   children,
 }: {

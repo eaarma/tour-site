@@ -134,7 +134,7 @@ public class AuthenticationController {
                 return ResponseCookie.from(name, value)
                                 .httpOnly(true) // refresh token should ALWAYS be HttpOnly
                                 .secure(secure) // ✅ environment-controlled
-                                .sameSite("None") // required for cross-site cookies
+                                .sameSite("none") // required for cross-site cookies
                                 .path("/")
                                 .maxAge(maxAgeSeconds)
                                 .build();

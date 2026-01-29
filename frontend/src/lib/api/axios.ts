@@ -137,6 +137,11 @@ api.interceptors.response.use(
     /* =============================
        STANDARD ERROR HANDLING
        ============================= */
+
+    if (status === 401 && originalRequest.url?.includes("/auth/me")) {
+      throw new ApiError(status, response.data);
+    }
+
     switch (status) {
       case 400: {
         const data = response.data as ApiErrorData | undefined;
@@ -154,7 +159,9 @@ api.interceptors.response.use(
         toast.error("Server error. Please try again later.");
         break;
       default:
-        toast.error("Unexpected error occurred.");
+        if (status !== 401) {
+          toast.error("Unexpected error occurred.");
+        }
         break;
     }
 
