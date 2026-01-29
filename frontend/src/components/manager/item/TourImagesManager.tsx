@@ -67,8 +67,9 @@ export default function TourImagesManager({
           setUploadProgress(
             (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
           ),
-        () => {
-          toast.error("Upload failed");
+        (error) => {
+          console.error("Firebase upload error:", error);
+          toast.error(error.message ?? "Upload failed");
           setUploading(false);
         },
         async () => {
@@ -79,7 +80,8 @@ export default function TourImagesManager({
           setUploading(false);
         },
       );
-    } catch {
+    } catch (err) {
+      console.error("Upload exception:", err);
       toast.error("Upload error");
       setUploading(false);
     }
