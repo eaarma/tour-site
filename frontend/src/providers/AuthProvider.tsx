@@ -5,7 +5,6 @@ import { useDispatch } from "react-redux";
 import { clearUser, setAuth } from "@/store/authSlice";
 import { AuthService } from "@/lib/authService";
 import { UserResponseDto } from "@/types";
-import { useRouter } from "next/navigation";
 
 export default function AuthProvider({
   children,
@@ -13,7 +12,6 @@ export default function AuthProvider({
   children: React.ReactNode;
 }) {
   const dispatch = useDispatch();
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
 
   // 1️⃣ Initial user load (NO accessToken here)
@@ -38,7 +36,7 @@ export default function AuthProvider({
     fetchUser();
   }, [dispatch]);
 
-/*   // 2️⃣ Background session checker (optional but valid) Currently disabled
+  /*   // 2️⃣ Background session checker (optional but valid) Currently disabled
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
