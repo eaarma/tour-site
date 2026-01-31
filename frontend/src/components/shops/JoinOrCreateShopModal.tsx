@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Search, PlusCircle } from "lucide-react";
+import { Search, PlusCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import Modal from "../common/Modal";
 import { ShopService } from "@/lib/shopService";
@@ -40,7 +40,7 @@ export default function JoinOrCreateShopModal({
       const filtered =
         searchBy === "name"
           ? allShops.filter((s) =>
-              s.name.toLowerCase().includes(searchTerm.toLowerCase())
+              s.name.toLowerCase().includes(searchTerm.toLowerCase()),
             )
           : allShops.filter((s) => s.id.toString() === searchTerm.trim());
       setResults(filtered);
@@ -91,12 +91,6 @@ export default function JoinOrCreateShopModal({
       {/* Header with close */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold">Join or Create a Shop</h2>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-gray-700 transition"
-        >
-          <X className="w-5 h-5" />
-        </button>
       </div>
 
       {/* Tabs */}

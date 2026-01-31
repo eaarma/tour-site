@@ -22,6 +22,10 @@ export default function SessionExpiredModal() {
     window.location.href = "/auth/login?sessionExpired=1";
   };
 
+  const handleCloseDialog = () => {
+    dispatch(clearExpired());
+  };
+
   return (
     <AnimatePresence>
       {expired && (
@@ -47,6 +51,13 @@ export default function SessionExpiredModal() {
 
             <button className="btn btn-primary btn-block" onClick={handleLogin}>
               Go to Login
+            </button>
+
+            <button
+              className="btn btn mt-2 btn-block"
+              onClick={handleCloseDialog}
+            >
+              Close
             </button>
           </motion.div>
         </motion.div>

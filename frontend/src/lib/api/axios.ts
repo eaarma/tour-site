@@ -131,8 +131,15 @@ api.interceptors.response.use(
       } catch {
         isRefreshing = false;
         refreshSubscribers = [];
+        const { user } = store.getState().auth;
+
         store.dispatch(clearUser());
-        store.dispatch(markExpired());
+
+        // 🔒 Only mark expired if a session actually existed
+        if (user) {
+          store.dispatch(markExpired());
+        }
+
         throw new ApiError(status, response.data);
       }
     }
