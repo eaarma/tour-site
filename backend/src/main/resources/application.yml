@@ -9,7 +9,7 @@ spring:
     locations: classpath:db/migration
 
 jwt:
-  access-expiration-ms: 900000        # 15 minutes
+  access-expiration-ms: 30000        #  900 000 = 15 minutes
   refresh-expiration-ms: 86400000     # 24 hours
 
 

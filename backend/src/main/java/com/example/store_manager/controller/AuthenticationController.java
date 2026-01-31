@@ -90,7 +90,7 @@ public class AuthenticationController {
 
                 // Refresh token as HttpOnly cookie
                 response.addHeader(HttpHeaders.SET_COOKIE,
-                                buildCookie("refreshToken", tokens.refreshToken(), 7 * 24 * 60 * 60, isProd)
+                                buildCookie("refreshToken", tokens.refreshToken(), 1 * 24 * 60 * 60, isProd)
                                                 .toString());
 
                 User user = userRepository.findByEmail(dto.getEmail().trim().toLowerCase())
@@ -168,7 +168,7 @@ public class AuthenticationController {
                 AuthTokens tokens = result.get();
 
                 response.addHeader(HttpHeaders.SET_COOKIE,
-                                buildCookie("refreshToken", tokens.refreshToken(), 7 * 24 * 60 * 60, isProd)
+                                buildCookie("refreshToken", tokens.refreshToken(), 1 * 24 * 60 * 60, isProd)
                                                 .toString());
 
                 return ResponseEntity.ok(Map.of("accessToken", tokens.accessToken()));
