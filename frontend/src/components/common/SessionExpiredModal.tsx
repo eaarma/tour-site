@@ -4,10 +4,18 @@ import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/store";
 import { clearExpired } from "@/store/sessionSlice";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePathname } from "next/dist/client/components/navigation";
 
 export default function SessionExpiredModal() {
   const dispatch = useDispatch();
   const expired = useSelector((state: RootState) => state.session.expired);
+
+  const pathname = usePathname();
+
+  // 🚫 Never show on auth pages
+  if (pathname.startsWith("/auth")) {
+    return null;
+  }
 
   const handleLogin = () => {
     dispatch(clearExpired());

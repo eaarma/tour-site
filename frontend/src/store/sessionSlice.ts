@@ -13,8 +13,10 @@ const sessionSlice = createSlice({
   initialState,
   reducers: {
     markExpired: (state) => {
+      if (state.expired) return;
       state.expired = true;
     },
+
     clearExpired: (state) => {
       state.expired = false;
     },

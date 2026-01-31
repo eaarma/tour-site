@@ -8,6 +8,7 @@ import { clearUser, setAuth } from "@/store/authSlice";
 import toast from "react-hot-toast";
 import api from "@/lib/api/axios";
 import { RootState } from "@/store/store";
+import { clearExpired } from "@/store/sessionSlice";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -40,6 +41,8 @@ export default function LoginPage() {
 
     try {
       await api.post("/auth/logout");
+      dispatch(clearExpired());
+      dispatch(clearUser());
     } finally {
       if (pathname?.startsWith("/user") || pathname?.startsWith("/manager")) {
         router.push("/");
@@ -88,6 +91,7 @@ export default function LoginPage() {
       });
 
       dispatch(setAuth({ user, accessToken }));
+      dispatch(clearExpired());
 
       const redirect =
         user.role === "ADMIN" || user.role === "MANAGER" ? "/shops" : "/user";
