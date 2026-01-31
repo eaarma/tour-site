@@ -48,6 +48,8 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 let isRefreshing = false;
 let refreshSubscribers: Array<(token: string) => void> = [];
 
+let sessionExpiredHandled = false;
+
 function onRefreshed(token: string) {
   refreshSubscribers.forEach((cb) => cb(token));
   refreshSubscribers = [];
@@ -55,6 +57,13 @@ function onRefreshed(token: string) {
 
 function addRefreshSubscriber(cb: (token: string) => void) {
   refreshSubscribers.push(cb);
+}
+
+function handleSessionExpiredOnce() {
+  if (sessionExpiredHandled) return;
+  sessionExpiredHandled = true;
+  store.dispatch(clearUser());
+  store.dispatch(markExpired());
 }
 
 /* =====================================================
@@ -78,17 +87,15 @@ api.interceptors.response.use(
       _retry?: boolean;
     };
 
-    const isAuthEndpoint =
-      originalRequest.url?.includes("/auth/login") ||
-      originalRequest.url?.includes("/auth/refresh") ||
-      originalRequest.url?.includes("/auth/logout");
+    const url = originalRequest.url ?? "";
+    const isAuthRoute = url.startsWith("/auth/");
 
     /* =============================
        401 → REFRESH FLOW
        ============================= */
-    if (status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+    if (status === 401 && !originalRequest._retry && !isAuthRoute) {
       const { user } = store.getState().auth;
-      const isMeEndpoint = originalRequest.url?.includes("/auth/me");
+      const isMeEndpoint = url === "/auth/me" || url.includes("/auth/me");
 
       // After a hard refresh, user is null but refresh cookie may exist.
       // Allow refresh attempt for /auth/me even when user is null.
@@ -98,7 +105,6 @@ api.interceptors.response.use(
 
       originalRequest._retry = true;
 
-      // ⏳ If refresh already running, wait
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           addRefreshSubscriber((token: string) => {
@@ -131,8 +137,7 @@ api.interceptors.response.use(
       } catch {
         isRefreshing = false;
         refreshSubscribers = [];
-        store.dispatch(clearUser());
-        store.dispatch(markExpired());
+        handleSessionExpiredOnce();
         throw new ApiError(status, response.data);
       }
     }
@@ -141,7 +146,7 @@ api.interceptors.response.use(
        STANDARD ERROR HANDLING
        ============================= */
 
-    if (status === 401 && originalRequest.url?.includes("/auth/me")) {
+    if (status === 401 && url.includes("/auth/me")) {
       throw new ApiError(status, response.data);
     }
 
@@ -151,7 +156,6 @@ api.interceptors.response.use(
         toast.error(data?.message || "Bad request.");
         break;
       }
-
       case 403:
         toast.error("You do not have permission to do that.");
         break;
