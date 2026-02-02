@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import TitleText from "../common/TitleText";
-import MarginContainer from "../common/MarginContainer";
 
 const Footer: React.FC = () => {
   return (
     <footer className="bg-base-200 border-t mt-8">
-      <MarginContainer>
+      <div className="page-container py-6">
         <div className="flex flex-col justify-center items-center text-center h-40">
           {/* Links section */}
           <div className="flex flex-wrap justify-center gap-6 mb-4 text-sm">
@@ -28,7 +27,7 @@ const Footer: React.FC = () => {
           {/* TitleText centered */}
           <TitleText title="ShopEase" image="/tree.png" />
         </div>
-      </MarginContainer>
+      </div>
     </footer>
   );
 };
