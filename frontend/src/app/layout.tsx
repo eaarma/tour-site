@@ -3,7 +3,6 @@ import "./globals.css";
 import { ReduxProvider } from "@/providers/ReduxProvider";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import MarginContainer from "@/components/common/MarginContainer";
 import AuthProvider from "@/providers/AuthProvider";
 import { Toaster } from "react-hot-toast";
 import GlobalLoader from "@/components/common/GlobalLoader";
