@@ -37,11 +37,13 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="flex flex-col items-center justify-start min-h-screen p-4 max-w-7xl mx-auto">
-      <div className="w-full space-y-6 mt-5">
-        <WelcomeImage imageUrl="/images/background.jpg">
-          <SearchBar redirectOnSearch />
-        </WelcomeImage>
+    <main className="flex flex-col min-h-screen sm:py-4">
+      <div className="w-full mt-0 space-y-6 sm:mt-4 px-2 sm:px-4 md:px-0">
+        <div className="full-bleed sm:page-container mt-0 sm:mt-6 mb-40 sm:mb-12">
+          <WelcomeImage imageUrl="/images/background.jpg">
+            <SearchBar redirectOnSearch />
+          </WelcomeImage>
+        </div>
         {loading ? (
           <ItemListHorizontalSkeleton />
         ) : (
@@ -50,7 +52,9 @@ export default function Home() {
         {loading ? (
           <HighlightedItemSkeleton />
         ) : (
-          highlighted && <HighlightedItem item={highlighted} />
+          highlighted && (
+            <HighlightedItem title="Featured Tour" item={highlighted} />
+          )
         )}
       </div>
     </main>

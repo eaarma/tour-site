@@ -20,13 +20,15 @@ const ItemListHorizontal: React.FC<ItemListHorizontalProps> = ({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
+
   const updateScrollButtons = () => {
     const container = containerRef.current;
     if (!container) return;
 
     setCanScrollLeft(container.scrollLeft > 1);
     setCanScrollRight(
-      container.scrollLeft + container.clientWidth < container.scrollWidth - 1
+      container.scrollLeft + container.clientWidth < container.scrollWidth - 1,
     );
   };
 
@@ -65,7 +67,7 @@ const ItemListHorizontal: React.FC<ItemListHorizontalProps> = ({
 
   return (
     <div className="relative space-y-4 my-6">
-      <h2 className="text-2xl font-bold mt-15">{title}</h2>
+      <h2 className=" text-l sm:text-2xl font-bold mt-15">{title}</h2>
 
       {/* Wrapper for scrollable area and overlay buttons */}
       <div className="relative">
@@ -78,10 +80,15 @@ const ItemListHorizontal: React.FC<ItemListHorizontalProps> = ({
           {items.map((item) => (
             <div
               key={item.id}
-              className="snap-start flex-shrink-0 h-full px-1"
-              style={{
-                flex: `0 0 calc((100% - ${4 * 16}px) / ${visibleCount})`,
-              }}
+              className="
+    snap-start flex-shrink-0 h-full px-1
+    w-[260px] sm:w-auto
+  "
+              style={
+                isMobile
+                  ? { width: 260 }
+                  : { flex: `0 0 calc((100% - ${4 * 16}px) / ${visibleCount})` }
+              }
             >
               <ItemCard item={item} href={`/items/${item.id}`} />
             </div>
@@ -91,7 +98,7 @@ const ItemListHorizontal: React.FC<ItemListHorizontalProps> = ({
         {/* Left arrow overlay */}
         <button
           onClick={() => scrollByOne("left")}
-          className={`absolute left-0 top-1/2 -translate-y-1/2 -ml-4 bg-white rounded-full p-2 shadow transition ${
+          className={`hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 -ml-4 bg-white rounded-full p-2 shadow transition ${
             canScrollLeft
               ? "opacity-100"
               : "opacity-0 pointer-events-none invisible"
@@ -103,7 +110,7 @@ const ItemListHorizontal: React.FC<ItemListHorizontalProps> = ({
         {/* Right arrow overlay */}
         <button
           onClick={() => scrollByOne("right")}
-          className={`absolute right-0 top-1/2 -translate-y-1/2 -mr-4 bg-white rounded-full p-2 shadow transition ${
+          className={`hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 -mr-4 bg-white rounded-full p-2 shadow transition ${
             canScrollRight
               ? "opacity-100"
               : "opacity-0 pointer-events-none invisible"

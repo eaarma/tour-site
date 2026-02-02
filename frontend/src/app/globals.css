@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: light --default, dark --prefersdark, night, customtheme;
+  themes:
+    light --default,
+    dark --prefersdark,
+    night,
+    customtheme;
 
   darktheme: "light";
   base: false; /* Disable daisyUI's base styles to avoid conflicts */
@@ -57,4 +61,44 @@
 
 .animate-fade-in {
   animation: fade-in 0.2s ease-out;
+}
+.page-container > * {
+  max-width: 1280px; /* max-w-screen-xl */
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .page-container > * {
+    padding-left: 4rem; /* px-6 */
+    padding-right: 4rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-container > * {
+    padding-left: 6rem; /* px-10 */
+    padding-right: 6rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .page-container > * {
+    padding-left: 7rem; /* px-12 */
+    padding-right: 7rem;
+  }
+}
+
+.full-bleed {
+  width: 100%;
+}
+
+@media (max-width: 639px) {
+  .full-bleed {
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+  }
 }

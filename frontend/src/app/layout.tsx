@@ -18,8 +18,8 @@ const geistSans = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "ShopEase",
-  description: "Ease into your shopping experience with ShopEase",
+  title: "TourHub",
+  description: "Explore and Book Amazing Tours",
 };
 
 export const dynamic = "force-dynamic";
@@ -38,9 +38,14 @@ export default function RootLayout({
             <SessionExpiredModal />
             <Header />
             <main className="flex-grow">
-              <MarginContainer>{children}</MarginContainer>
-              <Toaster position="top-center" />
+              <div className="page-container">{children}</div>
             </main>
+            <Toaster
+              position="top-center"
+              containerStyle={{
+                top: "5rem",
+              }}
+            />
             <Footer />
           </AuthProvider>
         </ReduxProvider>

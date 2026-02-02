@@ -22,7 +22,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
 }) => {
   const [keywords, setKeywords] = useState(initialKeywords);
   const [date, setDate] = useState<Date | null>(
-    initialDate ? new Date(initialDate) : null
+    initialDate ? new Date(initialDate) : null,
   );
   const [initialized, setInitialized] = useState(false);
   const hasSkippedInitial = useRef(false);
@@ -119,10 +119,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
       </div>
 
       {/* Date picker with custom input */}
-      <div className="w-full sm:w-auto">
+      <div className="w-full sm:w-auto sm:min-w-[180px]">
         <DatePicker
           selected={date}
           onChange={(d) => setDate(d)}
+          wrapperClassName="w-full"
           onSelect={() => {
             if (document.activeElement instanceof HTMLElement) {
               document.activeElement.blur();

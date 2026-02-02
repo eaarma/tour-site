@@ -19,7 +19,7 @@ const CustomDateInput = forwardRef<HTMLInputElement, CustomDateInputProps>(
     };
 
     return (
-      <div className="relative w-full">
+      <div className="relative w-full ">
         <input
           ref={ref}
           type="text"
@@ -43,7 +43,7 @@ const CustomDateInput = forwardRef<HTMLInputElement, CustomDateInputProps>(
         )}
       </div>
     );
-  }
+  },
 );
 
 CustomDateInput.displayName = "CustomDateInput";
