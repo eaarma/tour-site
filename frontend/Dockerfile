@@ -49,8 +49,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 # Create non-root user (security best practice)
-RUN addgroup -g 1001 -S nodejs \
-  && adduser -S nextjs -u 1001
+RUN groupadd -g 1001 nodejs \
+ && useradd -u 1001 -g nodejs -m -s /usr/sbin/nologin nextjs
+
 
 # Copy only required files
 COPY --from=builder /app/package.json ./
