@@ -111,7 +111,7 @@ export default function ItemsPage() {
           initialDate={date}
         />
 
-        <div className="flex justify-between items-start gap-4">
+        <div className="w-full grid grid-cols-2 gap-4 sm:flex sm:justify-between items-start">
           <FilterMenu
             filters={FILTER_CATEGORIES}
             selected={{

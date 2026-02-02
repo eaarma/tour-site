@@ -58,7 +58,7 @@ const CartTotalSection: React.FC<Props> = ({ onCheckoutSuccess }) => {
   };
 
   return (
-    <div className="w-full md:w-1/3 lg:w-1/3 p-4 border rounded-xl shadow-sm bg-base-100 space-y-4 mt-25 md:mt-25 sm:mt-0">
+    <div className="w-full md:w-1/3 lg:w-1/3 p-4 border rounded-xl shadow-sm bg-base-100 space-y-4 sm:mt-25 md:mt-25">
       <h3 className="text-xl font-semibold mb-4">Summary</h3>
       <div className="flex justify-between">
         <span>Items</span>

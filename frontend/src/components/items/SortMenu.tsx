@@ -34,11 +34,11 @@ const SortMenu: React.FC<SortMenuProps> = ({ sortKey, onSortChange }) => {
     SORT_OPTIONS.find((o) => o.key === sortKey)?.label || "Sort";
 
   return (
-    <div className="flex flex-col items-end gap-2 mt-4 mr-4">
+    <div className="flex flex-col items-end gap-2 mt-4 w-full">
       <h2 className="text-lg font-semibold mb-2">Sort</h2>
 
       <Listbox value={sortKey} onChange={handleChange}>
-        <div className="relative w-60">
+        <div className="relative w-full sm:w-48">
           <Listbox.Button className="w-full rounded border px-3 py-2 text-left bg-white text-sm shadow flex justify-between items-center">
             <span>{activeLabel}</span>
             <ChevronUpDownIcon className="h-4 w-4 text-neutral ml-2" />

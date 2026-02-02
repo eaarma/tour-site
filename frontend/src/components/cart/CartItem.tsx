@@ -31,7 +31,7 @@ const CartItem: React.FC<CartItemProps> = ({
     itemData.images?.[0] || itemData.image || "/images/placeholder.jpg";
 
   return (
-    <div className="w-full flex items-center gap-3 py-2">
+    <div className="w-full flex items-center gap-3 py-1">
       {/* Selection Checkbox */}
       <input
         id={`cart-toggle-${item.cartItemId}`}
@@ -68,24 +68,26 @@ const CartItem: React.FC<CartItemProps> = ({
         </div>
 
         {/* Actions + Price */}
-        <div className="flex items-center gap-2 mt-4 md:mt-0">
-          <button
-            className="btn btn-sm"
-            onClick={() => onView(item)}
-            aria-label={`View ${item.title}`}
-          >
-            View
-          </button>
+        <div className="flex items-center gap-2 mt-4 md:mt-0 w-full md:w-auto">
+          <div className="flex items-center gap-2">
+            <button
+              className="btn btn-sm"
+              onClick={() => onView(item)}
+              aria-label={`View ${item.title}`}
+            >
+              View
+            </button>
 
-          <button
-            onClick={() => onRemove(item.cartItemId)}
-            className="btn btn-sm btn-error btn-outline"
-            aria-label={`Delete ${item.title}`}
-          >
-            <X className="w-4 h-4" />
-          </button>
+            <button
+              onClick={() => onRemove(item.cartItemId)}
+              className="btn btn-sm btn-error btn-outline"
+              aria-label={`Delete ${item.title}`}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
-          <div className="ml-4 text-right font-semibold text-primary">
+          <div className="ml-auto text-right font-semibold text-primary sm:ml-2">
             €{totalPrice.toFixed(2)}
           </div>
         </div>

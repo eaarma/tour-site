@@ -43,22 +43,25 @@ export default function ManagerShopSection({ shopId }: Props) {
 
   const handleUserUpdated = (updatedUser: ShopUserDto) => {
     setMembers((prev) =>
-      prev.map((m) => (m.userId === updatedUser.userId ? updatedUser : m))
+      prev.map((m) => (m.userId === updatedUser.userId ? updatedUser : m)),
     );
   };
 
   if (!shop) return null;
 
   return (
-    <div className="flex justify-between items-start mb-6 bg-base-100 p-4 rounded-lg shadow relative">
+    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-6 bg-base-100 p-4 rounded-lg shadow relative">
       {/* Left side: shop info */}
       <div>
-        <h2 className="text-2xl font-bold">{shop.name}</h2>
+        <h2 className="text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
+          {shop.name}
+        </h2>
+
         <p className="text-sm text-gray-500">Shop ID: {shop.id}</p>
       </div>
 
       {/* Right side: actions */}
-      <div className="flex items-center gap-4 relative">
+      <div className="flex justify-end items-center gap-4">
         {/* Pending Requests button */}
         <button
           className={`btn btn-sm ${
@@ -71,10 +74,8 @@ export default function ManagerShopSection({ shopId }: Props) {
           }
         >
           {pendingRequests.length === 0
-            ? "0 pending requests"
-            : `${pendingRequests.length} pending ${
-                pendingRequests.length === 1 ? "request" : "requests"
-              }`}
+            ? "0 pending"
+            : `${pendingRequests.length} pending `}
         </button>
 
         {/* Members button */}
@@ -141,8 +142,8 @@ export default function ManagerShopSection({ shopId }: Props) {
         onStatusChange={(updatedUserId, newStatus) => {
           setMembers((prev) =>
             prev.map((m) =>
-              m.userId === updatedUserId ? { ...m, status: newStatus } : m
-            )
+              m.userId === updatedUserId ? { ...m, status: newStatus } : m,
+            ),
           );
         }}
       />

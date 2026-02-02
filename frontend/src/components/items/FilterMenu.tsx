@@ -74,13 +74,13 @@ const FilterMenu: React.FC<FilterMenuProps> = ({ filters, onChange }) => {
   }, [selectedFilters]);
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 mt-4">
+    <div className="w-full px-2 sm:px-4 mt-4">
       <h2 className="text-lg font-semibold mb-4">Filter</h2>
 
       {/* Dropdown filters */}
-      <div className="flex flex-wrap gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-row sm:flex-nowrap">
         {filters.map((filter) => (
-          <div key={filter.key} className="w-48">
+          <div key={filter.key} className="w-full sm:w-48">
             <Listbox
               value={Array.from(selectedFilters[filter.key] || [])}
               onChange={(values: string[]) => {

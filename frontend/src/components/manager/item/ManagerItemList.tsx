@@ -15,7 +15,7 @@ export default function ManagerItemList({
 }: ManagerItemListProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"active" | "inactive" | "all">(
-    "active"
+    "active",
   );
 
   // ✅ Filtering logic
@@ -24,7 +24,7 @@ export default function ManagerItemList({
     filteredItems = items.filter((i) => i.status === "ACTIVE");
   } else if (activeTab === "inactive") {
     filteredItems = items.filter(
-      (i) => i.status === "ON_HOLD" || i.status === "CANCELLED"
+      (i) => i.status === "ON_HOLD" || i.status === "CANCELLED",
     );
   } else {
     filteredItems = items;
@@ -67,7 +67,7 @@ export default function ManagerItemList({
 
       {/* ✅ Scrollable grid container */}
       {filteredItems.length === 0 ? (
-        <div className="text-center text-gray-500 mt-6">
+        <div className="text-center text-gray-500 m-14">
           No items found for this tab.
         </div>
       ) : (

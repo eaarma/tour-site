@@ -28,7 +28,7 @@ export default function ManagerStatisticsSection({
     <section>
       <h2 className="text-2xl font-bold mb-4">Statistics</h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Stat
           icon={<Briefcase className="w-5 h-5" />}
           title="Active Tours"

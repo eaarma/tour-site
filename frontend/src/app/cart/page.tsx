@@ -22,7 +22,7 @@ export default function CartPage() {
       {cart.length === 0 ? (
         <p className="text-gray-500">Your cart is empty 🛒</p>
       ) : (
-        <div className="flex flex-col md:flex-row md:items-start gap-6">
+        <div className="flex flex-col md:flex-row md:items-start sm:gap-6 gap-6">
           <CartItemSection cart={cart} onView={handleView} />
           <CartTotalSection />
         </div>
