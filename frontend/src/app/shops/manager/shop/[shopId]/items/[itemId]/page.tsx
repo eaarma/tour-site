@@ -147,7 +147,7 @@ export default function ManagerItemPage() {
         toast.success("Tour created! You can now add schedules.");
 
         // The page stays on the same route (itemId is still "new")
-        // router.replace(`/manager/shops/${shopId}/items/${created.id}`);
+        router.replace(`/shops/manager/shop/${shopId}/items/${created.id}`);
       } else if (item) {
         // ✅ UPDATE EXISTING TOUR
         const dto: TourUpdateDto = {

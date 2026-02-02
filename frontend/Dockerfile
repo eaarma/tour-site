@@ -42,7 +42,7 @@ RUN npm run build
 # =========================
 # 2️⃣ Runtime stage
 # =========================
-FROM node:20-alpine AS runner
+FROM node:20-bookworm-slim AS runner
 
 WORKDIR /app
 
