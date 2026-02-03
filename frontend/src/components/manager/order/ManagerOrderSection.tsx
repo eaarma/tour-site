@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import CardFrame from "@/components/common/CardFrame";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import CustomDateInput from "@/components/common/CustomDateInput";
@@ -192,96 +191,97 @@ export default function ManagerOrderSection({
 
   return (
     <section className="mb-12">
-      <CardFrame>
-        <div className="p-4">
-          <h2 className="text-2xl font-bold mb-4">Manage Sessions</h2>
+      <div className="sm:p-6">
+        <h2 className="text-2xl font-bold mb-4">Manage Sessions</h2>
 
-          {/* Tabs */}
-          <div className="sticky top-0 z-10 bg-base-200 pb-3">
-            <div className="tabs tabs-boxed mb-3">
-              <button
-                className={`tab ${activeTab === "today" ? "tab-active" : ""}`}
-                onClick={() => setActiveTab("today")}
-              >
-                Today
-              </button>
-              <button
-                className={`tab ${activeTab === "active" ? "tab-active" : ""}`}
-                onClick={() => setActiveTab("active")}
-              >
-                Active
-              </button>
-              <button
-                className={`tab ${activeTab === "past" ? "tab-active" : ""}`}
-                onClick={() => setActiveTab("past")}
-              >
-                Past
-              </button>
+        {/* Tabs */}
+        <div className="sticky top-0 z-10 bg-base-200 pb-3">
+          <div className="tabs tabs-boxed mb-3">
+            <button
+              className={`tab ${activeTab === "today" ? "tab-active" : ""}`}
+              onClick={() => setActiveTab("today")}
+            >
+              Today
+            </button>
+            <button
+              className={`tab ${activeTab === "active" ? "tab-active" : ""}`}
+              onClick={() => setActiveTab("active")}
+            >
+              Active
+            </button>
+            <button
+              className={`tab ${activeTab === "past" ? "tab-active" : ""}`}
+              onClick={() => setActiveTab("past")}
+            >
+              Past
+            </button>
+          </div>
+
+          {/* Date filters */}
+          <div className="flex items-end gap-3 mt-2">
+            {/* From */}
+            <div className="flex flex-col gap-1 w-40 md:w-44">
+              <span className="text-xs text-gray-500">From</span>
+              <DatePicker
+                selected={fromDate}
+                onChange={(d) => setFromDate(d)}
+                dateFormat="yyyy-MM-dd"
+                customInput={
+                  <CustomDateInput
+                    value={fromDate ? fromDate.toLocaleDateString("en-GB") : ""}
+                    onClear={() => setFromDate(null)}
+                  />
+                }
+              />
             </div>
 
-            {/* Date pickers */}
-            <div className="flex gap-4 items-center mb-2 mt-2">
-              <div className="flex items-center gap-2">
-                <label className="text-sm">From:</label>
-                <DatePicker
-                  selected={fromDate}
-                  onChange={(d) => setFromDate(d)}
-                  dateFormat="yyyy-MM-dd"
-                  customInput={
-                    <CustomDateInput
-                      value={
-                        fromDate ? fromDate.toLocaleDateString("en-GB") : ""
-                      }
-                      onClear={() => setFromDate(null)}
-                    />
-                  }
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <label className="text-sm">To:</label>
-                <DatePicker
-                  selected={toDate}
-                  onChange={(d) => setToDate(d)}
-                  dateFormat="yyyy-MM-dd"
-                  customInput={
-                    <CustomDateInput
-                      value={toDate ? toDate.toLocaleDateString("en-GB") : ""}
-                      onClear={() => setToDate(null)}
-                    />
-                  }
-                />
-              </div>
-              {/* CLEAR DATES (STATIC, DISABLED WHEN EMPTY) */}
-              <button
-                className="btn btn-sm btn-outline"
-                disabled={!hasDateFilter}
-                onClick={() => {
-                  setFromDate(null);
-                  setToDate(null);
-                }}
-              >
-                Clear dates
-              </button>
+            {/* To */}
+            <div className="flex flex-col gap-1 w-40 md:w-44">
+              <span className="text-xs text-gray-500">To</span>
+              <DatePicker
+                selected={toDate}
+                onChange={(d) => setToDate(d)}
+                dateFormat="yyyy-MM-dd"
+                customInput={
+                  <CustomDateInput
+                    value={toDate ? toDate.toLocaleDateString("en-GB") : ""}
+                    onClear={() => setToDate(null)}
+                  />
+                }
+              />
             </div>
+
+            {/* Clear */}
+            <button
+              className="btn btn-outline px-3 text-sm"
+              disabled={!hasDateFilter}
+              onClick={() => {
+                setFromDate(null);
+                setToDate(null);
+              }}
+            >
+              Clear
+            </button>
           </div>
 
           {/* SORT + FILTER CONTROLS */}
-          <div className="flex flex-wrap gap-4 items-center mt-4 mb-4">
+          <div className="flex gap-4 mt-3 mb-4">
             {/* SORT */}
-            <select
-              className="select select-bordered select-sm"
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as OrderSort)}
-            >
-              <option value="DATE">Sort by date</option>
-              <option value="STATUS">Sort by status</option>
-            </select>
+            <div className="flex-1 sm:flex-none">
+              <select
+                className="select select-bordered select-sm w-full sm:w-auto"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as OrderSort)}
+              >
+                <option value="DATE">Sort by date</option>
+                <option value="STATUS">Sort by status</option>
+              </select>
+            </div>
 
             {/* STATUS FILTER DROPDOWN */}
-            <div className="relative" ref={statusFilterRef}>
+            <div className="relative flex-1 sm:flex-none" ref={statusFilterRef}>
               <button
-                className="btn btn-sm btn-outline min-w-[180px] justify-between"
+                className="btn btn-sm btn-outline w-full sm:w-auto justify-between"
                 onClick={() => setStatusFilterOpen((v) => !v)}
               >
                 {statusFilter.length === 0
@@ -292,10 +292,7 @@ export default function ManagerOrderSection({
               </button>
 
               {statusFilterOpen && (
-                <div
-                  className="absolute left-0 mt-2 w-52 bg-base-100 border shadow-md rounded-lg z-30 p-2"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <div className="absolute left-0 mt-2 w-full sm:w-52 bg-base-100 border shadow-md rounded-lg z-30 p-2">
                   {ALL_STATUSES.map((st) => {
                     const checked = statusFilter.includes(st);
                     return (
@@ -323,42 +320,42 @@ export default function ManagerOrderSection({
               )}
             </div>
           </div>
+        </div>
 
-          {/* List */}
-          <div className="space-y-3 min-h-[465px] max-h-[465px] overflow-y-auto pr-2">
-            {filtered.length > 0 ? (
-              filtered.map((session) => (
-                <SessionCard
-                  key={session.id}
-                  session={session}
-                  tour={tours.find((t) => t.id === session.tourId)}
-                  onClick={() => setSelectedSessionId(session.id!)}
-                  onConfirmSession={handleConfirmSession}
-                  onCompleteSession={handleCompleteSession}
-                />
-              ))
-            ) : (
-              <p className="text-sm text-gray-500">No sessions to display.</p>
-            )}
-          </div>
-
-          {/* Modal */}
-          {selectedSessionId && (
-            <SessionDetailsModal
-              session={sessionList.find((s) => s.id === selectedSessionId)!}
-              tour={tours.find(
-                (t) =>
-                  t.id ===
-                  sessionList.find((s) => s.id === selectedSessionId)!.tourId,
-              )}
-              onClose={() => setSelectedSessionId(null)}
-              onConfirmSession={handleConfirmSession}
-              onCompleteSession={handleCompleteSession}
-              onSessionUpdated={handleSessionUpdated}
-            />
+        {/* List */}
+        <div className="space-y-3 min-h-[465px] max-h-[465px] overflow-y-auto pr-2">
+          {filtered.length > 0 ? (
+            filtered.map((session) => (
+              <SessionCard
+                key={session.id}
+                session={session}
+                tour={tours.find((t) => t.id === session.tourId)}
+                onClick={() => setSelectedSessionId(session.id!)}
+                onConfirmSession={handleConfirmSession}
+                onCompleteSession={handleCompleteSession}
+              />
+            ))
+          ) : (
+            <p className="text-sm text-gray-500">No sessions to display.</p>
           )}
         </div>
-      </CardFrame>
+
+        {/* Modal */}
+        {selectedSessionId && (
+          <SessionDetailsModal
+            session={sessionList.find((s) => s.id === selectedSessionId)!}
+            tour={tours.find(
+              (t) =>
+                t.id ===
+                sessionList.find((s) => s.id === selectedSessionId)!.tourId,
+            )}
+            onClose={() => setSelectedSessionId(null)}
+            onConfirmSession={handleConfirmSession}
+            onCompleteSession={handleCompleteSession}
+            onSessionUpdated={handleSessionUpdated}
+          />
+        )}
+      </div>
     </section>
   );
 }
