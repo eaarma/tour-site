@@ -52,7 +52,6 @@ ENV NODE_ENV=production
 RUN groupadd -g 1001 nodejs \
  && useradd -u 1001 -g nodejs -m -s /usr/sbin/nologin nextjs
 
-
 # Copy only required files
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/package-lock.json ./
