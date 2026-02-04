@@ -75,7 +75,7 @@ export default function ItemPage() {
       <div className="relative max-w-5xl mx-auto card bg-base-100 shadow-lg p-6">
         {/* Status Badge */}
         <div
-          className={`absolute top-4 right-4 tooltip`}
+          className={`absolute top-4 right-4 tooltip z-20`}
           data-tip={`Current status of this tour is ${item?.status}`}
         >
           <span

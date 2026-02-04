@@ -78,8 +78,8 @@ const Header: React.FC = () => {
   }, []);
 
   return (
-    <header className="bg-base-100 border-b shadow-md page-container">
-      <div className="flex items-center justify-between py-3 px-2 md:p-4">
+    <header className="sticky top-0 z-50 bg-base-100 border-b shadow-md page-container">
+      <div className="flex items-center justify-between py-1 px-2 md:p-4">
         <button
           className="md:hidden btn btn-ghost btn-sm"
           onClick={() => setMobileMenuOpen((v) => !v)}
@@ -236,38 +236,42 @@ const Header: React.FC = () => {
       </div>
 
       {mobileMenuOpen && (
-        <div className="md:hidden mt-2 rounded border bg-base-100 shadow p-3 space-y-3">
-          {/* Menu items */}
-          {menuItems.map((item) => (
-            <Link
-              key={item.path}
-              href={item.path}
-              onClick={() => setMobileMenuOpen(false)}
-              className="block w-full text-left px-3 py-2 rounded hover:bg-base-200"
-            >
-              {item.label}
-            </Link>
-          ))}
-
-          {/* Search */}
-          <div className="pt-2 border-t">
-            <input
-              type="text"
-              placeholder="Search booking id"
-              value={searchId}
-              onChange={(e) => setSearchId(e.target.value)}
-              className="input input-bordered input-sm w-full mb-2"
-            />
-            <button
-              className="btn btn-primary btn-sm w-full"
-              onClick={() => {
-                if (!searchId.trim()) return;
-                router.push(`/orders/${searchId}`);
-                setMobileMenuOpen(false);
-              }}
-            >
-              Search
-            </button>
+        <div
+          className="fixed inset-0 bg-black/40 z-20 md:hidden top-[58px]"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <div className="md:hidden fixed inset-x-0 top-[58px] z-30 bg-base-100 border-t shadow-lg p-4 space-y-3 box-border">
+            {/* Menu items */}
+            {menuItems.map((item) => (
+              <Link
+                key={item.path}
+                href={item.path}
+                onClick={() => setMobileMenuOpen(false)}
+                className="block w-full text-left px-3 py-2 rounded hover:bg-base-200"
+              >
+                {item.label}
+              </Link>
+            ))}
+            {/* Search */}
+            <div className="pt-2 border-t ">
+              <input
+                type="text"
+                placeholder="Search booking id"
+                value={searchId}
+                onChange={(e) => setSearchId(e.target.value)}
+                className="input input-bordered input-sm w-full mb-2"
+              />
+              <button
+                className="btn btn-primary btn-sm w-full"
+                onClick={() => {
+                  if (!searchId.trim()) return;
+                  router.push(`/orders/${searchId}`);
+                  setMobileMenuOpen(false);
+                }}
+              >
+                Search
+              </button>
+            </div>
           </div>
         </div>
       )}

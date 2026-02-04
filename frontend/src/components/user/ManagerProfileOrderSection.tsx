@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import CardFrame from "@/components/common/CardFrame";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import CustomDateInput from "@/components/common/CustomDateInput";
@@ -147,156 +146,159 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
 
   return (
     <section className="mb-2">
-      <CardFrame>
-        <div className="p-4">
-          <h2 className="text-2xl font-bold mb-4">Your Sessions</h2>
+      <div className="sm:p-2">
+        <h2 className="text-2xl font-bold mb-4">Your Sessions</h2>
 
-          {/* Tabs */}
-          <div role="tablist" className="tabs tabs-boxed mb-3">
-            <button
-              className={`tab ${activeTab === "current" ? "tab-active" : ""}`}
-              onClick={() => setActiveTab("current")}
-            >
-              Current
-            </button>
-            <button
-              className={`tab ${activeTab === "past" ? "tab-active" : ""}`}
-              onClick={() => setActiveTab("past")}
-            >
-              Past
-            </button>
+        {/* Tabs */}
+        <div role="tablist" className="tabs tabs-boxed mb-3">
+          <button
+            className={`tab ${activeTab === "current" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("current")}
+          >
+            Current
+          </button>
+          <button
+            className={`tab ${activeTab === "past" ? "tab-active" : ""}`}
+            onClick={() => setActiveTab("past")}
+          >
+            Past
+          </button>
+        </div>
+
+        {/* Date pickers */}
+        <div className="flex items-end gap-3 mt-2">
+          {/* From */}
+          <div className="flex flex-col gap-1 w-40 md:w-44">
+            <span className="text-xs text-gray-500">From</span>
+            <DatePicker
+              selected={fromDate}
+              onChange={(d) => setFromDate(d)}
+              dateFormat="yyyy-MM-dd"
+              customInput={
+                <CustomDateInput
+                  value={fromDate ? fromDate.toLocaleDateString("en-GB") : ""}
+                  onClear={() => setFromDate(null)}
+                />
+              }
+            />
           </div>
 
-          {/* Date pickers */}
-          <div className="flex gap-4 items-center mb-3">
-            <div className="flex items-center gap-2">
-              <label className="text-sm">From:</label>
-              <DatePicker
-                selected={fromDate}
-                onChange={(d) => setFromDate(d)}
-                dateFormat="yyyy-MM-dd"
-                customInput={
-                  <CustomDateInput
-                    value={fromDate ? fromDate.toLocaleDateString("en-GB") : ""}
-                    onClear={() => setFromDate(null)}
-                  />
-                }
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label className="text-sm">To:</label>
-              <DatePicker
-                selected={toDate}
-                onChange={(d) => setToDate(d)}
-                dateFormat="yyyy-MM-dd"
-                customInput={
-                  <CustomDateInput
-                    value={toDate ? toDate.toLocaleDateString("en-GB") : ""}
-                    onClear={() => setToDate(null)}
-                  />
-                }
-              />
-            </div>
-
-            <button
-              className="btn btn-sm btn-outline"
-              disabled={!hasDateFilter}
-              onClick={() => {
-                setFromDate(null);
-                setToDate(null);
-              }}
-            >
-              Clear dates
-            </button>
+          <div className="flex flex-col gap-1 w-40 md:w-44">
+            <span className="text-xs text-gray-500">To</span>
+            <DatePicker
+              selected={toDate}
+              onChange={(d) => setToDate(d)}
+              dateFormat="yyyy-MM-dd"
+              customInput={
+                <CustomDateInput
+                  value={toDate ? toDate.toLocaleDateString("en-GB") : ""}
+                  onClear={() => setToDate(null)}
+                />
+              }
+            />
           </div>
 
-          {/* Sort + Filter */}
-          <div className="flex flex-wrap gap-4 items-center mt-2 mb-4">
+          <button
+            className="btn btn-outline px-3 text-sm"
+            disabled={!hasDateFilter}
+            onClick={() => {
+              setFromDate(null);
+              setToDate(null);
+            }}
+          >
+            Clear dates
+          </button>
+        </div>
+
+        {/* Sort + Filter */}
+        <div className="flex gap-4 mt-3 mb-4">
+          <div className="flex-1 sm:flex-none">
             <select
-              className="select select-bordered select-sm"
+              className="select select-bordered select-sm w-full sm:w-auto"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as OrderSort)}
             >
               <option value="DATE">Sort by date</option>
               <option value="STATUS">Sort by status</option>
             </select>
-
-            <div className="relative" ref={statusFilterRef}>
-              <button
-                className="btn btn-sm btn-outline min-w-[180px] justify-between"
-                onClick={() => setStatusFilterOpen((v) => !v)}
-              >
-                {statusFilter.length === 0
-                  ? "All statuses"
-                  : `${statusFilter.length} selected`}
-              </button>
-
-              {statusFilterOpen && (
-                <div className="absolute left-0 mt-2 w-52 bg-base-100 border shadow-md rounded-lg z-30 p-2">
-                  {ALL_STATUSES.map((st) => {
-                    const checked = statusFilter.includes(st);
-                    return (
-                      <label
-                        key={st}
-                        className="flex items-center gap-2 px-2 py-1 rounded hover:bg-base-200 cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          className="checkbox checkbox-sm"
-                          checked={checked}
-                          onChange={() =>
-                            setStatusFilter((prev) =>
-                              checked
-                                ? prev.filter((s) => s !== st)
-                                : [...prev, st],
-                            )
-                          }
-                        />
-                        <span className="text-sm">{st}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
           </div>
 
-          {/* List */}
-          <div className="space-y-3 min-h-[370px] max-h-[370px] overflow-y-auto pr-2">
-            {filtered.length > 0 ? (
-              filtered.map((session) => (
-                <SessionCard
-                  key={session.id}
-                  session={session}
-                  tour={tours.find((t) => t.id === session.tourId)}
-                  onClick={() => setSelectedSessionId(session.id)}
-                  onConfirmSession={handleConfirmSession}
-                  onCompleteSession={handleCompleteSession}
-                />
-              ))
-            ) : (
-              <p className="text-sm text-gray-500">No sessions to display.</p>
+          <div className="relative flex-1 sm:flex-none" ref={statusFilterRef}>
+            <button
+              className="btn btn-sm btn-outline min-w-[180px] justify-between"
+              onClick={() => setStatusFilterOpen((v) => !v)}
+            >
+              {statusFilter.length === 0
+                ? "All statuses"
+                : `${statusFilter.length} selected`}
+            </button>
+
+            {statusFilterOpen && (
+              <div className="absolute left-0 mt-2 w-52 bg-base-100 border shadow-md rounded-lg z-30 p-2">
+                {ALL_STATUSES.map((st) => {
+                  const checked = statusFilter.includes(st);
+                  return (
+                    <label
+                      key={st}
+                      className="flex items-center gap-2 px-2 py-1 rounded hover:bg-base-200 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-sm"
+                        checked={checked}
+                        onChange={() =>
+                          setStatusFilter((prev) =>
+                            checked
+                              ? prev.filter((s) => s !== st)
+                              : [...prev, st],
+                          )
+                        }
+                      />
+                      <span className="text-sm">{st}</span>
+                    </label>
+                  );
+                })}
+              </div>
             )}
           </div>
+        </div>
 
-          {/* Modal */}
-          {selectedSessionId && (
-            <SessionDetailsModal
-              session={sessionList.find((s) => s.id === selectedSessionId)!}
-              tour={tours.find(
-                (t) =>
-                  t.id ===
-                  sessionList.find((s) => s.id === selectedSessionId)!.tourId,
-              )}
-              onClose={() => setSelectedSessionId(null)}
-              onConfirmSession={() => {}}
-              onCompleteSession={handleCompleteSession}
-              onSessionUpdated={handleSessionUpdated}
-            />
+        {/* List */}
+        <div className="space-y-3 overflow-y-auto pr-2">
+          {filtered.length > 0 ? (
+            filtered.map((session) => (
+              <SessionCard
+                key={session.id}
+                session={session}
+                tour={tours.find((t) => t.id === session.tourId)}
+                onClick={() => setSelectedSessionId(session.id)}
+                onConfirmSession={handleConfirmSession}
+                onCompleteSession={handleCompleteSession}
+              />
+            ))
+          ) : (
+            <p className="text-sm text-gray-500 mb-4 mt-4 text-center">
+              No sessions to display.
+            </p>
           )}
         </div>
-      </CardFrame>
+
+        {/* Modal */}
+        {selectedSessionId && (
+          <SessionDetailsModal
+            session={sessionList.find((s) => s.id === selectedSessionId)!}
+            tour={tours.find(
+              (t) =>
+                t.id ===
+                sessionList.find((s) => s.id === selectedSessionId)!.tourId,
+            )}
+            onClose={() => setSelectedSessionId(null)}
+            onConfirmSession={() => {}}
+            onCompleteSession={handleCompleteSession}
+            onSessionUpdated={handleSessionUpdated}
+          />
+        )}
+      </div>
     </section>
   );
 }

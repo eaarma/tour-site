@@ -29,7 +29,7 @@ export default function ManagerProfileStatisticSection({
     <div className="card bg-base-100 shadow-lg p-5">
       <h2 className="text-2xl font-bold mb-5">Statistics</h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {/* Shops */}
         <Stat
           icon={<Briefcase className="w-5 h-5" />}

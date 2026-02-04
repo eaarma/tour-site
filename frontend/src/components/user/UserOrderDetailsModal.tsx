@@ -50,7 +50,7 @@ export default function UserOrderDetailsModal({
             </div>
             <div>
               <p className="font-semibold text-sm">Price Paid</p>
-              <p>${orderItem.pricePaid.toFixed(2)}</p>
+              <p>€{orderItem.pricePaid.toFixed(2)}</p>
             </div>
           </div>
 
@@ -61,8 +61,8 @@ export default function UserOrderDetailsModal({
                 orderItem.status === "COMPLETED"
                   ? "badge-success"
                   : orderItem.status === "CANCELLED_CONFIRMED"
-                  ? "badge-error"
-                  : "badge-info"
+                    ? "badge-error"
+                    : "badge-info"
               }`}
             >
               {orderItem.status}

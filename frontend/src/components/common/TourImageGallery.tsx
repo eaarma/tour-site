@@ -53,7 +53,7 @@ export default function TourImageGallery({
           src={mainImage}
           alt={title || "Tour Image"}
           className={`rounded-xl w-full h-72 lg:h-[420px] object-cover shadow-md ${
-            isPlaceholder ? "opacity-70 grayscale blur-[1px]" : ""
+            isPlaceholder ? "opacity-70 grayscale " : ""
           }`}
           onError={(e) => {
             const img = e.currentTarget as HTMLImageElement;
