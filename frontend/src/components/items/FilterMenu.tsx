@@ -1,7 +1,7 @@
 "use client";
 
 import { FilterCategory } from "@/types/types";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Listbox } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 
@@ -11,7 +11,11 @@ interface FilterMenuProps {
   onChange: (selection: Record<string, string[]>) => void; // tell parent to update URL
 }
 
-const FilterMenu: React.FC<FilterMenuProps> = ({ filters, onChange }) => {
+const FilterMenu: React.FC<FilterMenuProps> = ({
+  filters,
+  onChange,
+  selected,
+}) => {
   const [selectedFilters, setSelectedFilters] = useState<
     Record<string, Set<string>>
   >(() => {
@@ -21,6 +25,16 @@ const FilterMenu: React.FC<FilterMenuProps> = ({ filters, onChange }) => {
     });
     return initial;
   });
+
+  useEffect(() => {
+    const next: Record<string, Set<string>> = {};
+
+    filters.forEach((f) => {
+      next[f.key] = new Set(selected[f.key] || []);
+    });
+
+    setSelectedFilters(next);
+  }, [selected, filters]);
 
   const emitChange = (next: Record<string, Set<string>>) => {
     const plain: Record<string, string[]> = {};
@@ -51,7 +65,7 @@ const FilterMenu: React.FC<FilterMenuProps> = ({ filters, onChange }) => {
   };
 
   const isSelected = (key: string, option: string) =>
-    selectedFilters[key]?.has(option);
+    selectedFilters[key]?.has(option) ?? false;
 
   const clearAllFilters = () => {
     const cleared: Record<string, Set<string>> = {};

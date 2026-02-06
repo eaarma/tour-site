@@ -61,7 +61,7 @@ public class TourController {
                         @RequestParam(name = "page", defaultValue = "0") int page,
                         @RequestParam(name = "size", defaultValue = "12") int size,
                         @RequestParam(name = "sort", defaultValue = "title,asc") String[] sort,
-                        @RequestParam(name = "category", required = false) List<String> category,
+                        @RequestParam(name = "categories", required = false) List<String> categories,
                         @RequestParam(name = "language", required = false) List<String> language,
                         @RequestParam(name = "type", required = false) String type,
                         @RequestParam(name = "keyword", required = false) String keyword,
@@ -69,7 +69,7 @@ public class TourController {
 
                 return ResultResponseMapper.toResponse(
                                 tourService.getAllByQuery(
-                                                category,
+                                                categories,
                                                 type,
                                                 language,
                                                 keyword,

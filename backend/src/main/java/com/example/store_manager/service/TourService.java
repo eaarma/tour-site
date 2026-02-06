@@ -127,22 +127,41 @@ public class TourService {
             }
         }
 
+        boolean hasCategory = categoryEnums != null && !categoryEnums.isEmpty();
+        boolean hasDate = date != null;
+
         Page<Tour> tours;
 
-        if (date == null) {
-            tours = tourRepository.searchByFiltersWithoutDate(
-                    categoryEnums,
-                    type,
-                    language,
-                    keyword,
-                    pageable);
-        } else {
-            tours = tourRepository.searchByFiltersWithDate(
+        if (hasCategory && hasDate) {
+            tours = tourRepository.searchWithCategoryAndDate(
                     categoryEnums,
                     type,
                     language,
                     keyword,
                     date,
+                    pageable);
+
+        } else if (hasCategory) {
+            tours = tourRepository.searchWithCategory(
+                    categoryEnums,
+                    type,
+                    language,
+                    keyword,
+                    pageable);
+
+        } else if (hasDate) {
+            tours = tourRepository.searchWithDate(
+                    type,
+                    language,
+                    keyword,
+                    date,
+                    pageable);
+
+        } else {
+            tours = tourRepository.searchBase(
+                    type,
+                    language,
+                    keyword,
                     pageable);
         }
 

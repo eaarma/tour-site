@@ -182,7 +182,7 @@ class TourServiceTest {
     }
 
     @Test
-    void getAllByQuery_withDate_callsDateRepository() {
+    void getAllByQuery_withCategoryAndDate_callsCorrectRepository() {
         Tour tour = new Tour();
         TourResponseDto dto = new TourResponseDto();
 
@@ -190,8 +190,13 @@ class TourServiceTest {
 
         LocalDate date = LocalDate.of(2026, 2, 28);
 
-        when(tourRepository.searchByFiltersWithDate(
-                any(), any(), any(), any(), eq(date), any(Pageable.class)))
+        when(tourRepository.searchWithCategoryAndDate(
+                any(),
+                any(),
+                any(),
+                any(),
+                eq(date),
+                any(Pageable.class)))
                 .thenReturn(page);
 
         when(tourMapper.toDto(tour)).thenReturn(dto);
@@ -208,6 +213,15 @@ class TourServiceTest {
 
         assertTrue(result.isOk());
         assertEquals(1, result.get().getContent().size());
+        assertSame(dto, result.get().getContent().get(0));
+
+        verify(tourRepository).searchWithCategoryAndDate(
+                any(),
+                any(),
+                any(),
+                any(),
+                eq(date),
+                any(Pageable.class));
     }
 
     @Test
