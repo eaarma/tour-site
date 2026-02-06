@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     if (!name || !email || !message) {
       return NextResponse.json(
         { error: "Name, email, and message are required." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -37,10 +37,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    console.error("Contact Form Error:", error);
+    console.error("Contact Form Error: ", error);
     return NextResponse.json(
       { error: "Failed to send message." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

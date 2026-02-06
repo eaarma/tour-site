@@ -36,7 +36,14 @@ export default function AuthProvider({
     fetchUser();
   }, [dispatch]);
 
-  /*   // 2️⃣ Background session checker (optional but valid) Currently disabled
+  if (loading) {
+    return <div className="p-6 text-center">Loading authentication...</div>;
+  }
+
+  return <>{children}</>;
+}
+
+/*   // 2️⃣ Background session checker (optional but valid) Currently disabled
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
@@ -55,9 +62,3 @@ export default function AuthProvider({
 
     return () => clearInterval(interval);
   }, [dispatch, router]); */
-  if (loading) {
-    return <div className="p-6 text-center">Loading authentication...</div>;
-  }
-
-  return <>{children}</>;
-}
