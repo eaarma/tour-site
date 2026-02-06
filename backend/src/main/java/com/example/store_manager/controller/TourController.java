@@ -1,9 +1,11 @@
 package com.example.store_manager.controller;
 
 import java.security.Principal;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -63,7 +65,8 @@ public class TourController {
                         @RequestParam(name = "language", required = false) List<String> language,
                         @RequestParam(name = "type", required = false) String type,
                         @RequestParam(name = "keyword", required = false) String keyword,
-                        @RequestParam(name = "date", required = false) String date) {
+                       @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+LocalDate date {
 
                 return ResultResponseMapper.toResponse(
                                 tourService.getAllByQuery(

@@ -1,6 +1,7 @@
 package com.example.store_manager.service;
 
 import java.security.Principal;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -100,7 +101,7 @@ public class TourService {
             String type,
             List<String> language,
             String keyword,
-            String date,
+            LocalDate date,
             int page,
             int size,
             String[] sort) {
@@ -113,7 +114,7 @@ public class TourService {
 
         if (keyword != null && keyword.isBlank())
             keyword = null;
-        if (date != null && date.isBlank())
+        if (date != null && date.toString().isBlank())
             date = null;
 
         List<TourCategory> categoryEnums = null;
