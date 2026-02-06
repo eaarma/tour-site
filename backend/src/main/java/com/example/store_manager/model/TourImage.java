@@ -2,9 +2,12 @@ package com.example.store_manager.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import java.time.LocalDateTime;
+
+import java.time.Instant;
 
 import org.hibernate.envers.Audited;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 
@@ -12,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 @Entity
 @Table(name = "tour_images")
 @Audited
+@EntityListeners(AuditingEntityListener.class)
 public class TourImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,5 +30,7 @@ public class TourImage {
 
     private Integer position; // optional ordering
 
-    private LocalDateTime uploadedAt = LocalDateTime.now();
+    @CreatedDate
+    @Column(name = "uploaded_at", nullable = false, updatable = false)
+    private Instant uploadedAt;
 }

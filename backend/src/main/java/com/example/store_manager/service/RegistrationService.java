@@ -1,23 +1,20 @@
 package com.example.store_manager.service;
 
-import java.time.LocalDateTime;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.example.store_manager.dto.user.UserRegisterRequestDto;
+
 import com.example.store_manager.dto.user.ManagerRegisterRequestDto;
+import com.example.store_manager.dto.user.UserRegisterRequestDto;
 import com.example.store_manager.dto.user.UserResponseDto;
 import com.example.store_manager.model.Role;
-import com.example.store_manager.model.Shop;
-import com.example.store_manager.model.ShopUser;
-import com.example.store_manager.model.ShopUserRole;
-import com.example.store_manager.model.ShopUserStatus;
 import com.example.store_manager.model.User;
-import com.example.store_manager.repository.UserRepository;
 import com.example.store_manager.repository.ShopUserRepository;
+import com.example.store_manager.repository.UserRepository;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
 import com.example.store_manager.utility.ShopAssignmentUtil;
+
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -74,7 +71,6 @@ public class RegistrationService {
                 .bio(request.getBio())
                 .experience(request.getExperience())
                 .languages(request.getLanguages())
-                .createdAt(LocalDateTime.now())
                 .role(Role.MANAGER)
                 .build();
 

@@ -1,8 +1,7 @@
 package com.example.store_manager.dto.shop;
 
-import java.time.LocalDateTime;
 import lombok.*;
-
+import java.time.Instant;
 
 @Data
 @NoArgsConstructor
@@ -13,5 +12,5 @@ public class ShopUserStatusDto {
     private String shopName;
     private String role;
     private String status;
-    private LocalDateTime joinedAt;
+    private Instant joinedAt;
 }

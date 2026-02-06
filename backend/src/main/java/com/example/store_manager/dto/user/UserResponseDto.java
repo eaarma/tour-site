@@ -1,5 +1,6 @@
 package com.example.store_manager.dto.user;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -23,6 +24,6 @@ public class UserResponseDto {
     private String bio;
     private String experience;
     private String languages;
-    private LocalDateTime createdAt;
+    private Instant createdAt;
     private String profileImageUrl;
 }

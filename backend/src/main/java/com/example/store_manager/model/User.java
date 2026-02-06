@@ -1,5 +1,6 @@
 package com.example.store_manager.model;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -50,7 +51,7 @@ public class User {
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     // Admin-only fields
     private String bio;

@@ -64,7 +64,6 @@ public class ShopService {
                                 .user(user)
                                 .role(ShopUserRole.OWNER)
                                 .status(ShopUserStatus.ACTIVE)
-                                .createdAt(LocalDateTime.now())
                                 .build();
 
                 shopUserRepository.save(shopUser);

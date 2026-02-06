@@ -1,5 +1,6 @@
 package com.example.store_manager.dto.shop;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -19,5 +20,5 @@ public class ShopUserDto {
     private String role;
     private String status;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime joinedAt;
+    private Instant joinedAt;
 }

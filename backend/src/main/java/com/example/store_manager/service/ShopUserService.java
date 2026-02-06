@@ -166,7 +166,6 @@ public class ShopUserService {
                                 .user(user)
                                 .role(ShopUserRole.GUIDE)
                                 .status(ShopUserStatus.PENDING)
-                                .createdAt(LocalDateTime.now())
                                 .build();
 
                 shopUserRepository.save(shopUser);
