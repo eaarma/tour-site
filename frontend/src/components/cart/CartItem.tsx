@@ -27,9 +27,6 @@ const CartItem: React.FC<CartItemProps> = ({
 
   const itemData = item as ItemWithImages;
 
-  const thumbnail =
-    itemData.images?.[0] || itemData.image || "/images/placeholder.jpg";
-
   return (
     <div className="w-full flex items-center gap-3 py-1">
       {/* Selection Checkbox */}
@@ -46,12 +43,30 @@ const CartItem: React.FC<CartItemProps> = ({
         {/* Tour Details */}
 
         {/* ✅ Thumbnail Image */}
+        {/* ✅ Thumbnail Image */}
         <img
-          src={thumbnail}
+          src={
+            itemData.images?.length
+              ? itemData.images[0]
+              : itemData.image || "/images/item_placeholder.jpg"
+          }
           alt={item.title}
-          className="w-16 h-16 mr-3 object-cover rounded-lg cursor-pointer"
+          className={`w-16 h-16 mr-3 object-cover rounded-lg cursor-pointer ${
+            itemData.images?.length || itemData.image
+              ? ""
+              : "opacity-70 grayscale blur-[1px]"
+          }`}
           onClick={() => onView(item)}
+          onError={(e) => {
+            e.currentTarget.src = "/images/item_placeholder.jpg";
+            e.currentTarget.classList.add(
+              "opacity-70",
+              "grayscale",
+              "blur-[1px]",
+            );
+          }}
         />
+
         <div className="flex-1">
           <h3 className="text-lg font-semibold">{item.title}</h3>
           <div className="flex flex-wrap gap-2 mt-2 text-sm text-gray-600">

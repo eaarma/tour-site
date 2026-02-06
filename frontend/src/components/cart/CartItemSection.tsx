@@ -37,6 +37,14 @@ const CartItemSection: React.FC<Props> = ({ cart, onView }) => {
     });
   };
 
+  const handleRemoveSelected = () => {
+    const selectedItems = cart.filter((item) => item.selected);
+
+    selectedItems.forEach((item) => {
+      dispatch(removeItemFromCart(item.cartItemId));
+    });
+  };
+
   return (
     <div className="w-full md:w-2/3 lg:w-2/3 space-y-4">
       <h2 className="text-2xl font-bold mb-5">Your Cart</h2>
@@ -46,7 +54,8 @@ const CartItemSection: React.FC<Props> = ({ cart, onView }) => {
       ) : (
         <>
           {/* ✅ Select All Checkbox */}
-          <div className="flex items-center gap-3 border-b pb-2 mb-4 mt-2 ml-1">
+          {/* ✅ Select All + Remove Selected */}
+          <div className="flex items-center justify-between border-b pb-2 mb-4 mt-2 ml-1">
             <label
               htmlFor="cart-toggle-all"
               className="flex items-center gap-2 cursor-pointer"
@@ -62,6 +71,14 @@ const CartItemSection: React.FC<Props> = ({ cart, onView }) => {
                 Select all ({selectedCount})
               </span>
             </label>
+
+            <button
+              onClick={handleRemoveSelected}
+              disabled={selectedCount === 0}
+              className="btn btn-sm btn-outline btn-error disabled:opacity-50"
+            >
+              Remove ({selectedCount})
+            </button>
           </div>
 
           {/* ✅ Cart Items */}
