@@ -21,25 +21,27 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
     List<Tour> findByShopId(Long shopId);
 
     @Query("""
-                SELECT DISTINCT t FROM Tour t
-                LEFT JOIN t.categories c
-                LEFT JOIN t.language l
-                WHERE (:type IS NULL OR t.type = :type)
-                  AND (:language IS NULL OR l IN :language)
-                  AND (:categories IS NULL OR c IN :categories)
-                  AND t.status = 'ACTIVE'
-                  AND (
-                    COALESCE(:keyword, '') = '' OR (
-                      LOWER(t.title) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%')) OR
-                      LOWER(t.description) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%')) OR
-                      LOWER(t.location) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%'))
-                    )
-                  )
-                  AND (:date IS NULL OR EXISTS (
-                       SELECT ts.id FROM TourSchedule ts
-                       WHERE ts.tour = t AND ts.date = :date
-                  ))
-            """)
+                            SELECT DISTINCT t FROM Tour t
+                            LEFT JOIN t.categories c
+                            LEFT JOIN t.language l
+                            WHERE (:type IS NULL OR t.type = :type)
+                              AND (:language IS NULL OR l IN :language)
+                              AND (:categories IS NULL OR c IN :categories)
+                              AND t.status = 'ACTIVE'
+                              AND (
+                                COALESCE(:keyword, '') = '' OR (
+                                  LOWER(t.title) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%')) OR
+                                  LOWER(t.description) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%')) OR
+                                  LOWER(t.location) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%'))
+                                )
+                              )
+                             AND (:date IS NULL OR EXISTS (
+                 SELECT 1 FROM TourSchedule ts
+                 WHERE ts.tour = t
+                   AND ts.date = :date
+            ))
+
+                        """)
     Page<Tour> searchByFilters(
             @Param("categories") List<TourCategory> categories,
             @Param("type") String type,
