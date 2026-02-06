@@ -114,8 +114,6 @@ public class TourService {
 
         if (keyword != null && keyword.isBlank())
             keyword = null;
-        if (date != null && date.toString().isBlank())
-            date = null;
 
         List<TourCategory> categoryEnums = null;
         if (categories != null && !categories.isEmpty()) {
