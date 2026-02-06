@@ -127,13 +127,24 @@ public class TourService {
             }
         }
 
-        Page<Tour> tours = tourRepository.searchByFilters(
-                categoryEnums,
-                type,
-                language,
-                keyword,
-                date,
-                pageable);
+        Page<Tour> tours;
+
+        if (date == null) {
+            tours = tourRepository.searchByFiltersWithoutDate(
+                    categoryEnums,
+                    type,
+                    language,
+                    keyword,
+                    pageable);
+        } else {
+            tours = tourRepository.searchByFiltersWithDate(
+                    categoryEnums,
+                    type,
+                    language,
+                    keyword,
+                    date,
+                    pageable);
+        }
 
         return Result.ok(tours.map(tourMapper::toDto));
     }

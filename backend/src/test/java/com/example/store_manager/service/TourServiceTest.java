@@ -2,8 +2,10 @@ package com.example.store_manager.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import java.security.Principal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -142,8 +144,8 @@ class TourServiceTest {
 
         Page<Tour> page = new PageImpl<>(List.of(tour));
 
-        when(tourRepository.searchByFilters(
-                any(), any(), any(), any(), any(), any(Pageable.class)))
+        when(tourRepository.searchByFiltersWithoutDate(
+                any(), any(), any(), any(), any(Pageable.class)))
                 .thenReturn(page);
 
         when(tourMapper.toDto(tour)).thenReturn(dto);
@@ -153,7 +155,7 @@ class TourServiceTest {
                 "PRIVATE",
                 List.of("EN"),
                 null,
-                null,
+                null, // date = null → WITHOUT date branch
                 0,
                 10,
                 new String[] { "title", "asc" });
@@ -177,6 +179,35 @@ class TourServiceTest {
 
         assertTrue(result.isFail());
         assertEquals("BAD_REQUEST", result.error().code());
+    }
+
+    @Test
+    void getAllByQuery_withDate_callsDateRepository() {
+        Tour tour = new Tour();
+        TourResponseDto dto = new TourResponseDto();
+
+        Page<Tour> page = new PageImpl<>(List.of(tour));
+
+        LocalDate date = LocalDate.of(2026, 2, 28);
+
+        when(tourRepository.searchByFiltersWithDate(
+                any(), any(), any(), any(), eq(date), any(Pageable.class)))
+                .thenReturn(page);
+
+        when(tourMapper.toDto(tour)).thenReturn(dto);
+
+        Result<Page<TourResponseDto>> result = tourService.getAllByQuery(
+                List.of("ADVENTURE"),
+                "PRIVATE",
+                List.of("EN"),
+                null,
+                date,
+                0,
+                10,
+                new String[] { "title", "asc" });
+
+        assertTrue(result.isOk());
+        assertEquals(1, result.get().getContent().size());
     }
 
     @Test
