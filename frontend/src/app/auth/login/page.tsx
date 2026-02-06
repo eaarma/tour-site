@@ -55,7 +55,7 @@ export default function LoginPage() {
   // 🔹 If already logged in → show message instead of login form
   if (user) {
     return (
-      <main className="flex flex-col items-center justify-center min-h-screen p-4">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <div className="card bg-base-300 shadow-lg p-8 max-w-md w-full text-center space-y-4">
           <h2 className="text-2xl font-bold">You are already logged in</h2>
           <p className="opacity-80">
@@ -74,7 +74,7 @@ export default function LoginPage() {
             </button>
           </div>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -105,7 +105,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex flex-col items-center justify-start min-h-screen pt-24 px-4">
+    <div className="flex flex-col items-center justify-start min-h-screen pt-24 px-4">
       <div className="w-full max-w-md space-y-8">
         <div className="card shadow-lg bg-base-300 p-8">
           <h2 className="text-2xl font-bold mb-4">User Login</h2>
@@ -156,6 +156,6 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

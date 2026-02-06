@@ -44,7 +44,7 @@ export default function ManagerProfilePage({
         const activeShops = shopStatuses.filter((s) => s.status === "ACTIVE");
 
         const shopDetails = await Promise.all(
-          activeShops.map(async (s) => await ShopService.getById(s.shopId))
+          activeShops.map(async (s) => await ShopService.getById(s.shopId)),
         );
 
         setShops(shopDetails);
@@ -85,7 +85,7 @@ export default function ManagerProfilePage({
         // Total orders (order items count)
         const orders = sessions.reduce(
           (sum, s) => sum + (s.participants?.length ?? 0),
-          0
+          0,
         );
         setTotalOrders(orders);
 
@@ -95,17 +95,17 @@ export default function ManagerProfilePage({
             sum +
             (s.participants?.reduce((pSum, p) => pSum + p.participants, 0) ??
               0),
-          0
+          0,
         );
 
         setTotalParticipants(participants);
 
         // Fetch tours needed for cards/modals
         const uniqueTourIds = Array.from(
-          new Set(sessions.map((s) => s.tourId))
+          new Set(sessions.map((s) => s.tourId)),
         );
         const tourDetails = await Promise.all(
-          uniqueTourIds.map((id) => TourService.getById(id))
+          uniqueTourIds.map((id) => TourService.getById(id)),
         );
         setTours(tourDetails);
       } catch (err) {
@@ -117,7 +117,7 @@ export default function ManagerProfilePage({
   }, [profile?.id]);
 
   return (
-    <main className="bg-base-200 min-h-screen p-6">
+    <div className="bg-base-200 min-h-screen p-6">
       <div className="max-w-5xl mx-auto flex flex-col gap-8">
         <ProfileSection user={profile} onProfileUpdated={setProfile} />
 
@@ -142,6 +142,6 @@ export default function ManagerProfilePage({
           Go to Shops Page
         </button>
       </div>
-    </main>
+    </div>
   );
 }

@@ -65,30 +65,29 @@ export default function UserRegisterPage() {
 
       toast.success("User registered successfully ✅");
       router.push("/auth/login");
-    }  catch (err) {
-  console.error(err);
+    } catch (err) {
+      console.error(err);
 
-  if (err instanceof ApiError && err.data) {
-    if (err.data.errors?.length) {
-      setErrors({ general: err.data.errors.join(", ") });
-    } else if (err.data.details) {
-      setErrors({ general: Object.values(err.data.details).join(", ") });
-    } else if (err.data.message) {
-      setErrors({ general: err.data.message });
-    } else {
-      setErrors({ general: "Registration failed." });
+      if (err instanceof ApiError && err.data) {
+        if (err.data.errors?.length) {
+          setErrors({ general: err.data.errors.join(", ") });
+        } else if (err.data.details) {
+          setErrors({ general: Object.values(err.data.details).join(", ") });
+        } else if (err.data.message) {
+          setErrors({ general: err.data.message });
+        } else {
+          setErrors({ general: "Registration failed." });
+        }
+      } else {
+        setErrors({ general: "Registration failed." });
+      }
+    } finally {
+      setLoading(false);
     }
-  } else {
-    setErrors({ general: "Registration failed." });
-  }
-} finally {
-  setLoading(false);
-}
-
   };
 
   return (
-    <main className="flex items-start justify-center min-h-screen bg-base-200 pt-24">
+    <div className="flex items-start justify-center min-h-screen bg-base-200 pt-24">
       <div className="card w-full max-w-md shadow-lg bg-base-100 p-6">
         <h2 className="text-2xl font-bold mb-4">User Registration</h2>
 
@@ -186,6 +185,6 @@ export default function UserRegisterPage() {
           </button>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

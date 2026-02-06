@@ -129,7 +129,7 @@ export default function CheckoutPage() {
   };
 
   return (
-    <main className="bg-base-200 min-h-screen p-6">
+    <div className="bg-base-200 min-h-screen p-6">
       <div className="max-w-2xl mx-auto bg-base-100 p-6 rounded-lg shadow-md">
         <h1 className="text-3xl font-bold mb-6 text-center">Checkout</h1>
 
@@ -250,6 +250,6 @@ export default function CheckoutPage() {
           </button>
         </form>
       </div>
-    </main>
+    </div>
   );
 }

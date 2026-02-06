@@ -36,26 +36,26 @@ export default function ConfirmationPage() {
 
   if (loading) {
     return (
-      <main className="flex items-center justify-center min-h-screen text-gray-500">
+      <div className="flex items-center justify-center min-h-screen text-gray-500">
         Loading order...
-      </main>
+      </div>
     );
   }
 
   if (!order) {
     return (
-      <main className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen">
         <p className="text-red-500 text-center">
           Order not found. Returning home...
         </p>
-      </main>
+      </div>
     );
   }
 
   const mainItem = order.items?.[0];
 
   return (
-    <main className="max-w-3xl mx-auto p-6">
+    <div className="max-w-3xl mx-auto p-6">
       {/* HEADER */}
       <div className="text-center mb-10">
         <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
@@ -161,6 +161,6 @@ export default function ConfirmationPage() {
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
-    </main>
+    </div>
   );
 }

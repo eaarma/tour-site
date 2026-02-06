@@ -25,7 +25,7 @@ const Footer: React.FC = () => {
           </div>
 
           {/* TitleText centered */}
-          <TitleText title="ShopEase" image="/tree.png" />
+          <TitleText title="TourHub" image="/tree.png" />
         </div>
       </div>
     </footer>

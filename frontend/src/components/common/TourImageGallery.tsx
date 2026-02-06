@@ -46,7 +46,7 @@ export default function TourImageGallery({
   const isPlaceholder = images.length === 0;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 min-w-0">
       {/* ✅ Main Image */}
       <div className="w-full">
         <img
@@ -71,7 +71,7 @@ export default function TourImageGallery({
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
-          className="flex gap-3 overflow-x-auto pb-2 cursor-grab active:cursor-grabbing select-none"
+          className="flex gap-3 overflow-x-auto pb-2 cursor-grab w-full max-w-full active:cursor-grabbing select-none"
         >
           {images.map((img, index) => (
             <div

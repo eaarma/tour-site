@@ -45,7 +45,7 @@ export default function ContactPage() {
     }
   };
   return (
-    <main className="max-w-4xl mx-auto p-6 min-h-screen mt-4 sm:mt-6">
+    <div className="max-w-4xl mx-auto p-6 min-h-screen mt-4 sm:mt-6">
       <section className="text-center mb-10">
         <h1 className="text-3xl font-bold mb-2">Get in Touch</h1>
         <p className="text-base text-gray-600">
@@ -107,6 +107,6 @@ export default function ContactPage() {
           <div className="text-error text-sm text-center">{errorMessage}</div>
         )}
       </form>
-    </main>
+    </div>
   );
 }

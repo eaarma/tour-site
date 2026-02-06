@@ -57,7 +57,7 @@ export default function ViewOrderPage() {
   const firstItem = order.items[0];
 
   return (
-    <main className="min-h-screen bg-base-200 p-6 flex justify-center">
+    <div className="min-h-screen bg-base-200 p-6 flex justify-center">
       {error && <p className="text-red-500 mt-4">Failed to load booking.</p>}
 
       <div className="max-w-3xl w-full">
@@ -144,6 +144,6 @@ export default function ViewOrderPage() {
           </section>
         </div>
       </div>
-    </main>
+    </div>
   );
 }

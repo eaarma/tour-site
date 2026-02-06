@@ -18,7 +18,7 @@ export default function CartPage() {
   }, []);
 
   return (
-    <main className="max-w-7xl mx-auto p-4 min-h-screen mt-5">
+    <div className="max-w-7xl mx-auto p-4 min-h-screen mt-5">
       {cart.length === 0 ? (
         <p className="text-gray-500">Your cart is empty 🛒</p>
       ) : (
@@ -50,6 +50,6 @@ export default function CartPage() {
           initialComment={viewItem.comment}
         />
       )}
-    </main>
+    </div>
   );
 }

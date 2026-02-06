@@ -33,11 +33,11 @@ export default function PublicManagerProfilePage() {
   const imageUrl =
     manager.profileImageUrl ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(
-      manager.name
+      manager.name,
     )}&background=random`;
 
   return (
-    <main className="bg-base-200 min-h-screen p-6">
+    <div className="bg-base-200 min-h-screen p-6">
       <div className="max-w-3xl mx-auto">
         <BackButton />
         <CardFrame>
@@ -114,6 +114,6 @@ export default function PublicManagerProfilePage() {
           </div>
         </CardFrame>
       </div>
-    </main>
+    </div>
   );
 }

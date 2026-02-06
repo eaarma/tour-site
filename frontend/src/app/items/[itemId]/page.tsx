@@ -52,7 +52,7 @@ export default function ItemPage() {
   }
 
   return (
-    <main className="bg-base-200 min-h-screen p-6">
+    <div className="bg-base-200 min-h-screen md:px-6 py-6">
       {/* Back Button */}
       <div className="max-w-5xl mx-auto mb-4">
         <button
@@ -74,10 +74,7 @@ export default function ItemPage() {
       {/* Main Card */}
       <div className="relative max-w-5xl mx-auto card bg-base-100 shadow-lg p-6">
         {/* Status Badge */}
-        <div
-          className={`absolute top-4 right-4 tooltip z-20`}
-          data-tip={`Current status of this tour is ${item?.status}`}
-        >
+        <div className={`absolute top-4 right-4  z-20`}>
           <span
             className={`badge ${
               item?.status === "ACTIVE"
@@ -180,6 +177,6 @@ export default function ItemPage() {
         selectedSchedule={selectedSchedule ?? undefined}
         schedules={schedules}
       />
-    </main>
+    </div>
   );
 }

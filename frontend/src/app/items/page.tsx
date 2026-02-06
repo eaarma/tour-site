@@ -103,7 +103,7 @@ export default function ItemsPage() {
   };
 
   return (
-    <main className="flex flex-col items-center min-h-screen p-4 max-w-7xl mx-auto">
+    <div className="flex flex-col items-center min-h-screen p-4 max-w-7xl mx-auto">
       <div className="w-full space-y-6 mt-5">
         <SearchBar
           onSearch={handleSearch}
@@ -145,6 +145,6 @@ export default function ItemsPage() {
           />
         )}
       </div>
-    </main>
+    </div>
   );
 }

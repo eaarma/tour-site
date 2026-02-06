@@ -191,7 +191,7 @@ export default function ManagerItemPage() {
   }
 
   return (
-    <main className="bg-base-200 min-h-screen p-6">
+    <div className="bg-base-200 min-h-screen p-6">
       <div className="max-w-5xl mx-auto mb-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold">
           {isNew ? "Add Tour" : isEditing ? "Edit Tour" : "Tour Details"}
@@ -535,6 +535,6 @@ export default function ManagerItemPage() {
           </div>
         </div>
       </div>
-    </main>
+    </div>
   );
 }
