@@ -12,7 +12,6 @@ export default function AuthProvider({
   children: React.ReactNode;
 }) {
   const dispatch = useDispatch();
-  const [loading, setLoading] = useState(true);
 
   // 1️⃣ Initial user load (NO accessToken here)
   useEffect(() => {
@@ -29,16 +28,11 @@ export default function AuthProvider({
       } catch {
         dispatch(clearUser());
       } finally {
-        setLoading(false);
       }
     };
 
     fetchUser();
   }, [dispatch]);
-
-  if (loading) {
-    return <div className="p-6 text-center">Loading authentication...</div>;
-  }
 
   return <>{children}</>;
 }
