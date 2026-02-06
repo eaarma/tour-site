@@ -144,18 +144,18 @@ class TourServiceTest {
 
         Page<Tour> page = new PageImpl<>(List.of(tour));
 
-        when(tourRepository.searchByFiltersWithoutDate(
+        when(tourRepository.searchWithCategory(
                 any(), any(), any(), any(), any(Pageable.class)))
                 .thenReturn(page);
 
         when(tourMapper.toDto(tour)).thenReturn(dto);
 
         Result<Page<TourResponseDto>> result = tourService.getAllByQuery(
-                List.of("ADVENTURE"),
+                List.of("ADVENTURE"), // hasCategory = true
                 "PRIVATE",
                 List.of("EN"),
                 null,
-                null, // date = null → WITHOUT date branch
+                null, // hasDate = false
                 0,
                 10,
                 new String[] { "title", "asc" });
