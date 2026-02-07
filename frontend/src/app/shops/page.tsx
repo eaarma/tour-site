@@ -9,6 +9,8 @@ import { PlusCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import JoinOrCreateShopModal from "@/components/shops/JoinOrCreateShopModal";
 import RequireAuth from "@/components/common/RequireAuth";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 
 interface ShopWithStatus extends ShopDto {
   userStatus: string;
@@ -20,6 +22,10 @@ export default function ShopsPage() {
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const router = useRouter();
 
+  const authInitialized = useSelector(
+    (state: RootState) => state.auth.initialized,
+  );
+
   useEffect(() => {
     const fetchShops = async () => {
       try {
@@ -29,7 +35,7 @@ export default function ShopsPage() {
           shopStatuses.map(async (s) => {
             const shop = await ShopService.getById(s.shopId);
             return { ...shop, userStatus: s.status };
-          })
+          }),
         );
 
         // ✅ Sort: Active first, Pending after
@@ -47,8 +53,9 @@ export default function ShopsPage() {
       }
     };
 
+    if (!authInitialized) return;
     fetchShops();
-  }, []);
+  }, [authInitialized]);
 
   const handleRequestSent = () => {
     toast.success("Request sent ✅");

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { clearUser, setAuth } from "@/store/authSlice";
+import { clearUser, setAuth, setInitialized } from "@/store/authSlice";
 import { AuthService } from "@/lib/authService";
 import { UserResponseDto } from "@/types";
 
@@ -20,7 +20,6 @@ export default function AuthProvider({
         const user: UserResponseDto | null = await AuthService.getCurrentUser();
 
         if (user) {
-          // ⚠️ accessToken is intentionally null here
           dispatch(setAuth({ user, accessToken: null }));
         } else {
           dispatch(clearUser());
@@ -28,6 +27,7 @@ export default function AuthProvider({
       } catch {
         dispatch(clearUser());
       } finally {
+        dispatch(setInitialized());
       }
     };
 
