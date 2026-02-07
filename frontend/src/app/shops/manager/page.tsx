@@ -10,10 +10,11 @@ import { Tour } from "@/types";
 import { TourService } from "@/lib/tourService";
 import { useShopAccess } from "@/hooks/useShopAccess";
 import Unauthorized from "@/components/common/Unauthorized";
-import { Navigation, Package } from "lucide-react";
+import { Frame, Navigation, Package } from "lucide-react";
 
 import { TourSessionDto } from "@/types/tourSession";
 import { TourSessionService } from "@/lib/tourSessionService";
+import CardFrame from "@/components/common/CardFrame";
 
 export default function ShopManagerPage() {
   const router = useRouter();
@@ -161,50 +162,52 @@ export default function ShopManagerPage() {
 
       {/* ===== Tabs ===== */}
       <div className="mt-6">
-        <div className="border-b border-base-300 mb-10">
-          <div className="flex gap-10">
-            <button
-              onClick={() => setActiveTab("orders")}
-              className={`py-3 px-1 text-[1.05rem] font-semibold tracking-wide 
+        <CardFrame>
+          <div className="border-b border-base-300 mb-10">
+            <div className="flex gap-10">
+              <button
+                onClick={() => setActiveTab("orders")}
+                className={`py-3 px-3 text-[1.05rem] font-semibold tracking-wide 
         flex items-center gap-2 transition-all 
         ${
           activeTab === "orders"
             ? "text-primary border-b-2 border-primary"
-            : "text-gray-700 hover:text-gray-900"
+            : "text-gray-700 hover:text-blue-700"
         }`}
-            >
-              <Package className="w-5 h-5" strokeWidth={2.25} />
-              Orders
-            </button>
+              >
+                <Package className="w-5 h-5" strokeWidth={2.25} />
+                Orders
+              </button>
 
-            <button
-              onClick={() => setActiveTab("tours")}
-              className={`py-3 px-1 text-[1.05rem] font-semibold tracking-wide 
+              <button
+                onClick={() => setActiveTab("tours")}
+                className={`py-3 px-3 text-[1.05rem] font-semibold tracking-wide 
         flex items-center gap-2 transition-all 
         ${
           activeTab === "tours"
             ? "text-primary border-b-2 border-primary"
-            : "text-gray-700 hover:text-gray-900"
+            : "text-gray-700 hover:text-blue-700"
         }`}
-            >
-              <Navigation className="w-5 h-5" strokeWidth={2.25} />
-              Tours
-            </button>
+              >
+                <Navigation className="w-5 h-5" strokeWidth={2.25} />
+                Tours
+              </button>
+            </div>
           </div>
-        </div>
 
-        {/* Tab panels */}
-        {activeTab === "orders" && (
-          <ManagerOrderSection
-            sessions={sessions}
-            tours={tours}
-            shopId={shopId}
-          />
-        )}
+          {/* Tab panels */}
+          {activeTab === "orders" && (
+            <ManagerOrderSection
+              sessions={sessions}
+              tours={tours}
+              shopId={shopId}
+            />
+          )}
 
-        {activeTab === "tours" && (
-          <ManagerItemList items={tours} shopId={shopId} />
-        )}
+          {activeTab === "tours" && (
+            <ManagerItemList items={tours} shopId={shopId} />
+          )}
+        </CardFrame>
       </div>
     </div>
   );

@@ -1,0 +1,9 @@
+ALTER TABLE shops
+ADD COLUMN created_at TIMESTAMP WITH TIME ZONE;
+
+UPDATE shops
+SET created_at = NOW()
+WHERE created_at IS NULL;
+
+ALTER TABLE shops
+ALTER COLUMN created_at SET NOT NULL;
