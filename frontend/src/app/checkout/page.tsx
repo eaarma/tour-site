@@ -8,8 +8,6 @@ import { setCheckoutInfo, updateCheckoutInfo } from "@/store/checkoutSlice";
 import { RootState } from "@/store/store";
 import { UserService } from "@/lib/userService";
 import toast from "react-hot-toast";
-import { useRef } from "react";
-
 export default function CheckoutPage() {
   const router = useRouter();
   const dispatch = useDispatch();
@@ -22,7 +20,6 @@ export default function CheckoutPage() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const [highlightIndex, setHighlightIndex] = useState(0);
-  const selectingWithKeyboard = useRef(false);
   // ✅ 1. Pre-fill checkout info from logged-in user
   useEffect(() => {
     const loadUserProfile = async () => {
