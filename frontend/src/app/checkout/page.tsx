@@ -8,6 +8,7 @@ import { setCheckoutInfo, updateCheckoutInfo } from "@/store/checkoutSlice";
 import { RootState } from "@/store/store";
 import { UserService } from "@/lib/userService";
 import toast from "react-hot-toast";
+import { useRef } from "react";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -20,7 +21,8 @@ export default function CheckoutPage() {
   const [isFocused, setIsFocused] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState("");
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
+  const [highlightIndex, setHighlightIndex] = useState(0);
+  const selectingWithKeyboard = useRef(false);
   // ✅ 1. Pre-fill checkout info from logged-in user
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -122,6 +124,10 @@ export default function CheckoutPage() {
     );
   });
 
+  useEffect(() => {
+    setHighlightIndex(0);
+  }, [query]);
+
   const handleSelect = (dial_code: string) => {
     setCountryCode(dial_code.replace("+", "")); // store digits only
     setQuery("");
@@ -181,7 +187,9 @@ export default function CheckoutPage() {
                     type="text"
                     className="input input-bordered w-full"
                     placeholder="+372"
-                    value={isFocused ? query : `+${countryCode}`}
+                    value={
+                      isFocused ? query : countryCode ? `+${countryCode}` : ""
+                    }
                     onChange={(e) => {
                       setQuery(e.target.value);
                       setDropdownOpen(true);
@@ -193,17 +201,46 @@ export default function CheckoutPage() {
                     }}
                     onBlur={() => {
                       setTimeout(() => {
+                        if (
+                          filteredCountries.length > 0 &&
+                          query.trim() !== ""
+                        ) {
+                          handleSelect(filteredCountries[0].dial_code);
+                        }
+
                         setIsFocused(false);
                         setDropdownOpen(false);
                       }, 150);
                     }}
+                    onKeyDown={(e) => {
+                      if (
+                        !dropdownOpen &&
+                        (e.key === "ArrowDown" || e.key === "ArrowUp")
+                      ) {
+                        setDropdownOpen(true);
+                      }
+
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        setHighlightIndex((i) =>
+                          Math.min(i + 1, filteredCountries.length - 1),
+                        );
+                      }
+
+                      if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setHighlightIndex((i) => Math.max(i - 1, 0));
+                      }
+                    }}
                   />
                   {dropdownOpen && (
                     <ul className="absolute z-20 mt-1 max-h-60 overflow-y-auto w-full bg-base-100 border border-base-300 rounded-box shadow-lg">
-                      {filteredCountries.map((country) => (
+                      {filteredCountries.map((country, index) => (
                         <li
                           key={country.code}
-                          className="px-3 py-2 cursor-pointer hover:bg-base-200"
+                          className={`px-3 py-2 cursor-pointer ${
+                            index === highlightIndex ? "bg-base-300" : ""
+                          }`}
                           onMouseDown={() => handleSelect(country.dial_code)}
                         >
                           {country.name} ({country.dial_code})
