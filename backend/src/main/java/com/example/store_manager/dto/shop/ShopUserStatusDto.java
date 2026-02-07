@@ -12,5 +12,5 @@ public class ShopUserStatusDto {
     private String shopName;
     private String role;
     private String status;
-    private Instant joinedAt;
+    private String joinedAt;
 }

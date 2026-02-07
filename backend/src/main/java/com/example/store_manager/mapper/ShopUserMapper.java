@@ -21,7 +21,7 @@ public class ShopUserMapper {
                 .phone(user.getPhone())
                 .role(shopUser.getRole().name())
                 .status(shopUser.getStatus().name())
-                .joinedAt(shopUser.getCreatedAt())
+                .joinedAt(shopUser.getCreatedAt().toString())
                 .build();
     }
 
@@ -31,7 +31,7 @@ public class ShopUserMapper {
                 .shopName(shopUser.getShop().getName())
                 .role(shopUser.getRole().name())
                 .status(shopUser.getStatus().name())
-                .joinedAt(shopUser.getCreatedAt())
+                .joinedAt(shopUser.getCreatedAt().toString())
                 .build();
     }
 }

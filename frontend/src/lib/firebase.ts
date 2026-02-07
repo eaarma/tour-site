@@ -19,7 +19,5 @@ const firebaseConfig = {
   appId: FIREBASE_APP_ID,
 };
 
-console.log("🔥 Firebase storage bucket:", firebaseConfig.storageBucket);
-
 const app = initializeApp(firebaseConfig);
 export const storage = getStorage(app);

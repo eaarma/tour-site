@@ -20,5 +20,5 @@ public class ShopUserDto {
     private String role;
     private String status;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private Instant joinedAt;
+    private String joinedAt;
 }
