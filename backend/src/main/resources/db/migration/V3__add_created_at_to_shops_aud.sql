@@ -1,0 +1,2 @@
+ALTER TABLE shops_aud
+ADD COLUMN created_at TIMESTAMP WITH TIME ZONE;
