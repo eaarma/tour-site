@@ -22,3 +22,4 @@ ADD COLUMN expires_at TIMESTAMP;
 
 CREATE INDEX IF NOT EXISTS idx_orders_reserved_expiration
 ON orders (status, expires_at);
+"
