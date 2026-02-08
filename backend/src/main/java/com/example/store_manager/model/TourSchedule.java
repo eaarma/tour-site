@@ -5,8 +5,17 @@ import java.time.LocalTime;
 
 import org.hibernate.envers.Audited;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "tour_schedules")
@@ -38,4 +47,14 @@ public class TourSchedule {
 
     @Column(nullable = false)
     private String status; // ACTIVE, EXPIRED, BOOKED
+
+    @Column(name = "reserved_participants", nullable = false)
+    private Integer reservedParticipants = 0;
+
+    public int getAvailableParticipants() {
+        int reserved = reservedParticipants != null ? reservedParticipants : 0;
+        int booked = bookedParticipants != null ? bookedParticipants : 0;
+        return maxParticipants - booked - reserved;
+    }
+
 }

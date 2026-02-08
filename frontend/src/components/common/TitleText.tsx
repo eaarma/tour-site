@@ -9,7 +9,7 @@ interface TitleTextProps {
 
 const TitleText: React.FC<TitleTextProps> = ({ title, image }) => {
   return (
-    <div className="flex items-center space-x-2 md:space-x-4 border p-1 md:p-2">
+    <div className="flex items-center space-x-2 md:space-x-4 p-1 md:p-2">
       <Image
         src={image}
         alt={title}

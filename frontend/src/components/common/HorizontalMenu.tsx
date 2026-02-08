@@ -13,7 +13,7 @@ interface HorizontalMenuProps {
 
 const HorizontalMenu: React.FC<HorizontalMenuProps> = ({ items }) => {
   return (
-    <div className="flex flex-row justify-center gap-4 p-1 border bg-base-200 rounded">
+    <div className="flex flex-row justify-center gap-4 p-1 bg-base-200 rounded">
       {items.map((item, index) => (
         <Link
           key={index}

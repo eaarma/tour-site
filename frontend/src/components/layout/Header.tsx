@@ -79,7 +79,7 @@ const Header: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-base-100 border-b shadow-md page-container">
-      <div className="flex items-center justify-between py-1 px-2 md:p-4">
+      <div className="flex items-center justify-between py-1 px-2 md:p-2">
         <button
           className="md:hidden btn btn-ghost btn-sm"
           onClick={() => setMobileMenuOpen((v) => !v)}

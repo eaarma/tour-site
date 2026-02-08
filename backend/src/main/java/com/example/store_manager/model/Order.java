@@ -81,4 +81,8 @@ public class Order {
     @LastModifiedDate
     @Column(name = "updated_at")
     private Instant updatedAt;
+
+    @Column(name = "expires_at")
+    private Instant expiresAt;
+
 }
