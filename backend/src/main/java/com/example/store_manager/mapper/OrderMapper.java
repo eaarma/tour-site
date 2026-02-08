@@ -37,6 +37,7 @@ public class OrderMapper {
                 .status(order.getStatus())
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
+                .expiresAt(order.getExpiresAt())
                 .items(order.getOrderItems().stream()
                         .map(orderItemMapper::toDto)
                         .collect(Collectors.toList()))

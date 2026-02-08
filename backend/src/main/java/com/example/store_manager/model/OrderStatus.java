@@ -2,10 +2,11 @@ package com.example.store_manager.model;
 
 public enum OrderStatus {
     // Before payment
-    PENDING, // User has placed order but not paid yet
+    RESERVED, // User has placed order but not paid yet
     EXPIRED, // Payment window expired or reservation not completed
 
     // After payment
+    PENDING,
     PLANNED, // Payment received, awaiting confirmation
     PAID, // Fully paid and all items confirmed
     PARTIALLY_PAID, // (optional) if you ever allow split payments

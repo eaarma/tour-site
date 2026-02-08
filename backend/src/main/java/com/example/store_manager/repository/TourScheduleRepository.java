@@ -3,6 +3,7 @@ package com.example.store_manager.repository;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -12,19 +13,12 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
 import com.example.store_manager.model.TourSchedule;
 
 import jakarta.persistence.LockModeType;
 
 @Repository
 public interface TourScheduleRepository extends JpaRepository<TourSchedule, Long> {
-
-    /*
-     * -----------------------------
-     * Basic queries
-     * -----------------------------
-     */
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select s from TourSchedule s where s.id = :id")
@@ -37,9 +31,7 @@ public interface TourScheduleRepository extends JpaRepository<TourSchedule, Long
     List<TourSchedule> findByTourIdAndStatus(Long tourId, String status);
 
     /*
-     * -----------------------------
      * Scheduled maintenance
-     * -----------------------------
      */
 
     @Modifying
@@ -52,9 +44,7 @@ public interface TourScheduleRepository extends JpaRepository<TourSchedule, Long
     int markExpiredSchedules(@Param("today") LocalDate today, @Param("now") LocalTime now);
 
     /*
-     * -----------------------------
      * Authorization helper (AOP)
-     * -----------------------------
      */
 
     @Query("""

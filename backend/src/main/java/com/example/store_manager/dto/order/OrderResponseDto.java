@@ -22,6 +22,7 @@ public class OrderResponseDto {
     private OrderStatus status;
     private Instant createdAt;
     private Instant updatedAt;
+    private Instant expiresAt;
 
     private List<OrderItemResponseDto> items;
 }

@@ -99,11 +99,14 @@ public class OrderService {
                                 return Result.fail(ApiError.notFound("Schedule not found"));
                         }
 
-                        int newBooked = schedule.getBookedParticipants() + itemDto.getParticipants();
-                        if (newBooked > schedule.getMaxParticipants()) {
+                        int available = schedule.getAvailableParticipants();
+
+                        if (itemDto.getParticipants() > available) {
                                 return Result.fail(
                                                 ApiError.badRequest("Not enough spots available for this schedule"));
                         }
+
+                        int newBooked = schedule.getBookedParticipants() + itemDto.getParticipants();
 
                         // ✅ Update schedule (single source of truth)
                         schedule.setBookedParticipants(newBooked);
@@ -114,8 +117,8 @@ public class OrderService {
                         } else {
                                 schedule.setStatus("ACTIVE");
                         }
-
-                        tourScheduleRepository.save(schedule);
+                        // Note: No need to call save() here because of @Transactional and JPA dirty checking
+                        //tourScheduleRepository.save(schedule);
 
                         // ✅ Create or reuse session
                         TourSession session = tourSessionRepository
@@ -133,6 +136,7 @@ public class OrderService {
                                         .shopId(tour.getShop().getId())
                                         .tourTitle(tour.getTitle())
                                         .scheduledAt(itemDto.getScheduledAt())
+                                        .schedule(schedule)
                                         .participants(itemDto.getParticipants())
                                         .name(dto.getName())
                                         .email(dto.getEmail())

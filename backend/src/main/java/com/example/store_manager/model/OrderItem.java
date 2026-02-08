@@ -118,4 +118,8 @@ public class OrderItem {
     @JoinColumn(name = "session_id")
     private TourSession session;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "schedule_id", nullable = false)
+    private TourSchedule schedule;
+
 }
