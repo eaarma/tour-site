@@ -120,6 +120,7 @@ public class OrderService {
                         // Note: No need to call save() here because of @Transactional and JPA dirty checking
                         //tourScheduleRepository.save(schedule);
 
+        
                         // ✅ Create or reuse session
                         TourSession session = tourSessionRepository
                                         .findByScheduleId(schedule.getId())

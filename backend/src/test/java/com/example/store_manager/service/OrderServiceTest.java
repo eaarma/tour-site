@@ -762,7 +762,6 @@ public class OrderServiceTest {
         assertTrue(result.isOk());
 
         verify(tourScheduleRepository).findByIdForUpdate(1L);
-        verify(tourScheduleRepository).save(any(TourSchedule.class));
         verify(tourSessionRepository).save(any(TourSession.class));
         verify(orderRepository).save(any(Order.class));
     }
