@@ -29,4 +29,5 @@ public record ApiError(String code, String message) {
     public static ApiError internal(String message) {
         return new ApiError("INTERNAL", message);
     }
+
 }

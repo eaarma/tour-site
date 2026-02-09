@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 public class ReservationExpirationJob {
 
     private final OrderRepository orderRepo;
-    private final TourScheduleRepository scheduleRepo;
 
     @Scheduled(fixedDelay = 60000)
     @Transactional
@@ -34,8 +33,9 @@ public class ReservationExpirationJob {
 
                 TourSchedule schedule = item.getSchedule();
 
-                schedule.setReservedParticipants(
-                        schedule.getReservedParticipants() - item.getParticipants());
+                schedule.releaseReserved(item.getParticipants());
+
+                item.setStatus(OrderStatus.EXPIRED);
             }
 
             order.setStatus(OrderStatus.EXPIRED);

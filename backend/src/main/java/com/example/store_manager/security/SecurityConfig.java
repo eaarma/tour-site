@@ -53,8 +53,8 @@ public class SecurityConfig {
                         .requireExplicitSave(false))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/error").permitAll()
-                        .requestMatchers("/auth/me").authenticated()
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/auth/me").authenticated()
 
                         // Tours
                         .requestMatchers(HttpMethod.GET, "/tours").permitAll()
@@ -75,6 +75,10 @@ public class SecurityConfig {
                         // Order items
                         .requestMatchers(HttpMethod.PATCH, "/orders/items/**")
                         .hasAnyRole("MANAGER", "OWNER", "ADMIN")
+
+                        // Checkout
+                        .requestMatchers(HttpMethod.POST, "/checkout/reserve").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/checkout/finalize").permitAll()
 
                         // Shops & Shop Users
                         .requestMatchers(HttpMethod.POST, "/api/shops/**").permitAll()

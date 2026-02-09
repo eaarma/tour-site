@@ -1,10 +1,12 @@
 package com.example.store_manager.service;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -62,12 +64,10 @@ public class OrderService {
         private final CurrentUserService currentUserService;
         private final TourSessionRepository tourSessionRepository;
 
-        /**
-         * Create a new order with multiple items.
-         */
-
         @Transactional
-        public Result<OrderResponseDto> createOrder(OrderCreateRequestDto dto, UUID userId) {
+        public Result<OrderResponseDto> createOrder(
+                        OrderCreateRequestDto dto,
+                        UUID userId) {
 
                 User user = null;
                 if (userId != null) {
@@ -77,11 +77,31 @@ public class OrderService {
                         }
                 }
 
+                Result<Order> built = buildOrder(dto, user, OrderStatus.PENDING, false);
+
+                if (built.isFail()) {
+                        return Result.fail(built.getErrorOrThrow());
+                }
+
+                Order saved = orderRepository.save(built.get());
+
+                return Result.ok(orderMapper.toDto(saved));
+        }
+
+        @Transactional
+        protected Result<Order> buildOrder(
+                        OrderCreateRequestDto dto,
+                        User user,
+                        OrderStatus orderStatus,
+                        boolean reserveOnly) {
+
                 Order order = Order.builder()
                                 .user(user)
                                 .paymentMethod(dto.getPaymentMethod())
-                                .status(OrderStatus.PENDING)
+                                .status(orderStatus)
                                 .build();
+
+                BigDecimal totalPrice = BigDecimal.ZERO;
 
                 for (OrderItemCreateRequestDto itemDto : dto.getItems()) {
 
@@ -90,7 +110,7 @@ public class OrderService {
                                 return Result.fail(ApiError.notFound("Tour not found"));
                         }
 
-                        // 🔒 LOCK schedule row
+                        // 🔒 Lock schedule
                         TourSchedule schedule = tourScheduleRepository
                                         .findByIdForUpdate(itemDto.getScheduleId())
                                         .orElse(null);
@@ -106,22 +126,24 @@ public class OrderService {
                                                 ApiError.badRequest("Not enough spots available for this schedule"));
                         }
 
-                        int newBooked = schedule.getBookedParticipants() + itemDto.getParticipants();
-
-                        // ✅ Update schedule (single source of truth)
-                        schedule.setBookedParticipants(newBooked);
-
-                        if ("PRIVATE".equalsIgnoreCase(tour.getType()) ||
-                                        newBooked >= schedule.getMaxParticipants()) {
-                                schedule.setStatus("BOOKED");
+                        // ✅ Inventory mutation
+                        if (reserveOnly) {
+                                schedule.setReservedParticipants(
+                                                schedule.getReservedParticipants() + itemDto.getParticipants());
                         } else {
-                                schedule.setStatus("ACTIVE");
-                        }
-                        // Note: No need to call save() here because of @Transactional and JPA dirty checking
-                        //tourScheduleRepository.save(schedule);
+                                int newBooked = schedule.getBookedParticipants() + itemDto.getParticipants();
 
-        
-                        // ✅ Create or reuse session
+                                schedule.setBookedParticipants(newBooked);
+
+                                if ("PRIVATE".equalsIgnoreCase(tour.getType())
+                                                || newBooked >= schedule.getMaxParticipants()) {
+                                        schedule.setStatus("BOOKED");
+                                } else {
+                                        schedule.setStatus("ACTIVE");
+                                }
+                        }
+
+                        // ✅ Session
                         TourSession session = tourSessionRepository
                                         .findByScheduleId(schedule.getId())
                                         .orElseGet(() -> tourSessionRepository.save(
@@ -129,6 +151,9 @@ public class OrderService {
                                                                         .schedule(schedule)
                                                                         .status(SessionStatus.PLANNED)
                                                                         .build()));
+
+                        BigDecimal price = tour.getPrice().multiply(
+                                        BigDecimal.valueOf(itemDto.getParticipants()));
 
                         OrderItem item = OrderItem.builder()
                                         .order(order)
@@ -146,10 +171,8 @@ public class OrderService {
                                         .preferredLanguage(itemDto.getPreferredLanguage())
                                         .comment(itemDto.getComment())
                                         .paymentMethod(dto.getPaymentMethod())
-                                        .status(OrderStatus.CONFIRMED)
-                                        .pricePaid(
-                                                        tour.getPrice().multiply(
-                                                                        BigDecimal.valueOf(itemDto.getParticipants())))
+                                        .status(orderStatus)
+                                        .pricePaid(price)
                                         .tourSnapshot(orderMapper.toJsonSnapshot(
                                                         TourSnapshotDto.builder()
                                                                         .id(tour.getId())
@@ -160,15 +183,66 @@ public class OrderService {
                                         .build();
 
                         order.getOrderItems().add(item);
+                        totalPrice = totalPrice.add(price);
                 }
-
-                BigDecimal totalPrice = order.getOrderItems().stream()
-                                .map(OrderItem::getPricePaid)
-                                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
                 order.setTotalPrice(totalPrice);
 
+                return Result.ok(order);
+        }
+
+        @Transactional
+        public Result<OrderResponseDto> finalizeReservation(
+                        Long orderId,
+                        String token) {
+
+                Order order = orderRepository.findById(orderId).orElse(null);
+
+                if (order == null) {
+                        return Result.fail(ApiError.notFound("Order not found"));
+                }
+
+                if (order.getStatus() != OrderStatus.RESERVED) {
+                        return Result.fail(ApiError.badRequest(
+                                        "Order is not in RESERVED state"));
+                }
+
+                if (!Objects.equals(order.getReservationToken(), token)) {
+                        return Result.fail(ApiError.forbidden(
+                                        "Invalid reservation token"));
+                }
+
+                if (order.getExpiresAt() != null &&
+                                order.getExpiresAt().isBefore(Instant.now())) {
+
+                        return Result.fail(ApiError.badRequest(
+                                        "Reservation has expired"));
+                }
+
+                for (OrderItem item : order.getOrderItems()) {
+
+                        TourSchedule schedule = tourScheduleRepository
+                                        .findByIdForUpdate(item.getSchedule().getId())
+                                        .orElse(null);
+
+                        if (schedule == null) {
+                                return Result.fail(ApiError.notFound("Schedule not found"));
+                        }
+
+                        schedule.releaseReserved(item.getParticipants());
+
+                        schedule.setBookedParticipants(
+                                        schedule.getBookedParticipants()
+                                                        + item.getParticipants());
+                        item.setStatus(OrderStatus.PAID);
+                }
+
+                order.setStatus(OrderStatus.PAID);
+
+                order.setReservationToken(null);
+
                 Order saved = orderRepository.save(order);
+
                 return Result.ok(orderMapper.toDto(saved));
         }
 

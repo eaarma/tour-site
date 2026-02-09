@@ -81,7 +81,7 @@ const ItemListHorizontal: React.FC<ItemListHorizontalProps> = ({
             <div
               key={item.id}
               className="
-    snap-start flex-shrink-0 h-full px-1
+    snap-start flex-shrink-0 h-full
     w-[260px] sm:w-auto
   "
               style={

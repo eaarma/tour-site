@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.store_manager.dto.finalize.FinalizeReservationDto;
 import com.example.store_manager.dto.order.OrderCreateRequestDto;
 import com.example.store_manager.dto.order.OrderItemResponseDto;
 import com.example.store_manager.dto.order.OrderResponseDto;

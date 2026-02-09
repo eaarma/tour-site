@@ -12,4 +12,5 @@ public class ReserveResponseDto {
     private Long orderId;
     private Instant expiresAt;
     private OrderStatus status;
+    private String reservationToken;
 }

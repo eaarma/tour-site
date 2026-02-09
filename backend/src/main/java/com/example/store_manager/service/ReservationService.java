@@ -5,64 +5,105 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
+import com.example.store_manager.dto.finalize.FinalizeReservationDto;
+import com.example.store_manager.dto.order.OrderCreateRequestDto;
+import com.example.store_manager.dto.order.OrderItemCreateRequestDto;
 import com.example.store_manager.dto.reserve.ReserveItemDto;
 import com.example.store_manager.model.Order;
 import com.example.store_manager.model.OrderItem;
 import com.example.store_manager.model.OrderStatus;
+import com.example.store_manager.model.Tour;
 import com.example.store_manager.model.TourSchedule;
 import com.example.store_manager.model.User;
 import com.example.store_manager.repository.OrderRepository;
 import com.example.store_manager.repository.TourScheduleRepository;
+import com.example.store_manager.utility.ApiError;
+import com.example.store_manager.utility.Result;
+import com.example.store_manager.utility.ResultResponseMapper;
+
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class ReservationService {
 
-    private final TourScheduleRepository scheduleRepo;
-    private final OrderRepository orderRepo;
+        private final OrderService orderService;
+        private final OrderRepository orderRepo;
+        private final TourScheduleRepository scheduleRepo;
 
-    @Transactional
-    public Order reserve(List<ReserveItemDto> items, User user) {
+        @Transactional
+        public Result<Order> reserve(OrderCreateRequestDto dto, User user) {
 
-        Instant expiresAt = Instant.now().plus(15, ChronoUnit.MINUTES);
+                Instant expiresAt = Instant.now().plus(15, ChronoUnit.MINUTES);
 
-        Order order = Order.builder()
-                .user(user)
-                .status(OrderStatus.RESERVED)
-                .expiresAt(expiresAt)
-                .build();
+                String token = UUID.randomUUID().toString();
 
-        BigDecimal total = BigDecimal.ZERO;
+                Order order = Order.builder()
+                                .user(user)
+                                .status(OrderStatus.RESERVED)
+                                .expiresAt(expiresAt)
+                                .reservationToken(token)
+                                .totalPrice(BigDecimal.ZERO)
+                                .build();
 
-        for (ReserveItemDto item : items) {
+                BigDecimal total = BigDecimal.ZERO;
 
-            TourSchedule schedule = scheduleRepo
-                    .findByIdForUpdate(item.getScheduleId())
-                    .orElseThrow(() -> new RuntimeException("Schedule not found"));
+                for (OrderItemCreateRequestDto itemDto : dto.getItems()) {
 
-            if (schedule.getAvailableParticipants() < item.getParticipants()) {
-                throw new IllegalStateException("Not enough availability");
-            }
+                        TourSchedule schedule = scheduleRepo
+                                        .findByIdForUpdate(itemDto.getScheduleId())
+                                        .orElse(null);
 
-            schedule.setReservedParticipants(
-                    schedule.getReservedParticipants() + item.getParticipants());
+                        if (schedule == null) {
+                                return Result.fail(ApiError.notFound("Schedule not found"));
+                        }
 
-            OrderItem orderItem = OrderItem.builder()
-                    .order(order)
-                    .schedule(schedule)
-                    .scheduledAt(LocalDateTime.of(schedule.getDate(), schedule.getTime()))
-                    .participants(item.getParticipants())
-                    .status(OrderStatus.RESERVED)
-                    .build();
+                        if (schedule.getAvailableParticipants() < itemDto.getParticipants()) {
+                                return Result.fail(ApiError.badRequest("Not enough availability"));
+                        }
 
-            order.getOrderItems().add(orderItem);
+                        schedule.setReservedParticipants(
+                                        schedule.getReservedParticipants() + itemDto.getParticipants());
+
+                        Tour tour = schedule.getTour();
+
+                        BigDecimal price = tour.getPrice()
+                                        .multiply(BigDecimal.valueOf(itemDto.getParticipants()));
+
+                        total = total.add(price);
+
+                        OrderItem orderItem = OrderItem.builder()
+                                        .order(order)
+                                        .tour(tour)
+                                        .schedule(schedule)
+                                        .shopId(tour.getShop().getId())
+                                        .tourTitle(tour.getTitle())
+                                        .scheduledAt(LocalDateTime.of(schedule.getDate(), schedule.getTime()))
+                                        .participants(itemDto.getParticipants())
+                                        .name(dto.getName())
+                                        .email(dto.getEmail())
+                                        .phone(dto.getPhone())
+                                        .nationality(dto.getNationality())
+                                        .paymentMethod(dto.getPaymentMethod())
+                                        .status(OrderStatus.RESERVED)
+                                        .pricePaid(price)
+                                        .tourSnapshot("")
+                                        .build();
+
+                        order.getOrderItems().add(orderItem);
+                }
+
+                order.setTotalPrice(total);
+
+                return Result.ok(orderRepo.save(order));
         }
 
-        return orderRepo.save(order);
-    }
 }

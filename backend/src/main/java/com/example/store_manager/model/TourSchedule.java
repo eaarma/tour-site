@@ -57,4 +57,11 @@ public class TourSchedule {
         return maxParticipants - booked - reserved;
     }
 
+    public void releaseReserved(int amount) {
+        if (amount < 0)
+            throw new IllegalArgumentException();
+
+        reservedParticipants = Math.max(0, reservedParticipants - amount);
+    }
+
 }

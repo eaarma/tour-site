@@ -10,7 +10,7 @@ import { Tour } from "@/types";
 import { TourService } from "@/lib/tourService";
 import { useShopAccess } from "@/hooks/useShopAccess";
 import Unauthorized from "@/components/common/Unauthorized";
-import { Frame, Navigation, Package } from "lucide-react";
+import { Navigation, Package } from "lucide-react";
 
 import { TourSessionDto } from "@/types/tourSession";
 import { TourSessionService } from "@/lib/tourSessionService";

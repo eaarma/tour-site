@@ -85,4 +85,7 @@ public class Order {
     @Column(name = "expires_at")
     private Instant expiresAt;
 
+    @Column(name = "reservation_token", unique = true)
+    private String reservationToken;
+
 }

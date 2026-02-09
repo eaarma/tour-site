@@ -42,4 +42,12 @@ public final class Result<T> {
     public <U> Result<U> map(Function<T, U> mapper) {
         return isOk() ? Result.ok(mapper.apply(value)) : Result.fail(error);
     }
+
+    public ApiError getErrorOrThrow() {
+    if (isOk()) {
+        throw new IllegalStateException("Tried to get error from successful Result");
+    }
+    return error;
+}
+
 }
