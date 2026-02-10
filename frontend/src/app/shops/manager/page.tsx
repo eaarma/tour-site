@@ -15,6 +15,7 @@ import { Navigation, Package } from "lucide-react";
 import { TourSessionDto } from "@/types/tourSession";
 import { TourSessionService } from "@/lib/tourSessionService";
 import CardFrame from "@/components/common/CardFrame";
+import ShopManagerPaymentSection from "@/components/manager/payment/ShopManagerPaymentSection";
 
 export default function ShopManagerPage() {
   const router = useRouter();
@@ -29,7 +30,9 @@ export default function ShopManagerPage() {
 
   const [sessions, setSessions] = useState<TourSessionDto[]>([]);
 
-  const [activeTab, setActiveTab] = useState<"orders" | "tours">("orders");
+  const [activeTab, setActiveTab] = useState<"orders" | "tours" | "payments">(
+    "orders",
+  );
 
   const [stats, setStats] = useState({
     totalTours: 0,
@@ -192,6 +195,19 @@ export default function ShopManagerPage() {
                 <Navigation className="w-5 h-5" strokeWidth={2.25} />
                 Tours
               </button>
+
+              <button
+                onClick={() => setActiveTab("payments")}
+                className={`py-3 px-3 text-[1.05rem] font-semibold tracking-wide 
+  flex items-center gap-2 transition-all 
+  ${
+    activeTab === "payments"
+      ? "text-primary border-b-2 border-primary"
+      : "text-gray-700 hover:text-blue-700"
+  }`}
+              >
+                Payments
+              </button>
             </div>
           </div>
 
@@ -206,6 +222,10 @@ export default function ShopManagerPage() {
 
           {activeTab === "tours" && (
             <ManagerItemList items={tours} shopId={shopId} />
+          )}
+
+          {activeTab === "payments" && (
+            <ShopManagerPaymentSection shopId={shopId} />
           )}
         </CardFrame>
       </div>

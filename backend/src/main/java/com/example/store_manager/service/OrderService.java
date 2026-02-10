@@ -3,17 +3,11 @@ package com.example.store_manager.service;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -38,6 +32,8 @@ import com.example.store_manager.model.User;
 import com.example.store_manager.repository.OrderItemRepository;
 import com.example.store_manager.repository.OrderRepository;
 import com.example.store_manager.repository.TourRepository;
+import com.example.store_manager.repository.TourScheduleRepository;
+import com.example.store_manager.repository.TourSessionRepository;
 import com.example.store_manager.repository.UserRepository;
 import com.example.store_manager.security.CurrentUserService;
 import com.example.store_manager.security.CustomUserDetails;
@@ -46,8 +42,6 @@ import com.example.store_manager.security.annotations.ShopAccess;
 import com.example.store_manager.security.annotations.ShopIdSource;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
-import com.example.store_manager.repository.TourScheduleRepository;
-import com.example.store_manager.repository.TourSessionRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -65,6 +59,7 @@ public class OrderService {
         private final TourScheduleRepository tourScheduleRepository;
         private final CurrentUserService currentUserService;
         private final TourSessionRepository tourSessionRepository;
+        private final PaymentService paymentService;
 
         @Transactional
         public Result<OrderResponseDto> createOrder(
@@ -264,6 +259,8 @@ public class OrderService {
                 }
 
                 order.setStatus(OrderStatus.PAID);
+
+                paymentService.createForOrder(order);
 
                 order.setReservationToken(null);
 
