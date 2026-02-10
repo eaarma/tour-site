@@ -4,19 +4,13 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.UUID;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
-import com.example.store_manager.dto.finalize.FinalizeReservationDto;
 import com.example.store_manager.dto.order.OrderCreateRequestDto;
 import com.example.store_manager.dto.order.OrderItemCreateRequestDto;
-import com.example.store_manager.dto.reserve.ReserveItemDto;
 import com.example.store_manager.model.Order;
 import com.example.store_manager.model.OrderItem;
 import com.example.store_manager.model.OrderStatus;
@@ -27,7 +21,6 @@ import com.example.store_manager.repository.OrderRepository;
 import com.example.store_manager.repository.TourScheduleRepository;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
-import com.example.store_manager.utility.ResultResponseMapper;
 
 import lombok.RequiredArgsConstructor;
 
@@ -44,7 +37,7 @@ public class ReservationService {
 
                 Instant expiresAt = Instant.now().plus(15, ChronoUnit.MINUTES);
 
-                String token = UUID.randomUUID().toString();
+                UUID token = UUID.randomUUID();
 
                 Order order = Order.builder()
                                 .user(user)

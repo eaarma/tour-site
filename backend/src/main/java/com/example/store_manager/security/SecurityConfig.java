@@ -66,6 +66,7 @@ public class SecurityConfig {
                         // Orders
                         .requestMatchers(HttpMethod.GET, "/orders/guest/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/orders/guest").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/orders/*/status").permitAll()
                         .requestMatchers(HttpMethod.GET, "/orders/**").hasAnyRole("MANAGER", "OWNER", "ADMIN", "USER")
                         .requestMatchers(HttpMethod.POST, "/orders/**").hasAnyRole("MANAGER", "OWNER", "ADMIN", "USER")
                         .requestMatchers(HttpMethod.PUT, "/orders/**").hasAnyRole("MANAGER", "OWNER", "ADMIN")
@@ -73,8 +74,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/orders/**").hasAnyRole("MANAGER", "OWNER", "ADMIN")
 
                         // Order items
-                        .requestMatchers(HttpMethod.PATCH, "/orders/items/**")
-                        .hasAnyRole("MANAGER", "OWNER", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/orders/items/**").hasAnyRole("MANAGER", "OWNER", "ADMIN")
 
                         // Checkout
                         .requestMatchers(HttpMethod.POST, "/checkout/reserve").permitAll()

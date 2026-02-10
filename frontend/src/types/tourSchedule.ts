@@ -11,9 +11,10 @@ export interface TourScheduleResponseDto {
   date: string;
   time?: string;
   maxParticipants: number;
-  bookedParticipants: number; // ✅ add this
+  bookedParticipants: number;
+  reservedParticipants: number; // ← add this
   status?: "ACTIVE" | "BOOKED" | "CANCELLED";
-  type?: "PUBLIC" | "PRIVATE"; // ✅ add this
+  type?: "PUBLIC" | "PRIVATE";
 }
 
 export interface TourScheduleUpdateDto {

@@ -86,6 +86,6 @@ public class Order {
     private Instant expiresAt;
 
     @Column(name = "reservation_token", unique = true)
-    private String reservationToken;
+    private UUID reservationToken;
 
 }

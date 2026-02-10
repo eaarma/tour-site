@@ -1,17 +1,21 @@
 package com.example.store_manager.controller;
 
+import java.util.UUID;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.store_manager.dto.finalize.FinalizeReservationDto;
 import com.example.store_manager.dto.order.OrderCreateRequestDto;
-import com.example.store_manager.dto.reserve.ReserveRequestDto;
+import com.example.store_manager.dto.order.OrderStatusDto;
 import com.example.store_manager.dto.reserve.ReserveResponseDto;
 import com.example.store_manager.model.Order;
 import com.example.store_manager.model.User;
@@ -64,7 +68,7 @@ public class CheckoutController {
                         order.getId(),
                         order.getExpiresAt(),
                         order.getStatus(),
-                        order.getReservationToken()));
+                        order.getReservationToken().toString()));
     }
 
     private HttpStatus mapStatus(ApiError error) {
@@ -81,9 +85,30 @@ public class CheckoutController {
     public ResponseEntity<?> finalizeReservation(
             @RequestBody FinalizeReservationDto dto) {
 
+        UUID token = UUID.fromString(dto.reservationToken());
+
         return ResultResponseMapper.toResponse(
                 orderService.finalizeReservation(
                         dto.orderId(),
-                        dto.reservationToken()));
+                        token));
     }
+
+    @GetMapping("/{id}/status")
+    public ResponseEntity<?> getStatus(
+            @PathVariable Long id,
+            @RequestParam UUID token) {
+
+        Result<OrderStatusDto> result = orderService.getReservationStatus(id, token);
+
+        if (result.isFail()) {
+            ApiError error = result.error();
+
+            return ResponseEntity
+                    .status(mapStatus(error))
+                    .body(error);
+        }
+
+        return ResponseEntity.ok(result.get());
+    }
+
 }

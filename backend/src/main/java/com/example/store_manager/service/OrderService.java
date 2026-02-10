@@ -1,6 +1,7 @@
 package com.example.store_manager.service;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -22,6 +23,7 @@ import com.example.store_manager.dto.order.OrderCreateRequestDto;
 import com.example.store_manager.dto.order.OrderItemCreateRequestDto;
 import com.example.store_manager.dto.order.OrderItemResponseDto;
 import com.example.store_manager.dto.order.OrderResponseDto;
+import com.example.store_manager.dto.order.OrderStatusDto;
 import com.example.store_manager.dto.tour.TourSnapshotDto;
 import com.example.store_manager.mapper.OrderItemMapper;
 import com.example.store_manager.mapper.OrderMapper;
@@ -194,10 +196,11 @@ public class OrderService {
         @Transactional
         public Result<OrderResponseDto> finalizeReservation(
                         Long orderId,
-                        String token) {
+                        UUID token) {
 
-                Order order = orderRepository.findById(orderId).orElse(null);
-
+                Order order = orderRepository
+                                .findByIdAndReservationToken(orderId, token)
+                                .orElse(null);
                 if (order == null) {
                         return Result.fail(ApiError.notFound("Order not found"));
                 }
@@ -244,6 +247,36 @@ public class OrderService {
                 Order saved = orderRepository.save(order);
 
                 return Result.ok(orderMapper.toDto(saved));
+        }
+
+        @Transactional(readOnly = true)
+        public Result<OrderStatusDto> getReservationStatus(
+                        Long orderId,
+                        UUID reservationToken) {
+
+                Order order = orderRepository
+                                .findByIdAndReservationToken(orderId, reservationToken)
+                                .orElse(null);
+
+                if (order == null) {
+                        return Result.fail(ApiError.notFound("Order not found"));
+                }
+
+                long remaining = 0;
+
+                if (order.getExpiresAt() != null) {
+                        remaining = Duration
+                                        .between(Instant.now(), order.getExpiresAt())
+                                        .getSeconds();
+
+                        remaining = Math.max(0, remaining);
+                }
+
+                return Result.ok(new OrderStatusDto(
+                                order.getId(),
+                                order.getStatus(),
+                                order.getExpiresAt(),
+                                remaining));
         }
 
         /* Get a single order by ID. */

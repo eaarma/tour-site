@@ -1,4 +1,7 @@
 export type OrderStatus =
+  | "RESERVED"
+  | "PAID"
+  | "EXPIRED"
   | "PENDING"
   | "CONFIRMED"
   | "CANCELLED"
@@ -46,10 +49,11 @@ export interface OrderItemResponseDto {
 export interface OrderResponseDto {
   id: number;
   totalPrice: number;
-  paymentMethod: string;
+  paymentMethod: string | null;
   status: OrderStatus;
   createdAt: string;
   updatedAt: string;
+  expiresAt?: string;
   items: OrderItemResponseDto[];
 }
 
@@ -100,4 +104,26 @@ export interface OrderDetailsModalDto {
 
   managerId?: string;
   managerName?: string;
+}
+
+export interface ReservationRequestDto {
+  items: {
+    scheduleId: number;
+    participants: number;
+    preferredLanguage?: string;
+    comment?: string;
+  }[];
+
+  paymentMethod: string;
+  name: string;
+  email: string;
+  phone: string;
+  nationality?: string;
+}
+
+export interface ReservationResponseDto {
+  orderId: number;
+  expiresAt: string; // ISO timestamp
+  status: "RESERVED";
+  reservationToken: string;
 }

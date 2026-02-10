@@ -29,12 +29,18 @@ export default function PaymentSummarySection({
 }: PaymentSummarySectionProps) {
   const total = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
-    0
+    0,
   );
 
   return (
     <div className="bg-base-100 p-6 rounded-lg shadow-md w-full max-w-2xl">
       <h2 className="text-2xl font-semibold mb-6">Order Summary</h2>
+
+      {items.length === 0 && (
+        <div className="text-center text-warning font-medium">
+          No items selected for checkout
+        </div>
+      )}
 
       {/* Item List */}
       <ul className="space-y-4 mb-6">

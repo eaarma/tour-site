@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { useSelector } from "react-redux";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-hot-toast";
 import PaymentMethodSection from "@/components/payment/PaymentMethodSection";
 import PaymentSummarySection from "@/components/payment/PaymentSummarySection";
 import PaymentTotalSection from "@/components/payment/PaymentTotalSection";
 import { RootState } from "@/store/store";
-import { OrderService } from "@/lib/orderService";
 import { useRouter } from "next/navigation";
 import { OrderCreateRequestDto } from "@/types/order";
 import { CartItem as CartItemType } from "@/types/cart";
-import { TourScheduleService } from "@/lib/tourScheduleService";
 import ItemModal from "@/components/items/ItemModal";
-import { useAuth } from "@/hooks/useAuth";
+import { ReservationService } from "@/lib/reservationService";
+import { ReservationResponseDto } from "@/types/order";
+import { removeItemFromCart } from "@/store/cartSlice";
 
 export default function PaymentPage() {
   const cartItems = useSelector((state: RootState) =>
@@ -27,8 +27,69 @@ export default function PaymentPage() {
     "credit-card" | "pay-link"
   >("credit-card");
   const [loading, setLoading] = useState(false);
+  const [reservation, setReservation] = useState<ReservationResponseDto | null>(
+    null,
+  );
 
-  const { isAuthenticated } = useAuth();
+  const [expiresIn, setExpiresIn] = useState<number>(0);
+  const dispatch = useDispatch();
+
+  const reservedRef = useRef(false);
+
+  useEffect(() => {
+    if (reservedRef.current) return;
+    reservedRef.current = true;
+    const reserve = async () => {
+      if (cartItems.length === 0) return;
+
+      const request: OrderCreateRequestDto = {
+        paymentMethod: selectedMethod === "credit-card" ? "CARD" : "PAY_LINK",
+        name: checkoutInfo.name,
+        email: checkoutInfo.email,
+        phone: checkoutInfo.phone,
+        nationality: checkoutInfo.nationality,
+        items: cartItems.map((item) => ({
+          tourId: Number(item.id),
+          scheduleId: item.scheduleId,
+          participants: item.participants,
+          scheduledAt: `${item.selectedDate}T${item.selectedTime}`,
+          preferredLanguage: item.preferredLanguage,
+          comment: item.comment,
+        })),
+      };
+
+      try {
+        const res = await ReservationService.reserve(request);
+
+        setReservation(res);
+
+        const expiry = new Date(res.expiresAt).getTime();
+        setExpiresIn(Math.floor((expiry - Date.now()) / 1000));
+      } catch {
+        toast.error("Failed to reserve order");
+      }
+    };
+
+    reserve();
+  }, []);
+
+  useEffect(() => {
+    if (!reservation) return;
+
+    const interval = setInterval(() => {
+      setExpiresIn((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          toast.error("Reservation expired");
+          router.push("/cart");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [reservation]);
 
   // Map cart items to summary
   const summaryItems = cartItems.map((item) => ({
@@ -45,64 +106,26 @@ export default function PaymentPage() {
     0,
   );
 
-  const validateSchedules = async () => {
-    const bad: CartItemType[] = [];
-    for (const it of cartItems) {
-      try {
-        const schedule = await TourScheduleService.getById(it.scheduleId);
-        if (!schedule || schedule.status !== "ACTIVE") {
-          bad.push(it);
-        }
-      } catch {
-        bad.push(it);
-      }
-    }
-    return { ok: bad.length === 0, badItems: bad };
-  };
-
   const handleProceed = async () => {
     if (cartItems.length === 0) {
-      toast.error("Your cart is empty!");
+      toast.error("No items chosen for checkout");
       return;
     }
-
-    const isGuest = !isAuthenticated;
+    if (!reservation) return;
 
     setLoading(true);
 
-    // ✅ Step 1: Revalidate schedules before placing order
-    const { ok, badItems } = await validateSchedules();
-    if (!ok) {
-      const firstBad = badItems[0];
-      setBadItem(firstBad);
-      toast.error(
-        `Time ${firstBad.selectedDate} ${firstBad.selectedTime} for "${firstBad.title}" is no longer available.`,
-      );
-      setLoading(false);
-      return;
-    }
-
     try {
-      // ✅ Step 2: Create full order (backend will book schedules internally)
-      const orderRequest: OrderCreateRequestDto = {
-        paymentMethod: selectedMethod === "credit-card" ? "CARD" : "PAY_LINK",
-        name: checkoutInfo.name,
-        email: checkoutInfo.email,
-        phone: checkoutInfo.phone,
-        nationality: checkoutInfo.nationality,
-        items: cartItems.map((item) => ({
-          tourId: Number(item.id),
-          scheduleId: item.scheduleId,
-          participants: item.participants,
-          scheduledAt: `${item.selectedDate}T${item.selectedTime}`,
-          preferredLanguage: item.preferredLanguage,
-          comment: item.comment,
-        })),
-      };
+      const order = await ReservationService.finalize(
+        reservation.orderId,
+        reservation.reservationToken,
+      );
 
-      const order = await OrderService.create(orderRequest, isGuest);
+      // ✅ Remove purchased cart items
+      cartItems.forEach((item) => {
+        dispatch(removeItemFromCart(item.cartItemId));
+      });
 
-      // ✅ Step 3: Send email confirmation
       await fetch("/api/send-confirmation", {
         method: "POST",
         headers: {
@@ -113,11 +136,9 @@ export default function PaymentPage() {
 
       toast.success("Order confirmed ✅");
 
-      // ✅ Step 4: Redirect to confirmation page
       router.push(`/confirmation/${order.id}`);
-    } catch (err) {
-      console.error("Order creation failed", err);
-      toast.error("Failed to create order. Try again.");
+    } catch {
+      toast.error("Payment failed or reservation expired");
     } finally {
       setLoading(false);
     }
@@ -142,6 +163,12 @@ export default function PaymentPage() {
             onProceed={handleProceed}
             isLoading={loading}
           />
+          {reservation && (
+            <div className="bg-warning/20 p-4 rounded-lg text-center font-semibold mt-2">
+              Reservation expires in {Math.floor(expiresIn / 60)}:
+              {(expiresIn % 60).toString().padStart(2, "0")}
+            </div>
+          )}
         </div>
       </div>
 

@@ -2,6 +2,7 @@ package com.example.store_manager.repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,5 +23,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                 AND o.expiresAt < :now
             """)
     List<Order> findExpiredReservations(@Param("now") Instant now);
+
+    Optional<Order> findByIdAndReservationToken(
+            Long id,
+            UUID reservationToken);
 
 }
