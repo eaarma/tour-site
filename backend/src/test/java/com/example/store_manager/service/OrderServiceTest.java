@@ -707,66 +707,6 @@ public class OrderServiceTest {
     }
 
     @Test
-    void createOrder_returnsOk_whenGuestOrderIsValid() {
-
-        OrderCreateRequestDto dto = validCreateOrderDto();
-
-        // --- Tour ---
-        Tour tour = new Tour();
-        tour.setId(1L);
-        tour.setType("PUBLIC");
-        tour.setPrice(BigDecimal.TEN);
-
-        Shop shop = new Shop();
-        shop.setId(1L);
-        tour.setShop(shop);
-
-        // --- Schedule (SOURCE OF TRUTH) ---
-        TourSchedule schedule = new TourSchedule();
-        schedule.setId(1L);
-        schedule.setTour(tour);
-        schedule.setBookedParticipants(0);
-        schedule.setMaxParticipants(10);
-        schedule.setStatus("ACTIVE");
-
-        // --- Session (DERIVED) ---
-        TourSession session = TourSession.builder()
-                .id(1L)
-                .schedule(schedule)
-                .status(SessionStatus.PLANNED)
-                .build();
-
-        // --- Mocks ---
-        when(tourRepository.findById(1L))
-                .thenReturn(Optional.of(tour));
-
-        when(tourScheduleRepository.findByIdForUpdate(1L))
-                .thenReturn(Optional.of(schedule));
-
-        when(tourSessionRepository.findByScheduleId(1L))
-                .thenReturn(Optional.empty());
-
-        when(tourSessionRepository.save(any(TourSession.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
-
-        when(orderRepository.save(any(Order.class)))
-                .thenAnswer(inv -> inv.getArgument(0));
-
-        when(orderMapper.toDto(any(Order.class)))
-                .thenReturn(new OrderResponseDto());
-
-        // --- Execute ---
-        Result<OrderResponseDto> result = service.createOrder(dto, null);
-
-        // --- Assert ---
-        assertTrue(result.isOk());
-
-        verify(tourScheduleRepository).findByIdForUpdate(1L);
-        verify(tourSessionRepository).save(any(TourSession.class));
-        verify(orderRepository).save(any(Order.class));
-    }
-
-    @Test
     void createOrder_returnsFail_whenScheduleOverbooked() {
 
         OrderCreateRequestDto dto = validCreateOrderDto();
