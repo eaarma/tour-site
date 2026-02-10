@@ -30,73 +30,30 @@ public class ReservationService {
 
         private final OrderService orderService;
         private final OrderRepository orderRepo;
-        private final TourScheduleRepository scheduleRepo;
 
         @Transactional
         public Result<Order> reserve(OrderCreateRequestDto dto, User user) {
 
                 Instant expiresAt = Instant.now().plus(15, ChronoUnit.MINUTES);
-
                 UUID token = UUID.randomUUID();
 
-                Order order = Order.builder()
-                                .user(user)
-                                .status(OrderStatus.RESERVED)
-                                .expiresAt(expiresAt)
-                                .reservationToken(token)
-                                .totalPrice(BigDecimal.ZERO)
-                                .build();
+                // ✅ reuse central builder
+                Result<Order> built = orderService.buildOrder(
+                                dto,
+                                user,
+                                OrderStatus.RESERVED,
+                                true // reserve only
+                );
 
-                BigDecimal total = BigDecimal.ZERO;
-
-                for (OrderItemCreateRequestDto itemDto : dto.getItems()) {
-
-                        TourSchedule schedule = scheduleRepo
-                                        .findByIdForUpdate(itemDto.getScheduleId())
-                                        .orElse(null);
-
-                        if (schedule == null) {
-                                return Result.fail(ApiError.notFound("Schedule not found"));
-                        }
-
-                        if (schedule.getAvailableParticipants() < itemDto.getParticipants()) {
-                                return Result.fail(ApiError.badRequest("Not enough availability"));
-                        }
-
-                        schedule.setReservedParticipants(
-                                        schedule.getReservedParticipants() + itemDto.getParticipants());
-
-                        Tour tour = schedule.getTour();
-
-                        BigDecimal price = tour.getPrice()
-                                        .multiply(BigDecimal.valueOf(itemDto.getParticipants()));
-
-                        total = total.add(price);
-
-                        OrderItem orderItem = OrderItem.builder()
-                                        .order(order)
-                                        .tour(tour)
-                                        .schedule(schedule)
-                                        .shopId(tour.getShop().getId())
-                                        .tourTitle(tour.getTitle())
-                                        .scheduledAt(LocalDateTime.of(schedule.getDate(), schedule.getTime()))
-                                        .participants(itemDto.getParticipants())
-                                        .name(dto.getName())
-                                        .email(dto.getEmail())
-                                        .phone(dto.getPhone())
-                                        .nationality(dto.getNationality())
-                                        .paymentMethod(dto.getPaymentMethod())
-                                        .status(OrderStatus.RESERVED)
-                                        .pricePaid(price)
-                                        .tourSnapshot("")
-                                        .build();
-
-                        order.getOrderItems().add(orderItem);
+                if (built.isFail()) {
+                        return built;
                 }
 
-                order.setTotalPrice(total);
+                Order order = built.get();
+
+                order.setExpiresAt(expiresAt);
+                order.setReservationToken(token);
 
                 return Result.ok(orderRepo.save(order));
         }
-
 }

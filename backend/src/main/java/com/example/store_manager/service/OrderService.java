@@ -146,13 +146,15 @@ public class OrderService {
                         }
 
                         // ✅ Session
-                        TourSession session = tourSessionRepository
-                                        .findByScheduleId(schedule.getId())
-                                        .orElseGet(() -> tourSessionRepository.save(
-                                                        TourSession.builder()
-                                                                        .schedule(schedule)
-                                                                        .status(SessionStatus.PLANNED)
-                                                                        .build()));
+                        /*
+                         * TourSession session = tourSessionRepository
+                         * .findByScheduleId(schedule.getId())
+                         * .orElseGet(() -> tourSessionRepository.save(
+                         * TourSession.builder()
+                         * .schedule(schedule)
+                         * .status(SessionStatus.PLANNED)
+                         * .build()));
+                         */
 
                         BigDecimal price = tour.getPrice().multiply(
                                         BigDecimal.valueOf(itemDto.getParticipants()));
@@ -160,7 +162,7 @@ public class OrderService {
                         OrderItem item = OrderItem.builder()
                                         .order(order)
                                         .tour(tour)
-                                        .session(session)
+                                        .session(null)
                                         .shopId(tour.getShop().getId())
                                         .tourTitle(tour.getTitle())
                                         .scheduledAt(itemDto.getScheduledAt())
@@ -221,7 +223,6 @@ public class OrderService {
                         return Result.fail(ApiError.badRequest(
                                         "Reservation has expired"));
                 }
-
                 for (OrderItem item : order.getOrderItems()) {
 
                         TourSchedule schedule = tourScheduleRepository
@@ -232,11 +233,33 @@ public class OrderService {
                                 return Result.fail(ApiError.notFound("Schedule not found"));
                         }
 
+                        // ✅ Inventory transition
                         schedule.releaseReserved(item.getParticipants());
 
-                        schedule.setBookedParticipants(
-                                        schedule.getBookedParticipants()
-                                                        + item.getParticipants());
+                        int newBooked = schedule.getBookedParticipants()
+                                        + item.getParticipants();
+
+                        schedule.setBookedParticipants(newBooked);
+
+                        Tour tour = item.getTour();
+
+                        if ("PRIVATE".equalsIgnoreCase(tour.getType())
+                                        || newBooked >= schedule.getMaxParticipants()) {
+                                schedule.setStatus("BOOKED");
+                        } else {
+                                schedule.setStatus("ACTIVE");
+                        }
+
+                        // ✅ Ensure session exists (moved here!)
+                        TourSession session = tourSessionRepository
+                                        .findByScheduleId(schedule.getId())
+                                        .orElseGet(() -> tourSessionRepository.save(
+                                                        TourSession.builder()
+                                                                        .schedule(schedule)
+                                                                        .status(SessionStatus.PLANNED)
+                                                                        .build()));
+
+                        item.setSession(session);
                         item.setStatus(OrderStatus.PAID);
                 }
 
