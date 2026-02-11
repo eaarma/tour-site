@@ -10,11 +10,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 
-import com.example.store_manager.dto.payment.PaymentDto;
-import com.example.store_manager.dto.payment.PaymentResponseDto;
-import com.example.store_manager.mapper.PaymentMapper;
-import com.example.store_manager.model.Payment;
+import com.example.store_manager.dto.payment.PaymentLineResponseDto;
 import com.example.store_manager.service.PaymentService;
+import com.example.store_manager.utility.Result;
 import com.example.store_manager.utility.ResultResponseMapper;
 
 @RestController
@@ -22,29 +20,29 @@ import com.example.store_manager.utility.ResultResponseMapper;
 @RequiredArgsConstructor
 public class PaymentController {
 
-    private final PaymentService paymentService;
+        private final PaymentService paymentService;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getById(
-            @PathVariable("id") Long id) {
+        @GetMapping("/{id}")
+        public ResponseEntity<?> getById(@PathVariable Long id) {
+                return ResultResponseMapper.toResponse(
+                                paymentService.getById(id));
+        }
 
-        return ResultResponseMapper.toResponse(
-                paymentService.getById(id));
-    }
+        @GetMapping("/order/{orderId}")
+        public ResponseEntity<?> getByOrderId(@PathVariable Long orderId) {
+                return ResultResponseMapper.toResponse(
+                                paymentService.getByOrderId(orderId));
+        }
 
-    @GetMapping("/order/{orderId}")
-    public ResponseEntity<?> getByOrderId(
-            @PathVariable("orderId") Long orderId) {
+        @GetMapping("/shop/{shopId}")
+        public ResponseEntity<?> getShopPayments(@PathVariable("shopId") Long shopId) {
+                Result<List<PaymentLineResponseDto>> result = paymentService.getShopPayments(shopId);
 
-        return ResultResponseMapper.toResponse(
-                paymentService.getByOrderId(orderId));
-    }
+                if (result.isFail()) {
+                        return ResponseEntity.badRequest().body(result.error());
+                }
 
-    @GetMapping("/shop/{shopId}")
-    public ResponseEntity<?> getByShop(
-            @PathVariable("shopId") Long shopId) {
+                return ResponseEntity.ok(result.get());
+        }
 
-        return ResultResponseMapper.toResponse(
-                paymentService.getByShop(shopId));
-    }
 }

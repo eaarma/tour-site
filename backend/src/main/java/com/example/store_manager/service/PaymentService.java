@@ -10,11 +10,16 @@ import java.util.List;
 
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.store_manager.dto.payment.PaymentLineResponseDto;
 import com.example.store_manager.dto.payment.PaymentResponseDto;
+import com.example.store_manager.mapper.PaymentLineMapper;
 import com.example.store_manager.mapper.PaymentMapper;
 import com.example.store_manager.model.Order;
+import com.example.store_manager.model.OrderItem;
 import com.example.store_manager.model.Payment;
+import com.example.store_manager.model.PaymentLine;
 import com.example.store_manager.model.PaymentStatus;
+import com.example.store_manager.repository.PaymentLineRepository;
 import com.example.store_manager.repository.PaymentRepository;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
@@ -26,35 +31,59 @@ public class PaymentService {
     private static final BigDecimal PLATFORM_RATE = new BigDecimal("0.10");
 
     private final PaymentRepository paymentRepository;
+    private final PaymentLineRepository paymentLineRepository;
     private final PaymentMapper paymentMapper;
+    private final PaymentLineMapper paymentLineMapper;
 
     @Transactional
     public Payment createForOrder(Order order) {
 
-        BigDecimal total = order.getTotalPrice();
-
-        BigDecimal platformFee = total.multiply(PLATFORM_RATE)
-                .setScale(2, RoundingMode.HALF_UP);
-
-        BigDecimal shopAmount = total.subtract(platformFee);
+        BigDecimal totalFee = BigDecimal.ZERO;
 
         Payment payment = Payment.builder()
                 .order(order)
-                .amountTotal(total)
-                .platformFee(platformFee)
-                .shopAmount(shopAmount)
+                .amountTotal(order.getTotalPrice())
+                .platformFee(BigDecimal.ZERO)
                 .currency("EUR")
                 .status(PaymentStatus.SUCCEEDED)
                 .build();
 
-        return paymentRepository.save(payment);
+        Payment saved = paymentRepository.save(payment);
+
+        for (OrderItem item : order.getOrderItems()) {
+
+            BigDecimal gross = item.getPricePaid();
+
+            BigDecimal fee = gross.multiply(PLATFORM_RATE)
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            BigDecimal shopAmount = gross.subtract(fee);
+
+            totalFee = totalFee.add(fee);
+
+            PaymentLine line = PaymentLine.builder()
+                    .payment(saved)
+                    .orderItem(item)
+                    .shopId(item.getShopId())
+                    .grossAmount(gross)
+                    .platformFee(fee)
+                    .shopAmount(shopAmount)
+                    .currency("EUR")
+                    .status(PaymentStatus.SUCCEEDED)
+                    .build();
+
+            paymentLineRepository.save(line);
+        }
+
+        saved.setPlatformFee(totalFee);
+
+        return paymentRepository.save(saved);
     }
 
     @Transactional(readOnly = true)
     public Result<PaymentResponseDto> getById(Long id) {
 
-        Payment payment = paymentRepository.findById(id)
-                .orElse(null);
+        Payment payment = paymentRepository.findById(id).orElse(null);
 
         if (payment == null) {
             return Result.fail(ApiError.notFound("Payment not found"));
@@ -66,21 +95,20 @@ public class PaymentService {
     @Transactional(readOnly = true)
     public Result<PaymentResponseDto> getByOrderId(Long orderId) {
 
-        Payment payment = paymentRepository.findByOrderId(orderId)
-                .orElse(null);
+        Payment payment = paymentRepository.findByOrderId(orderId).orElse(null);
 
         if (payment == null) {
-            return Result.fail(ApiError.notFound("Payment not found for order"));
+            return Result.fail(ApiError.notFound("Payment not found"));
         }
 
         return Result.ok(paymentMapper.toDto(payment));
     }
 
     @Transactional(readOnly = true)
-    public Result<List<PaymentResponseDto>> getByShop(Long shopId) {
+    public Result<List<PaymentLineResponseDto>> getShopPayments(Long shopId) {
 
-        List<Payment> payments = paymentRepository.findUnpaidByShopId(shopId);
+        List<PaymentLine> lines = paymentLineRepository.findUnpaidByShopId(shopId);
 
-        return Result.ok(paymentMapper.toDtoList(payments));
+        return Result.ok(paymentLineMapper.toDtoList(lines));
     }
 }

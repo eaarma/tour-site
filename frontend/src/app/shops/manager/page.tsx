@@ -10,7 +10,7 @@ import { Tour } from "@/types";
 import { TourService } from "@/lib/tourService";
 import { useShopAccess } from "@/hooks/useShopAccess";
 import Unauthorized from "@/components/common/Unauthorized";
-import { Navigation, Package } from "lucide-react";
+import { CreditCard, Navigation, Package } from "lucide-react";
 
 import { TourSessionDto } from "@/types/tourSession";
 import { TourSessionService } from "@/lib/tourSessionService";
@@ -185,12 +185,12 @@ export default function ShopManagerPage() {
               <button
                 onClick={() => setActiveTab("tours")}
                 className={`py-3 px-3 text-[1.05rem] font-semibold tracking-wide 
-        flex items-center gap-2 transition-all 
-        ${
-          activeTab === "tours"
-            ? "text-primary border-b-2 border-primary"
-            : "text-gray-700 hover:text-blue-700"
-        }`}
+                flex items-center gap-2 transition-all 
+                ${
+                  activeTab === "tours"
+                    ? "text-primary border-b-2 border-primary"
+                    : "text-gray-700 hover:text-blue-700"
+                }`}
               >
                 <Navigation className="w-5 h-5" strokeWidth={2.25} />
                 Tours
@@ -199,13 +199,14 @@ export default function ShopManagerPage() {
               <button
                 onClick={() => setActiveTab("payments")}
                 className={`py-3 px-3 text-[1.05rem] font-semibold tracking-wide 
-  flex items-center gap-2 transition-all 
-  ${
-    activeTab === "payments"
-      ? "text-primary border-b-2 border-primary"
-      : "text-gray-700 hover:text-blue-700"
-  }`}
+                flex items-center gap-2 transition-all 
+              ${
+                activeTab === "payments"
+                  ? "text-primary border-b-2 border-primary"
+                  : "text-gray-700 hover:text-blue-700"
+              }}`}
               >
+                <CreditCard className="w-5 h-5" strokeWidth={2.25} />
                 Payments
               </button>
             </div>

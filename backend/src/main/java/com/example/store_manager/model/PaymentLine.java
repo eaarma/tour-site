@@ -2,32 +2,29 @@ package com.example.store_manager.model;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
@@ -38,26 +35,32 @@ import lombok.Setter;
 @Audited
 @EntityListeners(AuditingEntityListener.class)
 @Entity
-@Table(name = "payments")
-public class Payment {
+@Table(name = "payment_lines", uniqueConstraints = @UniqueConstraint(name = "uk_payment_lines_order_item", columnNames = "order_item_id"))
+public class PaymentLine {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(optional = false)
-    @JoinColumn(name = "order_id", nullable = false, unique = true)
-    private Order order;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_id", nullable = false)
+    private Payment payment;
 
-    @Column(name = "provider_payment_id")
-    private String providerPaymentId;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_item_id", nullable = false)
+    private OrderItem orderItem;
 
-    @Column(name = "amount_total", nullable = false, precision = 10, scale = 2)
-    private BigDecimal amountTotal;
+    @Column(name = "shop_id", nullable = false)
+    private Long shopId;
 
-    // total platform fee across all lines
+    @Column(name = "gross_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal grossAmount;
+
     @Column(name = "platform_fee", nullable = false, precision = 10, scale = 2)
     private BigDecimal platformFee;
+
+    @Column(name = "shop_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal shopAmount;
 
     @Column(nullable = false)
     private String currency;
@@ -66,14 +69,15 @@ public class Payment {
     @Column(nullable = false)
     private PaymentStatus status;
 
+    // payout is per shop allocation
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payout_id")
+    private Payout payout;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
     @Version
     private Long version;
-
-    @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PaymentLine> paymentLines = new ArrayList<>();
-
 }

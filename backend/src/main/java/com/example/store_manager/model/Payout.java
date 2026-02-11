@@ -60,7 +60,7 @@ public class Payout {
     private Instant periodEnd;
 
     @OneToMany(mappedBy = "payout")
-    private List<Payment> payments;
+    private List<PaymentLine> paymentLines;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

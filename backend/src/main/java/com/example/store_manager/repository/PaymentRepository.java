@@ -16,49 +16,26 @@ import com.example.store_manager.model.Payment;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
-    Optional<Payment> findByOrderId(Long orderId);
+        /**
+         * Find payment created for a specific order.
+         * 1:1 relationship between Order and Payment.
+         */
+        Optional<Payment> findByOrderId(Long orderId);
 
-    @Query("""
-                SELECT DISTINCT p
-                FROM Payment p
-                JOIN p.order o
-                JOIN o.orderItems oi
-                WHERE oi.shopId = :shopId
-                  AND p.status = 'SUCCEEDED'
-                  AND p.payout IS NULL
-            """)
-    List<Payment> findUnpaidByShopId(
-            @Param("shopId") Long shopId);
-
-    @Query("""
-                SELECT COALESCE(SUM(p.shopAmount), 0)
-                FROM Payment p
-                JOIN p.order o
-                JOIN o.orderItems i
-                WHERE i.shopId = :shopId
-                  AND p.payout IS NULL
-                  AND p.status = 'SUCCEEDED'
-            """)
-    BigDecimal sumUnpaidByShopId(@Param("shopId") Long shopId);
-
-    @Query("""
-                SELECT DISTINCT p
-                FROM Payment p
-                JOIN p.order o
-                JOIN o.orderItems i
-                WHERE i.shopId = :shopId
-                ORDER BY p.createdAt DESC
-            """)
-    Page<Payment> findHistoryByShopId(@Param("shopId") Long shopId, Pageable pageable);
-
-    @Query("""
-                SELECT p
-                FROM Payment p
-                WHERE p.payout IS NULL
-                  AND p.status = 'SUCCEEDED'
-            """)
-    List<Payment> findReadyForPayout();
-
-    List<Payment> findByPayoutId(Long payoutId);
+        /**
+         * Payment history for a shop.
+         * Returns parent payments that contain at least one line
+         * belonging to the shop.
+         */
+        @Query("""
+                            SELECT DISTINCT p
+                            FROM Payment p
+                            JOIN p.paymentLines pl
+                            WHERE pl.shopId = :shopId
+                            ORDER BY p.createdAt DESC
+                        """)
+        Page<Payment> findHistoryByShopId(
+                        @Param("shopId") Long shopId,
+                        Pageable pageable);
 
 }
