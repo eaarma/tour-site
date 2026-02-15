@@ -5,25 +5,31 @@ const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const securityHeaders = [
   {
     key: "Content-Security-Policy",
-    value: `
-      default-src 'self';
-      script-src 'self' 'unsafe-eval' 'unsafe-inline';
-      script-src-elem 'self' 'unsafe-eval' 'unsafe-inline';
-      style-src 'self' 'unsafe-inline';
-      style-src-elem 'self' 'unsafe-inline';
-      img-src 'self' data: https://firebasestorage.googleapis.com https://ui-avatars.com;
-      connect-src 'self' ${API_URL}
-      https://tourhub.space
-      https://api.tourhub.space
-      https://firebasestorage.googleapis.com;
-      http://localhost:8080;
-      font-src 'self';
-      object-src 'none';
-      base-uri 'none';
-      frame-ancestors 'none';
-    `
-      .replace(/\s{2,}/g, " ")
-      .trim(),
+    value: [
+      // Allow Stripe globally (required for iframe nesting)
+      "default-src 'self' https://js.stripe.com https://hooks.stripe.com",
+
+      // Scripts
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com",
+
+      // Frames (Stripe Elements)
+      "frame-src https://js.stripe.com https://hooks.stripe.com",
+
+      // Network calls
+      `connect-src 'self' ${API_URL} https://api.stripe.com https://js.stripe.com https://m.stripe.network https://hooks.stripe.com https://tourhub.space https://api.tourhub.space https://firebasestorage.googleapis.com http://localhost:8080`,
+
+      // Styles
+      "style-src 'self' 'unsafe-inline'",
+
+      // Images
+      "img-src 'self' data: https://firebasestorage.googleapis.com https://ui-avatars.com https://*.stripe.com",
+
+      // Fonts & hardening
+      "font-src 'self'",
+      "object-src 'none'",
+      "base-uri 'none'",
+      "frame-ancestors 'none'",
+    ].join("; "),
   },
 ];
 

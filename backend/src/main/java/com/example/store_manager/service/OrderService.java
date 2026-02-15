@@ -3,6 +3,7 @@ package com.example.store_manager.service;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -140,17 +141,6 @@ public class OrderService {
                                 }
                         }
 
-                        // ✅ Session
-                        /*
-                         * TourSession session = tourSessionRepository
-                         * .findByScheduleId(schedule.getId())
-                         * .orElseGet(() -> tourSessionRepository.save(
-                         * TourSession.builder()
-                         * .schedule(schedule)
-                         * .status(SessionStatus.PLANNED)
-                         * .build()));
-                         */
-
                         BigDecimal price = tour.getPrice().multiply(
                                         BigDecimal.valueOf(itemDto.getParticipants()));
 
@@ -160,7 +150,10 @@ public class OrderService {
                                         .session(null)
                                         .shopId(tour.getShop().getId())
                                         .tourTitle(tour.getTitle())
-                                        .scheduledAt(itemDto.getScheduledAt())
+                                        .scheduledAt(
+                                                        LocalDateTime.of(
+                                                                        schedule.getDate(),
+                                                                        schedule.getTime()))
                                         .schedule(schedule)
                                         .participants(itemDto.getParticipants())
                                         .name(dto.getName())
@@ -202,6 +195,10 @@ public class OrderService {
                         return Result.fail(ApiError.notFound("Order not found"));
                 }
 
+                if (order.getStatus() == OrderStatus.FINALIZED) {
+                        return Result.ok(orderMapper.toDto(order));
+                }
+
                 if (order.getStatus() != OrderStatus.RESERVED) {
                         return Result.fail(ApiError.badRequest(
                                         "Order is not in RESERVED state"));
@@ -220,6 +217,7 @@ public class OrderService {
                 }
                 for (OrderItem item : order.getOrderItems()) {
 
+                        // ensure session exists (this is fine here)
                         TourSchedule schedule = tourScheduleRepository
                                         .findByIdForUpdate(item.getSchedule().getId())
                                         .orElse(null);
@@ -228,24 +226,6 @@ public class OrderService {
                                 return Result.fail(ApiError.notFound("Schedule not found"));
                         }
 
-                        // ✅ Inventory transition
-                        schedule.releaseReserved(item.getParticipants());
-
-                        int newBooked = schedule.getBookedParticipants()
-                                        + item.getParticipants();
-
-                        schedule.setBookedParticipants(newBooked);
-
-                        Tour tour = item.getTour();
-
-                        if ("PRIVATE".equalsIgnoreCase(tour.getType())
-                                        || newBooked >= schedule.getMaxParticipants()) {
-                                schedule.setStatus("BOOKED");
-                        } else {
-                                schedule.setStatus("ACTIVE");
-                        }
-
-                        // ✅ Ensure session exists (moved here!)
                         TourSession session = tourSessionRepository
                                         .findByScheduleId(schedule.getId())
                                         .orElseGet(() -> tourSessionRepository.save(
@@ -255,13 +235,12 @@ public class OrderService {
                                                                         .build()));
 
                         item.setSession(session);
-                        item.setStatus(OrderStatus.PAID);
+                        item.setStatus(OrderStatus.FINALIZED);
                 }
 
-                order.setStatus(OrderStatus.PAID);
+                order.setStatus(OrderStatus.FINALIZED);
 
-                paymentService.createForOrder(order);
-
+                paymentService.createPendingForOrder(order);
                 order.setReservationToken(null);
 
                 Order saved = orderRepository.save(order);

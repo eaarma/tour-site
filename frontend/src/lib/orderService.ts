@@ -18,6 +18,13 @@ export const OrderService = {
     return res.data;
   },
 
+  getOrderById: async (id: number): Promise<OrderResponseDto> => {
+    const res = await api.get(`${BASE_URL}/${id}`, {
+      withCredentials: false, // allow both guests and logged-in users to fetch orders
+    });
+    return res.data;
+  },
+
   // 🔹 Create new order (auto-selects endpoint)
   create: async (
     data: OrderCreateRequestDto,

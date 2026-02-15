@@ -44,6 +44,9 @@ test {
 }
 
 dependencies {
+
+	
+
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -75,10 +78,12 @@ dependencies {
 	implementation 'org.hibernate.validator:hibernate-validator:8.0.1.Final'
   	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
-implementation 'com.bucket4j:bucket4j-core:8.7.0'
+    implementation 'com.bucket4j:bucket4j-core:8.7.0'
 
     implementation 'org.hibernate.orm:hibernate-envers'
-   
+    implementation 'com.stripe:stripe-java:24.21.0'
+
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
    //If you later want Redis-based cluster rate limiting:
 //implementation 'com.bucket4j:bucket4j-redis:8.7.0'
 //implementation 'io.lettuce:lettuce-core:6.3.2.RELEASE'

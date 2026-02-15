@@ -9,6 +9,7 @@ import GlobalLoader from "@/components/common/GlobalLoader";
 import SessionExpiredModal from "@/components/common/SessionExpiredModal";
 
 import localFont from "next/font/local";
+import StripeProvider from "@/providers/StripeProvider";
 
 const geistSans = localFont({
   src: "../fonts/Geist-Regular.ttf",
@@ -33,19 +34,21 @@ export default function RootLayout({
       <body className="flex flex-col min-h-screen bg-base-200 overflow-x-hidden">
         <ReduxProvider>
           <AuthProvider>
-            <GlobalLoader />
-            <SessionExpiredModal />
-            <Header />
-            <main className="flex-grow">
-              <div className="page-container">{children}</div>
-            </main>
-            <Toaster
-              position="top-center"
-              containerStyle={{
-                top: "5rem",
-              }}
-            />
-            <Footer />
+            <StripeProvider>
+              <GlobalLoader />
+              <SessionExpiredModal />
+              <Header />
+              <main className="flex-grow">
+                <div className="page-container">{children}</div>
+              </main>
+              <Toaster
+                position="top-center"
+                containerStyle={{
+                  top: "5rem",
+                }}
+              />
+              <Footer />
+            </StripeProvider>
           </AuthProvider>
         </ReduxProvider>
       </body>

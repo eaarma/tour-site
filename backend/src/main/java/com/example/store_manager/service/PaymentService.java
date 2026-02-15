@@ -1,13 +1,12 @@
 package com.example.store_manager.service;
 
-import org.springframework.stereotype.Service;
-
-import lombok.RequiredArgsConstructor;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.store_manager.dto.payment.PaymentLineResponseDto;
@@ -16,6 +15,7 @@ import com.example.store_manager.mapper.PaymentLineMapper;
 import com.example.store_manager.mapper.PaymentMapper;
 import com.example.store_manager.model.Order;
 import com.example.store_manager.model.OrderItem;
+import com.example.store_manager.model.OrderStatus;
 import com.example.store_manager.model.Payment;
 import com.example.store_manager.model.PaymentLine;
 import com.example.store_manager.model.PaymentStatus;
@@ -23,6 +23,8 @@ import com.example.store_manager.repository.PaymentLineRepository;
 import com.example.store_manager.repository.PaymentRepository;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -34,9 +36,11 @@ public class PaymentService {
     private final PaymentLineRepository paymentLineRepository;
     private final PaymentMapper paymentMapper;
     private final PaymentLineMapper paymentLineMapper;
+    private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
+    private final EmailService emailService;
 
     @Transactional
-    public Payment createForOrder(Order order) {
+    public Payment createPendingForOrder(Order order) {
 
         BigDecimal totalFee = BigDecimal.ZERO;
 
@@ -45,7 +49,7 @@ public class PaymentService {
                 .amountTotal(order.getTotalPrice())
                 .platformFee(BigDecimal.ZERO)
                 .currency("EUR")
-                .status(PaymentStatus.SUCCEEDED)
+                .status(PaymentStatus.PENDING)
                 .build();
 
         Payment saved = paymentRepository.save(payment);
@@ -69,7 +73,7 @@ public class PaymentService {
                     .platformFee(fee)
                     .shopAmount(shopAmount)
                     .currency("EUR")
-                    .status(PaymentStatus.SUCCEEDED)
+                    .status(PaymentStatus.PENDING)
                     .build();
 
             paymentLineRepository.save(line);
@@ -78,6 +82,48 @@ public class PaymentService {
         saved.setPlatformFee(totalFee);
 
         return paymentRepository.save(saved);
+    }
+
+    @Transactional
+    public Result<Void> markPaymentSucceeded(Long paymentId) {
+
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Payment not found: " + paymentId));
+
+        // idempotency guard
+        if (payment.getStatus() == PaymentStatus.SUCCEEDED) {
+            return Result.ok();
+        }
+
+        // 1. Payment
+        payment.setStatus(PaymentStatus.SUCCEEDED);
+
+        // 2. Payment lines
+        for (PaymentLine line : payment.getPaymentLines()) {
+            line.setStatus(PaymentStatus.SUCCEEDED);
+        }
+
+        // 3. Order + OrderItems
+        Order order = payment.getOrder();
+
+        order.setStatus(OrderStatus.PAID);
+
+        for (OrderItem item : order.getOrderItems()) {
+            item.setStatus(OrderStatus.PAID);
+        }
+
+        try {
+            emailService.sendOrderConfirmation(order);
+        } catch (Exception e) {
+            log.error("Email failed for order {}", order.getId(), e);
+        }
+
+        log.info("Payment succeeded: orderId={}, paymentId={}", order.getId(), paymentId);
+
+        paymentRepository.save(payment);
+
+        return Result.ok();
     }
 
     @Transactional(readOnly = true)

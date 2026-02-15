@@ -6,9 +6,15 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
+  dismissable?: boolean;
 }
 
-export default function Modal({ isOpen, onClose, children }: ModalProps) {
+export default function Modal({
+  isOpen,
+  onClose,
+  children,
+  dismissable = true,
+}: ModalProps) {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -19,7 +25,10 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
           exit={{ opacity: 0 }}
         >
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={dismissable ? onClose : undefined}
+          />
 
           {/* Modal */}
           <motion.div
@@ -32,13 +41,15 @@ export default function Modal({ isOpen, onClose, children }: ModalProps) {
             transition={{ duration: 0.22, ease: "easeOut" }}
           >
             {/* Close button */}
-            <button
-              onClick={onClose}
-              className="absolute top-3 right-3 btn btn-sm btn-ghost btn-circle"
-              aria-label="Close"
-            >
-              ✕
-            </button>
+            {dismissable && (
+              <button
+                onClick={onClose}
+                className="absolute top-3 right-3 btn btn-sm btn-ghost btn-circle"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            )}
 
             {children}
           </motion.div>

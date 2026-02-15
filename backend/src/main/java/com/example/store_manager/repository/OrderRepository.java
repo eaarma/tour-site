@@ -28,4 +28,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             Long id,
             UUID reservationToken);
 
+    @Query("""
+            select o
+            from Order o
+            left join fetch o.orderItems
+            where o.id = :id
+            """)
+    Optional<Order> findByIdWithItems(@Param("id") Long id);
+
 }

@@ -56,6 +56,10 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/auth/me").authenticated()
 
+                        .requestMatchers("/checkout/stripe/**").permitAll()
+                        .requestMatchers("/stripe/webhook").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/payments/order/**").permitAll()
+
                         // Tours
                         .requestMatchers(HttpMethod.GET, "/tours").permitAll()
                         .requestMatchers(HttpMethod.GET, "/tours/**").permitAll()
@@ -67,7 +71,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/orders/guest/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/orders/guest").permitAll()
                         .requestMatchers(HttpMethod.GET, "/orders/*/status").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/orders/**").hasAnyRole("MANAGER", "OWNER", "ADMIN", "USER")
+                        .requestMatchers(HttpMethod.GET, "/orders/**").permitAll() // allow both guests and logged-in
+                                                                                   // users to fetch orders
                         .requestMatchers(HttpMethod.POST, "/orders/**").hasAnyRole("MANAGER", "OWNER", "ADMIN", "USER")
                         .requestMatchers(HttpMethod.PUT, "/orders/**").hasAnyRole("MANAGER", "OWNER", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/orders/**").hasAnyRole("MANAGER", "OWNER", "ADMIN")

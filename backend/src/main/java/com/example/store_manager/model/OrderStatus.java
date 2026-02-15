@@ -4,7 +4,7 @@ public enum OrderStatus {
     // Before payment
     RESERVED, // User has placed order but not paid yet
     EXPIRED, // Payment window expired or reservation not completed
-
+    FINALIZED, // User completed checkout and payment is being processed
     // After payment
     PENDING,
     PLANNED, // Payment received, awaiting confirmation

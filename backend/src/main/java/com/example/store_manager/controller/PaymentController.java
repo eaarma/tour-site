@@ -23,13 +23,13 @@ public class PaymentController {
         private final PaymentService paymentService;
 
         @GetMapping("/{id}")
-        public ResponseEntity<?> getById(@PathVariable Long id) {
+        public ResponseEntity<?> getById(@PathVariable("id") Long id) {
                 return ResultResponseMapper.toResponse(
                                 paymentService.getById(id));
         }
 
         @GetMapping("/order/{orderId}")
-        public ResponseEntity<?> getByOrderId(@PathVariable Long orderId) {
+        public ResponseEntity<?> getByOrderId(@PathVariable("orderId") Long orderId) {
                 return ResultResponseMapper.toResponse(
                                 paymentService.getByOrderId(orderId));
         }

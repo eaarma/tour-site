@@ -12,6 +12,8 @@ public final class Result<T> {
     private final T value;
     private final ApiError error;
 
+    private static final Result<Void> VOID_OK = new Result<>(null, null);
+
     private Result(T value, ApiError error) {
         this.value = value;
         this.error = error;
@@ -19,6 +21,12 @@ public final class Result<T> {
 
     public static <T> Result<T> ok(T value) {
         return new Result<>(Objects.requireNonNull(value), null);
+
+    }
+
+    @SuppressWarnings("unchecked")
+    public static Result<Void> ok() {
+        return VOID_OK;
     }
 
     public static <T> Result<T> fail(ApiError error) {
@@ -72,4 +80,5 @@ public final class Result<T> {
                 ? Result.ok(mapper.apply(value))
                 : Result.fail(error);
     }
+
 }

@@ -1,12 +1,10 @@
 package com.example.store_manager.controller;
 
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,9 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.store_manager.dto.finalize.FinalizeReservationDto;
 import com.example.store_manager.dto.order.OrderCreateRequestDto;
-import com.example.store_manager.dto.order.OrderItemResponseDto;
 import com.example.store_manager.dto.order.OrderResponseDto;
 import com.example.store_manager.dto.order.StatusUpdateRequestDto;
 import com.example.store_manager.security.CustomUserDetails;

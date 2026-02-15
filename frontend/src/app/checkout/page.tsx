@@ -5,9 +5,12 @@ import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import { countryDialCodes } from "@/utils/countryDialCodes";
 import { setCheckoutInfo, updateCheckoutInfo } from "@/store/checkoutSlice";
-import { RootState } from "@/store/store";
+import { RootState, store } from "@/store/store";
 import { UserService } from "@/lib/userService";
 import toast from "react-hot-toast";
+import { ReservationService } from "@/lib/reservationService";
+import { OrderCreateRequestDto } from "@/types/order";
+
 export default function CheckoutPage() {
   const router = useRouter();
   const dispatch = useDispatch();
@@ -78,7 +81,7 @@ export default function CheckoutPage() {
   }, [countryCode, phoneNumber, dispatch]);
 
   // ✅ 3. Handle submit
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const fullPhone = `${countryCode}${phoneNumber}`.replace(/\D/g, "");
@@ -88,28 +91,56 @@ export default function CheckoutPage() {
       return;
     }
 
-    // ✅ Email format validation
     if (!emailRegex.test(checkout.email)) {
       toast.error("Please enter a valid email address");
       return;
     }
 
-    // ✅ Phone length validation
     if (fullPhone.length < 7 || fullPhone.length > 15) {
       toast.error("Phone number must be between 7 and 15 digits long");
       return;
     }
 
-    dispatch(
-      setCheckoutInfo({
+    const cartItems = store.getState().cart.items.filter((i) => i.selected);
+
+    if (cartItems.length === 0) {
+      toast.error("Cart is empty");
+      return;
+    }
+
+    try {
+      toast.loading("Reserving your order…");
+
+      const request: OrderCreateRequestDto = {
+        paymentMethod: "CARD",
         name: checkout.name.trim(),
         email: checkout.email.trim(),
         phone: `+${fullPhone}`,
         nationality: checkout.nationality,
-      }),
-    );
+        items: cartItems.map((item) => ({
+          tourId: Number(item.id),
+          scheduleId: item.scheduleId,
+          participants: item.participants,
+          scheduledAt: `${item.selectedDate}T${item.selectedTime}`,
+          preferredLanguage: item.preferredLanguage,
+          comment: item.comment,
+        })),
+      };
 
-    router.push("/payment");
+      const res = await ReservationService.reserve(request);
+
+      toast.dismiss();
+
+      // 👇 Navigate WITH orderId in URL
+      router.push(
+        `/payment/${res.orderId}?token=${encodeURIComponent(
+          res.reservationToken,
+        )}`,
+      );
+    } catch {
+      toast.dismiss();
+      toast.error("Failed to reserve order");
+    }
   };
 
   // ✅ Unified search by name or dial code

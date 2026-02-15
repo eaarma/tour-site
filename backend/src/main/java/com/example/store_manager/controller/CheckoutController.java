@@ -1,5 +1,6 @@
 package com.example.store_manager.controller;
 
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,7 @@ import com.example.store_manager.repository.UserRepository;
 import com.example.store_manager.security.CustomUserDetails;
 import com.example.store_manager.service.OrderService;
 import com.example.store_manager.service.ReservationService;
+import com.example.store_manager.service.StripeService;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
 import com.example.store_manager.utility.ResultResponseMapper;
@@ -37,6 +39,7 @@ public class CheckoutController {
     private final ReservationService reservationService;
     private final UserRepository userRepository;
     private final OrderService orderService;
+    private final StripeService stripeService;
 
     @PostMapping("/reserve")
     public ResponseEntity<?> reserve(
@@ -109,6 +112,24 @@ public class CheckoutController {
         }
 
         return ResponseEntity.ok(result.get());
+    }
+
+    @PostMapping("/{orderId}/pay")
+    public ResponseEntity<?> createPayment(
+            @PathVariable Long orderId) {
+
+        Result<String> result = stripeService.createPaymentIntent(orderId);
+
+        if (result.isFail()) {
+            ApiError error = result.error();
+
+            return ResponseEntity
+                    .status(mapStatus(error))
+                    .body(error);
+        }
+
+        return ResponseEntity.ok(
+                Map.of("clientSecret", result.get()));
     }
 
 }

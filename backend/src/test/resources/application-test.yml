@@ -6,6 +6,10 @@ spring:
 
   flyway:
     enabled: false
+  
+  stripe:
+  webhook-secret: test
+
 
   jpa:
     hibernate:

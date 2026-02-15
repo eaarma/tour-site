@@ -1,119 +1,62 @@
 "use client";
 
-import { useState } from "react";
-
-type PaymentMethod = "credit-card" | "pay-link";
-
-type CardInfo = {
-  cardNumber: string;
-  expiry: string;
-  cvc: string;
-};
+type PaymentMethod = "stripe";
 
 type PaymentMethodSectionProps = {
   selected: PaymentMethod;
-  onSelect: (method: PaymentMethod, cardInfo?: CardInfo) => void;
+  onSelect: (method: PaymentMethod) => void;
 };
 
 export default function PaymentMethodSection({
   selected,
   onSelect,
 }: PaymentMethodSectionProps) {
-  const [method, setMethod] = useState<PaymentMethod>(selected);
-  const [cardInfo, setCardInfo] = useState<CardInfo>({
-    cardNumber: "",
-    expiry: "",
-    cvc: "",
-  });
-
-  const handleMethodChange = (newMethod: PaymentMethod) => {
-    setMethod(newMethod);
-    onSelect(newMethod, cardInfo);
-  };
-
-  const handleCardChange = (field: keyof CardInfo, value: string) => {
-    const updated = { ...cardInfo, [field]: value };
-    setCardInfo(updated);
-    if (method === "credit-card") onSelect(method, updated);
-  };
-
   return (
-    <div className="bg-base-100 p-6 rounded-lg shadow-md w-full max-w-2xl">
-      <h2 className="text-2xl font-semibold mb-4">Select Payment Method</h2>
+    <div className="bg-base-100 p-6 rounded-2xl shadow-lg w-full max-w-2xl border border-base-300">
+      <h2 className="text-2xl font-semibold mb-6">Payment Method</h2>
 
-      {/* Toggle Buttons */}
-      <div className="flex gap-4 mb-4">
+      <div className="space-y-4">
+        {/* Stripe Option */}
         <button
           type="button"
-          className={`btn flex-1 ${
-            method === "credit-card" ? "btn-primary" : "btn-outline"
+          onClick={() => onSelect("stripe")}
+          className={`w-full flex items-center justify-between p-5 rounded-xl border transition-all duration-200 ${
+            selected === "stripe"
+              ? "border-primary bg-primary/5 ring-2 ring-primary"
+              : "border-base-300 hover:border-primary hover:bg-base-200"
           }`}
-          onClick={() => handleMethodChange("credit-card")}
         >
-          Credit Card
-        </button>
-        <button
-          type="button"
-          className={`btn flex-1 ${
-            method === "pay-link" ? "btn-primary" : "btn-outline"
-          }`}
-          onClick={() => handleMethodChange("pay-link")}
-        >
-          Pay through Link
+          <div className="flex items-center gap-4">
+            {/* Stripe Icon */}
+            <div className="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">
+              S
+            </div>
+
+            <div className="text-left">
+              <p className="font-semibold">Credit / Debit Card</p>
+              <p className="text-sm opacity-70">
+                Secure payment powered by Stripe
+              </p>
+            </div>
+          </div>
+
+          {/* Selected Indicator */}
+          <div
+            className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+              selected === "stripe" ? "border-primary" : "border-base-300"
+            }`}
+          >
+            {selected === "stripe" && (
+              <div className="w-2.5 h-2.5 bg-primary rounded-full" />
+            )}
+          </div>
         </button>
       </div>
 
-      {/* Credit Card Fields */}
-      {method === "credit-card" && (
-        <div className="space-y-4">
-          <div>
-            <label className="label">
-              <span className="label-text">Card Number</span>
-            </label>
-            <input
-              type="text"
-              className="input input-bordered w-full"
-              placeholder="1234 5678 9012 3456"
-              value={cardInfo.cardNumber}
-              onChange={(e) => handleCardChange("cardNumber", e.target.value)}
-            />
-          </div>
-
-          <div className="flex gap-4">
-            <div className="w-1/2">
-              <label className="label">
-                <span className="label-text">Expiry</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                placeholder="MM/YY"
-                value={cardInfo.expiry}
-                onChange={(e) => handleCardChange("expiry", e.target.value)}
-              />
-            </div>
-            <div className="w-1/2">
-              <label className="label">
-                <span className="label-text">CVC</span>
-              </label>
-              <input
-                type="text"
-                className="input input-bordered w-full"
-                placeholder="123"
-                value={cardInfo.cvc}
-                onChange={(e) => handleCardChange("cvc", e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Pay through Link Info */}
-      {method === "pay-link" && (
-        <div className="alert alert-info mt-4">
-          A secure payment link will open on the next page.
-        </div>
-      )}
+      <div className="mt-6 text-sm opacity-70">
+        Your payment details are securely processed. We do not store card
+        information.
+      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { PaymentLineResponseDto } from "@/types/paymentLine";
-import { PaymentLineService } from "@/lib/PaymentLineService";
+import { PaymentLineService } from "@/lib/paymentLineService";
 
 interface Props {
   shopId: number;
@@ -52,7 +52,7 @@ export default function ShopManagerPaymentSection({ shopId }: Props) {
   if (payments.length === 0) {
     return (
       <div className="p-6 text-gray-600">
-        No unpaid payments found for this shop.{" "}
+        Payment records found for this shop.{" "}
       </div>
     );
   }
