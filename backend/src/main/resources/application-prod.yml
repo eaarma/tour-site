@@ -25,6 +25,10 @@ management:
     tags:
       application: store_manager
 
+  health:
+    mail:
+      enabled: false
+
   endpoint:
     health:
       show-details: never
