@@ -18,6 +18,8 @@ public class TourScheduleMapper {
                 .maxParticipants(schedule.getMaxParticipants())
                 .bookedParticipants(
                         schedule.getBookedParticipants() == null ? 0 : schedule.getBookedParticipants())
+                .reservedParticipants(
+                        schedule.getReservedParticipants() == null ? 0 : schedule.getReservedParticipants())
                 .status(schedule.getStatus())
                 .build();
     }
@@ -29,6 +31,7 @@ public class TourScheduleMapper {
         schedule.setTime(dto.getTime());
         schedule.setMaxParticipants(dto.getMaxParticipants());
         schedule.setBookedParticipants(0); // keep explicit
+        schedule.setReservedParticipants(0); // initialize reserved participants
         schedule.setStatus("ACTIVE");
         return schedule;
     }

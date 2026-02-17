@@ -42,6 +42,9 @@ export default function ItemModal({
   >([]);
   const [selectedSchedule, setSelectedSchedule] =
     useState<TourScheduleResponseDto | null>(null);
+  const [liveSchedule, setLiveSchedule] =
+    useState<TourScheduleResponseDto | null>(null);
+
   const [participants, setParticipants] = useState(initialParticipants);
   const [preferredLanguage, setPreferredLanguage] = useState("");
   const [comment, setComment] = useState("");
@@ -52,6 +55,30 @@ export default function ItemModal({
       setLocalSchedules(schedules);
     }
   }, [schedules]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!selectedSchedule?.id) {
+      setLiveSchedule(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const latest = await TourScheduleService.getById(selectedSchedule.id);
+        if (!cancelled) setLiveSchedule(latest);
+      } catch (e) {
+        console.error("Failed to fetch schedule by id", e);
+        if (!cancelled) setLiveSchedule(null);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, selectedSchedule?.id]);
 
   // 2) If no schedules provided, fetch them (when modal opens / item changes)
   useEffect(() => {
@@ -121,6 +148,15 @@ export default function ItemModal({
     router.push(`/items/${item.id}`);
   };
 
+  const remaining = liveSchedule
+    ? Math.max(
+        0,
+        (liveSchedule.maxParticipants ?? 0) -
+          (liveSchedule.bookedParticipants ?? 0) -
+          (liveSchedule.reservedParticipants ?? 0),
+      )
+    : 0;
+
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <h2 className="text-2xl font-bold mb-4">{item.title}</h2>
@@ -140,15 +176,18 @@ export default function ItemModal({
         <select
           id="participants"
           className="select select-bordered w-32"
-          value={participants}
+          value={remaining > 0 ? participants : 0}
           onChange={(e) => setParticipants(Number(e.target.value))}
+          disabled={!selectedSchedule || remaining === 0}
         >
-          {Array.from({ length: item.participants || 1 }, (_, i) => i + 1).map(
-            (n) => (
+          {remaining > 0 ? (
+            Array.from({ length: remaining }, (_, i) => i + 1).map((n) => (
               <option key={n} value={n}>
                 {n}
               </option>
-            ),
+            ))
+          ) : (
+            <option value={0}>Full</option>
           )}
         </select>
       </div>
@@ -194,7 +233,7 @@ export default function ItemModal({
         <button
           className="btn btn-primary"
           onClick={handleUpdate}
-          disabled={!selectedSchedule}
+          disabled={!selectedSchedule || remaining === 0}
         >
           Update Cart
         </button>

@@ -19,8 +19,11 @@ import com.example.store_manager.model.OrderStatus;
 import com.example.store_manager.model.Payment;
 import com.example.store_manager.model.PaymentLine;
 import com.example.store_manager.model.PaymentStatus;
+import com.example.store_manager.model.Tour;
+import com.example.store_manager.model.TourSchedule;
 import com.example.store_manager.repository.PaymentLineRepository;
 import com.example.store_manager.repository.PaymentRepository;
+import com.example.store_manager.repository.TourScheduleRepository;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
 
@@ -38,6 +41,7 @@ public class PaymentService {
     private final PaymentLineMapper paymentLineMapper;
     private static final Logger log = LoggerFactory.getLogger(PaymentService.class);
     private final EmailService emailService;
+    private final TourScheduleRepository tourScheduleRepository;
 
     @Transactional
     public Payment createPendingForOrder(Order order) {
@@ -106,6 +110,29 @@ public class PaymentService {
 
         // 3. Order + OrderItems
         Order order = payment.getOrder();
+
+        for (OrderItem item : order.getOrderItems()) {
+            TourSchedule schedule = tourScheduleRepository
+                    .findByIdForUpdate(item.getSchedule().getId())
+                    .orElseThrow(() -> new IllegalStateException("Schedule not found"));
+
+            int qty = item.getParticipants();
+
+            // consume reservation
+            schedule.releaseReserved(qty);
+
+            // book it
+            int newBooked = (schedule.getBookedParticipants() == null ? 0 : schedule.getBookedParticipants()) + qty;
+            schedule.setBookedParticipants(newBooked);
+
+            // status update
+            Tour tour = item.getTour(); // should be present
+            if ("PRIVATE".equalsIgnoreCase(tour.getType()) || newBooked >= schedule.getMaxParticipants()) {
+                schedule.setStatus("BOOKED");
+            } else {
+                schedule.setStatus("ACTIVE");
+            }
+        }
 
         order.setStatus(OrderStatus.PAID);
 

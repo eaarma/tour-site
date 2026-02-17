@@ -66,12 +66,23 @@ export default function BookingModal({
 
     try {
       const latest = await TourScheduleService.getById(chosenSchedule.id);
+      const remaining = Math.max(
+        0,
+        (latest.maxParticipants ?? 0) -
+          (latest.bookedParticipants ?? 0) -
+          (latest.reservedParticipants ?? 0),
+      );
 
       if (!latest || latest.status !== "ACTIVE") {
         handleRemoveUnavailable(chosenSchedule.id);
         toast.error(
           "Selected time is no longer available. Please pick another.",
         );
+        return false;
+      }
+
+      if (participants > remaining) {
+        toast.error(`Only ${remaining} spots available.`);
         return false;
       }
 
@@ -110,6 +121,21 @@ export default function BookingModal({
     }
   };
 
+  const remaining = chosenSchedule
+    ? Math.max(
+        0,
+        (chosenSchedule.maxParticipants ?? 0) -
+          (chosenSchedule.bookedParticipants ?? 0) -
+          (chosenSchedule.reservedParticipants ?? 0),
+      )
+    : 0;
+
+  useEffect(() => {
+    if (participants > remaining) {
+      setParticipants(remaining > 0 ? remaining : 1);
+    }
+  }, [remaining, participants]);
+
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <h2
@@ -142,13 +168,16 @@ export default function BookingModal({
           className="select select-bordered w-32"
           value={participants}
           onChange={(e) => setParticipants(Number(e.target.value))}
+          disabled={!chosenSchedule || remaining === 0}
         >
-          {Array.from({ length: item.participants || 1 }, (_, i) => i + 1).map(
-            (n) => (
+          {remaining > 0 ? (
+            Array.from({ length: remaining }, (_, i) => i + 1).map((n) => (
               <option key={n} value={n}>
                 {n}
               </option>
-            ),
+            ))
+          ) : (
+            <option value={0}>Full</option>
           )}
         </select>
       </div>

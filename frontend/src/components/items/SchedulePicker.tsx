@@ -23,22 +23,21 @@ export default function SchedulePicker({
   onSelect,
   className = "",
 }: Props) {
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const schedulesByDate = useMemo(() => {
     return schedules.reduce<Record<string, TourScheduleResponseDto[]>>(
       (acc, s) => {
         (acc[s.date] ||= []).push(s);
         return acc;
       },
-      {}
+      {},
     );
   }, [schedules]);
 
   const dateKeys = useMemo(
     () => Object.keys(schedulesByDate).sort(),
-    [schedulesByDate]
+    [schedulesByDate],
   );
-
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   // keep selectedDate valid
   useEffect(() => {
@@ -46,12 +45,24 @@ export default function SchedulePicker({
       setSelectedDate(null);
       return;
     }
-    if (!selectedDate || !dateKeys.includes(selectedDate)) {
+    if (
+      !selectedScheduleId &&
+      (!selectedDate || !dateKeys.includes(selectedDate))
+    ) {
       setSelectedDate(dateKeys[0]);
     }
   }, [dateKeys, selectedDate]);
 
-  const times = selectedDate ? schedulesByDate[selectedDate] ?? [] : [];
+  useEffect(() => {
+    if (!selectedScheduleId) return;
+
+    const found = schedules.find((s) => s.id === selectedScheduleId);
+    if (found) {
+      setSelectedDate(found.date);
+    }
+  }, [selectedScheduleId, schedules]);
+
+  const times = selectedDate ? (schedulesByDate[selectedDate] ?? []) : [];
 
   return (
     <div className={className}>

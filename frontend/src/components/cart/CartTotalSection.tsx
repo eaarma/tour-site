@@ -33,18 +33,25 @@ const CartTotalSection: React.FC<Props> = ({ onCheckoutSuccess }) => {
     }
 
     setLoading(true);
-    const { ok, badItems } =
+    const { ok, issues } =
       await validateSchedulesAgainstCapacity(selectedItems);
+
     setLoading(false);
 
     if (!ok) {
-      // show message for first bad item and list count
-      const first = badItems[0];
-      toast.error(
-        `Time ${first.selectedDate} ${first.selectedTime} for "${first.title}" is no longer available. Please pick a different time.`,
-      );
-      // optionally, you can remove bad items from cart:
-      // badItems.forEach(i => dispatch(removeItemFromCart(i.id)));
+      const first = issues[0];
+      const firstItem = first.items[0];
+
+      if (first.available <= 0) {
+        toast.error(
+          `"${firstItem.title}" is fully booked for ${firstItem.selectedDate} ${firstItem.selectedTime}.`,
+        );
+      } else {
+        toast.error(
+          `Only ${first.available} spots available for "${firstItem.title}" (${firstItem.selectedDate} ${firstItem.selectedTime}).`,
+        );
+      }
+
       return;
     }
 

@@ -19,5 +19,6 @@ public class TourScheduleResponseDto {
     private LocalTime time;
     private int maxParticipants;
     private int bookedParticipants;
+    private int reservedParticipants;
     private String status; // e.g. ACTIVE, EXPIRED, BOOKED
 }

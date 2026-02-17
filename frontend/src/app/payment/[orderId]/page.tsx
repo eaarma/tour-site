@@ -75,7 +75,7 @@ export default function PaymentPage() {
     } */
 
     return cartItems.map((item) => ({
-      id: item.id,
+      id: item.cartItemId,
       title: item.title,
       date: item.selectedDate,
       time: item.selectedTime,

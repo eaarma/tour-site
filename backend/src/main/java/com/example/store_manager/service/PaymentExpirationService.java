@@ -10,9 +10,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.store_manager.model.Order;
+import com.example.store_manager.model.OrderItem;
 import com.example.store_manager.model.OrderStatus;
 import com.example.store_manager.model.Payment;
 import com.example.store_manager.model.PaymentStatus;
+import com.example.store_manager.model.TourSchedule;
 import com.example.store_manager.repository.PaymentRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -35,7 +37,6 @@ public class PaymentExpirationService {
 
         for (Payment payment : expiredPayments) {
 
-            // Double safety check
             if (payment.getStatus() != PaymentStatus.PENDING) {
                 continue;
             }
@@ -43,17 +44,26 @@ public class PaymentExpirationService {
             log.info("Expiring payment {}", payment.getId());
 
             payment.setStatus(PaymentStatus.FAILED);
-
             payment.getPaymentLines()
                     .forEach(line -> line.setStatus(PaymentStatus.FAILED));
 
             Order order = payment.getOrder();
 
             if (order.getStatus() != OrderStatus.PAID) {
+
+                for (OrderItem item : order.getOrderItems()) {
+
+                    TourSchedule schedule = item.getSchedule();
+
+                    // release reserved participants
+                    schedule.releaseReserved(item.getParticipants());
+
+                    item.setStatus(OrderStatus.FAILED);
+                }
+
                 order.setStatus(OrderStatus.FAILED);
-                order.getOrderItems()
-                        .forEach(item -> item.setStatus(OrderStatus.FAILED));
             }
         }
+
     }
 }

@@ -20,8 +20,11 @@ export default function SessionCard({
   onCompleteSession,
 }: Props) {
   const datetime = new Date(`${session.date}T${session.time}`);
+
   const totalParticipants =
-    session.participants?.reduce((sum, p) => sum + p.participants, 0) ?? 0;
+    session.participants
+      ?.filter((p) => p.status === "PAID")
+      .reduce((sum, p) => sum + p.participants, 0) ?? 0;
 
   const statusColor =
     session.status === "CONFIRMED"

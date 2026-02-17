@@ -34,7 +34,17 @@ export default function SessionDetailsModal({
   const [isOwnershipModalOpen, setIsOwnershipModalOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
 
-  const participants = session.participants ?? [];
+  const paidParticipants = (session.participants ?? []).filter(
+    (p) => p.status === "PAID",
+  );
+
+  const bookedCount = paidParticipants.reduce(
+    (sum, p) => sum + p.participants,
+    0,
+  );
+
+  const remaining = session.maxParticipants - bookedCount;
+
   const datetime = new Date(`${session.date}T${session.time}`);
   const [sessionData, setSessionData] = useState(session);
 
@@ -107,11 +117,11 @@ export default function SessionDetailsModal({
         <div className="bg-base-200 px-4 py-3 rounded-lg mb-5 flex items-center justify-between">
           <div className="flex items-center gap-2 text-primary font-semibold text-lg">
             <Users className="w-5 h-5" />
-            {session.bookedParticipants} / {session.maxParticipants} booked
+            {bookedCount} / {session.maxParticipants} booked
           </div>
 
           <div className="text-gray-700 font-medium">
-            {session.remaining} spaces available
+{remaining} spaces available
           </div>
         </div>
 
@@ -123,7 +133,7 @@ export default function SessionDetailsModal({
 
         {/* PARTICIPANT LIST */}
         <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2">
-          {participants.map((p) => (
+          {paidParticipants.map((p) => (
             <OrderItemCard
               key={p.orderItemId}
               item={{

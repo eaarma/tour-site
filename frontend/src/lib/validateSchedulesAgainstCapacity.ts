@@ -3,11 +3,25 @@ import { CartItem } from "@/types";
 
 export async function validateSchedulesAgainstCapacity(
   items: CartItem[],
-): Promise<{ ok: boolean; badItems: CartItem[] }> {
-  const bad: CartItem[] = [];
+): Promise<{
+  ok: boolean;
+  issues: {
+    scheduleId: number;
+    available: number;
+    requested: number;
+    items: CartItem[];
+  }[];
+}> {
+  const issues: {
+    scheduleId: number;
+    available: number;
+    requested: number;
+    items: CartItem[];
+  }[] = [];
 
   const grouped = new Map<number, CartItem[]>();
 
+  // 🔹 Group by schedule
   for (const item of items) {
     if (!grouped.has(item.scheduleId)) {
       grouped.set(item.scheduleId, []);
@@ -19,22 +33,42 @@ export async function validateSchedulesAgainstCapacity(
     try {
       const schedule = await TourScheduleService.getById(scheduleId);
 
+      // ❌ Schedule missing or inactive
       if (!schedule || schedule.status !== "ACTIVE") {
-        bad.push(...group);
+        issues.push({
+          scheduleId,
+          available: 0,
+          requested: group.reduce((sum, i) => sum + i.participants, 0),
+          items: group,
+        });
         continue;
       }
 
-      const remaining = schedule.maxParticipants - schedule.bookedParticipants;
+      // ✅ CORRECT availability calculation
+      const available =
+        (schedule.maxParticipants ?? 0) -
+        (schedule.bookedParticipants ?? 0) -
+        (schedule.reservedParticipants ?? 0);
 
       const requested = group.reduce((sum, i) => sum + i.participants, 0);
 
-      if (requested > remaining) {
-        bad.push(...group);
+      if (requested > available) {
+        issues.push({
+          scheduleId,
+          available: Math.max(0, available),
+          requested,
+          items: group,
+        });
       }
     } catch {
-      bad.push(...group);
+      issues.push({
+        scheduleId,
+        available: 0,
+        requested: group.reduce((sum, i) => sum + i.participants, 0),
+        items: group,
+      });
     }
   }
 
-  return { ok: bad.length === 0, badItems: bad };
+  return { ok: issues.length === 0, issues };
 }
