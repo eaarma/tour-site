@@ -14,7 +14,6 @@ import { CreditCard, Navigation, Package } from "lucide-react";
 
 import { TourSessionDto } from "@/types/tourSession";
 import { TourSessionService } from "@/lib/tourSessionService";
-import CardFrame from "@/components/common/CardFrame";
 import ShopManagerPaymentSection from "@/components/manager/payment/ShopManagerPaymentSection";
 
 export default function ShopManagerPage() {
