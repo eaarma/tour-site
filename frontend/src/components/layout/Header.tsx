@@ -170,7 +170,7 @@ const Header: React.FC = () => {
                 className="flex items-center justify-center p-1 gap-2 text-primary hover:bg-primary/10 active:bg-primary/20 rounded-full w-10 h-10 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 transition-colors duration-150"
                 onClick={() => setOpen((prev) => !prev)}
               >
-                <FaUserCircle className="text-2xl p-1" />
+                <FaUserCircle className="text-2xl" />
                 <span className="hidden sm:inline">{user.name}</span>
               </button>
 

@@ -97,17 +97,6 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ title, item }) => {
                 {item.type}
               </Badge>
             )}
-
-            {/* Price tag on image (mobile) */}
-            <div className="absolute bottom-3 right-3 bg-card/90 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-sm lg:hidden">
-              <span className="text-lg font-bold text-card-foreground">
-                {"\u20AC"}
-                {item.price}
-              </span>
-              <span className="text-xs text-muted-foreground ml-0.5">
-                /person
-              </span>
-            </div>
           </div>
 
           {/* Content section */}
