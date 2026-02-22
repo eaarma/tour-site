@@ -171,7 +171,7 @@ const Header: React.FC = () => {
                 onClick={() => setOpen((prev) => !prev)}
               >
                 <FaUserCircle className="text-2xl" />
-                <span className="hidden sm:inline">{user.name}</span>
+                <span className="hidden sm:inline mb-0.5">{user.name}</span>
               </button>
 
               {open && (
