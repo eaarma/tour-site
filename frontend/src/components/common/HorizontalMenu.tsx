@@ -13,12 +13,12 @@ interface HorizontalMenuProps {
 
 const HorizontalMenu: React.FC<HorizontalMenuProps> = ({ items }) => {
   return (
-    <div className="flex flex-row justify-center gap-4 p-1 bg-base-200 rounded">
+    <div className="flex flex-row justify-center gap-4 p-1 bg-base-100 rounded">
       {items.map((item, index) => (
         <Link
           key={index}
           href={item.path}
-          className="btn btn-sm btn-outline min-w-[100px] text-center"
+          className="btn btn-sm btn-outline min-w-[100px] text-center hover:text-primary hover:hover:bg-base-200 rounded-lg"
         >
           {item.label}
         </Link>

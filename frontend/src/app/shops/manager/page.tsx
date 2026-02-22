@@ -165,70 +165,68 @@ export default function ShopManagerPage() {
 
       {/* ===== Tabs ===== */}
       <div className="mt-6">
-        <CardFrame>
-          <div className="border-b border-base-300 mb-10">
-            <div className="flex gap-10">
-              <button
-                onClick={() => setActiveTab("orders")}
-                className={`py-3 px-3 text-[1.05rem] font-semibold tracking-wide 
-        flex items-center gap-2 transition-all 
-        ${
-          activeTab === "orders"
-            ? "text-primary border-b-2 border-primary"
-            : "text-gray-700 hover:text-blue-700"
-        }`}
-              >
-                <Package className="w-5 h-5" strokeWidth={2.25} />
-                Orders
-              </button>
+        <div className="border-b border-base-300 mb-10">
+          <div className="flex gap-2 sm:gap-10">
+            <button
+              onClick={() => setActiveTab("orders")}
+              className={`py-3 px-3 text-[1.05rem] font-semibold tracking-wide 
+                flex items-center gap-2 transition-all 
+                  ${
+                    activeTab === "orders"
+                      ? "text-primary border-b-2 border-primary"
+                      : "text-gray-700 hover:text-primary/80"
+                  }`}
+            >
+              <Package className="w-5 h-5" strokeWidth={2.25} />
+              Orders
+            </button>
 
-              <button
-                onClick={() => setActiveTab("tours")}
-                className={`py-3 px-3 text-[1.05rem] font-semibold tracking-wide 
+            <button
+              onClick={() => setActiveTab("tours")}
+              className={`py-3 px-3 text-[1.05rem] font-semibold tracking-wide 
                 flex items-center gap-2 transition-all 
                 ${
                   activeTab === "tours"
                     ? "text-primary border-b-2 border-primary"
-                    : "text-gray-700 hover:text-blue-700"
+                    : "text-gray-700 hover:text-primary/80"
                 }`}
-              >
-                <Navigation className="w-5 h-5" strokeWidth={2.25} />
-                Tours
-              </button>
+            >
+              <Navigation className="w-5 h-5" strokeWidth={2.25} />
+              Tours
+            </button>
 
-              <button
-                onClick={() => setActiveTab("payments")}
-                className={`py-3 px-3 text-[1.05rem] font-semibold tracking-wide 
+            <button
+              onClick={() => setActiveTab("payments")}
+              className={`py-3 px-3 text-[1.05rem] font-semibold tracking-wide 
                 flex items-center gap-2 transition-all 
               ${
                 activeTab === "payments"
                   ? "text-primary border-b-2 border-primary"
-                  : "text-gray-700 hover:text-blue-700"
-              }}`}
-              >
-                <CreditCard className="w-5 h-5" strokeWidth={2.25} />
-                Payments
-              </button>
-            </div>
+                  : "text-gray-700 hover:text-primary/80"
+              }`}
+            >
+              <CreditCard className="w-5 h-5" strokeWidth={2.25} />
+              Payments
+            </button>
           </div>
+        </div>
 
-          {/* Tab panels */}
-          {activeTab === "orders" && (
-            <ManagerOrderSection
-              sessions={sessions}
-              tours={tours}
-              shopId={shopId}
-            />
-          )}
+        {/* Tab panels */}
+        {activeTab === "orders" && (
+          <ManagerOrderSection
+            sessions={sessions}
+            tours={tours}
+            shopId={shopId}
+          />
+        )}
 
-          {activeTab === "tours" && (
-            <ManagerItemList items={tours} shopId={shopId} />
-          )}
+        {activeTab === "tours" && (
+          <ManagerItemList items={tours} shopId={shopId} />
+        )}
 
-          {activeTab === "payments" && (
-            <ShopManagerPaymentSection shopId={shopId} />
-          )}
-        </CardFrame>
+        {activeTab === "payments" && (
+          <ShopManagerPaymentSection shopId={shopId} />
+        )}
       </div>
     </div>
   );

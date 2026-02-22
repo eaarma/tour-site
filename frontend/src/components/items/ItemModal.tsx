@@ -175,7 +175,7 @@ export default function ItemModal({
         </label>
         <select
           id="participants"
-          className="select select-bordered w-32"
+          className="select select-bordered w-32 rounded-lg"
           value={remaining > 0 ? participants : 0}
           onChange={(e) => setParticipants(Number(e.target.value))}
           disabled={!selectedSchedule || remaining === 0}
@@ -199,7 +199,7 @@ export default function ItemModal({
           </label>
 
           <select
-            className="select select-bordered w-full"
+            className="select select-bordered w-full rounded-lg"
             value={preferredLanguage}
             onChange={(e) => setPreferredLanguage(e.target.value)}
           >
@@ -215,23 +215,26 @@ export default function ItemModal({
 
       {/* 🔹 Comment */}
       <div className="mb-4">
-        <label className="block font-semibold mb-2">Comment (optional)</label>
+        <label className="block font-semibold mb-2 ">Comment (optional)</label>
         <textarea
-          className="textarea textarea-bordered w-full"
+          className="textarea textarea-bordered w-full rounded-lg"
           rows={3}
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          placeholder="Anything the guide should know?"
+          placeholder="Anything the they provider should know?"
         />
       </div>
 
       <div className="flex justify-end mt-6">
-        <button className="btn btn-secondary mr-4" onClick={viewTour}>
+        <button
+          className="btn btn-secondary mr-4 rounded-lg"
+          onClick={viewTour}
+        >
           View Tour
         </button>
 
         <button
-          className="btn btn-primary"
+          className="btn btn-primary rounded-lg"
           onClick={handleUpdate}
           disabled={!selectedSchedule || remaining === 0}
         >

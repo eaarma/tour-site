@@ -45,7 +45,7 @@ export default function ItemsPage() {
         date: date || undefined,
         categories: selectedCategories.length ? selectedCategories : undefined,
         language: selectedLanguages.length ? selectedLanguages : undefined,
-        type: selectedTypes.length ? selectedTypes[0] : undefined,
+        type: selectedTypes.length ? selectedTypes : undefined,
       };
 
       try {
@@ -104,7 +104,7 @@ export default function ItemsPage() {
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4 max-w-7xl mx-auto">
-      <div className="w-full space-y-6 mt-5">
+      <div className="w-full space-y-6 mt-5 sm:mt-7">
         <SearchBar
           onSearch={handleSearch}
           initialKeywords={keyword}

@@ -38,36 +38,54 @@ const SortMenu: React.FC<SortMenuProps> = ({ sortKey, onSortChange }) => {
       <h2 className="text-lg font-semibold mb-2">Sort</h2>
 
       <Listbox value={sortKey} onChange={handleChange}>
-        <div className="relative w-full sm:w-48">
-          <Listbox.Button className="w-full rounded border px-3 py-2 text-left bg-white text-sm shadow flex justify-between items-center">
-            <span>{activeLabel}</span>
-            <ChevronUpDownIcon className="h-4 w-4 text-neutral ml-2" />
-          </Listbox.Button>
+        {({ open }) => (
+          <div className="relative w-full sm:w-48">
+            <Listbox.Button
+              className={`
+          w-full rounded-xl px-3 py-2 text-left text-sm shadow
+          flex justify-between items-center
+          bg-base-100
+          border transition-colors
+          hover:border-border hover:outline-none hover:ring-2 hover:ring-ring/20 hover:ring-primary/30
+          ${open ? "border-primary ring-2 ring-primary" : "border-base-300"}
 
-          <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white shadow-lg border text-sm">
-            {SORT_OPTIONS.map((opt) => (
-              <Listbox.Option
-                key={opt.key}
-                value={opt.key}
-                className={({ active }) =>
-                  `
+          hover:border-primary
+        `}
+            >
+              <span className="font-semibold truncate">{activeLabel}</span>
+
+              <ChevronUpDownIcon
+                className={`h-4 w-4 ml-2 transition-colors ${
+                  open ? "text-primary" : "text-neutral"
+                }`}
+              />
+            </Listbox.Button>
+
+            <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto bg-white shadow-lg border text-sm rounded-xl">
+              {SORT_OPTIONS.map((opt) => (
+                <Listbox.Option
+                  key={opt.key}
+                  value={opt.key}
+                  className={({ active }) =>
+                    `
                     cursor-pointer select-none relative px-4 py-2 flex items-center gap-2
                     ${active ? "bg-blue-400 text-white" : ""}
                   `
-                }
-              >
-                {({ selected }) => (
-                  <>
-                    <div className="w-4 h-4 flex items-center justify-center">
-                      {selected && <CheckIcon className="h-4 w-4" />}
-                    </div>
-                    <span>{opt.label}</span>
-                  </>
-                )}
-              </Listbox.Option>
-            ))}
-          </Listbox.Options>
-        </div>
+                  }
+                >
+                  {({ selected }) => (
+                    <>
+                      <div className="w-4 h-4 flex items-center justify-center">
+                        {selected && <CheckIcon className="h-4 w-4" />}
+                      </div>
+                      <span>{opt.label}</span>
+                    </>
+                  )}
+                </Listbox.Option>
+              ))}
+            </Listbox.Options>
+          </div>
+        )}
       </Listbox>
 
       {sortKey !== DEFAULT_SORT && (

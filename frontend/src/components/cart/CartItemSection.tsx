@@ -75,7 +75,7 @@ const CartItemSection: React.FC<Props> = ({ cart, onView }) => {
             <button
               onClick={handleRemoveSelected}
               disabled={selectedCount === 0}
-              className="btn btn-sm btn-outline btn-error disabled:opacity-50"
+              className="btn btn-sm btn-outline btn-error disabled:opacity-50 rounded-lg"
             >
               Remove ({selectedCount})
             </button>

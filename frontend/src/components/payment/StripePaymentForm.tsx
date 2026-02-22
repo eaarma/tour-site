@@ -98,7 +98,7 @@ export default function StripePaymentForm({
       <button
         onClick={handlePay}
         disabled={loading || !stripe}
-        className="btn btn-primary w-full"
+        className="btn btn-primary w-full rounded-lg"
       >
         {loading ? "Processing…" : `Pay €${amount.toFixed(2)}`}
       </button>

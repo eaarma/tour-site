@@ -31,7 +31,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" data-theme="light" className={`${geistSans.variable} `}>
-      <body className="flex flex-col min-h-screen bg-base-200 overflow-x-hidden">
+      <body className="flex flex-col min-h-screen bg-base-100 overflow-x-hidden">
         <ReduxProvider>
           <AuthProvider>
             <StripeProvider>

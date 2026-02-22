@@ -50,7 +50,7 @@ export default function ContactPage() {
   return (
     <div className="max-w-4xl mx-auto p-6 min-h-screen mt-4 sm:mt-6">
       <section className="text-center mb-10">
-        <h1 className="text-3xl font-bold mb-2">Get in Touch</h1>
+        <h1 className="text-3xl font-bold mb-4">Get in Touch</h1>
         <p className="text-base text-gray-600">
           We’d love to hear from you! Whether you have a question about our
           tours, feedback, or just want to say hi, feel free to reach out.
@@ -69,7 +69,7 @@ export default function ContactPage() {
         <input
           type="text"
           placeholder="Name"
-          className="input input-bordered w-full"
+          className="input input-bordered w-full rounded-xl"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
@@ -77,7 +77,7 @@ export default function ContactPage() {
         <input
           type="email"
           placeholder="Email"
-          className="input input-bordered w-full"
+          className="input input-bordered w-full rounded-xl"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -85,12 +85,12 @@ export default function ContactPage() {
         <input
           type="text"
           placeholder="Subject"
-          className="input input-bordered w-full"
+          className="input input-bordered w-full rounded-xl"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
         />
         <textarea
-          className="textarea textarea-bordered w-full"
+          className="textarea textarea-bordered w-full rounded-xl"
           placeholder="Message"
           rows={4}
           value={message}
@@ -99,7 +99,7 @@ export default function ContactPage() {
         ></textarea>
 
         <button
-          className="btn btn-primary self-center mt-2"
+          className="btn btn-primary self-center mt-2 rounded-xl"
           type="submit"
           disabled={isSubmitting}
         >

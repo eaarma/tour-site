@@ -42,7 +42,11 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ title, item }) => {
   const router = useRouter();
   if (!item) return null;
 
-  const mainImage = item.images?.[0] || "/images/item_placeholder.jpg";
+  const placeholderPath = "/images/item_placeholder.jpg";
+
+  const mainImage = item.images?.[0] || placeholderPath;
+
+  const isPlaceholder = mainImage === placeholderPath;
 
   const handleNavigate = () => router.push(`/items/${item.id}`);
 
@@ -66,11 +70,15 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ title, item }) => {
           {/* Image section */}
           <div className="relative w-full h-52 sm:h-60 lg:w-[50%] lg:h-full shrink-0 overflow-hidden bg-muted">
             <img
-              src={mainImage || "/placeholder.svg"}
+              src={mainImage}
               alt={item.title || "Tour image"}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className={`
+    w-full h-full object-cover transition-transform duration-500
+    group-hover:scale-105
+    ${isPlaceholder ? "opacity-70 grayscale blur-[1px]" : ""}
+  `}
               onError={(e) => {
-                e.currentTarget.src = "/images/item_placeholder.jpg";
+                e.currentTarget.src = placeholderPath;
                 e.currentTarget.classList.add(
                   "opacity-70",
                   "grayscale",
@@ -85,7 +93,7 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ title, item }) => {
 
             {/* Type badge */}
             {item.type && (
-              <Badge className="absolute top-3 left-3 bg-card/90 backdrop-blur-sm text-card-foreground border-0 shadow-sm">
+              <Badge className="absolute top-3 left-3 bg-card/90 backdrop-blur-sm text-white text-card-foreground border-0 shadow-sm">
                 {item.type}
               </Badge>
             )}
@@ -199,7 +207,7 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ title, item }) => {
                   <Badge
                     key={cat}
                     variant="secondary"
-                    className="text-[10px] px-1.5 py-0"
+                    className="text-[10px] px-1.5 py-0 text-white"
                   >
                     {formatCategory(cat)}
                   </Badge>
@@ -241,7 +249,7 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ title, item }) => {
 
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-lg bg-primary mt-1 px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="inline-flex items-center gap-2 rounded-lg bg-primary mt-1 px-5 py-2.5 text-white text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleNavigate();

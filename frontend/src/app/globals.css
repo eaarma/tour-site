@@ -14,20 +14,24 @@
   default: true;
 
   /* Core colors */
-  --color-primary: #4f46e5; /* Indigo, calm and modern */
-  --color-secondary: #10b981; /* Soft teal, fresh */
+  --color-primary: #0284c7; /* Calm and modern */
+  --color-secondary: #059669; /* Soft teal, fresh */
   --color-accent: #f59e0b; /* Warm amber, for highlights/buttons */
   --color-neutral: #374151; /* Dark gray for text and borders */
   --color-base-100: #f9fafb; /* Slightly off-white background */
-
-  /* Feedback colors */
+  --color-base-200: #e5e7eb; /* 👈 light border */
+  --color-base-300: #e5e7eb;
+  --color-base-400: #a7bdcc;
+  --color-primary-hover: #7dd3fc; /* sky-500 (lighter) */ /* Feedback colors */
   --color-info: #3b82f6; /* Blue info messages */
   --color-success: #16a34a; /* Green success messages */
   --color-warning: #facc15; /* Golden warning */
   --color-error: #ef4444; /* Red error messages */
+  --color-sky-300: #7dd3fc;
+  --color-sky-400: #38bdf8;
 
   /* Rounded corners */
-  --rounded-box: 0.75rem; /* softer, modern rounded container */
+  --rounded-box: 0.5rem; /* softer, modern rounded container */
   --rounded-btn: 0.5rem;
   --rounded-badge: 1.5rem;
 
@@ -40,11 +44,35 @@
   --btn-focus-scale: 0.97;
 
   /* Borders & Tabs */
-  --border-btn: 1px;
   --tab-border: 1px;
   --tab-radius: 0.5rem;
 }
+
+* {
+  border-color: var(--color-base-400);
+}
+
+@layer components {
+  .btn,
+  .input,
+  .select,
+  .textarea {
+    @apply rounded-lg;
+  }
+}
+
+.btn,
+.input,
+.select,
+.textarea {
+  border-radius: 0.5rem !important; /* rounded-lg */
+}
+
 .react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
+.react-datepicker {
   z-index: 9999 !important;
 }
 

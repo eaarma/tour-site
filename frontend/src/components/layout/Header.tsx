@@ -114,7 +114,7 @@ const Header: React.FC = () => {
         <div className="relative mr-4 hidden md:block" ref={searchRef}>
           <button
             type="button"
-            className="btn btn-sm btn-outline flex items-center gap-2 hover:bg-base-200"
+            className="btn btn-sm btn-outline flex items-center rounded-lg gap-2 hover:bg-base-200 hover:text-primary"
             onClick={() => setSearchOpen((prev) => !prev)}
           >
             <svg
@@ -167,10 +167,10 @@ const Header: React.FC = () => {
             <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
-                className="flex items-center gap-2 text-primary hover:text-primary-focus active:text-primary-content transition-colors duration-150"
+                className="flex items-center justify-center p-1 gap-2 text-primary hover:bg-primary/10 active:bg-primary/20 rounded-full w-10 h-10 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 transition-colors duration-150"
                 onClick={() => setOpen((prev) => !prev)}
               >
-                <FaUserCircle className="text-2xl" />
+                <FaUserCircle className="text-2xl p-1" />
                 <span className="hidden sm:inline">{user.name}</span>
               </button>
 
@@ -213,17 +213,17 @@ const Header: React.FC = () => {
           ) : (
             <Link
               href="/auth/login"
-              className="text-2xl text-primary hover:text-primary-focus active:text-primary-content transition-colors"
+              className="flex items-center justify-center text-primary hover:text-primary-focus hover:bg-base-200 active:bg-primary/20 rounded-full w-10 h-10 transition-colors duration-150"
             >
-              <FaUserCircle />
+              <FaUserCircle className="text-2xl" />
             </Link>
           )}
 
           <Link
             href="/cart"
-            className="btn btn-sm btn-outline flex items-center hover:bg-base-200 hover:text-primary transition-colors relative"
+            className="btn btn-sm btn-outline flex items-center hover:bg-base-200 hover:text-primary rounded-lg transition-colors relative"
           >
-            <FaShoppingCart className="text-lg md:mr-2" />
+            <FaShoppingCart className="text-lg md:mr-2 hover:bg-primary/10" />
             <span className="hidden md:inline">Cart</span>
 
             {cartCount > 0 && (

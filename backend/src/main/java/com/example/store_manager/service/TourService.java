@@ -98,8 +98,7 @@ public class TourService {
     @Transactional(readOnly = true)
     public Result<Page<TourResponseDto>> getAllByQuery(
             List<String> categories,
-            String type,
-            List<String> language,
+            List<String> type, List<String> language,
             String keyword,
             LocalDate date,
             int page,
@@ -131,6 +130,10 @@ public class TourService {
         boolean hasDate = date != null;
 
         Page<Tour> tours;
+
+        if (type != null && type.isEmpty()) {
+            type = null;
+        }
 
         if (hasCategory && hasDate) {
             tours = tourRepository.searchWithCategoryAndDate(

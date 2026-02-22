@@ -68,7 +68,7 @@ export default function SchedulePicker({
     <div className={className}>
       <h3 className="font-semibold mb-2">Available dates</h3>
       <select
-        className="select select-bordered w-full max-w-xs mb-4"
+        className="select select-bordered w-full max-w-xs mb-4 rounded-lg"
         value={selectedDate ?? ""}
         onChange={(e) => setSelectedDate(e.target.value || null)}
       >

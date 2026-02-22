@@ -22,7 +22,7 @@ interface QueryParams {
   date?: string;
   categories?: string[];
   language?: string[];
-  type?: string;
+  type?: string[];
 }
 
 export const TourService = {

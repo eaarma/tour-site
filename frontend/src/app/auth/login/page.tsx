@@ -56,7 +56,7 @@ export default function LoginPage() {
   if (user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="card bg-base-300 shadow-lg p-8 max-w-md w-full text-center space-y-4">
+        <div className="card bg-base-100 shadow-lg p-8 max-w-md w-full text-center space-y-4">
           <h2 className="text-2xl font-bold">You are already logged in</h2>
           <p className="opacity-80">
             Log out or navigate back to the home page.
@@ -107,7 +107,7 @@ export default function LoginPage() {
   return (
     <div className="flex flex-col items-center justify-start min-h-screen pt-24 px-4">
       <div className="w-full max-w-md space-y-8">
-        <div className="card shadow-lg bg-base-300 p-8">
+        <div className="card shadow-lg bg-base-100 p-8">
           <h2 className="text-2xl font-bold mb-4">User Login</h2>
           <form onSubmit={handleLogin} className="flex flex-col gap-4">
             <input

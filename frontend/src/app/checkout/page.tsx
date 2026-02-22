@@ -175,7 +175,7 @@ export default function CheckoutPage() {
             </label>
             <input
               type="text"
-              className="input input-bordered w-full"
+              className="input input-bordered w-full rounded-lg"
               value={checkout.name}
               onChange={(e) =>
                 dispatch(updateCheckoutInfo({ name: e.target.value }))
@@ -191,7 +191,7 @@ export default function CheckoutPage() {
             </label>
             <input
               type="email"
-              className="input input-bordered w-full"
+              className="input input-bordered w-full rounded-lg"
               value={checkout.email}
               onChange={(e) =>
                 dispatch(updateCheckoutInfo({ email: e.target.value }))
@@ -213,7 +213,7 @@ export default function CheckoutPage() {
                 <div className="w-40 relative">
                   <input
                     type="text"
-                    className="input input-bordered w-full"
+                    className="input input-bordered w-full rounded-lg"
                     placeholder="+372"
                     value={
                       isFocused ? query : countryCode ? `+${countryCode}` : ""
@@ -286,7 +286,7 @@ export default function CheckoutPage() {
 
               <input
                 type="tel"
-                className="input input-bordered flex-1"
+                className="input input-bordered flex-1 rounded-lg"
                 placeholder="1234567890"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
@@ -302,7 +302,7 @@ export default function CheckoutPage() {
             </label>
             <input
               type="text"
-              className="input input-bordered w-full"
+              className="input input-bordered w-full rounded-lg"
               value={checkout.nationality}
               onChange={(e) =>
                 dispatch(updateCheckoutInfo({ nationality: e.target.value }))
@@ -310,7 +310,10 @@ export default function CheckoutPage() {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary w-full mt-4">
+          <button
+            type="submit"
+            className="btn btn-primary w-full mt-4 rounded-lg"
+          >
             Proceed to Payment
           </button>
         </form>

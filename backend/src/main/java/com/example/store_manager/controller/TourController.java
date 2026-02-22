@@ -63,7 +63,7 @@ public class TourController {
                         @RequestParam(name = "sort", defaultValue = "title,asc") String[] sort,
                         @RequestParam(name = "categories", required = false) List<String> categories,
                         @RequestParam(name = "language", required = false) List<String> language,
-                        @RequestParam(name = "type", required = false) String type,
+                        @RequestParam(name = "type", required = false) List<String> type,
                         @RequestParam(name = "keyword", required = false) String keyword,
                         @RequestParam(name = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 

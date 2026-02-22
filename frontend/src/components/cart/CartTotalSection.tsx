@@ -76,7 +76,7 @@ const CartTotalSection: React.FC<Props> = ({ onCheckoutSuccess }) => {
         <span className="font-bold">€{totalPrice.toFixed(2)}</span>
       </div>
       <button
-        className={`btn btn-primary w-full mt-6 ${loading ? "loading" : ""}`}
+        className={`btn btn-primary w-full mt-6 rounded-lg ${loading ? "loading" : ""}`}
         onClick={handleProceedToCheckout}
         disabled={loading}
       >

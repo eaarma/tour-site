@@ -109,38 +109,59 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
               }}
               multiple
             >
-              <div className="relative">
-                <Listbox.Button className="w-full rounded border px-3 py-2 text-left bg-base-100 text-sm shadow flex justify-between items-center">
-                  <span className="truncate font-semibold">{filter.label}</span>
-                  <ChevronUpDownIcon className="h-4 w-4 text-neutral ml-2" />
-                </Listbox.Button>
+              {({ open }) => (
+                <div className="relative">
+                  <Listbox.Button
+                    className={`
+          w-full rounded px-3 py-2 text-left text-sm shadow
+          flex justify-between items-center
+          bg-base-100
+          border transition-colors
+          rounded-xl
+          hover:border-border hover:outline-none hover:ring-2 hover:ring-ring/20 hover:ring-primary/30
 
-                <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-base-100 text-neutral shadow-lg border text-sm">
-                  {filter.options.map((opt) => {
-                    const label = typeof opt === "string" ? opt : opt.label;
-                    const value = typeof opt === "string" ? opt : opt.value;
+          ${open ? "border-primary ring-2 ring-primary" : "border-base-300"}
 
-                    return (
-                      <Listbox.Option
-                        key={value}
-                        value={value}
-                        className={({ active }) =>
-                          `cursor-pointer select-none relative px-4 py-2 flex items-center gap-2 ${
-                            active ? "bg-blue-400" : ""
-                          }`
-                        }
-                      >
-                        <div className="w-4 h-4 flex items-center justify-center">
-                          {isSelected(filter.key, value) && (
-                            <CheckIcon className="h-4 w-4 text-blue-600" />
-                          )}
-                        </div>
-                        <span>{label}</span>
-                      </Listbox.Option>
-                    );
-                  })}
-                </Listbox.Options>
-              </div>
+          hover:border-primary
+        `}
+                  >
+                    <span className="truncate font-semibold">
+                      {filter.label}
+                    </span>
+                    <ChevronUpDownIcon
+                      className={`h-4 w-4 ml-2 transition-colors ${
+                        open ? "text-primary" : "text-neutral"
+                      }`}
+                    />
+                  </Listbox.Button>
+
+                  <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-base-100 text-neutral shadow-lg border text-sm">
+                    {filter.options.map((opt) => {
+                      const label = typeof opt === "string" ? opt : opt.label;
+                      const value = typeof opt === "string" ? opt : opt.value;
+
+                      return (
+                        <Listbox.Option
+                          key={value}
+                          value={value}
+                          className={({ active }) =>
+                            `cursor-pointer select-none relative px-4 py-2 flex items-center gap-2 ${
+                              active ? "bg-blue-400" : ""
+                            }`
+                          }
+                        >
+                          <div className="w-4 h-4 flex items-center justify-center">
+                            {isSelected(filter.key, value) && (
+                              <CheckIcon className="h-4 w-4 text-blue-600" />
+                            )}
+                          </div>
+                          <span>{label}</span>
+                        </Listbox.Option>
+                      );
+                    })}
+                  </Listbox.Options>
+                </div>
+              )}
             </Listbox>
           </div>
         ))}

@@ -192,10 +192,10 @@ export default function ManagerOrderSection({
   return (
     <section className="mb-12">
       <div className="sm:p-6">
-        <h2 className="text-2xl font-bold mb-4">Manage Sessions</h2>
+        <h2 className="text-2xl font-bold mb-4 ml-2">Manage Sessions</h2>
 
         {/* Tabs */}
-        <div className="sticky top-0 z-10 bg-base-200 pb-3">
+        <div className="sticky top-0 z-10 bg-base-100 pb-3">
           <div className="tabs tabs-boxed mb-3">
             <button
               className={`tab ${activeTab === "today" ? "tab-active" : ""}`}
@@ -253,7 +253,7 @@ export default function ManagerOrderSection({
 
             {/* Clear */}
             <button
-              className="btn btn-outline px-3 text-sm"
+              className="btn btn-outline px-3 text-sm mb-0.5"
               disabled={!hasDateFilter}
               onClick={() => {
                 setFromDate(null);
@@ -269,7 +269,9 @@ export default function ManagerOrderSection({
             {/* SORT */}
             <div className="flex-1 sm:flex-none">
               <select
-                className="select select-bordered select-sm w-full sm:w-auto"
+                className="select  select-sm w-full sm:w-auto 
+                hover:border-border hover:outline-none hover:ring-2 hover:ring-ring/30 hover:ring-primary/20
+                focus:border-border focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring/20 focus:ring-primary"
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as OrderSort)}
               >

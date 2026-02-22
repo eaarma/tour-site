@@ -130,7 +130,7 @@ export default function ManagerRegisterPage() {
   };
 
   return (
-    <div className="bg-base-200 min-h-screen">
+    <div className="bg-base-100 min-h-screen">
       <div className="flex justify-center pt-20">
         <div className="card w-full max-w-lg shadow-lg bg-base-100 p-6">
           <h2 className="text-2xl font-bold mb-4">Manager Register</h2>

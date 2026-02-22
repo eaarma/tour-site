@@ -34,7 +34,7 @@ export default function PaymentTotalSection({
 
       <button
         onClick={onProceed}
-        className="btn btn-primary w-full mt-4"
+        className="btn btn-primary w-full mt-4 rounded-xl"
         disabled={isLoading}
       >
         {isLoading ? "Processing..." : "Proceed to Payment"}

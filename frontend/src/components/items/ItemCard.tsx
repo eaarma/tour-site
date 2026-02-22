@@ -15,6 +15,13 @@ interface ItemCardProps {
   showStatus?: boolean;
 }
 
+function formatCategory(cat: string) {
+  return cat
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 const statusColors: Record<string, string> = {
   ACTIVE: "bg-emerald-500",
   ON_HOLD: "bg-amber-500",
@@ -48,7 +55,7 @@ const ItemCard: React.FC<ItemCardProps> = ({
   const imageUrl = item.images?.length ? item.images[0] : null;
 
   const CardContent = (
-    <div className="group relative flex flex-col h-full overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer">
+    <div className="group relative flex flex-col h-full overflow-hidden rounded-xl border border-base-300 bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer">
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden bg-muted shrink-0">
         {imageUrl ? (
@@ -77,40 +84,34 @@ const ItemCard: React.FC<ItemCardProps> = ({
         )}
 
         {/* Status indicator */}
-{showStatus && item.status && (
-  <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-card/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
-    <span
-      className={`size-2 rounded-full shrink-0 ${
-        statusColors[item.status] || "bg-muted-foreground"
-      }`}
-    />
-    <span className="text-xs font-medium text-card-foreground">
-      {item.status.replace("_", " ")}
-    </span>
-  </div>
-)}
-
+        {showStatus && item.status && (
+          <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-card/90 backdrop-blur-sm rounded-full px-2.5 py-1 shadow-sm">
+            <span
+              className={`size-2 rounded-full shrink-0 ${
+                statusColors[item.status] || "bg-muted-foreground"
+              }`}
+            />
+            <span className="text-xs font-medium text-card-foreground">
+              {item.status.replace("_", " ")}
+            </span>
+          </div>
+        )}
 
         {/* Type badge */}
         {item.type && (
-          <Badge className="absolute top-3 left-3 bg-card/90 backdrop-blur-sm text-card-foreground border-0 shadow-sm">
+          <Badge className="absolute top-3 left-3 bg-card/90 text-white backdrop-blur-sm text-card-foreground border-0 shadow-sm">
             {item.type}
           </Badge>
         )}
 
-{/* Price overlay */}
-<div className="absolute bottom-3 right-3 rounded-lg px-3 py-1.5 shadow-md backdrop-blur-md bg-white/80 border border-white/40">
-  <span className="text-lg font-bold text-gray-900">
-    {"\u20AC"}
-    {item.price}
-  </span>
-  <span className="ml-1 text-xs text-gray-700">/person</span>
-</div>
-
-
-
-
-
+        {/* Price overlay */}
+        <div className="absolute bottom-3 right-3 rounded-xl px-3 py-1.5 shadow-md backdrop-blur-md bg-white/80 border border-white/40">
+          <span className="text-lg font-bold text-gray-900">
+            {"\u20AC"}
+            {item.price}
+          </span>
+          <span className="ml-1 text-xs text-gray-700">/person</span>
+        </div>
       </div>
 
       {/* Content */}
@@ -167,9 +168,8 @@ const ItemCard: React.FC<ItemCardProps> = ({
               <Badge
                 variant="outline"
                 className={`text-[10px] px-1.5 py-0 font-medium ${getIntensityColor(
-  item.intensity
-)}`}
-
+                  item.intensity,
+                )}`}
               >
                 {item.intensity}
               </Badge>
@@ -195,29 +195,28 @@ const ItemCard: React.FC<ItemCardProps> = ({
           </div>
         </div>
 
-   {/* Categories */}
-{item.categories && item.categories.length > 0 && (
-  <div className="flex items-center gap-1.5 flex-wrap pt-1">
-    <Tag className="size-3 text-muted-foreground shrink-0" />
+        {/* Categories */}
+        {item.categories && item.categories.length > 0 && (
+          <div className="flex items-center gap-1.5 flex-wrap pt-1">
+            <Tag className="size-3 text-muted-foreground shrink-0" />
 
-    {item.categories.slice(0, 3).map((cat) => (
-      <Badge
-        key={cat}
-        variant="secondary"
-        className="text-[10px] px-1.5 py-0"
-      >
-        {cat.replace(/_/g, " ")}
-      </Badge>
-    ))}
+            {item.categories.slice(0, 3).map((cat) => (
+              <Badge
+                key={cat}
+                variant="secondary"
+                className="text-[10px] px-1.5 py-0 text-white"
+              >
+                {formatCategory(cat)}
+              </Badge>
+            ))}
 
-    {item.categories.length > 3 && (
-      <span className="text-[10px] text-muted-foreground">
-        +{item.categories.length - 3} more
-      </span>
-    )}
-  </div>
-)}
-
+            {item.categories.length > 3 && (
+              <span className="text-[10px] text-muted-foreground">
+                +{item.categories.length - 3} more
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

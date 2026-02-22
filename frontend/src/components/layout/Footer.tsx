@@ -5,7 +5,7 @@ import TitleText from "../common/TitleText";
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-base-200 border-t mt-8">
+    <footer className="bg-base-100 border-t mt-8">
       <div className="page-container py-6">
         <div className="flex flex-col justify-center items-center text-center h-40">
           {/* Links section */}

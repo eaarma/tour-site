@@ -151,8 +151,8 @@ class TourServiceTest {
         when(tourMapper.toDto(tour)).thenReturn(dto);
 
         Result<Page<TourResponseDto>> result = tourService.getAllByQuery(
-                List.of("ADVENTURE"), // hasCategory = true
-                "PRIVATE",
+                List.of("ADVENTURE"),
+                List.of("PRIVATE"),
                 List.of("EN"),
                 null,
                 null, // hasDate = false
@@ -203,7 +203,7 @@ class TourServiceTest {
 
         Result<Page<TourResponseDto>> result = tourService.getAllByQuery(
                 List.of("ADVENTURE"),
-                "PRIVATE",
+                List.of("PRIVATE"),
                 List.of("EN"),
                 null,
                 date,

@@ -87,7 +87,7 @@ export default function UserRegisterPage() {
   };
 
   return (
-    <div className="flex items-start justify-center min-h-screen bg-base-200 pt-24">
+    <div className="flex items-start justify-center min-h-screen bg-base-100 pt-24">
       <div className="card w-full max-w-md shadow-lg bg-base-100 p-6">
         <h2 className="text-2xl font-bold mb-4">User Registration</h2>
 

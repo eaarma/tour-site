@@ -86,7 +86,7 @@ const CartItem: React.FC<CartItemProps> = ({
         <div className="flex items-center gap-2 mt-4 md:mt-0 w-full md:w-auto">
           <div className="flex items-center gap-2">
             <button
-              className="btn btn-sm"
+              className="btn btn-sm bg-base-100 hover:shadow-md hover:bg-sky-300 rounded-lg"
               onClick={() => onView(item)}
               aria-label={`View ${item.title}`}
             >
@@ -95,7 +95,7 @@ const CartItem: React.FC<CartItemProps> = ({
 
             <button
               onClick={() => onRemove(item.cartItemId)}
-              className="btn btn-sm btn-error btn-outline"
+              className="btn btn-sm btn-error btn-outline rounded-lg"
               aria-label={`Delete ${item.title}`}
             >
               <X className="w-4 h-4" />

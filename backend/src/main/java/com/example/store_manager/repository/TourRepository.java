@@ -23,7 +23,7 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
   @Query("""
           SELECT DISTINCT t FROM Tour t
           LEFT JOIN t.language l
-          WHERE (:type IS NULL OR t.type = :type)
+          WHERE (:type IS NULL OR t.type IN :type)
             AND (:language IS NULL OR l IN :language)
             AND t.status = 'ACTIVE'
             AND (
@@ -35,7 +35,7 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
             )
       """)
   Page<Tour> searchBase(
-      @Param("type") String type,
+      @Param("type") List<String> type,
       @Param("language") List<String> language,
       @Param("keyword") String keyword,
       Pageable pageable);
@@ -44,7 +44,7 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
           SELECT DISTINCT t FROM Tour t
           LEFT JOIN t.categories c
           LEFT JOIN t.language l
-          WHERE (:type IS NULL OR t.type = :type)
+          WHERE (:type IS NULL OR t.type IN :type)
             AND (:language IS NULL OR l IN :language)
             AND (:categories IS NULL OR c IN :categories)
             AND t.status = 'ACTIVE'
@@ -58,7 +58,7 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
       """)
   Page<Tour> searchByFiltersWithoutDate(
       @Param("categories") List<TourCategory> categories,
-      @Param("type") String type,
+      @Param("type") List<String> type,
       @Param("language") List<String> language,
       @Param("keyword") String keyword,
       Pageable pageable);
@@ -71,7 +71,7 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
               WHERE ts.tour = t
                 AND ts.date = :date
           )
-            AND (:type IS NULL OR t.type = :type)
+            AND (:type IS NULL OR t.type IN :type)
             AND (:language IS NULL OR l IN :language)
             AND t.status = 'ACTIVE'
             AND (
@@ -83,7 +83,7 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
             )
       """)
   Page<Tour> searchWithDate(
-      @Param("type") String type,
+      @Param("type") List<String> type,
       @Param("language") List<String> language,
       @Param("keyword") String keyword,
       @Param("date") LocalDate date,
@@ -92,7 +92,7 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
   @Query("""
           SELECT DISTINCT t FROM Tour t
           LEFT JOIN t.language l
-          WHERE (:type IS NULL OR t.type = :type)
+          WHERE (:type IS NULL OR t.type IN :type)
             AND (:language IS NULL OR l IN :language)
             AND t.status = 'ACTIVE'
             AND (
@@ -104,7 +104,7 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
             )
       """)
   Page<Tour> searchWithoutCategory(
-      @Param("type") String type,
+      @Param("type") List<String> type,
       @Param("language") List<String> language,
       @Param("keyword") String keyword,
       Pageable pageable);
@@ -116,7 +116,7 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
               SELECT 1 FROM t.categories c
               WHERE c IN :categories
           )
-            AND (:type IS NULL OR t.type = :type)
+            AND (:type IS NULL OR t.type IN :type)
             AND (:language IS NULL OR l IN :language)
             AND t.status = 'ACTIVE'
             AND (
@@ -129,7 +129,7 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
       """)
   Page<Tour> searchWithCategory(
       @Param("categories") List<TourCategory> categories,
-      @Param("type") String type,
+      @Param("type") List<String> type,
       @Param("language") List<String> language,
       @Param("keyword") String keyword,
       Pageable pageable);
@@ -146,7 +146,7 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
               WHERE ts.tour = t
                 AND ts.date = :date
             )
-            AND (:type IS NULL OR t.type = :type)
+            AND (:type IS NULL OR t.type IN :type)
             AND (:language IS NULL OR l IN :language)
             AND t.status = 'ACTIVE'
             AND (
@@ -159,7 +159,7 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
       """)
   Page<Tour> searchWithCategoryAndDate(
       @Param("categories") List<TourCategory> categories,
-      @Param("type") String type,
+      @Param("type") List<String> type,
       @Param("language") List<String> language,
       @Param("keyword") String keyword,
       @Param("date") LocalDate date,

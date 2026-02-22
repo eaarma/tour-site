@@ -165,7 +165,7 @@ export default function BookingModal({
         </label>
         <select
           id="participants-select"
-          className="select select-bordered w-32"
+          className="select select-bordered w-32 rounded-lg"
           value={participants}
           onChange={(e) => setParticipants(Number(e.target.value))}
           disabled={!chosenSchedule || remaining === 0}
@@ -189,7 +189,7 @@ export default function BookingModal({
           </label>
 
           <select
-            className="select select-bordered w-full"
+            className="select select-bordered w-full rounded-lg"
             value={preferredLanguage}
             onChange={(e) => setPreferredLanguage(e.target.value)}
           >
@@ -207,7 +207,7 @@ export default function BookingModal({
       <div className="mb-4">
         <label className="block font-semibold mb-2">Comment (optional)</label>
         <textarea
-          className="textarea textarea-bordered w-full"
+          className="textarea textarea-bordered w-full rounded-lg"
           rows={3}
           value={comment}
           onChange={(e) => setComment(e.target.value)}
@@ -217,7 +217,7 @@ export default function BookingModal({
 
       <div className="flex justify-between mt-6">
         <button
-          className="btn btn-secondary"
+          className="btn btn-secondary rounded-lg"
           onClick={handleAddToCart}
           disabled={!chosenSchedule}
         >
@@ -225,7 +225,7 @@ export default function BookingModal({
         </button>
 
         <button
-          className="btn btn-primary"
+          className="btn btn-primary rounded-lg"
           onClick={handleBookNow}
           disabled={!chosenSchedule}
         >
