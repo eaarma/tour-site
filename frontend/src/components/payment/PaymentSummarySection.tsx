@@ -9,7 +9,7 @@ type CheckoutItem = {
   time: string;
   quantity: number;
   price: number;
-  type: "PUBLIC" | "PRIVATE";
+  type: string;
 };
 
 type ContactInfo = {
