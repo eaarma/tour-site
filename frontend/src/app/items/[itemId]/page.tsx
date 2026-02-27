@@ -18,14 +18,11 @@ import {
   Clock,
   Flame,
   Globe,
-  Map,
   MapPin,
   PinIcon,
-  Pointer,
   Tag,
   Users,
 } from "lucide-react";
-import { FaRegHandPointer } from "react-icons/fa";
 
 function formatCategory(cat: string) {
   return cat

@@ -10,13 +10,11 @@ import toast from "react-hot-toast";
 interface EditableSchedulesProps {
   tourId: number;
   isEditing: boolean;
-  participants: number;
 }
 
 export default function EditableSchedules({
   tourId,
   isEditing,
-  participants,
 }: EditableSchedulesProps) {
   const [schedules, setSchedules] = useState<TourScheduleResponseDto[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);

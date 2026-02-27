@@ -586,11 +586,7 @@ export default function ManagerItemPage() {
                 {/* Schedules */}
                 {item && (
                   <div className="col-span-2 mt-4">
-                    <EditableSchedules
-                      tourId={item!.id}
-                      participants={item.participants}
-                      isEditing={true}
-                    />
+                    <EditableSchedules tourId={item!.id} isEditing={true} />
                   </div>
                 )}
               </div>

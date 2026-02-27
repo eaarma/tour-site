@@ -71,6 +71,7 @@ class TourControllerTest {
                                 .type("WALKING")
                                 .location("Rome")
                                 .status("ACTIVE")
+                                .meetingPoint("Colosseum Entrance")
                                 .shopId(1L)
                                 .build();
         }

@@ -148,6 +148,15 @@ export default function ManagerOrderSection({ shopId }: Props) {
     filtered.sort((a, b) => a.status.localeCompare(b.status));
   }
 
+  if (loading) {
+    return (
+      <div className="rounded-xl border border-base-300 bg-base-100 p-8 text-center">
+        <span className="loading loading-spinner loading-md text-primary" />
+        <p className="mt-3 text-sm text-muted-foreground">Loading orders...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* ================= HEADER ================= */}
