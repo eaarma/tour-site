@@ -5,9 +5,10 @@ export default function PrivacyPolicyPage() {
         <h1 className="text-3xl font-bold">Privacy Policy</h1>
 
         <p>
-          This Privacy Policy explains how TourHub ("we", "our", or "us")
-          collects, uses, and protects your personal data when you use our
-          platform to browse, book, and manage guided tours.
+          This Privacy Policy explains how TourHub (&quot;we&quot;,
+          &quot;our&quot;, or &quot;us&quot;) collects, uses, and protects your
+          personal data when you use our platform to browse, book, and manage
+          guided tours.
         </p>
 
         <section className="space-y-2">

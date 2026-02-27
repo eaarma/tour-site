@@ -30,7 +30,7 @@ export default function CancellationRefundPolicyPage() {
           <h2 className="text-xl font-semibold">3. No-Show Policy</h2>
           <p>
             Failure to attend a scheduled tour without prior cancellation
-            ("no-show") is considered non-refundable.
+            (&quot;no-show&quot;) is considered non-refundable.
           </p>
         </section>
 

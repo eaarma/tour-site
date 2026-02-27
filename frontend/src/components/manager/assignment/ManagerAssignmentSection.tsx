@@ -91,20 +91,6 @@ export default function ManagerAssignmentSection({ shopId }: Props) {
   // =============================
   // Current month revenue calculator
   // =============================
-  const getCurrentMonthRevenue = (sessions: TourSessionDto[]) => {
-    const now = new Date();
-
-    return sessions
-      .filter((s) => {
-        const d = new Date(`${s.date}T${s.time}`);
-        return (
-          d.getFullYear() === now.getFullYear() &&
-          d.getMonth() === now.getMonth()
-        );
-      })
-      .flatMap((s) => s.participants ?? [])
-      .reduce((sum, p) => sum + (p.pricePaid ?? 0), 0);
-  };
 
   function calculateSessionFinance(session: TourSessionDto) {
     const gross =

@@ -14,9 +14,9 @@ export default function TermsOfServicePage() {
           <h2 className="text-xl font-semibold">1. Platform Role</h2>
           <p>
             TourHub operates as an online marketplace connecting customers with
-            independent tour operators ("Shops"). TourHub is not the organizer
-            of the tours unless explicitly stated. The respective Shop is
-            responsible for delivering the tour service.
+            independent tour operators (&quot;Shops&quot;). TourHub is not the
+            organizer of the tours unless explicitly stated. The respective Shop
+            is responsible for delivering the tour service.
           </p>
         </section>
 

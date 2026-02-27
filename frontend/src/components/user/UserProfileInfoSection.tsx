@@ -3,7 +3,7 @@
 import { useState } from "react";
 import CardFrame from "@/components/common/CardFrame";
 import { UserResponseDto } from "@/types/user";
-import { Edit, User, Mail, Phone, Globe } from "lucide-react";
+import { Edit, Mail, Phone, Globe } from "lucide-react";
 import UserEditProfileModal from "./UserEditProfileModal";
 
 interface UserProfileInfoSectionProps {
