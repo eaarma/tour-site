@@ -110,6 +110,14 @@ export default function ItemModal({
     setSelectedSchedule(found);
   }, [initialScheduleId, localSchedules]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (item.type === "PUBLIC" && item.language?.length === 1) {
+      setPreferredLanguage(item.language[0]);
+    }
+  }, [isOpen, item.type, item.language]);
+
   const handleUpdate = () => {
     if (!selectedSchedule) {
       toast.error("Please choose a schedule first.");
@@ -195,15 +203,19 @@ export default function ItemModal({
       {item.language && item.language.length > 0 && (
         <div className="mb-4">
           <label className="block font-semibold mb-2">
-            Preferred Language (optional)
+            Preferred Language {item.type === "PUBLIC" && "(fixed)"}
           </label>
 
           <select
-            className="select select-bordered w-full rounded-lg"
+            className={`select select-bordered w-full rounded-lg ${
+              item.type === "PUBLIC" ? "bg-base-200 cursor-not-allowed" : ""
+            }`}
             value={preferredLanguage}
             onChange={(e) => setPreferredLanguage(e.target.value)}
+            disabled={item.type === "PUBLIC"}
           >
-            <option value="">No preference</option>
+            {item.type !== "PUBLIC" && <option value="">No preference</option>}
+
             {item.language.map((lang) => (
               <option key={lang} value={lang}>
                 {lang}

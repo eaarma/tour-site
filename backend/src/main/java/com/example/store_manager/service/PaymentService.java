@@ -178,9 +178,9 @@ public class PaymentService {
     }
 
     @Transactional(readOnly = true)
-    public Result<List<PaymentLineResponseDto>> getShopPayments(Long shopId) {
+    public Result<List<PaymentLineResponseDto>> getShopPaymentLines(Long shopId) {
 
-        List<PaymentLine> lines = paymentLineRepository.findUnpaidByShopId(shopId);
+        List<PaymentLine> lines = paymentLineRepository.findUnpaidByShopId(shopId, PaymentStatus.SUCCEEDED);
 
         return Result.ok(paymentLineMapper.toDtoList(lines));
     }

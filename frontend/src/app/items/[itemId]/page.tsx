@@ -18,10 +18,14 @@ import {
   Clock,
   Flame,
   Globe,
+  Map,
   MapPin,
+  PinIcon,
+  Pointer,
   Tag,
   Users,
 } from "lucide-react";
+import { FaRegHandPointer } from "react-icons/fa";
 
 function formatCategory(cat: string) {
   return cat
@@ -192,6 +196,14 @@ export default function ItemPage() {
                     <span className="truncate">{item.location}</span>
                   </div>
                 )}
+                {item.meetingPoint && (
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground ">
+                    <PinIcon className="size-4 shrink-0 " />
+                    <span className="truncate first-letter:capitalize ">
+                      {item.meetingPoint}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Price block */}
@@ -201,7 +213,10 @@ export default function ItemPage() {
                   {"\u20AC"}
                   {item.price}
                 </span>
-                <span className="text-sm text-muted-foreground">/person</span>
+                <span className="text-sm text-muted-foreground">
+                  {" "}
+                  {item.type === "PUBLIC" ? "/person" : "/tour"}
+                </span>
               </div>
 
               <div className="h-px bg-base-300" />

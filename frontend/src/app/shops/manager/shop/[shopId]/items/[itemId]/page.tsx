@@ -108,6 +108,22 @@ export default function ManagerItemPage() {
       newErrors.participants = "Participants must be at least 1.";
     }
 
+    if (!form.language || form.language.length === 0) {
+      newErrors.language = "At least one language is required.";
+    }
+
+    if (form.type === "PUBLIC" && form.language && form.language.length !== 1) {
+      newErrors.language = "Public tours must have exactly one language.";
+    }
+
+    if (form.type === "PRIVATE" && form.language && form.language.length < 1) {
+      newErrors.language = "Private tours must have at least one language.";
+    }
+
+    if (!form.meetingPoint) {
+      newErrors.meetingPoint = "Meeting point has to be filled";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -134,6 +150,7 @@ export default function ManagerItemPage() {
           categories: (form.categories ?? []).map((c) => c as TourCategory),
           language: form.language!,
           type: form.type!,
+          meetingPoint: form.meetingPoint!,
           status: form.status!,
         };
 
@@ -163,6 +180,7 @@ export default function ManagerItemPage() {
           categories: form.categories!,
           language: form.language!,
           type: form.type!,
+          meetingPoint: form.meetingPoint!,
           status: form.status!,
         };
 
@@ -191,7 +209,7 @@ export default function ManagerItemPage() {
   }
 
   return (
-    <div className="bg-base-200 min-h-screen p-6">
+    <div className="bg-base-100 min-h-screen p-6">
       <div className="max-w-5xl mx-auto mb-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold">
           {isNew ? "Add Tour" : isEditing ? "Edit Tour" : "Tour Details"}
@@ -231,12 +249,21 @@ export default function ManagerItemPage() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* ✅ TOUR IMAGES SECTION */}
           <div className="lg:w-1/2 flex flex-col gap-4">
-            <TourImagesManager
-              tourId={Number(itemId)}
-              isEditing={isEditing}
-              tourImages={tourImages}
-              setTourImages={setTourImages}
-            />
+            {isNew ? (
+              <div className="border border-base-300 rounded-xl p-6 text-sm text-muted-foreground bg-base-200">
+                <p className="font-medium text-foreground mb-1">
+                  Images unavailable
+                </p>
+                <p>Add images after the tour has been created.</p>
+              </div>
+            ) : (
+              <TourImagesManager
+                tourId={Number(itemId)}
+                isEditing={isEditing}
+                tourImages={tourImages}
+                setTourImages={setTourImages}
+              />
+            )}
           </div>
           {/* Details */}
           <div className="lg:w-1/2 flex flex-col justify-between gap-4">
@@ -474,6 +501,36 @@ export default function ManagerItemPage() {
                   )}
                 </div>
 
+                {/* Meeting point */}
+                <div className="col-span-2">
+                  <span className="font-semibold">Meeting point: </span>
+                  {isEditing ? (
+                    <div>
+                      <input
+                        className={`input input-bordered w-full ${
+                          errors.meetingPoint ? "input-error" : ""
+                        }`}
+                        placeholder="Meeting point (required)"
+                        value={form.meetingPoint || ""}
+                        onChange={(e) =>
+                          setForm({ ...form, meetingPoint: e.target.value })
+                        }
+                      />
+                      {errors.meetingPoint && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.meetingPoint}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    item?.meetingPoint || (
+                      <span className="text-gray-500">
+                        No meeting point set
+                      </span>
+                    )
+                  )}
+                </div>
+
                 {/* Languages */}
                 <div className="col-span-2">
                   <span className="font-semibold">Languages:</span>
@@ -487,6 +544,12 @@ export default function ManagerItemPage() {
                     />
                   ) : (
                     " " + item?.language?.join(", ")
+                  )}
+
+                  {errors.language && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.language}
+                    </p>
                   )}
                 </div>
 
@@ -526,7 +589,7 @@ export default function ManagerItemPage() {
                     <EditableSchedules
                       tourId={item!.id}
                       participants={item.participants}
-                      isEditing={isEditing}
+                      isEditing={true}
                     />
                   </div>
                 )}

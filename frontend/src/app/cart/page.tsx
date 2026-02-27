@@ -39,6 +39,7 @@ export default function CartPage() {
             price: viewItem.price,
             participants: viewItem.participants,
             images: viewItem.images,
+            type: viewItem.type,
             status: "ACTIVE",
             timeRequired: 60,
             language: viewItem.availableLanguages ?? [],

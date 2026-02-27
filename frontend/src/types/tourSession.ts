@@ -1,4 +1,4 @@
-import { OrderStatus } from "./order";
+import { OrderItemResponseDto, OrderStatus } from "./order";
 
 export type SessionStatus =
   | "PLANNED"
@@ -26,15 +26,21 @@ export interface OrderItemParticipantDto {
 export interface TourSessionDto {
   id: number;
   tourId: number;
+  scheduleId: number;
 
   date: string;
   time: string;
+  tourTitle: string;
+  tourLocation?: string;
+  tourMeetingPoint: string;
+  shopId: number;
 
   maxParticipants: number; // ✅ renamed
   bookedParticipants: number;
   remaining: number;
+  tourImages?: string[];
 
-  participants: OrderItemParticipantDto[];
+  participants: OrderItemResponseDto[];
 
   status:
     | "PLANNED"

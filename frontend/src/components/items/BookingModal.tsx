@@ -37,6 +37,8 @@ export default function BookingModal({
   const [localSchedules, setLocalSchedules] =
     useState<TourScheduleResponseDto[]>(schedules);
 
+  const [participants, setParticipants] = useState<number>(1);
+
   useEffect(() => {
     setChosenSchedule(selectedSchedule ?? null);
   }, [selectedSchedule]);
@@ -45,7 +47,13 @@ export default function BookingModal({
     setLocalSchedules(schedules);
   }, [schedules]);
 
-  const [participants, setParticipants] = useState<number>(1);
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (item.type === "PUBLIC" && item.language?.length === 1) {
+      setPreferredLanguage(item.language[0]);
+    }
+  }, [isOpen, item.type, item.language]);
 
   const handleRemoveUnavailable = (id: number) => {
     setLocalSchedules((prev) => prev.filter((s) => s.id !== id));
@@ -61,6 +69,11 @@ export default function BookingModal({
     }
     if (!participants) {
       toast.error("Please choose number of participants.");
+      return false;
+    }
+
+    if (item.type === "PRIVATE" && !preferredLanguage) {
+      toast.error("Please select a language.");
       return false;
     }
 
@@ -95,6 +108,7 @@ export default function BookingModal({
           participants,
           images: item.images,
           selected: true,
+          type: item.type,
           scheduleId: chosenSchedule.id,
           selectedDate: chosenSchedule.date,
           selectedTime: chosenSchedule.time || "",
@@ -182,24 +196,28 @@ export default function BookingModal({
         </select>
       </div>
       {/* 🔹 Preferred Language */}
-      {item.language && (
+      {item.language && item.language.length > 0 && (
         <div className="mb-4">
-          <label className="block font-semibold mb-2">
-            Preferred Language (optional)
-          </label>
+          <label className="block font-semibold mb-2">Language</label>
 
-          <select
-            className="select select-bordered w-full rounded-lg"
-            value={preferredLanguage}
-            onChange={(e) => setPreferredLanguage(e.target.value)}
-          >
-            <option value="">No preference</option>
-            {item.language.map((lang) => (
-              <option key={lang} value={lang}>
-                {lang}
-              </option>
-            ))}
-          </select>
+          {item.type === "PUBLIC" && item.language.length === 1 ? (
+            <div className="px-3 py-2 rounded-lg bg-base-200 text-sm text-foreground inline-block">
+              {item.language[0]}
+            </div>
+          ) : (
+            <select
+              className="select select-bordered rounded-lg"
+              value={preferredLanguage}
+              onChange={(e) => setPreferredLanguage(e.target.value)}
+            >
+              <option value="">Choose language</option>
+              {item.language.map((lang) => (
+                <option key={lang} value={lang}>
+                  {lang}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       )}
 

@@ -87,7 +87,6 @@ export default function EditableSchedules({
         tourId,
         date: formattedDate,
         time: formattedTime,
-        maxParticipants: participants,
       });
       setSchedules((prev) => [...prev, created]);
       setNewDate(null);

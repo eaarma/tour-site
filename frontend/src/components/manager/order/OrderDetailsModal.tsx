@@ -1,7 +1,7 @@
 "use client";
 
 import Modal from "@/components/common/Modal";
-import { Tour, OrderDetailsModalDto } from "@/types";
+import { OrderDetailsModalDto } from "@/types";
 import {
   Users,
   Calendar,
@@ -17,14 +17,14 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   orderItem: OrderDetailsModalDto | null;
-  tour?: Tour;
+  onViewSession?: (sessionId: number) => void;
 }
 
 export default function OrderDetailsModal({
   isOpen,
   onClose,
   orderItem,
-  tour,
+  onViewSession,
 }: Props) {
   if (!orderItem) return null;
 
@@ -43,20 +43,20 @@ export default function OrderDetailsModal({
       </div>
 
       {/* ===== TOUR PREVIEW ===== */}
-      {tour && (
+      {orderItem.tourImages?.length ? (
         <div className="mb-5">
-          {tour.images && (
-            <img
-              src={tour.images[0]}
-              alt={tour.title}
-              className="w-full h-40 object-cover rounded-lg mb-2"
-            />
-          )}
-          <h3 className="text-lg font-semibold text-gray-800">{tour.title}</h3>
-          {tour.location && (
-            <p className="text-sm text-gray-500">{tour.location}</p>
+          <h3 className="text-lg font-semibold text-gray-800">
+            {orderItem.tourTitle}
+          </h3>
+
+          {orderItem.tourLocation && (
+            <p className="text-sm text-gray-500">{orderItem.tourLocation}</p>
           )}
         </div>
+      ) : (
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">
+          {orderItem.tourTitle}
+        </h3>
       )}
 
       {/* ===== BOOKING DETAILS ===== */}
@@ -82,6 +82,25 @@ export default function OrderDetailsModal({
             {new Date(orderItem.scheduledAt).toLocaleString()}
           </span>
         </div>
+
+        {orderItem.sessionId && (
+          <div className="flex items-center gap-2">
+            <BadgeCheck className="w-4 h-4 text-gray-500" />
+            <span>
+              <strong>Session ID:</strong> #{orderItem.sessionId}
+            </span>
+          </div>
+        )}
+        {orderItem.sessionId && onViewSession && (
+          <div className="mt-2">
+            <button
+              className="btn btn-sm btn-outline"
+              onClick={() => onViewSession(orderItem.sessionId!)}
+            >
+              View Session
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ===== CUSTOMER INFO ===== */}

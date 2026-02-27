@@ -11,6 +11,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.example.store_manager.dto.order.OrderItemResponseDto;
 import com.example.store_manager.model.SessionStatus;
 
 @Data
@@ -28,6 +29,11 @@ public class TourSessionDetailsDto {
     private int maxParticipants;
     private int bookedParticipants;
     private int remaining;
+    private long scheduleId;
+    private String tourLocation;
+    private String tourTitle;
+    private String tourMeetingPoint;
+    private Long shopId;
 
     // Session
     private SessionStatus status;
@@ -37,5 +43,5 @@ public class TourSessionDetailsDto {
     private String managerName;
 
     // Bookings
-    private List<OrderItemParticipantDto> participants;
+    private List<OrderItemResponseDto> participants;
 }

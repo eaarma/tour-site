@@ -61,4 +61,12 @@ public class TourScheduleController {
                 return ResultResponseMapper.toResponse(
                                 service.getScheduleById(id));
         }
+
+        @GetMapping("/shop/{shopId}")
+        public ResponseEntity<?> getSchedulesForShop(
+                        @PathVariable("shopId") Long shopId) {
+
+                return ResultResponseMapper.toResponse(
+                                service.getSchedulesForShop(shopId));
+        }
 }

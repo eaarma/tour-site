@@ -19,7 +19,4 @@ public class TourScheduleCreateDto {
     private LocalDate date;
 
     private LocalTime time; // optional
-
-    @Min(value = 1, message = "At least 1 participant is required")
-    private int maxParticipants;
 }

@@ -114,7 +114,6 @@ class TourScheduleServiceTest {
         dto.setTourId(1L);
         dto.setDate(LocalDate.of(2026, 1, 31));
         dto.setTime(LocalTime.of(19, 0));
-        dto.setMaxParticipants(10);
 
         Tour tour = new Tour();
         tour.setId(1L);

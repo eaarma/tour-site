@@ -3,18 +3,26 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import ManagerShopSection from "@/components/manager/shop/ManagerShopSection";
-import ManagerOrderSection from "@/components/manager/order/ManagerOrderSection";
 import ManagerItemList from "@/components/manager/item/ManagerItemList";
 import ManagerStatisticsSection from "@/components/manager/statistics/ManagerStatisticsSection";
 import { Tour } from "@/types";
 import { TourService } from "@/lib/tourService";
 import { useShopAccess } from "@/hooks/useShopAccess";
 import Unauthorized from "@/components/common/Unauthorized";
-import { CreditCard, Navigation, Package } from "lucide-react";
+import {
+  CalendarDays,
+  ClipboardList,
+  CreditCard,
+  Navigation,
+  Package,
+} from "lucide-react";
 
 import { TourSessionDto } from "@/types/tourSession";
 import { TourSessionService } from "@/lib/tourSessionService";
 import ShopManagerPaymentSection from "@/components/manager/payment/ShopManagerPaymentSection";
+import ManagerSessionSection from "@/components/manager/session/ManagerSessionSection";
+import ManagerScheduleSection from "@/components/manager/schedule/ManagerScheduleSection";
+import ManagerOrderSection from "@/components/manager/order/ManagerOrderSection";
 
 export default function ShopManagerPage() {
   const router = useRouter();
@@ -29,9 +37,9 @@ export default function ShopManagerPage() {
 
   const [sessions, setSessions] = useState<TourSessionDto[]>([]);
 
-  const [activeTab, setActiveTab] = useState<"orders" | "tours" | "payments">(
-    "orders",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "sessions" | "tours" | "payments" | "orders" | "schedules"
+  >("sessions");
 
   const [stats, setStats] = useState({
     totalTours: 0,
@@ -164,55 +172,140 @@ export default function ShopManagerPage() {
 
       {/* ===== Tabs ===== */}
       <div className="mt-6">
-        <div className="border-b border-base-300 mb-10">
-          <div className="flex gap-2 sm:gap-10">
-            <button
-              onClick={() => setActiveTab("orders")}
-              className={`py-3 px-3 text-[1.05rem] font-semibold tracking-wide 
-                flex items-center gap-2 transition-all 
-                  ${
-                    activeTab === "orders"
-                      ? "text-primary border-b-2 border-primary"
-                      : "text-gray-700 hover:text-primary/80"
-                  }`}
-            >
-              <Package className="w-5 h-5" strokeWidth={2.25} />
-              Orders
-            </button>
+        <div className="border-b border-base-300 mb-6">
+          <div className="overflow-x-auto no-scrollbar">
+            <div className="flex justify-between gap-2 sm:justify-start sm:gap-10">
+              {/* Sessions */}
+              <button
+                onClick={() => setActiveTab("sessions")}
+                className={`
+        flex items-center justify-center sm:justify-start
+        gap-2
+        py-2 px-2 sm:px-3
+        text-sm sm:text-[1.05rem]
+        font-semibold tracking-wide
+        transition-all
+        ${
+          activeTab === "sessions"
+            ? "text-primary border-b-2 border-primary"
+            : "text-gray-600 hover:text-primary/80"
+        }
+      `}
+              >
+                <Package className="w-5 h-5" strokeWidth={2.25} />
+                <span
+                  className={`${activeTab === "sessions" ? "inline" : "hidden"} sm:inline`}
+                >
+                  Sessions
+                </span>
+              </button>
 
-            <button
-              onClick={() => setActiveTab("tours")}
-              className={`py-3 px-3 text-[1.05rem] font-semibold tracking-wide 
-                flex items-center gap-2 transition-all 
-                ${
-                  activeTab === "tours"
-                    ? "text-primary border-b-2 border-primary"
-                    : "text-gray-700 hover:text-primary/80"
-                }`}
-            >
-              <Navigation className="w-5 h-5" strokeWidth={2.25} />
-              Tours
-            </button>
+              {/* Tours */}
+              <button
+                onClick={() => setActiveTab("tours")}
+                className={`
+        flex items-center justify-center sm:justify-start
+        gap-2
+        py-2 px-2 sm:px-3
+        text-sm sm:text-[1.05rem]
+        font-semibold tracking-wide
+        transition-all
+        ${
+          activeTab === "tours"
+            ? "text-primary border-b-2 border-primary"
+            : "text-gray-600 hover:text-primary/80"
+        }
+      `}
+              >
+                <Navigation className="w-5 h-5" strokeWidth={2.25} />
+                <span
+                  className={`${activeTab === "tours" ? "inline" : "hidden"} sm:inline`}
+                >
+                  Tours
+                </span>
+              </button>
 
-            <button
-              onClick={() => setActiveTab("payments")}
-              className={`py-3 px-3 text-[1.05rem] font-semibold tracking-wide 
-                flex items-center gap-2 transition-all 
-              ${
-                activeTab === "payments"
-                  ? "text-primary border-b-2 border-primary"
-                  : "text-gray-700 hover:text-primary/80"
-              }`}
-            >
-              <CreditCard className="w-5 h-5" strokeWidth={2.25} />
-              Payments
-            </button>
+              {/* Schedules */}
+              <button
+                onClick={() => setActiveTab("schedules")}
+                className={`
+          flex items-center justify-center sm:justify-start
+          gap-2
+          py-2 px-2 sm:px-3
+          text-sm sm:text-[1.05rem]
+          font-semibold tracking-wide
+          transition-all
+          ${
+            activeTab === "schedules"
+              ? "text-primary border-b-2 border-primary"
+              : "text-gray-600 hover:text-primary/80"
+          }
+        `}
+              >
+                <CalendarDays className="w-5 h-5" strokeWidth={2.25} />
+                <span
+                  className={`${activeTab === "schedules" ? "inline" : "hidden"} sm:inline`}
+                >
+                  Schedules
+                </span>
+              </button>
+
+              {/* Orders */}
+              <button
+                onClick={() => setActiveTab("orders")}
+                className={`
+          flex items-center justify-center sm:justify-start
+          gap-2
+          py-2 px-2 sm:px-3
+          text-sm sm:text-[1.05rem]
+          font-semibold tracking-wide
+          transition-all
+          ${
+            activeTab === "orders"
+              ? "text-primary border-b-2 border-primary"
+              : "text-gray-600 hover:text-primary/80"
+          }
+        `}
+              >
+                <ClipboardList className="w-5 h-5" strokeWidth={2.25} />
+                <span
+                  className={`${activeTab === "orders" ? "inline" : "hidden"} sm:inline`}
+                >
+                  Orders
+                </span>
+              </button>
+
+              {/* Payments */}
+              <button
+                onClick={() => setActiveTab("payments")}
+                className={`
+        flex items-center justify-center sm:justify-start
+        gap-2
+        py-2 px-2 sm:px-3
+        text-sm sm:text-[1.05rem]
+        font-semibold tracking-wide
+        transition-all
+        ${
+          activeTab === "payments"
+            ? "text-primary border-b-2 border-primary"
+            : "text-gray-600 hover:text-primary/80"
+        }
+      `}
+              >
+                <CreditCard className="w-5 h-5" strokeWidth={2.25} />
+                <span
+                  className={`${activeTab === "payments" ? "inline" : "hidden"} sm:inline`}
+                >
+                  Payments
+                </span>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Tab panels */}
-        {activeTab === "orders" && (
-          <ManagerOrderSection
+        {activeTab === "sessions" && (
+          <ManagerSessionSection
             sessions={sessions}
             tours={tours}
             shopId={shopId}
@@ -222,6 +315,12 @@ export default function ShopManagerPage() {
         {activeTab === "tours" && (
           <ManagerItemList items={tours} shopId={shopId} />
         )}
+
+        {activeTab === "schedules" && (
+          <ManagerScheduleSection shopId={shopId} />
+        )}
+
+        {activeTab === "orders" && <ManagerOrderSection shopId={shopId} />}
 
         {activeTab === "payments" && (
           <ShopManagerPaymentSection shopId={shopId} />

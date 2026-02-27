@@ -6,8 +6,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import CustomDateInput from "@/components/common/CustomDateInput";
 import { Tour } from "@/types";
 import { TourSessionDto } from "@/types/tourSession";
-import SessionCard from "../manager/order/SessionCard";
-import SessionDetailsModal from "../manager/order/SessionDetailsModal";
+import SessionCard from "../manager/session/SessionCard";
+import SessionDetailsModal from "../manager/session/SessionDetailsModal";
 import toast from "react-hot-toast";
 import { TourSessionService } from "@/lib/tourSessionService";
 

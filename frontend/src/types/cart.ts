@@ -16,8 +16,11 @@ export interface CartItem {
   selectedDate: string;
   selectedTime: string;
   selected: boolean;
+  type: TourType;
   images?: string[];
   availableLanguages?: string[];
   preferredLanguage?: string;
   comment?: string;
 }
+
+type TourType = "PUBLIC" | "PRIVATE";

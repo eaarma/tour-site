@@ -25,7 +25,16 @@ export default function SchedulePicker({
 }: Props) {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const schedulesByDate = useMemo(() => {
-    return schedules.reduce<Record<string, TourScheduleResponseDto[]>>(
+    const available = schedules.filter((s) => {
+      const remaining =
+        (s.maxParticipants ?? 0) -
+        (s.bookedParticipants ?? 0) -
+        (s.reservedParticipants ?? 0);
+
+      return remaining > 0 && s.status === "ACTIVE";
+    });
+
+    return available.reduce<Record<string, TourScheduleResponseDto[]>>(
       (acc, s) => {
         (acc[s.date] ||= []).push(s);
         return acc;

@@ -49,7 +49,7 @@ export const OrderService = {
   },
 
   // 🔹 Fetch a specific order item by ID
-  getOrderItemById: async (itemId: number): Promise<OrderItemResponseDto> => {
+  getShopOrderItemById: async (itemId: number): Promise<OrderItemResponseDto> => {
     const res = await api.get(`${BASE_URL}/items/${itemId}`, {
       withCredentials: true,
     });

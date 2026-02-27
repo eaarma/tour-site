@@ -12,4 +12,5 @@ public class TourSnapshotDto {
     private String title;
     private String description;
     private BigDecimal price;
+    private String type;
 }

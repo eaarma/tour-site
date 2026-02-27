@@ -9,6 +9,7 @@ type CheckoutItem = {
   time: string;
   quantity: number;
   price: number;
+  type: "PUBLIC" | "PRIVATE";
 };
 
 type ContactInfo = {
@@ -27,10 +28,10 @@ export default function PaymentSummarySection({
   items,
   contact,
 }: PaymentSummarySectionProps) {
-  const total = items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0,
-  );
+  const total = items.reduce((sum, item) => {
+    const isPublic = item.type === "PUBLIC";
+    return sum + (isPublic ? item.price * item.quantity : item.price);
+  }, 0);
 
   return (
     <div className="bg-base-100 p-6 rounded-lg shadow-md w-full max-w-2xl">
@@ -55,11 +56,17 @@ export default function PaymentSummarySection({
                 {item.date} at {item.time}
               </p>
               <p className="text-sm text-gray-500">
-                Quantity: {item.quantity} × €{item.price.toFixed(2)}
+                {item.type === "PUBLIC"
+                  ? `Quantity: ${item.quantity} × €${item.price.toFixed(2)}`
+                  : `Group size: ${item.quantity} (€${item.price.toFixed(2)} per tour)`}
               </p>
             </div>
             <div className="text-right font-medium text-lg">
-              €{(item.price * item.quantity).toFixed(2)}
+              €
+              {(item.type === "PUBLIC"
+                ? item.price * item.quantity
+                : item.price
+              ).toFixed(2)}
             </div>
           </li>
         ))}

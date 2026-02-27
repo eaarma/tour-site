@@ -12,8 +12,13 @@ import com.example.store_manager.model.SessionStatus;
 import com.example.store_manager.model.TourSchedule;
 import com.example.store_manager.model.TourSession;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class TourSessionMapper {
+
+        private final OrderItemMapper orderItemMapper;
 
         public TourSessionDetailsDto toDto(TourSession session) {
 
@@ -24,51 +29,31 @@ public class TourSessionMapper {
 
                 return TourSessionDetailsDto.builder()
                                 .id(session.getId())
-                                .tourId(schedule.getTour().getId())
-
                                 // 📅 from schedule (single source of truth)
                                 .date(schedule.getDate())
                                 .time(schedule.getTime())
+                                .scheduleId(schedule.getId())
                                 .maxParticipants(max)
                                 .bookedParticipants(booked)
                                 .remaining(max - booked)
-
-                                // 📌 from session
                                 .status(session.getStatus())
-
-                                // 👤 manager
+                                .tourId(session.getSchedule().getTour().getId())
+                                .tourTitle(session.getSchedule().getTour().getTitle())
+                                .tourLocation(session.getSchedule().getTour().getLocation())
+                                .tourMeetingPoint(session.getSchedule().getTour().getMeetingPoint())
+                                .shopId(session.getSchedule().getTour().getShop().getId())
                                 .managerId(session.getManager() != null
                                                 ? session.getManager().getId()
                                                 : null)
                                 .managerName(session.getManager() != null
                                                 ? session.getManager().getName()
                                                 : null)
-
-                                // 👥 participants
                                 .participants(
                                                 session.getOrderItems()
                                                                 .stream()
-                                                                .map(this::toParticipantDto)
+                                                                .map(orderItemMapper::toDto)
                                                                 .toList())
                                 .build();
         }
 
-        private OrderItemParticipantDto toParticipantDto(OrderItem item) {
-                return OrderItemParticipantDto.builder()
-                                .orderItemId(item.getId())
-                                .name(item.getName())
-                                .participants(item.getParticipants())
-                                .status(item.getStatus())
-                                .pricePaid(item.getPricePaid())
-                                .managerId(item.getManager() != null
-                                                ? item.getManager().getId()
-                                                : null)
-                                .managerName(item.getManager() != null
-                                                ? item.getManager().getName()
-                                                : null)
-                                .email(item.getEmail())
-                                .phone(item.getPhone())
-                                .nationality(item.getNationality())
-                                .build();
-        }
 }

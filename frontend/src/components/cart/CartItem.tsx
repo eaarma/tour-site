@@ -17,8 +17,8 @@ const CartItem: React.FC<CartItemProps> = ({
   onView,
   onToggle,
 }) => {
-  const totalPrice = item.price * item.participants;
-
+  const isPublic = item.type === "PUBLIC";
+  const totalPrice = isPublic ? item.price * item.participants : item.price;
   // ✅ Thumbnail logic (support new images array or fallback to single image field)
   type ItemWithImages = {
     images?: string[];
@@ -42,7 +42,6 @@ const CartItem: React.FC<CartItemProps> = ({
       <div className="flex flex-col w-full md:flex-row justify-between items-start md:items-center border rounded-xl p-4 shadow-sm bg-base-100 hover:shadow-md transition-shadow">
         {/* Tour Details */}
 
-        {/* ✅ Thumbnail Image */}
         {/* ✅ Thumbnail Image */}
         <img
           src={
@@ -74,7 +73,7 @@ const CartItem: React.FC<CartItemProps> = ({
               {item.participants} participant{item.participants > 1 ? "s" : ""}
             </span>
             <span className="bg-gray-100 rounded-full px-2 py-1">
-              €{item.price} each
+              €{item.price} {isPublic ? "per person" : "per tour"}
             </span>
             <span className="bg-blue-100 text-blue-800 rounded-full px-2 py-1">
               {item.selectedDate} @ {item.selectedTime}
@@ -103,7 +102,9 @@ const CartItem: React.FC<CartItemProps> = ({
           </div>
 
           <div className="ml-auto text-right font-semibold text-primary sm:ml-2">
-            €{totalPrice.toFixed(2)}
+            <span className="bg-gray-100 rounded-full px-2 py-1">
+              €{totalPrice}
+            </span>
           </div>
         </div>
       </div>

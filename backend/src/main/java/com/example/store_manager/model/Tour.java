@@ -67,6 +67,7 @@ public class Tour {
     private String location;
     private String status;
     private String madeBy;
+    private String meetingPoint;
 
     @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TourImage> images = new ArrayList<>();

@@ -35,8 +35,8 @@ public class PaymentController {
         }
 
         @GetMapping("/shop/{shopId}")
-        public ResponseEntity<?> getShopPayments(@PathVariable("shopId") Long shopId) {
-                Result<List<PaymentLineResponseDto>> result = paymentService.getShopPayments(shopId);
+        public ResponseEntity<?> getShopPaymentLines(@PathVariable("shopId") Long shopId) {
+                Result<List<PaymentLineResponseDto>> result = paymentService.getShopPaymentLines(shopId);
 
                 if (result.isFail()) {
                         return ResponseEntity.badRequest().body(result.error());

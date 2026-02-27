@@ -140,9 +140,13 @@ public class OrderService {
                                         schedule.setStatus("ACTIVE");
                                 }
                         }
+                        BigDecimal price;
+                        if ("PRIVATE".equalsIgnoreCase(tour.getType())) {
+                                price = tour.getPrice(); // per tour
+                        } else {
+                                price = tour.getPrice().multiply(BigDecimal.valueOf(itemDto.getParticipants()));
 
-                        BigDecimal price = tour.getPrice().multiply(
-                                        BigDecimal.valueOf(itemDto.getParticipants()));
+                        }
 
                         OrderItem item = OrderItem.builder()
                                         .order(order)
@@ -171,6 +175,7 @@ public class OrderService {
                                                                         .title(tour.getTitle())
                                                                         .description(tour.getDescription())
                                                                         .price(tour.getPrice())
+                                                                        .type(tour.getType())
                                                                         .build()))
                                         .build();
 

@@ -45,6 +45,9 @@ public class TourCreateDto {
     @NotBlank(message = "Type is required")
     private String type;
 
+    @NotBlank(message = "Meeting point required")
+    private String meetingPoint;
+
     @NotBlank(message = "Location is required")
     private String location;
 

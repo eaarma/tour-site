@@ -1,19 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Modal from "@/components/common/Modal";
-import { Tour } from "@/types";
-import { OrderItemParticipantDto, TourSessionDto } from "@/types/tourSession";
-import { Users, Calendar, Clock, CircleUserRound } from "lucide-react";
+import { TourSessionDto } from "@/types/tourSession";
+import {
+  Users,
+  Calendar,
+  Clock,
+  CircleUserRound,
+  BadgeCheck,
+  Pin,
+} from "lucide-react";
 
-import OrderItemCard from "./OrderItemCard";
-import OrderDetailsModal from "./OrderDetailsModal";
+import OrderItemCard from "../order/OrderItemCard";
+import OrderDetailsModal from "../order/OrderDetailsModal";
 import SessionStatusModal from "./SessionStatusModal";
 import SessionOwnershipModal from "./SessionOwnershipModal";
+import { OrderItemResponseDto } from "@/types";
+import { FaUser } from "react-icons/fa";
 
 interface Props {
   session: TourSessionDto;
-  tour?: Tour;
   onClose: () => void;
   onConfirmSession: (sessionId: number) => void;
   onCompleteSession: (sessionId: number) => void;
@@ -22,14 +29,14 @@ interface Props {
 
 export default function SessionDetailsModal({
   session,
-  tour,
   onClose,
   onConfirmSession,
   onCompleteSession,
   onSessionUpdated,
 }: Props) {
-  const [selectedItem, setSelectedItem] =
-    useState<OrderItemParticipantDto | null>(null);
+  const [selectedItem, setSelectedItem] = useState<OrderItemResponseDto | null>(
+    null,
+  );
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [isOwnershipModalOpen, setIsOwnershipModalOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
@@ -45,7 +52,10 @@ export default function SessionDetailsModal({
 
   const remaining = session.maxParticipants - bookedCount;
 
-  const datetime = new Date(`${session.date}T${session.time}`);
+  const datetime = useMemo(
+    () => new Date(`${session.date}T${session.time}`),
+    [session.date, session.time],
+  );
   const [sessionData, setSessionData] = useState(session);
 
   useEffect(() => {
@@ -55,61 +65,87 @@ export default function SessionDetailsModal({
   return (
     <>
       <Modal isOpen={true} onClose={onClose}>
-        {/* HEADER */}
-        <div className="mb-5">
-          <div className="flex justify-between items-start">
-            {/* LEFT SIDE TITLE */}
+        {/* ================= HEADER ================= */}
+        <div className="mb-6 space-y-5">
+          {/* Top Row: Title + Status */}
+          <div className=" justify-between items-start gap-4">
             <div>
-              <h2 className="text-2xl font-bold text-gray-800 tracking-wide">
-                {tour?.title}
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                {session?.tourTitle}
               </h2>
 
-              {/* LOCATION */}
-              <p className="text-sm text-gray-500">{tour?.location}</p>
-
-              {/* STATUS LINE */}
-              <p className="text-sm text-gray-600 mt-1">
-                Status:{" "}
-                <span
-                  className={
-                    session.status === "PLANNED"
-                      ? "text-yellow-600 font-semibold"
-                      : session.status === "CONFIRMED"
-                        ? "text-blue-600 font-semibold"
-                        : session.status === "COMPLETED"
-                          ? "text-green-600 font-semibold"
-                          : session.status === "CANCELLED"
-                            ? "text-red-600 font-semibold"
-                            : "text-gray-600 font-semibold"
-                  }
-                >
-                  {session.status}
+              <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-1">
+                  <BadgeCheck className="w-4 h-4" />
+                  Session #{session.id}
                 </span>
-              </p>
 
-              {/* DATE + TIME */}
-              <div className="flex items-center gap-5 text-sm text-gray-600 mt-3">
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  {datetime.toLocaleDateString()}
-                </div>
-                <div className="flex items-center gap-1">
-                  <Clock className="w-4 h-4" />
-                  {datetime.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </div>
+                {session?.tourLocation && (
+                  <span className="truncate">{session.tourLocation}</span>
+                )}
               </div>
+            </div>
+
+            {/* Status Badge */}
+            <span
+              className={`badge badge-sm font-medium ${
+                session.status === "PLANNED"
+                  ? "badge-warning"
+                  : session.status === "CONFIRMED"
+                    ? "badge-info"
+                    : session.status === "COMPLETED"
+                      ? "badge-success"
+                      : session.status === "CANCELLED"
+                        ? "badge-error"
+                        : "badge-neutral"
+              }`}
+            >
+              {session.status}
+            </span>
+          </div>
+
+          {/* Date & Time Block */}
+          <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              {datetime.toLocaleDateString()}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              {datetime.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </div>
           </div>
 
-          {/* MANAGER LINE */}
-          <div className="mt-3">
-            Assigned to:{" "}
-            <span className="font-medium">
-              <strong>{sessionData.managerName ?? "Unassigned"}</strong>
-            </span>
+          {/* Divider */}
+          <div className="border-t border-base-300" />
+
+          {/* Logistics Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Manager */}
+            <div className="flex flex-col gap-1">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                Assigned Manager
+              </span>
+              <div className="flex items-center gap-2 text-base font-semibold text-foreground">
+                <FaUser className="w-4 h-4 text-primary" />
+                {sessionData.managerName ?? "Unassigned"}
+              </div>
+            </div>
+
+            {/* Meeting Point */}
+            <div className="flex flex-col gap-1">
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                Starting Point
+              </span>
+              <div className="flex items-center gap-2 text-base font-semibold text-foreground">
+                <Pin className="w-4 h-4 text-primary" />
+                {sessionData.tourMeetingPoint ?? "Not specified"}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -121,7 +157,7 @@ export default function SessionDetailsModal({
           </div>
 
           <div className="text-gray-700 font-medium">
-{remaining} spaces available
+            {remaining} spaces available
           </div>
         </div>
 
@@ -132,25 +168,12 @@ export default function SessionDetailsModal({
         </h3>
 
         {/* PARTICIPANT LIST */}
-        <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2">
-          {paidParticipants.map((p) => (
+        <div className="space-y-3 max-h-[300px] sm:max-h-[350px] overflow-y-auto pr-2">
+          {paidParticipants.map((item) => (
             <OrderItemCard
-              key={p.orderItemId}
-              item={{
-                id: p.orderItemId,
-                name: p.name,
-                participants: p.participants,
-                status: p.status,
-                tourTitle: tour?.title ?? "",
-                scheduledAt: `${session.date}T${session.time}`,
-                managerName: p.managerName,
-                managerId: p.managerId,
-                pricePaid: p.pricePaid ?? 0,
-              }}
-              onClick={() => setSelectedItem(p)}
-              onConfirm={() => {}}
-              onConfirmCancellation={() => {}}
-              onComplete={() => {}}
+              key={item.id}
+              item={item}
+              onClick={() => setSelectedItem(item)}
             />
           ))}
         </div>
@@ -189,7 +212,7 @@ export default function SessionDetailsModal({
 
             {optionsOpen && (
               <div
-                className="absolute right-0 mt-2 w-48 bg-base-100 border shadow-md rounded-lg z-30"
+                className="absolute right-0 bottom-full mb-2 w-48 bg-base-100 border border-base-300 shadow-lg rounded-lg z-50"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* VIEW TOUR */}
@@ -197,7 +220,7 @@ export default function SessionDetailsModal({
                   className="block w-full text-left px-4 py-2 hover:bg-base-200"
                   onClick={() => {
                     setOptionsOpen(false);
-                    window.open(`/items/${tour?.id}`, "_blank");
+                    window.open(`/items/${session?.tourId}`, "_blank");
                   }}
                 >
                   View Tour
@@ -240,7 +263,7 @@ export default function SessionDetailsModal({
           isOpen
           onClose={() => setIsOwnershipModalOpen(false)}
           sessionId={session.id}
-          shopId={tour?.shopId ?? 0}
+          shopId={session?.shopId ?? 0}
           currentManagerId={session.managerId}
           currentManagerName={session.managerName}
           onUpdated={(updated) => {
@@ -265,13 +288,8 @@ export default function SessionDetailsModal({
 
       {selectedItem && (
         <OrderDetailsModal
-          isOpen={true}
-          orderItem={{
-            ...selectedItem,
-            id: selectedItem.orderItemId,
-            scheduledAt: `${session.date}T${session.time}`,
-          }}
-          tour={tour}
+          isOpen
+          orderItem={selectedItem}
           onClose={() => setSelectedItem(null)}
         />
       )}

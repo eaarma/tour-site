@@ -55,111 +55,155 @@ export default function ConfirmationPage() {
   const mainItem = order.items?.[0];
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
-      {/* HEADER */}
-      <div className="text-center mb-10">
-        <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-        <h1 className="text-3xl font-bold text-green-600 mb-2">
-          Order #{order.id} Confirmed!
-        </h1>
-        <p className="text-gray-600">
-          Thank you! Your booking has been received.
-        </p>
-      </div>
+    <div className="min-h-screen bg-base-100 py-16 px-4">
+      <div className="max-w-3xl mx-auto">
+        {/* ================= HERO ================= */}
+        <div className="text-center mb-12">
+          <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />
+          <h1 className="text-3xl font-bold text-green-600 mb-3">
+            Booking Confirmed!
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Order #{order.id} has been successfully processed.
+          </p>
+        </div>
 
-      {/* CARD */}
-      <div className="bg-base-100 shadow-lg rounded-xl p-6 space-y-8 border border-base-300">
-        {/* ITEMS */}
-        <section>
-          <h2 className="text-xl font-semibold mb-4">Your Booking</h2>
+        {/* ================= MAIN CARD ================= */}
+        <div className="bg-base-100 shadow-xl rounded-2xl border border-base-300 overflow-hidden">
+          {/* ================= BOOKINGS ================= */}
+          <section className="p-8 border-b border-base-200">
+            <h2 className="text-xl font-semibold mb-6">Your Experience</h2>
 
-          <div className="space-y-4">
-            {order.items.map((item) => (
-              <div
-                key={item.id}
-                className="border border-base-200 rounded-lg p-4 flex justify-between"
-              >
-                <div>
-                  <p className="font-medium text-base">{item.tourTitle}</p>
+            <div className="space-y-6">
+              {order.items.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex flex-col md:flex-row md:justify-between gap-4 p-5 rounded-xl border border-base-200 bg-base-50"
+                >
+                  <div className="space-y-2">
+                    <p className="text-lg font-semibold">{item.tourTitle}</p>
 
-                  <p className="text-sm text-gray-500">
-                    {new Date(item.scheduledAt).toLocaleString()}
-                  </p>
+                    <p className="text-sm text-gray-600">
+                      📅 {new Date(item.scheduledAt).toLocaleString()}
+                    </p>
 
-                  <p className="text-sm text-gray-500">
-                    Participants: {item.participants}
-                  </p>
+                    <p className="text-sm text-gray-600">
+                      👥 {item.participants} participant(s)
+                    </p>
 
-                  <p className="text-sm text-gray-500">Status: {item.status}</p>
+                    {item.tourMeetingPoint && (
+                      <p className="text-sm text-gray-600">
+                        📍 Meeting Point:{" "}
+                        <span className="font-medium">
+                          {item.tourMeetingPoint}
+                        </span>
+                      </p>
+                    )}
+
+                    <p className="text-sm text-gray-600">
+                      Status:{" "}
+                      <span className="font-medium text-green-600">
+                        {item.status}
+                      </span>
+                    </p>
+                  </div>
+
+                  <div className="text-xl font-bold text-primary self-start md:self-center">
+                    €{item.pricePaid.toFixed(2)}
+                  </div>
                 </div>
-
-                <div className="text-lg font-bold text-primary">
-                  €{item.pricePaid.toFixed(2)}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* CUSTOMER */}
-        {mainItem && (
-          <section>
-            <h2 className="text-xl font-semibold mb-4">Customer</h2>
-            <div className="text-sm space-y-1">
-              <p>
-                <span className="font-medium">Name:</span> {mainItem.name}
-              </p>
-              {isAuthenticated && (
-                <>
-                  <p>
-                    <span className="font-medium">Email:</span> {mainItem.email}
-                  </p>
-                  <p>
-                    <span className="font-medium">Phone:</span> {mainItem.phone}
-                  </p>
-                </>
-              )}
-              {mainItem.nationality && (
-                <p>
-                  <span className="font-medium">Nationality:</span>{" "}
-                  {mainItem.nationality}
-                </p>
-              )}
+              ))}
             </div>
           </section>
-        )}
 
-        {/* PAYMENT */}
-        <section>
-          <h2 className="text-xl font-semibold mb-2">Payment</h2>
-          <div className="text-sm space-y-1">
-            <p>
-              <span className="font-medium">Method:</span> {order.paymentMethod}
-            </p>
-            <p>
-              <span className="font-medium">Total Paid:</span> €
-              {order.totalPrice.toFixed(2)}
-            </p>
-            <p>
-              <span className="font-medium">Status:</span> {order.status}
-            </p>
-          </div>
-        </section>
+          {/* ================= CUSTOMER ================= */}
+          {mainItem && (
+            <section className="p-8 border-b border-base-200">
+              <h2 className="text-xl font-semibold mb-4">Customer Details</h2>
 
-        <p className="text-xs text-gray-500">
-          Created: {new Date(order.createdAt).toLocaleString()}
-        </p>
-      </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground text-xs uppercase">
+                    Name
+                  </p>
+                  <p className="font-medium">{mainItem.name}</p>
+                </div>
 
-      {/* ACTION */}
-      <div className="flex justify-center mt-10">
-        <button
-          onClick={() => router.push("/")}
-          className="btn btn-primary btn-lg flex items-center gap-2"
-        >
-          Go Home
-          <ArrowRight className="w-4 h-4" />
-        </button>
+                {isAuthenticated && (
+                  <>
+                    <div>
+                      <p className="text-muted-foreground text-xs uppercase">
+                        Email
+                      </p>
+                      <p className="font-medium">{mainItem.email}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-muted-foreground text-xs uppercase">
+                        Phone
+                      </p>
+                      <p className="font-medium">{mainItem.phone}</p>
+                    </div>
+                  </>
+                )}
+
+                {mainItem.nationality && (
+                  <div>
+                    <p className="text-muted-foreground text-xs uppercase">
+                      Nationality
+                    </p>
+                    <p className="font-medium">{mainItem.nationality}</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* ================= PAYMENT ================= */}
+          <section className="p-8">
+            <h2 className="text-xl font-semibold mb-4">Payment Summary</h2>
+
+            <div className="bg-base-200 rounded-xl p-5 flex flex-col sm:flex-row sm:justify-between gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground text-xs uppercase">
+                  Method
+                </p>
+                <p className="font-medium">{order.paymentMethod}</p>
+              </div>
+
+              <div>
+                <p className="text-muted-foreground text-xs uppercase">
+                  Status
+                </p>
+                <p className="font-medium text-green-600">{order.status}</p>
+              </div>
+
+              <div>
+                <p className="text-muted-foreground text-xs uppercase">
+                  Total Paid
+                </p>
+                <p className="text-lg font-bold">
+                  €{order.totalPrice.toFixed(2)}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-500 mt-6">
+              Created on {new Date(order.createdAt).toLocaleString()}
+            </p>
+          </section>
+        </div>
+
+        {/* ================= ACTION ================= */}
+        <div className="flex justify-center mt-12">
+          <button
+            onClick={() => router.push("/")}
+            className="btn btn-primary btn-lg flex items-center gap-2"
+          >
+            Back to Home
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

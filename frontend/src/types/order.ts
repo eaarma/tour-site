@@ -3,6 +3,7 @@ export type OrderStatus =
   | "PAID"
   | "EXPIRED"
   | "PENDING"
+  | "FAILED"
   | "CONFIRMED"
   | "CANCELLED"
   | "COMPLETED"
@@ -39,10 +40,12 @@ export interface OrderItemResponseDto {
   nationality?: string;
   pricePaid: number;
   status: OrderStatus;
+  sessionId?: number;
   createdAt: string;
   tourSnapshot?: string;
   managerId?: string;
   managerName?: string;
+  tourMeetingPoint?: string;
   preferredLanguage?: string;
   comment?: string;
 }
@@ -98,10 +101,14 @@ export interface OrderDetailsModalDto {
   participants: number;
   status: OrderStatus;
   pricePaid: number;
-
+  tourTitle: string;
+  tourLocation?: string;
+  tourImages?: string[];
   email: string;
   phone: string;
   nationality?: string | null;
+
+  sessionId?: number;
 
   managerId?: string;
   managerName?: string;

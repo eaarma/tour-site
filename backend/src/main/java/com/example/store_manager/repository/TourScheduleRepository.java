@@ -53,4 +53,12 @@ public interface TourScheduleRepository extends JpaRepository<TourSchedule, Long
                 WHERE s.id = :scheduleId
             """)
     Optional<Long> findShopIdByScheduleId(@Param("scheduleId") Long scheduleId);
+
+    @Query("""
+                SELECT ts FROM TourSchedule ts
+                JOIN ts.tour t
+                WHERE t.shop.id = :shopId
+                ORDER BY ts.date ASC, ts.time ASC
+            """)
+    List<TourSchedule> findByShopIdOrderByDateAndTime(@Param("shopId") Long shopId);
 }

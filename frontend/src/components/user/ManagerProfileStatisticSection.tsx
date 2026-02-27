@@ -89,7 +89,7 @@ function Stat({
   subtitle?: string;
 }) {
   return (
-    <div className="bg-base-200 rounded-lg p-4 text-center flex flex-col items-center gap-1">
+    <div className="bg-base-100 rounded-lg p-4 text-center flex flex-col items-center gap-1">
       <div className="flex items-center gap-2 text-gray-600">
         {icon}
         <span className="text-sm">{title}</span>

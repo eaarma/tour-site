@@ -4,57 +4,53 @@ import { useEffect, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import CustomDateInput from "@/components/common/CustomDateInput";
-import {
-  OrderItemCardDto,
-  OrderItemResponseDto,
-  OrderStatus,
-} from "@/types/order";
-import { OrderService } from "@/lib/orderService";
-import toast from "react-hot-toast";
-import OrderDetailsModal from "./OrderDetailsModal";
-import OrderItemCard from "./OrderItemCard";
+import { Tour } from "@/types";
+import { TourSessionDto } from "@/types/tourSession";
+import SessionCard from "./SessionCard";
+import SessionDetailsModal from "./SessionDetailsModal";
 import { useSessionManager } from "@/hooks/useSessionManager";
-import SessionDetailsModal from "../session/SessionDetailsModal";
 
-const ACTIVE_STATUSES = ["PAID"];
+const ACTIVE_STATUSES: TourSessionDto["status"][] = ["PLANNED", "CONFIRMED"];
 
-const PAST_STATUSES = ["FAILED", "EXPIRED", "CANCELLED", "COMPLETED"];
-
-const ALL_STATUSES: OrderItemCardDto["status"][] = [
-  "PENDING",
-  "PAID",
-  "CONFIRMED",
+const PAST_STATUSES: TourSessionDto["status"][] = [
   "COMPLETED",
   "CANCELLED",
-  "FAILED",
-  "EXPIRED",
   "CANCELLED_CONFIRMED",
 ];
 
-type SortOption = "DATE" | "STATUS";
+const ALL_STATUSES: TourSessionDto["status"][] = [
+  "PLANNED",
+  "CONFIRMED",
+  "COMPLETED",
+  "CANCELLED",
+  "CANCELLED_CONFIRMED",
+];
 
 interface Props {
+  sessions: TourSessionDto[];
+  tours: Tour[];
   shopId: number;
 }
 
-export default function ManagerOrderSection({ shopId }: Props) {
-  const [orderItems, setOrderItems] = useState<OrderItemResponseDto[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const [activeTab, setActiveTab] = useState<"active" | "past">("active");
+export default function ManagerSessionSection({
+  tours,
+  shopId,
+}: Props) {
+  const [activeTab, setActiveTab] = useState<"today" | "active" | "past">(
+    "today",
+  );
 
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
-  const [sortBy, setSortBy] = useState<SortOption>("DATE");
-  const [statusFilter, setStatusFilter] = useState<
-    OrderItemResponseDto["status"][]
-  >([]);
-
+  const [sortBy, setSortBy] = useState<"DATE" | "STATUS">("DATE");
+  const [statusFilter, setStatusFilter] = useState<TourSessionDto["status"][]>(
+    [],
+  );
   const [statusFilterOpen, setStatusFilterOpen] = useState(false);
   const statusFilterRef = useRef<HTMLDivElement | null>(null);
+  const hasDateFilter = Boolean(fromDate || toDate);
 
-  const [selectedOrder, setSelectedOrder] =
-    useState<OrderItemResponseDto | null>(null);
+  //const { user } = useAuth();
 
   const {
     sessionList,
@@ -65,82 +61,87 @@ export default function ManagerOrderSection({ shopId }: Props) {
     updateLocalSession,
   } = useSessionManager(shopId);
 
-  const handleViewSession = (sessionId: number) => {
-    setSelectedOrder(null);
-    setSelectedSessionId(sessionId);
-  };
+  type OrderSort = "DATE" | "STATUS";
 
-  // 🔹 Fetch orders
-  const loadOrders = async () => {
-    if (!shopId) return;
-    try {
-      setLoading(true);
-      const data = await OrderService.getItemsByShopId(shopId);
-      console.log(data.map((o) => o.status));
-      setOrderItems(data);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load orders.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  //Default “From” date = today (first navigation)
   useEffect(() => {
-    loadOrders();
-  }, [shopId]);
-
-  // Close dropdown on outside click
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    setFromDate(today);
+  }, []);
   useEffect(() => {
     if (!statusFilterOpen) return;
 
     const onPointerDown = (e: PointerEvent) => {
-      if (!statusFilterRef.current?.contains(e.target as Node)) {
+      const el = statusFilterRef.current;
+      if (!el) return;
+
+      // if click is outside dropdown wrapper → close
+      if (!el.contains(e.target as Node)) {
         setStatusFilterOpen(false);
       }
     };
 
+    // pointerdown catches it early and avoids “open then instantly close”
     window.addEventListener("pointerdown", onPointerDown);
     return () => window.removeEventListener("pointerdown", onPointerDown);
   }, [statusFilterOpen]);
 
-  // =========================
-  // Filtering logic
-  // =========================
+  // ============================
+  //  Filter sessions
+  // ============================
+  let filtered = [...sessionList];
 
-  let filtered = [...orderItems];
+  // 🔹 Tab logic
+  if (activeTab === "today") {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
 
-  // Tab filter
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+
+    filtered = filtered.filter((s) => {
+      const dt = new Date(`${s.date}T${s.time}`);
+      return dt >= start && dt <= end;
+    });
+  }
+
   if (activeTab === "active") {
-    filtered = filtered.filter((o) => ACTIVE_STATUSES.includes(o.status));
+    filtered = filtered.filter((s) => ACTIVE_STATUSES.includes(s.status));
   }
 
   if (activeTab === "past") {
-    filtered = filtered.filter((o) => PAST_STATUSES.includes(o.status));
+    filtered = filtered.filter((s) => PAST_STATUSES.includes(s.status));
+  }
+  // Date range filter
+  if (fromDate) {
+    filtered = filtered.filter(
+      (s) => new Date(`${s.date}T${s.time}`) >= fromDate,
+    );
   }
 
-  // Date range
+  if (statusFilter.length > 0) {
+    filtered = filtered.filter((s) => statusFilter.includes(s.status));
+  }
+
   if (fromDate) {
-    filtered = filtered.filter((o) => new Date(o.scheduledAt) >= fromDate);
+    filtered = filtered.filter(
+      (s) => new Date(`${s.date}T${s.time}`) >= fromDate,
+    );
   }
 
   if (toDate) {
     const end = new Date(toDate);
     end.setHours(23, 59, 59, 999);
 
-    filtered = filtered.filter((o) => new Date(o.scheduledAt) <= end);
+    filtered = filtered.filter((s) => new Date(`${s.date}T${s.time}`) <= end);
   }
 
-  // Status filter
-  if (statusFilter.length > 0) {
-    filtered = filtered.filter((o) => statusFilter.includes(o.status));
-  }
-
-  // Sorting
   if (sortBy === "DATE") {
     filtered.sort(
       (a, b) =>
-        new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime(),
+        new Date(`${a.date}T${a.time}`).getTime() -
+        new Date(`${b.date}T${b.time}`).getTime(),
     );
   }
 
@@ -152,15 +153,26 @@ export default function ManagerOrderSection({ shopId }: Props) {
     <div className="space-y-6">
       {/* ================= HEADER ================= */}
       <div>
-        <h2 className="text-xl font-semibold text-foreground">Orders</h2>
+        <h2 className="text-xl font-semibold text-foreground">Sessions</h2>
         <p className="text-sm text-muted-foreground">
-          View and filter all order items for this shop.
+          Manage and monitor all tour sessions.
         </p>
       </div>
 
       {/* ================= TAB TOGGLE ================= */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="inline-flex rounded-xl border border-base-300 bg-base-100 p-1">
+          <button
+            onClick={() => setActiveTab("today")}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              activeTab === "today"
+                ? "bg-primary text-white shadow-sm"
+                : "text-muted-foreground hover:text-primary"
+            }`}
+          >
+            Today
+          </button>
+
           <button
             onClick={() => setActiveTab("active")}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
@@ -228,7 +240,7 @@ export default function ManagerOrderSection({ shopId }: Props) {
                 hover:border-border hover:outline-none hover:ring-2 hover:ring-ring/30 hover:ring-primary/20
                 focus:border-border focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring/20 focus:ring-primary"
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              onChange={(e) => setSortBy(e.target.value as OrderSort)}
             >
               <option value="DATE">Sort by date</option>
               <option value="STATUS">Sort by status</option>
@@ -236,26 +248,45 @@ export default function ManagerOrderSection({ shopId }: Props) {
           </div>
 
           {/* Status Filter */}
-          <div className="flex flex-col gap-1">
+          <div className="relative flex flex-col gap-1" ref={statusFilterRef}>
             <label className="text-xs text-muted-foreground">Status</label>
-            <select
-              className="select  select-sm w-full sm:w-auto h-10
-                hover:border-border hover:outline-none hover:ring-2 hover:ring-ring/30 hover:ring-primary/20
-                focus:border-border focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring/20 focus:ring-primary"
-              value={statusFilter[0] ?? ""}
-              onChange={(e) =>
-                setStatusFilter(
-                  e.target.value ? [e.target.value as OrderStatus] : [],
-                )
-              }
+
+            <button
+              className="btn btn-sm btn-outline w-full h-10 justify-between hover:border-primary hover:text-primary transition-colors"
+              onClick={() => setStatusFilterOpen((v) => !v)}
             >
-              <option value="">All statuses</option>
-              {ALL_STATUSES.map((st) => (
-                <option key={st} value={st}>
-                  {st}
-                </option>
-              ))}
-            </select>
+              {statusFilter.length === 0
+                ? "All statuses"
+                : `${statusFilter.length} selected`}
+            </button>
+
+            {statusFilterOpen && (
+              <div className="absolute left-0 top-full mt-2 w-full bg-base-100 border border-base-300 rounded-xl shadow-md z-30 p-2">
+                {ALL_STATUSES.map((st) => {
+                  const checked = statusFilter.includes(st);
+                  return (
+                    <label
+                      key={st}
+                      className="flex items-center gap-2 px-2 py-1 rounded hover:bg-base-200 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        className="checkbox checkbox-sm"
+                        checked={checked}
+                        onChange={() =>
+                          setStatusFilter((prev) =>
+                            checked
+                              ? prev.filter((s) => s !== st)
+                              : [...prev, st],
+                          )
+                        }
+                      />
+                      <span className="text-sm">{st}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Clear Filters */}
@@ -263,6 +294,7 @@ export default function ManagerOrderSection({ shopId }: Props) {
             <button
               type="button"
               className="btn btn-sm btn-outline w-full h-10 hover:border-primary hover:text-primary transition-colors"
+              disabled={!hasDateFilter && statusFilter.length === 0}
               onClick={() => {
                 setFromDate(null);
                 setToDate(null);
@@ -279,15 +311,18 @@ export default function ManagerOrderSection({ shopId }: Props) {
       <div>
         {filtered.length === 0 ? (
           <div className="rounded-xl border border-base-300 bg-base-100 p-8 text-center">
-            <p className="text-muted-foreground">No orders to display.</p>
+            <p className="text-muted-foreground">No sessions to display.</p>
           </div>
         ) : (
           <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
-            {filtered.map((item) => (
-              <OrderItemCard
-                key={item.id}
-                item={item}
-                onClick={() => setSelectedOrder(item)}
+            {filtered.map((session) => (
+              <SessionCard
+                key={session.id}
+                session={session}
+                tour={tours.find((t) => t.id === session.tourId)}
+                onClick={() => setSelectedSessionId(session.id!)}
+                onConfirmSession={confirmSession}
+                onCompleteSession={completeSession}
               />
             ))}
           </div>
@@ -295,15 +330,6 @@ export default function ManagerOrderSection({ shopId }: Props) {
       </div>
 
       {/* ================= MODAL ================= */}
-      {selectedOrder && (
-        <OrderDetailsModal
-          isOpen={!!selectedOrder}
-          onClose={() => setSelectedOrder(null)}
-          orderItem={selectedOrder}
-          onViewSession={handleViewSession}
-        />
-      )}
-
       {selectedSessionId && (
         <SessionDetailsModal
           session={sessionList.find((s) => s.id === selectedSessionId)!}

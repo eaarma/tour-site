@@ -9,6 +9,7 @@ export interface TourCreateDto {
   categories: TourCategory[];
   language: string[];
   type: string;
+  meetingPoint: string;
   location: string;
   status: string;
   shopId: number; // Long in Java -> number in TS
@@ -26,6 +27,7 @@ export interface Tour {
   categories: TourCategory[];
   language: string[];
   type: string;
+  meetingPoint: string;
   location: string;
   status: string;
   madeBy: string;
@@ -73,6 +75,7 @@ export interface ItemModalItem {
   id: number;
   title: string;
   price: number;
+  type: string;
   participants: number;
   images?: string[];
   status: string;
@@ -93,10 +96,9 @@ export interface TourFormDto {
   timeRequired?: number;
   intensity?: string;
   participants?: number;
-
+  meetingPoint?: string;
   categories?: TourCategory[];
   language?: string[];
-
   type?: string;
   status?: string;
 }
@@ -112,6 +114,7 @@ export interface TourUpdateDto {
   participants: number;
   categories: string[];
   language: string[];
+  meetingPoint: string;
   type: string;
   location: string;
   status: string;

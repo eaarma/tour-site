@@ -15,7 +15,7 @@ const CustomDateInput = forwardRef<HTMLButtonElement, CustomDateInputProps>(
           ref={ref}
           type="button"
           onClick={onClick}
-          className="group w-full h-11 pl-10 pr-9 bg-base-200 hover:bg-base-100 focus:bg-base-100 text-sm rounded-xl border border-transparent 
+          className="group w-full h-10 pl-10 pr-9 bg-base-200 hover:bg-base-100 focus:bg-base-100 text-sm rounded-lg border border-transparent 
           focus:border-border focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring/20 focus:ring-primary 
           hover:border-border hover:outline-none hover:ring-2 hover:ring-ring/20 hover:ring-primary/20 transition-all text-left cursor-pointer flex items-center"
         >

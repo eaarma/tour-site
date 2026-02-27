@@ -110,7 +110,10 @@ const ItemCard: React.FC<ItemCardProps> = ({
             {"\u20AC"}
             {item.price}
           </span>
-          <span className="ml-1 text-xs text-gray-700">/person</span>
+          <span className="ml-1 text-xs text-gray-700">
+            {" "}
+            {item.type === "PUBLIC" ? "/person" : "/tour"}
+          </span>
         </div>
       </div>
 

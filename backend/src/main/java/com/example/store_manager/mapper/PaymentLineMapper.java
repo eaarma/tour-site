@@ -12,9 +12,11 @@ public interface PaymentLineMapper {
     @Mapping(target = "paymentId", source = "payment.id")
     @Mapping(target = "orderItemId", source = "orderItem.id")
     @Mapping(target = "orderId", source = "orderItem.order.id")
+
     @Mapping(target = "tourTitle", source = "orderItem.tourTitle")
     @Mapping(target = "scheduledAt", source = "orderItem.scheduledAt")
     @Mapping(target = "participants", source = "orderItem.participants")
+
     PaymentLineResponseDto toDto(PaymentLine line);
 
     List<PaymentLineResponseDto> toDtoList(List<PaymentLine> lines);

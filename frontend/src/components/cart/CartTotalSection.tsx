@@ -21,11 +21,12 @@ const CartTotalSection: React.FC<Props> = ({ onCheckoutSuccess }) => {
 
   const selectedItems = cart.filter((i) => i.selected);
 
-  const totalPrice = selectedItems.reduce(
-    (acc, entry) => acc + entry.price * entry.participants,
-    0,
-  );
+  const totalPrice = selectedItems.reduce((acc, entry) => {
+    const isPublic = entry.type === "PUBLIC";
+    const itemTotal = isPublic ? entry.price * entry.participants : entry.price;
 
+    return acc + itemTotal;
+  }, 0);
   const handleProceedToCheckout = async () => {
     if (selectedItems.length === 0) {
       toast.error("Select at least one item to proceed.");

@@ -5,9 +5,6 @@ import { Users, Euro, Dot } from "lucide-react";
 
 interface Props {
   item: OrderItemCardDto;
-  onConfirm: (id: number) => void;
-  onConfirmCancellation: (id: number) => void;
-  onComplete: (id: number) => void;
   onClick: () => void;
 }
 

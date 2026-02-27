@@ -1,6 +1,7 @@
 package com.example.store_manager.mapper;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import com.example.store_manager.dto.order.OrderCreateRequestDto;
 import com.example.store_manager.dto.order.OrderItemCreateRequestDto;
@@ -16,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import com.example.store_manager.model.Tour;
+import com.example.store_manager.model.TourImage;
+import com.example.store_manager.model.TourSession;
 
 @Component
 @RequiredArgsConstructor
@@ -48,16 +51,28 @@ public class OrderItemMapper {
 
     // Map entity -> response DTO
     public OrderItemResponseDto toDto(OrderItem item) {
+        Tour tour = item.getTour();
         return OrderItemResponseDto.builder()
                 .id(item.getId())
                 .tourId(item.getTour().getId())
                 .shopId(item.getShopId())
                 .tourTitle(item.getTourTitle())
+                .tourLocation(tour.getLocation())
+                .tourMeetingPoint(tour.getMeetingPoint())
+                .tourImages(
+                        item.getTour().getImages()
+                                .stream()
+                                .map(TourImage::getImageUrl)
+                                .toList())
                 .scheduledAt(item.getScheduledAt())
                 .participants(item.getParticipants())
                 .name(item.getName())
                 .email(item.getEmail())
                 .phone(item.getPhone())
+                .sessionId(
+                        Optional.ofNullable(item.getSession())
+                                .map(TourSession::getId)
+                                .orElse(null))
                 .nationality(item.getNationality())
                 .preferredLanguage(item.getPreferredLanguage())
                 .comment(item.getComment())

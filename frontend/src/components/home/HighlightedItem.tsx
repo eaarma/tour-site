@@ -220,7 +220,9 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ title, item }) => {
                     {"\u20AC"}
                     {item.price}
                   </span>
-                  <span className="text-sm text-muted-foreground">/person</span>
+                  <span className="text-sm text-muted-foreground">
+                    {item.type === "PUBLIC" ? "/person" : "/tour"}
+                  </span>
                 </div>
               </div>
 

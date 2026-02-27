@@ -36,25 +36,41 @@ export default function ManagerItemList({
 
       {/* Tabs + Add Tour Button */}
       <div className="flex justify-between items-center mb-4">
-        <div role="tablist" className="tabs tabs-boxed">
-          <button
-            className={`tab ${activeTab === "active" ? "tab-active" : ""}`}
-            onClick={() => setActiveTab("active")}
-          >
-            Active
-          </button>
-          <button
-            className={`tab ${activeTab === "inactive" ? "tab-active" : ""}`}
-            onClick={() => setActiveTab("inactive")}
-          >
-            Inactive
-          </button>
-          <button
-            className={`tab ${activeTab === "all" ? "tab-active" : ""}`}
-            onClick={() => setActiveTab("all")}
-          >
-            All
-          </button>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="inline-flex rounded-xl border border-base-300 bg-base-100 p-1">
+            <button
+              onClick={() => setActiveTab("active")}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === "active"
+                  ? "bg-primary text-white shadow-sm"
+                  : "text-muted-foreground hover:text-primary"
+              }`}
+            >
+              Active
+            </button>
+
+            <button
+              onClick={() => setActiveTab("inactive")}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === "inactive"
+                  ? "bg-primary text-white shadow-sm"
+                  : "text-muted-foreground hover:text-primary"
+              }`}
+            >
+              Inactive
+            </button>
+
+            <button
+              onClick={() => setActiveTab("all")}
+              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                activeTab === "all"
+                  ? "bg-primary text-white shadow-sm"
+                  : "text-muted-foreground hover:text-primary"
+              }`}
+            >
+              All
+            </button>
+          </div>
         </div>
 
         <button

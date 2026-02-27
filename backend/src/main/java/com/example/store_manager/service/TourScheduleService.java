@@ -2,9 +2,7 @@ package com.example.store_manager.service;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,13 +10,10 @@ import com.example.store_manager.dto.schedule.TourScheduleCreateDto;
 import com.example.store_manager.dto.schedule.TourScheduleResponseDto;
 import com.example.store_manager.dto.schedule.TourScheduleUpdateDto;
 import com.example.store_manager.mapper.TourScheduleMapper;
-import com.example.store_manager.mapper.TourSessionMapper;
 import com.example.store_manager.model.Tour;
 import com.example.store_manager.model.TourSchedule;
-import com.example.store_manager.model.TourSession;
 import com.example.store_manager.repository.TourRepository;
 import com.example.store_manager.repository.TourScheduleRepository;
-import com.example.store_manager.repository.TourSessionRepository;
 import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
 import com.example.store_manager.security.annotations.ShopIdSource;
@@ -76,6 +71,7 @@ public class TourScheduleService {
         }
 
         TourSchedule schedule = scheduleMapper.fromCreateDto(dto, tour);
+        schedule.setMaxParticipants(tour.getParticipants());
         schedule.setBookedParticipants(0);
         schedule.setStatus("ACTIVE");
 
@@ -84,7 +80,7 @@ public class TourScheduleService {
     }
 
     @Transactional
-    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.ITEM_ID)
+    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.SCHEDULE_ID)
     public Result<TourScheduleResponseDto> updateSchedule(
             Long id,
             TourScheduleUpdateDto dto) {
@@ -119,7 +115,7 @@ public class TourScheduleService {
     }
 
     @Transactional
-    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.ITEM_ID)
+    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.SCHEDULE_ID)
     public Result<Boolean> deleteSchedule(Long id) {
 
         if (!scheduleRepository.existsById(id)) {
@@ -128,5 +124,16 @@ public class TourScheduleService {
 
         scheduleRepository.deleteById(id);
         return Result.ok(true);
+    }
+
+    @Transactional(readOnly = true)
+    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.SHOP_ID)
+    public Result<List<TourScheduleResponseDto>> getSchedulesForShop(Long shopId) {
+
+        return Result.ok(
+                scheduleRepository.findByShopIdOrderByDateAndTime(shopId)
+                        .stream()
+                        .map(scheduleMapper::toDto)
+                        .toList());
     }
 }

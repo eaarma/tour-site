@@ -11,10 +11,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.example.store_manager.model.PaymentLine;
+import com.example.store_manager.model.PaymentStatus;
 
 @Repository
 public interface PaymentLineRepository extends JpaRepository<PaymentLine, Long> {
-
   @Query("""
           SELECT pl
           FROM PaymentLine pl
@@ -22,18 +22,19 @@ public interface PaymentLineRepository extends JpaRepository<PaymentLine, Long> 
           JOIN FETCH pl.orderItem oi
           JOIN FETCH oi.order o
           WHERE pl.shopId = :shopId
-            AND pl.status = 'SUCCEEDED'
+            AND pl.status = :status
             AND pl.payout IS NULL
           ORDER BY pl.createdAt DESC
       """)
-  List<PaymentLine> findUnpaidByShopId(@Param("shopId") Long shopId);
+  List<PaymentLine> findUnpaidByShopId(@Param("shopId") Long shopId,
+      @Param("status") PaymentStatus status);
 
   @Query("""
-          SELECT COALESCE(SUM(pl.shopAmount), 0)
+          SELECT COALESCE(SUM(pl.shopAmount), 0.00)
           FROM PaymentLine pl
           WHERE pl.shopId = :shopId
             AND pl.payout IS NULL
-            AND pl.status = 'SUCCEEDED'
+            AND pl.status = com.example.store_manager.model.PaymentStatus.SUCCEEDED
       """)
   BigDecimal sumUnpaidByShopId(@Param("shopId") Long shopId);
 

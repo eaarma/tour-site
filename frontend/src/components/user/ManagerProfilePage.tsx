@@ -117,7 +117,7 @@ export default function ManagerProfilePage({
   }, [profile?.id]);
 
   return (
-    <div className="bg-base-200 min-h-screen p-6">
+    <div className="bg-base-100 min-h-screen p-6">
       <div className="max-w-5xl mx-auto flex flex-col gap-8">
         <ProfileSection user={profile} onProfileUpdated={setProfile} />
 

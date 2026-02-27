@@ -40,4 +40,10 @@ export const TourScheduleService = {
   delete: async (id: number): Promise<void> => {
     await api.delete(`${BASE_URL}/${id}`);
   },
+
+  // Get all schedules for a given shop
+  getByShopId: async (shopId: number): Promise<TourScheduleResponseDto[]> => {
+    const res = await api.get(`${BASE_URL}/shop/${shopId}`);
+    return res.data;
+  },
 };

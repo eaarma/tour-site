@@ -14,6 +14,7 @@ public class TourUpdateDto {
     private BigDecimal price;
     private Integer timeRequired;
     private Integer participants;
+    private String meetingPoint;
     private String intensity;
     private String type;
     private List<String> language;

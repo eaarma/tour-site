@@ -2,7 +2,6 @@ export interface TourScheduleCreateDto {
   tourId: number;
   date: string; // ISO string
   time?: string; // ISO time string
-  maxParticipants: number;
 }
 
 export interface TourScheduleResponseDto {
@@ -10,10 +9,11 @@ export interface TourScheduleResponseDto {
   tourId: number;
   date: string;
   time?: string;
+  tourTitle?: string;
   maxParticipants: number;
   bookedParticipants: number;
-  reservedParticipants: number; // ← add this
-  status?: "ACTIVE" | "BOOKED" | "CANCELLED";
+  reservedParticipants: number;
+  status: "ACTIVE" | "BOOKED" | "CANCELLED" | "EXPIRED";
   type?: "PUBLIC" | "PRIVATE";
 }
 

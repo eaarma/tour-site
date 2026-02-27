@@ -46,17 +46,18 @@ export default function PaymentPage() {
   const reservationToken = searchParams.get("token") || "";
 
   // -------- Helpers --------
-
   const subtotal = useMemo(() => {
-    // Prefer backend order total once loaded. Fall back to cart subtotal.
     if (order?.totalPrice != null) {
       const n = Number(order.totalPrice);
       return Number.isFinite(n) ? n : 0;
     }
-    return cartItems.reduce(
-      (sum, item) => sum + item.price * item.participants,
-      0,
-    );
+
+    return cartItems.reduce((sum, item) => {
+      const isPublic = item.type === "PUBLIC";
+      const itemTotal = isPublic ? item.price * item.participants : item.price;
+
+      return sum + itemTotal;
+    }, 0);
   }, [order, cartItems]);
 
   const summaryItems = useMemo(() => {
@@ -81,6 +82,7 @@ export default function PaymentPage() {
       time: item.selectedTime,
       quantity: item.participants,
       price: item.price,
+      type: item.type,
     }));
   }, [order, cartItems]);
 
