@@ -11,7 +11,7 @@ import { UserResponseDto } from "@/types/user";
 import ManagerProfileStatisticSection from "./ManagerProfileStatisticSection";
 import ProfileSection from "./ProfileSection";
 import ManagerProfileShopsSection from "./ManagerProfileShopsSections";
-import ManagerProfileOrderSection from "./ManagerProfileOrderSection";
+import ManagerProfileSessionSection from "./ManagerProfileOrderSection";
 import { Tour } from "@/types";
 import { TourSessionDto } from "@/types/tourSession";
 
@@ -131,7 +131,10 @@ export default function ManagerProfilePage({
         />
 
         {/* ✅ Sessions section (replaces orderitems section) */}
-        <ManagerProfileOrderSection sessions={managerSessions} tours={tours} />
+        <ManagerProfileSessionSection
+          sessions={managerSessions}
+          tours={tours}
+        />
 
         <ManagerProfileShopsSection shops={shops} loading={loading} />
 

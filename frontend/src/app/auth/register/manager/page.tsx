@@ -132,8 +132,8 @@ export default function ManagerRegisterPage() {
   return (
     <div className="bg-base-100 min-h-screen">
       <div className="flex justify-center pt-20">
-        <div className="card w-full max-w-lg shadow-lg bg-base-100 p-6">
-          <h2 className="text-2xl font-bold mb-4">Manager Register</h2>
+        <div className="card w-full max-w-lg shadow-lg bg-base-100 p-6 rounded-xl border border-base-300 space-y-8">
+          <h2 className="text-2xl font-bold mb-4 sm:mb-6">Manager Register</h2>
 
           {errors.general && (
             <div className="alert alert-error mb-4 text-sm">
@@ -302,7 +302,7 @@ export default function ManagerRegisterPage() {
             </button>
           </form>
 
-          <div className="mt-4 flex justify-between text-sm">
+          <div className="mt-2 flex justify-between text-sm">
             <button
               className="link link-primary"
               onClick={() => router.push("/auth/register/user")}

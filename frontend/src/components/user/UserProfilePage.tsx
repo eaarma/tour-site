@@ -14,7 +14,7 @@ export default function UserProfilePage({
   setProfile,
 }: UserProfilePageProps) {
   return (
-    <div className="bg-base-200 min-h-screen p-6">
+    <div className="bg-base-100 min-h-screen p-6">
       <div className="max-w-5xl mx-auto flex flex-col gap-8">
         <UserProfileInfoSection profile={profile} setProfile={setProfile} />
         <UserProfileOrdersSection profile={profile} />

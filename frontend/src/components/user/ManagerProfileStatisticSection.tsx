@@ -26,54 +26,47 @@ export default function ManagerProfileStatisticSection({
   totalParticipants,
 }: Props) {
   return (
-    <div className="card bg-base-100 shadow-lg p-5">
-      <h2 className="text-2xl font-bold mb-5">Statistics</h2>
+    <section>
+      <h2 className="text-2xl font-bold mb-4">Statistics</h2>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        {/* Shops */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <Stat
           icon={<Briefcase className="w-5 h-5" />}
-          title="Member of"
+          title="Member of Shops"
           value={shopsCount}
-          subtitle="Shops"
         />
 
-        {/* Tours Given */}
         <Stat
           icon={<CheckCircle className="w-5 h-5 text-success" />}
           title="Tours Given"
           value={toursGiven}
         />
 
-        {/* Upcoming */}
         <Stat
           icon={<CalendarClock className="w-5 h-5 text-primary" />}
           title="Upcoming Tours"
           value={upcomingTours}
         />
 
-        {/* Total Sessions */}
         <Stat
           icon={<ClipboardList className="w-5 h-5" />}
           title="Total Sessions"
           value={totalSessions}
         />
 
-        {/* Orders */}
         <Stat
           icon={<ClipboardList className="w-5 h-5" />}
           title="Total Orders"
           value={totalOrders}
         />
 
-        {/* Participants */}
         <Stat
           icon={<Users className="w-5 h-5" />}
           title="Participants Guided"
           value={totalParticipants}
         />
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -81,21 +74,20 @@ function Stat({
   icon,
   title,
   value,
-  subtitle,
 }: {
   icon: React.ReactNode;
   title: string;
   value: number;
-  subtitle?: string;
 }) {
   return (
-    <div className="bg-base-100 rounded-lg p-4 text-center flex flex-col items-center gap-1">
-      <div className="flex items-center gap-2 text-gray-600">
-        {icon}
-        <span className="text-sm">{title}</span>
+    <div className="rounded-xl border border-base-300 bg-base-100 shadow-sm p-2 space-y-8">
+      <div className="card-body p-4 flex-row items-center justify-between">
+        <div>
+          <h3 className="text-sm text-gray-600 mb-1">{title}</h3>
+          <p className="text-2xl font-bold">{value}</p>
+        </div>
+        <div className="text-gray-500">{icon}</div>
       </div>
-      <div className="text-2xl font-semibold">{value}</div>
-      {subtitle && <div className="text-xs text-gray-500">{subtitle}</div>}
     </div>
   );
 }

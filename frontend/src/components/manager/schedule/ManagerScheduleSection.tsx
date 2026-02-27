@@ -61,6 +61,13 @@ export default function ManagerScheduleSection({
     loadSchedules();
   }, [shopId]);
 
+  //Default “From” date = today (first navigation)
+  useEffect(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    setFromDate(today);
+  }, []);
+
   const uniqueTours = Array.from(
     new Map(schedules.map((s) => [s.tourId, s.tourTitle])).entries(),
   )

@@ -62,6 +62,29 @@ export default function SessionDetailsModal({
     setSessionData(session);
   }, [session]);
 
+  // ==============================
+  // Session Finance Calculation
+  // ==============================
+  const finance = useMemo(() => {
+    const gross = paidParticipants.reduce(
+      (sum, item) => sum + (item.pricePaid ?? 0),
+      0,
+    );
+
+    const fee = gross * 0.1;
+    const payout = gross - fee;
+
+    const isProjected =
+      session.status === "PLANNED" || session.status === "CONFIRMED";
+
+    return {
+      gross,
+      fee,
+      payout,
+      label: isProjected ? "Projected income" : "Session income",
+    };
+  }, [paidParticipants, session.status]);
+
   return (
     <>
       <Modal isOpen={true} onClose={onClose}>
@@ -144,6 +167,45 @@ export default function SessionDetailsModal({
               <div className="flex items-center gap-2 text-base font-semibold text-foreground">
                 <Pin className="w-4 h-4 text-primary" />
                 {sessionData.tourMeetingPoint ?? "Not specified"}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ================= FINANCIAL SUMMARY ================= */}
+        <div className="rounded-xl border border-base-300 bg-base-100 p-4 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            {/* Label */}
+            <div className="text-sm text-muted-foreground font-medium">
+              {finance.label}
+            </div>
+
+            {/* Financial Numbers */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:gap-8 text-sm">
+              {/* Gross */}
+              <div className="flex justify-between sm:flex-col sm:items-end">
+                <span className="text-xs text-muted-foreground">Gross</span>
+                <span className="font-semibold">
+                  €{finance.gross.toFixed(2)}
+                </span>
+              </div>
+
+              {/* Platform Fee */}
+              <div className="flex justify-between sm:flex-col sm:items-end">
+                <span className="text-xs text-muted-foreground">
+                  Platform fee (10%)
+                </span>
+                <span className="font-semibold text-red-500">
+                  €{finance.fee.toFixed(2)}
+                </span>
+              </div>
+
+              {/* Payout */}
+              <div className="flex justify-between sm:flex-col sm:items-end">
+                <span className="text-xs text-muted-foreground">Payout</span>
+                <span className="font-semibold text-green-600">
+                  €{finance.payout.toFixed(2)}
+                </span>
               </div>
             </div>
           </div>

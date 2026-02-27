@@ -91,6 +91,7 @@ export interface OrderItemCardDto {
   pricePaid: number;
   managerId?: string;
   managerName?: string;
+  createdAt: string;
 }
 
 export interface OrderDetailsModalDto {

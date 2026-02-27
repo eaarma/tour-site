@@ -273,7 +273,7 @@ export default function PaymentPage() {
   // -------- Render --------
 
   return (
-    <div className="min-h-screen bg-base-200 p-6">
+    <div className="min-h-screen bg-base-100 p-6">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-6">
         {/* Left Column */}
         <div className="flex-1 space-y-6">

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import CardFrame from "@/components/common/CardFrame";
 import { UserResponseDto } from "@/types/user";
-import { Edit } from "lucide-react";
+import { Edit, User, Mail, Phone, Globe } from "lucide-react";
 import UserEditProfileModal from "./UserEditProfileModal";
 
 interface UserProfileInfoSectionProps {
@@ -19,47 +19,63 @@ export default function UserProfileInfoSection({
 
   return (
     <CardFrame>
-      <div className="p-6 relative">
-        {/* ✅ Edit button */}
-        <button
-          className="btn btn-sm btn-outline absolute top-4 right-4 flex items-center gap-1"
-          onClick={() => setIsEditProfileModalOpen(true)}
-        >
-          <Edit className="w-4 h-4" />
-          Edit
-        </button>
+      <div className="p-6 space-y-6 relative">
+        {/* Header */}
+        <div className="flex justify-between items-start">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Your Profile</h2>
+            <p className="text-sm text-muted-foreground">
+              Manage your personal information.
+            </p>
+          </div>
 
-        <h2 className="text-2xl font-bold mb-4">Your Profile</h2>
+          <button
+            className="btn btn-sm btn-outline flex items-center gap-1"
+            onClick={() => setIsEditProfileModalOpen(true)}
+          >
+            <Edit className="w-4 h-4" />
+            Edit
+          </button>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <p className="font-semibold">Name</p>
-            <p>{profile.name || "—"}</p>
-          </div>
-          <div>
-            <p className="font-semibold">Email</p>
-            <p>{profile.email}</p>
-          </div>
-          <div>
-            <p className="font-semibold">Phone</p>
-            <p>{profile.phone || "—"}</p>
-          </div>
-          <div>
-            <p className="font-semibold">Nationality</p>
-            <p>{profile.nationality || "—"}</p>
-          </div>
-          <div className="md:col-span-2">
-            <p className="font-semibold">Member Since</p>
-            <p>
+        {/* Profile Header Block */}
+        <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
+          <div className="text-center sm:text-left">
+            <h3 className="text-xl font-semibold">{profile.name}</h3>
+            <p className="text-sm text-muted-foreground">
+              Member since{" "}
               {profile.createdAt
                 ? new Date(profile.createdAt).toLocaleDateString("en-GB")
                 : "—"}
             </p>
           </div>
         </div>
+
+        {/* Divider */}
+        <div className="border-t border-base-300" />
+
+        {/* Info Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <InfoRow
+            icon={<Mail className="w-4 h-4" />}
+            label="Email"
+            value={profile.email}
+          />
+
+          <InfoRow
+            icon={<Phone className="w-4 h-4" />}
+            label="Phone"
+            value={profile.phone || "Not provided"}
+          />
+
+          <InfoRow
+            icon={<Globe className="w-4 h-4" />}
+            label="Nationality"
+            value={profile.nationality || "Not specified"}
+          />
+        </div>
       </div>
 
-      {/* ✅ Edit Profile Modal */}
       <UserEditProfileModal
         isOpen={isEditProfileModalOpen}
         onClose={() => setIsEditProfileModalOpen(false)}
@@ -67,5 +83,27 @@ export default function UserProfileInfoSection({
         setProfile={setProfile}
       />
     </CardFrame>
+  );
+}
+
+function InfoRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="text-muted-foreground mt-1">{icon}</div>
+      <div>
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+          {label}
+        </p>
+        <p className="text-sm font-medium text-foreground">{value}</p>
+      </div>
+    </div>
   );
 }

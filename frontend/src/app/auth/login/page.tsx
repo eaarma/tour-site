@@ -107,7 +107,7 @@ export default function LoginPage() {
   return (
     <div className="flex flex-col items-center justify-start min-h-screen pt-24 px-4">
       <div className="w-full max-w-md space-y-8">
-        <div className="card shadow-lg bg-base-100 p-8">
+        <div className="card bg-base-100 p-8 rounded-xl border border-base-300 shadow-lg">
           <h2 className="text-2xl font-bold mb-4">User Login</h2>
           <form onSubmit={handleLogin} className="flex flex-col gap-4">
             <input

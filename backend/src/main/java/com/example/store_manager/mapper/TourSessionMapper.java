@@ -48,6 +48,8 @@ public class TourSessionMapper {
                                 .managerName(session.getManager() != null
                                                 ? session.getManager().getName()
                                                 : null)
+                                .managerEmail(session.getManager() != null ? session.getManager().getEmail() : null)
+                                .managerRole(session.getManager() != null ? session.getManager().getRole() : null)
                                 .participants(
                                                 session.getOrderItems()
                                                                 .stream()

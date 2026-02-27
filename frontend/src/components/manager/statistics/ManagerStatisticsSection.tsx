@@ -79,7 +79,7 @@ function Stat({
   value: number;
 }) {
   return (
-    <div className="card bg-base-100 shadow-md">
+    <div className="rounded-xl border border-base-300 bg-base-100 shadow-sm p-2 space-y-8">
       <div className="card-body p-4 flex-row items-center justify-between">
         <div>
           <h3 className="text-sm text-gray-600 mb-1">{title}</h3>

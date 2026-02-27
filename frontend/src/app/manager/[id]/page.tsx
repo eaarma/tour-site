@@ -37,7 +37,7 @@ export default function PublicManagerProfilePage() {
     )}&background=random`;
 
   return (
-    <div className="bg-base-200 min-h-screen p-6">
+    <div className="bg-base-100 min-h-screen p-6">
       <div className="max-w-3xl mx-auto">
         <BackButton />
         <CardFrame>

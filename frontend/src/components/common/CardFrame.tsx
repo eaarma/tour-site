@@ -7,7 +7,10 @@ interface CardFrameProps {
 
 const CardFrame: React.FC<CardFrameProps> = ({ children, idx }) => {
   return (
-    <div key={idx} className="card bg-base-100 shadow rounded-lg">
+    <div
+      key={idx}
+      className="card bg-base-100 shadow rounded-xl border border-base-300 space-y-8"
+    >
       {children}
     </div>
   );

@@ -31,17 +31,18 @@ interface Props {
   tours: Tour[];
 }
 
-export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
+export default function ManagerProfileSessionSection({
+  sessions,
+  tours,
+}: Props) {
   const [activeTab, setActiveTab] = useState<"current" | "past">("current");
 
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
-
   const [sortBy, setSortBy] = useState<"DATE" | "STATUS">("DATE");
   const [statusFilter, setStatusFilter] = useState<TourSessionDto["status"][]>(
     [],
   );
-
   const [statusFilterOpen, setStatusFilterOpen] = useState(false);
   const statusFilterRef = useRef<HTMLDivElement | null>(null);
 
@@ -50,51 +51,45 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
     null,
   );
 
-  type OrderSort = "DATE" | "STATUS";
+  const hasDateFilter = Boolean(fromDate || toDate);
 
-  // default From = today
-  useEffect(() => {
+  /*  useEffect(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     setFromDate(today);
-  }, []);
+  }, []); */
 
   useEffect(() => {
     setSessionList(sessions);
   }, [sessions]);
 
-  // close status dropdown on outside click
   useEffect(() => {
     if (!statusFilterOpen) return;
 
     const onPointerDown = (e: PointerEvent) => {
       const el = statusFilterRef.current;
-      if (!el) return;
-      if (!el.contains(e.target as Node)) setStatusFilterOpen(false);
+      if (!el?.contains(e.target as Node)) {
+        setStatusFilterOpen(false);
+      }
     };
 
     window.addEventListener("pointerdown", onPointerDown);
     return () => window.removeEventListener("pointerdown", onPointerDown);
   }, [statusFilterOpen]);
 
-  const hasDateFilter = Boolean(fromDate || toDate);
-
   const handleConfirmSession = async (sessionId: number) => {
     await TourSessionService.updateStatus(sessionId, "CONFIRMED");
     toast.success("Session confirmed");
 
-    // update local immediately (no reload required)
     setSessionList((prev) =>
       prev.map((s) => (s.id === sessionId ? { ...s, status: "CONFIRMED" } : s)),
     );
   };
 
-  // If you want profile page to allow “complete” from modal/card:
   const handleCompleteSession = async (sessionId: number) => {
     await TourSessionService.updateStatus(sessionId, "COMPLETED");
     toast.success("Session marked as completed");
 
-    // update local immediately (no reload required)
     setSessionList((prev) =>
       prev.map((s) => (s.id === sessionId ? { ...s, status: "COMPLETED" } : s)),
     );
@@ -106,9 +101,10 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
     );
   };
 
-  // ----------------------------
+  // ============================
   // Filtering
-  // ----------------------------
+  // ============================
+
   let filtered = [...sessionList];
 
   filtered = filtered.filter((s) =>
@@ -133,7 +129,6 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
     filtered = filtered.filter((s) => new Date(`${s.date}T${s.time}`) <= end);
   }
 
-  // Sorting
   if (sortBy === "DATE") {
     filtered.sort(
       (a, b) =>
@@ -145,35 +140,49 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
   }
 
   return (
-    <section className="mb-2">
-      <div className="sm:p-2">
-        <h2 className="text-2xl font-bold mb-4">Your Sessions</h2>
+    <div className="space-y-6">
+      {/* HEADER */}
+      <div>
+        <h2 className="text-xl font-semibold text-foreground">Your Sessions</h2>
+        <p className="text-sm text-muted-foreground">
+          Monitor and manage your assigned sessions.
+        </p>
+      </div>
 
-        {/* Tabs */}
-        <div role="tablist" className="tabs tabs-boxed mb-3">
-          <button
-            className={`tab ${activeTab === "current" ? "tab-active" : ""}`}
-            onClick={() => setActiveTab("current")}
-          >
-            Current
-          </button>
-          <button
-            className={`tab ${activeTab === "past" ? "tab-active" : ""}`}
-            onClick={() => setActiveTab("past")}
-          >
-            Past
-          </button>
-        </div>
+      {/* TAB TOGGLE */}
+      <div className="inline-flex rounded-xl border border-base-300 bg-base-100 p-1">
+        <button
+          onClick={() => setActiveTab("current")}
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+            activeTab === "current"
+              ? "bg-primary text-white shadow-sm"
+              : "text-muted-foreground hover:text-primary"
+          }`}
+        >
+          Current
+        </button>
 
-        {/* Date pickers */}
-        <div className="flex items-end gap-3 mt-2">
+        <button
+          onClick={() => setActiveTab("past")}
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+            activeTab === "past"
+              ? "bg-primary text-white shadow-sm"
+              : "text-muted-foreground hover:text-primary"
+          }`}
+        >
+          Past
+        </button>
+      </div>
+
+      {/* FILTERS */}
+      <div className="rounded-xl border border-base-300 bg-base-100 p-4 shadow-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
           {/* From */}
-          <div className="flex flex-col gap-1 w-40 md:w-44">
-            <span className="text-xs text-gray-500">From</span>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">From</span>
             <DatePicker
               selected={fromDate}
               onChange={(d) => setFromDate(d)}
-              dateFormat="yyyy-MM-dd"
               customInput={
                 <CustomDateInput
                   value={fromDate ? fromDate.toLocaleDateString("en-GB") : ""}
@@ -183,12 +192,12 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
             />
           </div>
 
-          <div className="flex flex-col gap-1 w-40 md:w-44">
-            <span className="text-xs text-gray-500">To</span>
+          {/* To */}
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">To</span>
             <DatePicker
               selected={toDate}
               onChange={(d) => setToDate(d)}
-              dateFormat="yyyy-MM-dd"
               customInput={
                 <CustomDateInput
                   value={toDate ? toDate.toLocaleDateString("en-GB") : ""}
@@ -198,34 +207,25 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
             />
           </div>
 
-          <button
-            className="btn btn-outline px-3 text-sm"
-            disabled={!hasDateFilter}
-            onClick={() => {
-              setFromDate(null);
-              setToDate(null);
-            }}
-          >
-            Clear dates
-          </button>
-        </div>
-
-        {/* Sort + Filter */}
-        <div className="flex gap-4 mt-3 mb-4">
-          <div className="flex-1 sm:flex-none">
+          {/* Sort */}
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-muted-foreground">Sort</label>
             <select
-              className="select select-bordered select-sm w-full sm:w-auto"
+              className="select select-sm select-bordered"
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as OrderSort)}
+              onChange={(e) => setSortBy(e.target.value as "DATE" | "STATUS")}
             >
               <option value="DATE">Sort by date</option>
               <option value="STATUS">Sort by status</option>
             </select>
           </div>
 
-          <div className="relative flex-1 sm:flex-none" ref={statusFilterRef}>
+          {/* Status filter */}
+          <div className="relative flex flex-col gap-1" ref={statusFilterRef}>
+            <label className="text-xs text-muted-foreground">Status</label>
+
             <button
-              className="btn btn-sm btn-outline min-w-[180px] justify-between"
+              className="btn btn-sm btn-outline justify-between"
               onClick={() => setStatusFilterOpen((v) => !v)}
             >
               {statusFilter.length === 0
@@ -234,7 +234,7 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
             </button>
 
             {statusFilterOpen && (
-              <div className="absolute left-0 mt-2 w-52 bg-base-100 border shadow-md rounded-lg z-30 p-2">
+              <div className="absolute left-0 top-full mt-2 w-full bg-base-100 border border-base-300 rounded-xl shadow-md z-30 p-2">
                 {ALL_STATUSES.map((st) => {
                   const checked = statusFilter.includes(st);
                   return (
@@ -261,12 +261,33 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
               </div>
             )}
           </div>
-        </div>
 
-        {/* List */}
-        <div className="space-y-3 overflow-y-auto pr-2">
-          {filtered.length > 0 ? (
-            filtered.map((session) => (
+          {/* Clear */}
+          <div className="flex items-end">
+            <button
+              className="btn btn-sm btn-outline w-full"
+              disabled={!hasDateFilter && statusFilter.length === 0}
+              onClick={() => {
+                setFromDate(null);
+                setToDate(null);
+                setStatusFilter([]);
+              }}
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* LIST */}
+      <div>
+        {filtered.length === 0 ? (
+          <div className="rounded-xl border border-base-300 bg-base-100 p-8 text-center">
+            <p className="text-muted-foreground">No sessions to display.</p>
+          </div>
+        ) : (
+          <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+            {filtered.map((session) => (
               <SessionCard
                 key={session.id}
                 session={session}
@@ -275,25 +296,21 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
                 onConfirmSession={handleConfirmSession}
                 onCompleteSession={handleCompleteSession}
               />
-            ))
-          ) : (
-            <p className="text-sm text-gray-500 mb-4 mt-4 text-center">
-              No sessions to display.
-            </p>
-          )}
-        </div>
-
-        {/* Modal */}
-        {selectedSessionId && (
-          <SessionDetailsModal
-            session={sessionList.find((s) => s.id === selectedSessionId)!}
-            onClose={() => setSelectedSessionId(null)}
-            onConfirmSession={() => {}}
-            onCompleteSession={handleCompleteSession}
-            onSessionUpdated={handleSessionUpdated}
-          />
+            ))}
+          </div>
         )}
       </div>
-    </section>
+
+      {/* MODAL */}
+      {selectedSessionId && (
+        <SessionDetailsModal
+          session={sessionList.find((s) => s.id === selectedSessionId)!}
+          onClose={() => setSelectedSessionId(null)}
+          onConfirmSession={handleConfirmSession}
+          onCompleteSession={handleCompleteSession}
+          onSessionUpdated={handleSessionUpdated}
+        />
+      )}
+    </div>
   );
 }

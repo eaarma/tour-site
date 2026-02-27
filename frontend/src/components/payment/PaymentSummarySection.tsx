@@ -34,7 +34,7 @@ export default function PaymentSummarySection({
   }, 0);
 
   return (
-    <div className="bg-base-100 p-6 rounded-lg shadow-md w-full max-w-2xl">
+    <div className="bg-base-100 p-6 shadow-md w-full max-w-2xl rounded-xl border border-base-300 space-y-8">
       <h2 className="text-2xl font-semibold mb-6">Order Summary</h2>
 
       {items.length === 0 && (

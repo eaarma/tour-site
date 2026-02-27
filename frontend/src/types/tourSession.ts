@@ -35,7 +35,7 @@ export interface TourSessionDto {
   tourMeetingPoint: string;
   shopId: number;
 
-  maxParticipants: number; // ✅ renamed
+  maxParticipants: number;
   bookedParticipants: number;
   remaining: number;
   tourImages?: string[];
@@ -50,4 +50,6 @@ export interface TourSessionDto {
     | "CANCELLED_CONFIRMED";
   managerId: string | undefined;
   managerName: string | undefined;
+  managerEmail: string;
+  managerRole: string;
 }

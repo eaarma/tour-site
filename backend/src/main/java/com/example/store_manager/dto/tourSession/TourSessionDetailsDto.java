@@ -6,12 +6,14 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
 import com.example.store_manager.dto.order.OrderItemResponseDto;
+import com.example.store_manager.model.Role;
 import com.example.store_manager.model.SessionStatus;
 
 @Data
@@ -41,6 +43,8 @@ public class TourSessionDetailsDto {
     // Manager
     private UUID managerId;
     private String managerName;
+    private String managerEmail;
+    private Role managerRole;
 
     // Bookings
     private List<OrderItemResponseDto> participants;

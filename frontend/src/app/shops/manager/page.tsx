@@ -15,6 +15,7 @@ import {
   CreditCard,
   Navigation,
   Package,
+  Users,
 } from "lucide-react";
 
 import { TourSessionDto } from "@/types/tourSession";
@@ -23,6 +24,7 @@ import ShopManagerPaymentSection from "@/components/manager/payment/ShopManagerP
 import ManagerSessionSection from "@/components/manager/session/ManagerSessionSection";
 import ManagerScheduleSection from "@/components/manager/schedule/ManagerScheduleSection";
 import ManagerOrderSection from "@/components/manager/order/ManagerOrderSection";
+import ManagerAssignmentSection from "@/components/manager/assignment/ManagerAssignmentSection";
 
 export default function ShopManagerPage() {
   const router = useRouter();
@@ -38,7 +40,7 @@ export default function ShopManagerPage() {
   const [sessions, setSessions] = useState<TourSessionDto[]>([]);
 
   const [activeTab, setActiveTab] = useState<
-    "sessions" | "tours" | "payments" | "orders" | "schedules"
+    "sessions" | "tours" | "payments" | "orders" | "schedules" | "assignments"
   >("sessions");
 
   const [stats, setStats] = useState({
@@ -299,6 +301,31 @@ export default function ShopManagerPage() {
                   Payments
                 </span>
               </button>
+
+              {/* Performance */}
+              <button
+                onClick={() => setActiveTab("assignments")}
+                className={`
+    flex items-center justify-center sm:justify-start
+    gap-2
+    py-2 px-2 sm:px-3
+    text-sm sm:text-[1.05rem]
+    font-semibold tracking-wide
+    transition-all
+    ${
+      activeTab === "assignments"
+        ? "text-primary border-b-2 border-primary"
+        : "text-gray-600 hover:text-primary/80"
+    }
+  `}
+              >
+                <Users className="w-5 h-5" strokeWidth={2.25} />
+                <span
+                  className={`${activeTab === "assignments" ? "inline" : "hidden"} sm:inline`}
+                >
+                  Assignments
+                </span>
+              </button>
             </div>
           </div>
         </div>
@@ -324,6 +351,14 @@ export default function ShopManagerPage() {
 
         {activeTab === "payments" && (
           <ShopManagerPaymentSection shopId={shopId} />
+        )}
+
+        {activeTab === "assignments" && (
+          <ManagerAssignmentSection
+            sessions={sessions}
+            tours={tours}
+            shopId={shopId}
+          />
         )}
       </div>
     </div>

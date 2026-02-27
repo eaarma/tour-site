@@ -16,7 +16,7 @@ export default function PaymentTotalSection({
   const total = subtotal + tax;
 
   return (
-    <div className="bg-base-100 p-6 rounded-lg shadow-lg w-full max-w-sm">
+    <div className="bg-base-100 p-6 shadow-lg w-full max-w-sm rounded-xl border border-base-300 space-y-8">
       <h2 className="text-2xl font-semibold mb-4">Order Total</h2>
 
       <div className="space-y-2 mb-4">
