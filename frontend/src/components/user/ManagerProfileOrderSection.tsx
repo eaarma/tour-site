@@ -287,11 +287,6 @@ export default function ManagerProfileOrderSection({ sessions, tours }: Props) {
         {selectedSessionId && (
           <SessionDetailsModal
             session={sessionList.find((s) => s.id === selectedSessionId)!}
-            tour={tours.find(
-              (t) =>
-                t.id ===
-                sessionList.find((s) => s.id === selectedSessionId)!.tourId,
-            )}
             onClose={() => setSelectedSessionId(null)}
             onConfirmSession={() => {}}
             onCompleteSession={handleCompleteSession}

@@ -9,7 +9,7 @@ export interface TourScheduleResponseDto {
   tourId: number;
   date: string;
   time?: string;
-  tourTitle?: string;
+  tourTitle: string;
   maxParticipants: number;
   bookedParticipants: number;
   reservedParticipants: number;
