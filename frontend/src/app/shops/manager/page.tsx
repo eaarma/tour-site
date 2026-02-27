@@ -354,11 +354,7 @@ export default function ShopManagerPage() {
         )}
 
         {activeTab === "assignments" && (
-          <ManagerAssignmentSection
-            sessions={sessions}
-            tours={tours}
-            shopId={shopId}
-          />
+          <ManagerAssignmentSection shopId={shopId} />
         )}
       </div>
     </div>
