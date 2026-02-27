@@ -22,5 +22,3 @@ export interface CartItem {
   preferredLanguage?: string;
   comment?: string;
 }
-
-type TourType = "PUBLIC" | "PRIVATE";
