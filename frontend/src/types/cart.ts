@@ -16,7 +16,7 @@ export interface CartItem {
   selectedDate: string;
   selectedTime: string;
   selected: boolean;
-  type: TourType;
+  type: string;
   images?: string[];
   availableLanguages?: string[];
   preferredLanguage?: string;
