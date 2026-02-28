@@ -36,4 +36,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         """)
         Optional<Order> findByIdWithItems(@Param("id") Long id);
 
+        boolean existsByCancellationTokenHash(String hash);
+
 }

@@ -20,3 +20,6 @@ jwt:
 security:
   booking-token:
     pepper: test-pepper
+
+app:
+  frontend-base-url: http://localhost:3000

@@ -4,6 +4,7 @@ import java.time.format.DateTimeFormatter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -22,11 +23,15 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+    @Value("${app.frontend-base-url}")
+    private String frontendBaseUrl;
 
     public void sendOrderConfirmation(Order order, String manageToken) {
         OrderItem firstItem = order.getOrderItems().stream()
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Order has no items"));
+
+        String manageUrl = frontendBaseUrl + "/booking/manage?token=" + manageToken;
 
         String to = firstItem.getEmail();
 
@@ -36,8 +41,7 @@ public class EmailService {
         }
 
         String subject = "Order Confirmation #" + order.getId();
-        String html = buildHtml(order, firstItem);
-
+        String html = buildHtml(order, firstItem, manageUrl);
         MimeMessage message = mailSender.createMimeMessage();
 
         try {
@@ -54,8 +58,7 @@ public class EmailService {
         }
     }
 
-    private String buildHtml(Order order, OrderItem firstItem) {
-
+    private String buildHtml(Order order, OrderItem firstItem, String manageUrl) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE, dd MMM yyyy HH:mm");
 
         String itemsHtml = order.getOrderItems().stream()
@@ -98,77 +101,95 @@ public class EmailService {
                 .reduce("", String::concat);
 
         return """
-                <html>
-                <body style="margin:0; padding:0; background-color:#f3f4f6; font-family:Arial, sans-serif;">
-                    <table width="100%%" cellpadding="0" cellspacing="0">
-                        <tr>
-                            <td align="center">
-                                <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; padding:30px; border-radius:8px;">
+                                <html>
+                                <body style="margin:0; padding:0; background-color:#f3f4f6; font-family:Arial, sans-serif;">
+                                    <table width="100%%" cellpadding="0" cellspacing="0">
+                                        <tr>
+                                            <td align="center">
+                                                <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; padding:30px; border-radius:8px;">
 
-                                    <!-- Header -->
-                                    <tr>
-                                        <td align="center" style="padding-bottom:20px;">
-                                            <h2 style="margin:0; color:#16a34a;">
-                                                Order Confirmation #%d
-                                            </h2>
-                                        </td>
-                                    </tr>
+                                                    <!-- Header -->
+                                                    <tr>
+                                                        <td align="center" style="padding-bottom:20px;">
+                                                            <h2 style="margin:0; color:#16a34a;">
+                                                                Order Confirmation #%d
+                                                            </h2>
+                                                        </td>
+                                                    </tr>
 
-                                    <!-- Greeting -->
-                                    <tr>
-                                        <td style="padding-bottom:20px; font-size:14px; color:#374151;">
-                                            Hi <strong>%s</strong>,<br/><br/>
-                                            Thank you for your booking! Your experience has been confirmed.
-                                        </td>
-                                    </tr>
+                                                    <!-- Greeting -->
+                                                    <tr>
+                                                        <td style="padding-bottom:20px; font-size:14px; color:#374151;">
+                                                            Hi <strong>%s</strong>,<br/><br/>
+                                                            Thank you for your booking! Your experience has been confirmed.
+                                                        </td>
+                                                    </tr>
 
-                                    <!-- Items -->
-                                    %s
+                                                    <!-- Items -->
+                                                    %s
 
-                                    <!-- Payment Summary -->
-                                    <tr>
-                                        <td style="padding-top:25px;">
-                                            <table width="100%%" cellpadding="0" cellspacing="0" style="background:#f9fafb; padding:15px; border-radius:6px;">
-                                                <tr>
-                                                    <td style="font-size:14px;">
-                                                        <strong>Total Paid:</strong>
-                                                    </td>
-                                                    <td align="right" style="font-size:14px; font-weight:bold;">
-                                                        €%.2f
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td style="font-size:14px;">
-                                                        <strong>Payment Method:</strong>
-                                                    </td>
-                                                    <td align="right" style="font-size:14px;">
-                                                        %s
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
+                                                    <!-- Payment Summary -->
+                                                    <tr>
+                                                        <td style="padding-top:25px;">
+                                                            <table width="100%%" cellpadding="0" cellspacing="0" style="background:#f9fafb; padding:15px; border-radius:6px;">
+                                                                <tr>
+                                                                    <td style="font-size:14px;">
+                                                                        <strong>Total Paid:</strong>
+                                                                    </td>
+                                                                    <td align="right" style="font-size:14px; font-weight:bold;">
+                                                                        €%.2f
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td style="font-size:14px;">
+                                                                        <strong>Payment Method:</strong>
+                                                                    </td>
+                                                                    <td align="right" style="font-size:14px;">
+                                                                        %s
+                                                                    </td>
+                                                                </tr>
+                                                            </table>
+                                                        </td>
+                                                    </tr>
 
-                                    <!-- Footer -->
-                                    <tr>
-                                        <td style="padding-top:30px; font-size:13px; color:#6b7280; text-align:center;">
-                                            We look forward to welcoming you!<br/>
-                                            If you have any questions, simply reply to this email.
-                                        </td>
-                                    </tr>
+                                                    <!-- Manage Booking -->
+                <tr>
+                    <td align="center" style="padding-top:30px;">
+                        <a href="%s"
+                           style="background-color:#16a34a;
+                                  color:#ffffff;
+                                  text-decoration:none;
+                                  padding:12px 24px;
+                                  border-radius:6px;
+                                  display:inline-block;
+                                  font-weight:bold;
+                                  font-size:14px;">
+                            Manage Booking
+                        </a>
+                    </td>
+                </tr>
 
-                                </table>
-                            </td>
-                        </tr>
-                    </table>
-                </body>
-                </html>
-                """
+                                                    <!-- Footer -->
+                                                    <tr>
+                                                        <td style="padding-top:30px; font-size:13px; color:#6b7280; text-align:center;">
+                                                            We look forward to welcoming you!<br/>
+                                                            If you have any questions, simply reply to this email.
+                                                        </td>
+                                                    </tr>
+
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </body>
+                                </html>
+                                """
                 .formatted(
                         order.getId(),
                         firstItem.getName(),
                         itemsHtml,
                         order.getTotalPrice(),
-                        order.getPaymentMethod() != null ? order.getPaymentMethod() : "Online Payment");
+                        order.getPaymentMethod() != null ? order.getPaymentMethod() : "Online Payment",
+                        manageUrl);
     }
 }

@@ -59,6 +59,7 @@ public class SecurityConfig {
                         .requestMatchers("/checkout/stripe/**").permitAll()
                         .requestMatchers("/stripe/webhook").permitAll()
                         .requestMatchers(HttpMethod.GET, "/payments/order/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/public/orders/manage").permitAll()
 
                         // Tours
                         .requestMatchers(HttpMethod.GET, "/tours").permitAll()
