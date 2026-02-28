@@ -23,8 +23,7 @@ public class EmailService {
     private final JavaMailSender mailSender;
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
-    public void sendOrderConfirmation(Order order) {
-
+    public void sendOrderConfirmation(Order order, String manageToken) {
         OrderItem firstItem = order.getOrderItems().stream()
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Order has no items"));

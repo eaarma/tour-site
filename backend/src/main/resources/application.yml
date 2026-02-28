@@ -30,6 +30,8 @@ security:
       - http://localhost:3000
       - https://tourhub.space
       - "https://www.tourhub.space"
+  booking-token:
+    pepper: ${BOOKING_TOKEN_PEPPER}
 
 stripe:
   api-key: ${STRIPE_API_KEY}

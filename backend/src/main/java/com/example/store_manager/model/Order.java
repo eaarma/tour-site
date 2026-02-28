@@ -88,4 +88,10 @@ public class Order {
     @Column(name = "reservation_token", unique = true)
     private UUID reservationToken;
 
+    @Column(name = "cancellation_token_hash", length = 64)
+    private String cancellationTokenHash;
+
+    @Column(name = "cancellation_token_expires_at")
+    private Instant cancellationTokenExpiresAt;
+
 }

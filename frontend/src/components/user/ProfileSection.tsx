@@ -68,47 +68,51 @@ export default function ProfileSection({
         {/* ===== CONTACT + DETAILS GRID ===== */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Contact Card */}
-          <div className="rounded-lg border border-base-200 p-4 space-y-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Contact
-            </h3>
+          <div className="rounded-lg border border-base-200 ">
+            <div className="ml-2 p-4 space-y-4">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Contact
+              </h3>
 
-            <InfoRow
-              icon={<Mail className="w-4 h-4" />}
-              label="Email"
-              value={user.email}
-            />
+              <InfoRow
+                icon={<Mail className="w-4 h-4" />}
+                label="Email"
+                value={user.email}
+              />
 
-            <InfoRow
-              icon={<Phone className="w-4 h-4" />}
-              label="Phone"
-              value={user.phone || "Not provided"}
-            />
+              <InfoRow
+                icon={<Phone className="w-4 h-4" />}
+                label="Phone"
+                value={user.phone || "Not provided"}
+              />
 
-            <InfoRow
-              icon={<Globe className="w-4 h-4" />}
-              label="Nationality"
-              value={user.nationality || "-"}
-            />
+              <InfoRow
+                icon={<Globe className="w-4 h-4" />}
+                label="Nationality"
+                value={user.nationality || "-"}
+              />
+            </div>
           </div>
 
           {/* Professional Info Card */}
-          <div className="rounded-lg border border-base-200 p-4 space-y-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Professional
-            </h3>
+          <div className="rounded-lg border border-base-200">
+            <div className="ml-2 p-4 space-y-4">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                Professional
+              </h3>
 
-            <InfoRow
-              icon={<Languages className="w-4 h-4" />}
-              label="Languages"
-              value={user.languages || "-"}
-            />
+              <InfoRow
+                icon={<Languages className="w-4 h-4" />}
+                label="Languages"
+                value={user.languages || "-"}
+              />
 
-            <InfoRow
-              icon={<Award className="w-4 h-4" />}
-              label="Experience"
-              value={formattedExperience}
-            />
+              <InfoRow
+                icon={<Award className="w-4 h-4" />}
+                label="Experience"
+                value={formattedExperience}
+              />
+            </div>
           </div>
         </div>
 

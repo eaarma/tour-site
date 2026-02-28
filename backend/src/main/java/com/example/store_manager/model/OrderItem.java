@@ -122,4 +122,14 @@ public class OrderItem {
     @JoinColumn(name = "schedule_id", nullable = false)
     private TourSchedule schedule;
 
+    @Column(name = "cancelled_at")
+    private Instant cancelledAt;
+
+    @Column(name = "cancellation_reason")
+    private String cancellationReason;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cancelled_by")
+    private CancelledBy cancelledBy;
+
 }
