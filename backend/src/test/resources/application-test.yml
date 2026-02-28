@@ -6,10 +6,9 @@ spring:
 
   flyway:
     enabled: false
-  
+
   stripe:
   webhook-secret: test
-
 
   jpa:
     hibernate:
@@ -17,3 +16,7 @@ spring:
 
 jwt:
   secret: your-super-long-random-secret-at-least-32-bytes
+
+security:
+  booking-token:
+    pepper: test-pepper
