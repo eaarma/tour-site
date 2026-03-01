@@ -69,7 +69,7 @@ export default function ConfirmationPage() {
         </div>
 
         {/* ================= MAIN CARD ================= */}
-        <div className="bg-base-100 shadow-xl rounded-2xl border border-base-300 overflow-hidden">
+        <div className="bg-base-100 shadow-xl rounded-xl border border-base-300 overflow-hidden">
           {/* ================= BOOKINGS ================= */}
           <section className="p-8 border-b border-base-200">
             <h2 className="text-xl font-semibold mb-6">Your Experience</h2>
