@@ -136,3 +136,11 @@ export interface ReservationResponseDto {
   status: "RESERVED";
   reservationToken: string;
 }
+
+export interface CancelBookingResponseDto {
+  orderId: number;
+  orderItemId: number;
+  refundable: boolean;
+  refundAmount: number;
+  newStatus: string;
+}
