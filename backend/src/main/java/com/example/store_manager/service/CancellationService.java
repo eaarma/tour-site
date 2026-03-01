@@ -24,6 +24,7 @@ public class CancellationService {
         private final OrderItemRepository orderItemRepository;
         private final TourScheduleRepository tourScheduleRepository;
         private final PaymentLineRepository paymentLineRepository;
+        private final EmailService emailService;
 
         /**
          * Core cancellation entry point.
@@ -56,8 +57,8 @@ public class CancellationService {
                 // ----------------------------
                 // 2️⃣ Refund eligibility
                 // ----------------------------
-                // boolean refundable = isRefundable(item);
-                boolean refundable = false; // For testing, disable refunds for now
+                boolean refundable = isRefundable(item);
+                // boolean refundable = false; // For testing, disable refunds for now
                 BigDecimal refundAmount = refundable
                                 ? item.getPricePaid()
                                 : BigDecimal.ZERO;
@@ -84,6 +85,11 @@ public class CancellationService {
                 item.setCancelledAt(Instant.now());
                 item.setCancellationReason(reason);
                 item.setCancelledBy(actor);
+
+                emailService.sendCancellationConfirmation(
+                                item,
+                                refundable,
+                                refundAmount);
 
                 updateOrderStatusIfNecessary(item.getOrder());
 
