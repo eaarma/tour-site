@@ -13,7 +13,7 @@ import com.example.store_manager.service.BookingAccessTokenService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/public/orders")
+@RequestMapping("/public/orders")
 @RequiredArgsConstructor
 public class PublicOrderController {
 
