@@ -15,7 +15,7 @@ import com.example.store_manager.utility.ResultResponseMapper;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/shop-users")
+@RequestMapping("/shop-users")
 @RequiredArgsConstructor
 public class ShopUserController {
 
