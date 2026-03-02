@@ -13,6 +13,7 @@ export default function UserRegisterPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [nationality, setNationality] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -36,6 +37,11 @@ export default function UserRegisterPage() {
     }
     if (!nationality.trim()) {
       newErrors.nationality = "Nationality is required.";
+    }
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password.";
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match.";
     }
 
     setErrors(newErrors);
@@ -86,6 +92,12 @@ export default function UserRegisterPage() {
     }
   };
 
+  const passwordsMatch =
+    confirmPassword.length > 0 && password === confirmPassword;
+
+  const passwordsMismatch =
+    confirmPassword.length > 0 && password !== confirmPassword;
+
   return (
     <div className="flex items-start justify-center min-h-screen bg-base-100 pt-24">
       <div className="card w-full max-w-md shadow-lg bg-base-100 p-6 rounded-xl border border-base-300 space-y-8">
@@ -132,6 +144,38 @@ export default function UserRegisterPage() {
             />
             {errors.password && (
               <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+            )}
+          </div>
+
+          <div>
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              className={`input input-bordered w-full ${
+                passwordsMatch
+                  ? "input-success"
+                  : passwordsMismatch
+                    ? "input-error"
+                    : ""
+              }`}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+
+            {passwordsMatch && (
+              <p className="text-green-600 text-sm mt-1">✓ Passwords match</p>
+            )}
+
+            {passwordsMismatch && (
+              <p className="text-red-500 text-sm mt-1">
+                ✗ Passwords do not match
+              </p>
+            )}
+
+            {errors.confirmPassword && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.confirmPassword}
+              </p>
             )}
           </div>
 

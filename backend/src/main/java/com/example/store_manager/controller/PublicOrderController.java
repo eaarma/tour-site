@@ -68,6 +68,7 @@ public class PublicOrderController {
                 Result<CancellationService.CancellationResult> result = cancellationService.cancelOrderItem(
                                 orderItemId,
                                 CancelledBy.GUEST,
+                                req.getReasonType(),
                                 req.getReason());
 
                 if (result.isFail()) {

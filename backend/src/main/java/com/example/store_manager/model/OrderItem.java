@@ -125,7 +125,11 @@ public class OrderItem {
     @Column(name = "cancelled_at")
     private Instant cancelledAt;
 
-    @Column(name = "cancellation_reason")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cancellation_reason_type")
+    private CancellationReasonType cancellationReasonType;
+
+    @Column(name = "cancellation_reason", length = 500)
     private String cancellationReason;
 
     @Enumerated(EnumType.STRING)

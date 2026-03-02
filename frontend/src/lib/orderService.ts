@@ -1,3 +1,4 @@
+import { CancellationReasonType } from "@/types/cancellation";
 import api from "./api/axios";
 import {
   OrderItemResponseDto,
@@ -11,7 +12,7 @@ export const OrderService = {
   // 🔹 Fetch a specific order, filtered by guest or user
   getById: async (
     id: string,
-    isGuest: boolean = false
+    isGuest: boolean = false,
   ): Promise<OrderResponseDto> => {
     const endpoint = isGuest ? `/orders/guest/${id}` : `/orders/${id}`;
     const res = await api.get(endpoint);
@@ -28,7 +29,7 @@ export const OrderService = {
   // 🔹 Create new order (auto-selects endpoint)
   create: async (
     data: OrderCreateRequestDto,
-    isGuest: boolean = false
+    isGuest: boolean = false,
   ): Promise<OrderResponseDto> => {
     const url = isGuest ? `${BASE_URL}/guest` : BASE_URL;
     const res = await api.post(url, data, {
@@ -40,7 +41,7 @@ export const OrderService = {
   // 🔹 Update entire order (rare)
   update: async (
     id: string,
-    data: OrderCreateRequestDto
+    data: OrderCreateRequestDto,
   ): Promise<OrderResponseDto> => {
     const res = await api.put(`${BASE_URL}/${id}`, data, {
       withCredentials: true,
@@ -49,7 +50,9 @@ export const OrderService = {
   },
 
   // 🔹 Fetch a specific order item by ID
-  getShopOrderItemById: async (itemId: number): Promise<OrderItemResponseDto> => {
+  getShopOrderItemById: async (
+    itemId: number,
+  ): Promise<OrderItemResponseDto> => {
     const res = await api.get(`${BASE_URL}/items/${itemId}`, {
       withCredentials: true,
     });
@@ -66,7 +69,7 @@ export const OrderService = {
 
   // 🔹 Fetch order items assigned to a specific manager
   getItemsByManagerId: async (
-    managerId: string
+    managerId: string,
   ): Promise<OrderItemResponseDto[]> => {
     const res = await api.get(`${BASE_URL}/manager/${managerId}/items`, {
       withCredentials: true,
@@ -82,12 +85,12 @@ export const OrderService = {
       | "CANCELLED_CONFIRMED"
       | "CANCELLED"
       | "PENDING"
-      | "COMPLETED"
+      | "COMPLETED",
   ): Promise<OrderItemResponseDto> => {
     const res = await api.patch(
       `${BASE_URL}/items/${itemId}/status`,
       { status },
-      { withCredentials: true }
+      { withCredentials: true },
     );
     return res.data;
   },
@@ -95,12 +98,12 @@ export const OrderService = {
   // 🔹 Assign/reassign to manager
   reassignManager: async (
     itemId: number,
-    managerId: string | null
+    managerId: string | null,
   ): Promise<OrderItemResponseDto> => {
     const res = await api.patch(
       `${BASE_URL}/items/${itemId}/assign`,
       { managerId },
-      { withCredentials: true }
+      { withCredentials: true },
     );
     return res.data;
   },
@@ -108,12 +111,12 @@ export const OrderService = {
   // 🔹 Confirm & assign in one step
   confirmOrderItem: async (
     itemId: number,
-    managerId: string
+    managerId: string,
   ): Promise<OrderItemResponseDto> => {
     const res = await api.patch(
       `${BASE_URL}/items/${itemId}/confirm/${managerId}`,
       {},
-      { withCredentials: true }
+      { withCredentials: true },
     );
     return res.data;
   },
@@ -124,5 +127,17 @@ export const OrderService = {
       withCredentials: true,
     });
     return res.data as OrderItemResponseDto[];
+  },
+
+  cancelOrderItem: async (
+    itemId: number,
+    reasonType: CancellationReasonType,
+    reason?: string,
+  ) => {
+    const res = await api.post(`/orders/items/${itemId}/cancel`, {
+      reasonType,
+      reason,
+    });
+    return res.data;
   },
 };

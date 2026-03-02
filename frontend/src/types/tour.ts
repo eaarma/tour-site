@@ -32,6 +32,7 @@ export interface Tour {
   status: string;
   madeBy: string;
   shopId: number;
+  shopName: string;
 }
 
 export interface TourImage {

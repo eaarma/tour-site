@@ -87,9 +87,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/checkout/finalize").permitAll()
 
                         // Shops & Shop Users
-                        .requestMatchers(HttpMethod.POST, "/api/shops/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/shops/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/shops/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/shop-users/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/shop-users/**").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/api/shops/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/shops/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/shop-users/**").authenticated()
 
                         // Tour Schedules

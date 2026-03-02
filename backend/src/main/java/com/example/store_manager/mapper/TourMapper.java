@@ -16,6 +16,7 @@ public interface TourMapper {
 
     // ✅ ENTITY → DTO (Response)
     @Mapping(target = "shopId", source = "shop.id")
+    @Mapping(target = "shopName", source = "shop.name")
     @Mapping(target = "images", expression = "java(mapImages(tour.getImages()))")
     @Mapping(target = "categories", source = "categories") // ✅ Map directly
     @Mapping(target = "language", source = "language")

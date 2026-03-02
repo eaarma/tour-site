@@ -9,6 +9,8 @@ export interface ShopDto {
   id: number;
   name: string;
   description?: string;
+  createdAt: string; // ISO string
+  shopName?: string; // Optional, for cases where we want to include it in responses
 }
 
 // For user requesting to join a shop

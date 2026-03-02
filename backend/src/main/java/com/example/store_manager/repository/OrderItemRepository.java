@@ -49,4 +49,12 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
                 WHERE oi.id = :id
             """)
     Optional<OrderItem> findByIdWithOrder(@Param("id") Long id);
+
+    @Query("""
+                select oi from OrderItem oi
+                join fetch oi.order o
+                left join fetch o.user
+                where oi.id = :id
+            """)
+    Optional<OrderItem> findByIdWithOrderAndUser(@Param("id") Long id);
 }

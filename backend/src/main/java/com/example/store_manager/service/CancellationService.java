@@ -31,10 +31,12 @@ public class CancellationService {
          * This method is agnostic of how authorization was performed.
          * It only operates on domain state.
          */
+
         @Transactional
         public Result<CancellationResult> cancelOrderItem(
                         Long orderItemId,
                         CancelledBy actor,
+                        CancellationReasonType reasonType,
                         String reason) {
 
                 OrderItem item = orderItemRepository.findById(orderItemId)
@@ -85,6 +87,7 @@ public class CancellationService {
                 item.setCancelledAt(Instant.now());
                 item.setCancellationReason(reason);
                 item.setCancelledBy(actor);
+                item.setCancellationReasonType(reasonType);
 
                 emailService.sendCancellationConfirmation(
                                 item,

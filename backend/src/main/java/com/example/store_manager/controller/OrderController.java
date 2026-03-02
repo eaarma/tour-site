@@ -15,10 +15,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.store_manager.dto.booking.CancelBookingRequestDto;
+import com.example.store_manager.dto.booking.CancelBookingResponseDto;
 import com.example.store_manager.dto.order.OrderCreateRequestDto;
+import com.example.store_manager.dto.order.OrderItemResponseDto;
 import com.example.store_manager.dto.order.OrderResponseDto;
 import com.example.store_manager.dto.order.StatusUpdateRequestDto;
+import com.example.store_manager.model.CancelledBy;
 import com.example.store_manager.security.CustomUserDetails;
+import com.example.store_manager.service.CancellationService;
 import com.example.store_manager.service.OrderService;
 import com.example.store_manager.utility.Result;
 import com.example.store_manager.utility.ResultResponseMapper;
@@ -32,6 +37,7 @@ import lombok.RequiredArgsConstructor;
 public class OrderController {
 
     private final OrderService orderService;
+    private final CancellationService cancellationService;
 
     // Create multi-item order
     @PostMapping
@@ -119,6 +125,65 @@ public class OrderController {
 
         return ResultResponseMapper.toResponse(
                 orderService.updateOrderItemStatus(itemId, request.getStatus()));
+    }
+
+    @PostMapping("/items/{orderItemId}/cancel")
+    public ResponseEntity<?> cancelMyOrderItem(
+            @PathVariable("orderItemId") Long orderItemId,
+            @RequestBody(required = false) CancelBookingRequestDto req) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated() ||
+                !(auth.getPrincipal() instanceof CustomUserDetails userDetails)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        UUID userId = userDetails.getId();
+
+        // Load order item with order + user
+        Result<OrderItemResponseDto> itemResult = orderService.getOrderItemById(orderItemId);
+
+        if (itemResult.isFail()) {
+            return ResultResponseMapper.toResponse(itemResult);
+        }
+
+        // We need the actual entity to validate ownership properly
+        var itemEntityResult = orderService.getOrderItemEntity(orderItemId);
+
+        if (itemEntityResult.isFail()) {
+            return ResultResponseMapper.toResponse(itemEntityResult);
+        }
+
+        var item = itemEntityResult.get();
+
+        if (item.getOrder().getUser() == null ||
+                !item.getOrder().getUser().getId().equals(userId)) {
+
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        Result<CancellationService.CancellationResult> result = cancellationService.cancelOrderItem(
+                orderItemId,
+                CancelledBy.USER,
+                req != null ? req.getReasonType() : null,
+                req != null ? req.getReason() : null);
+
+        if (result.isFail()) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(result.getErrorOrThrow());
+        }
+
+        var r = result.get();
+
+        return ResponseEntity.ok(
+                new CancelBookingResponseDto(
+                        item.getOrder().getId(),
+                        orderItemId,
+                        r.refundable(),
+                        r.refundAmount(),
+                        r.newStatus()));
     }
 
     // Get order items by manager

@@ -284,6 +284,24 @@ export default function ItemPage() {
                 </div>
               )}
 
+              {/* Provider */}
+              {item.shopId && item.shopName && (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    <Users className="size-3.5 shrink-0" />
+                    Provider
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/publicShops/${item.shopId}`)}
+                    className="text-sm font-medium text-primary hover:underline text-left"
+                  >
+                    {item.shopName}
+                  </button>
+                </div>
+              )}
+
               <div className="h-px bg-base-300" />
 
               {/* Schedule picker (existing correct behavior) */}

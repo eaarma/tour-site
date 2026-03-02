@@ -29,4 +29,5 @@ public class TourResponseDto {
     private String status;
     private String madeBy;
     private Long shopId;
+    private String shopName;
 }

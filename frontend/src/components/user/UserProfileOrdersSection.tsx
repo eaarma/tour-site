@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { OrderItemResponseDto } from "@/types/order";
+import { OrderItemResponseDto, OrderStatus } from "@/types/order";
 import { UserResponseDto } from "@/types/user";
 import { OrderService } from "@/lib/orderService";
 import CardFrame from "@/components/common/CardFrame";
@@ -19,7 +19,7 @@ export default function UserProfileOrdersSection({
   const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<OrderItemResponseDto | null>(
-    null
+    null,
   );
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export default function UserProfileOrdersSection({
         const sorted = data.sort(
           (a, b) =>
             new Date(b.scheduledAt).getTime() -
-            new Date(a.scheduledAt).getTime()
+            new Date(a.scheduledAt).getTime(),
         );
         setOrderItems(sorted);
       } catch (err) {
@@ -44,10 +44,10 @@ export default function UserProfileOrdersSection({
 
   const now = new Date();
   const upcoming = orderItems.filter(
-    (i) => new Date(i.scheduledAt) > now && i.status !== "CANCELLED_CONFIRMED"
+    (i) => new Date(i.scheduledAt) > now && i.status !== "CANCELLED_CONFIRMED",
   );
   const past = orderItems.filter(
-    (i) => new Date(i.scheduledAt) <= now || i.status === "CANCELLED_CONFIRMED"
+    (i) => new Date(i.scheduledAt) <= now || i.status === "CANCELLED_CONFIRMED",
   );
 
   const visibleItems = activeTab === "upcoming" ? upcoming : past;
@@ -105,8 +105,8 @@ export default function UserProfileOrdersSection({
                         item.status === "COMPLETED"
                           ? "badge-success"
                           : item.status === "CANCELLED_CONFIRMED"
-                          ? "badge-error"
-                          : "badge-info"
+                            ? "badge-error"
+                            : "badge-info"
                       }`}
                     >
                       {item.status}
@@ -136,6 +136,15 @@ export default function UserProfileOrdersSection({
         <UserOrderDetailsModal
           orderItem={selectedItem}
           onClose={() => setSelectedItem(null)}
+          onCancelled={(itemId, newStatus) => {
+            setOrderItems((prev) =>
+              prev.map((i) =>
+                i.id === itemId
+                  ? { ...i, status: newStatus as OrderStatus }
+                  : i,
+              ),
+            );
+          }}
         />
       )}
     </CardFrame>

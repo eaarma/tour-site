@@ -531,4 +531,9 @@ public class OrderService {
                 }
         }
 
+        public Result<OrderItem> getOrderItemEntity(Long id) {
+                return orderItemRepository.findByIdWithOrderAndUser(id)
+                                .map(Result::ok)
+                                .orElse(Result.fail(ApiError.notFound("Order item not found")));
+        }
 }
