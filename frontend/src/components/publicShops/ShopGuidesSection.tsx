@@ -1,7 +1,7 @@
 "use client";
 
 import { ShopUserDto } from "@/types";
-import { User, Mail, Phone } from "lucide-react";
+//import { User, Mail, Phone } from "lucide-react";
 import Badge from "@/components/common/Badge";
 import { FaUserCircle } from "react-icons/fa";
 
@@ -53,7 +53,7 @@ export default function ShopGuidesSection({ guides }: Props) {
               </div>
 
               {/* Contact (optional display – can remove later) */}
-              <div className="flex flex-col gap-2 text-sm text-muted-foreground ml-2">
+              {/*  <div className="flex flex-col gap-2 text-sm text-muted-foreground ml-2">
                 {guide.userEmail && (
                   <div className="flex items-center gap-2 truncate">
                     <Mail className="size-3.5 shrink-0" />
@@ -67,7 +67,7 @@ export default function ShopGuidesSection({ guides }: Props) {
                     <span>{guide.phone}</span>
                   </div>
                 )}
-              </div>
+              </div> */}
             </div>
           ))}
         </div>
