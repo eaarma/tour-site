@@ -30,6 +30,7 @@ import com.example.store_manager.model.OrderStatus;
 import com.example.store_manager.security.CustomUserDetailsService;
 import com.example.store_manager.security.JwtAuthenticationFilter;
 import com.example.store_manager.security.JwtService;
+import com.example.store_manager.service.CancellationService;
 import com.example.store_manager.service.OrderService;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
@@ -55,6 +56,9 @@ class OrderControllerTest {
 
         @MockitoBean
         private CustomUserDetailsService customUserDetailsService;
+
+        @MockitoBean
+        private CancellationService cancellationService;
 
         @MockBean
         MeterRegistry meterRegistry;
