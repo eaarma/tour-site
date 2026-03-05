@@ -22,6 +22,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsVerification, setNeedsVerification] = useState(false);
   const toastShown = useRef(false);
   const pathname = usePathname();
 
@@ -61,7 +62,6 @@ export default function LoginPage() {
           <p className="opacity-80">
             Log out or navigate back to the home page.
           </p>
-
           <div className="flex flex-col gap-3 mt-4">
             <button className="btn btn-error" onClick={() => handleLogout()}>
               Log Out
@@ -80,8 +80,10 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setLoading(true);
     setError(null);
+    setNeedsVerification(false);
 
     try {
       const { accessToken, user } = await AuthService.login({
@@ -98,7 +100,13 @@ export default function LoginPage() {
       router.push(redirect);
     } catch (err: unknown) {
       if (err instanceof ApiError) {
-        setError(err.data?.message || err.message);
+        const message = err.data?.message || err.message;
+
+        setError(message);
+
+        if (message.toLowerCase().includes("verify")) {
+          setNeedsVerification(true);
+        }
       } else {
         setError("Login failed. Please try again.");
       }
@@ -119,8 +127,12 @@ export default function LoginPage() {
               className="input input-bordered w-full"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setNeedsVerification(false); // reset verification hint
+              }}
             />
+
             <input
               type="password"
               placeholder="Password"
@@ -141,7 +153,13 @@ export default function LoginPage() {
 
           {error && <p className="text-error text-sm mt-2">{error}</p>}
 
-          {/* 👇 Add these */}
+          {needsVerification && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Please check your email for the verification link before logging
+              in.
+            </p>
+          )}
+
           <div className="mt-10 flex flex-col gap-3">
             <button
               className="btn btn-outline w-full"
