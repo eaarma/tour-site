@@ -70,6 +70,6 @@ public class VerificationService {
         userRepository.save(user);
         tokenRepository.save(verificationToken);
 
-        return Result.ok(null);
+        return Result.ok();
     }
 }
