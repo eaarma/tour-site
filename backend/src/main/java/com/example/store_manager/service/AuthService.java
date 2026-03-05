@@ -51,7 +51,12 @@ public class AuthService {
         }
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(); // logically impossible if auth succeeded
+                .orElseThrow();
+
+        // 🔒 Email verification gate
+        if (!user.isEmailVerified()) {
+            return Result.fail(ApiError.forbidden("Please verify your email before logging in."));
+        }
 
         String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);

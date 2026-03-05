@@ -322,7 +322,7 @@ public class EmailService {
             return;
         }
 
-        String verifyUrl = frontendBaseUrl + "/verify-email?token=" + token;
+        String verifyUrl = frontendBaseUrl + "/auth/verify-email?token=" + token;
 
         String subject = "Verify your email address";
 
