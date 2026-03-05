@@ -48,6 +48,7 @@ class AuthServiceTest {
                 User user = new User();
                 user.setId(UUID.randomUUID());
                 user.setEmail("test@example.com");
+                user.setEmailVerified(true); // ✅ NEW
 
                 when(userRepository.findByEmail("test@example.com"))
                                 .thenReturn(Optional.of(user));
@@ -244,59 +245,58 @@ class AuthServiceTest {
         }
 
         @Test
-void refresh_detectsConcurrentReuse() {
-    User user = new User();
-    user.setId(UUID.randomUUID());
+        void refresh_detectsConcurrentReuse() {
+                User user = new User();
+                user.setId(UUID.randomUUID());
 
-    RefreshToken validRt = RefreshToken.builder()
-            .user(user)
-            .tokenHash("token")
-            .expiresAt(Instant.now().plusSeconds(60))
-            .revoked(false)
-            .build();
+                RefreshToken validRt = RefreshToken.builder()
+                                .user(user)
+                                .tokenHash("token")
+                                .expiresAt(Instant.now().plusSeconds(60))
+                                .revoked(false)
+                                .build();
 
-    RefreshToken revokedRt = RefreshToken.builder()
-            .user(user)
-            .tokenHash("token")
-            .expiresAt(Instant.now().plusSeconds(60))
-            .revoked(true)
-            .build();
+                RefreshToken revokedRt = RefreshToken.builder()
+                                .user(user)
+                                .tokenHash("token")
+                                .expiresAt(Instant.now().plusSeconds(60))
+                                .revoked(true)
+                                .build();
 
-    when(jwtService.validateRefreshToken("token"))
-            .thenReturn(true);
+                when(jwtService.validateRefreshToken("token"))
+                                .thenReturn(true);
 
-    // First call → token valid
-    when(refreshTokenService.resolve("token"))
-            .thenReturn(Result.ok(validRt))  // first call
-            .thenReturn(Result.ok(revokedRt)); // second call
+                // First call → token valid
+                when(refreshTokenService.resolve("token"))
+                                .thenReturn(Result.ok(validRt)) // first call
+                                .thenReturn(Result.ok(revokedRt)); // second call
 
-    when(jwtService.generateAccessToken(user))
-            .thenReturn("access");
+                when(jwtService.generateAccessToken(user))
+                                .thenReturn("access");
 
-    when(jwtService.generateRefreshToken(user))
-            .thenReturn("refresh");
+                when(jwtService.generateRefreshToken(user))
+                                .thenReturn("refresh");
 
-    when(jwtService.getRefreshExpiryInstant())
-            .thenReturn(Instant.now().plusSeconds(3600));
+                when(jwtService.getRefreshExpiryInstant())
+                                .thenReturn(Instant.now().plusSeconds(3600));
 
-    when(refreshTokenService.revoke("token"))
-            .thenReturn(Result.ok(true));
+                when(refreshTokenService.revoke("token"))
+                                .thenReturn(Result.ok(true));
 
-    when(refreshTokenService.store(any(), any(), any()))
-            .thenReturn(Result.ok(true));
+                when(refreshTokenService.store(any(), any(), any()))
+                                .thenReturn(Result.ok(true));
 
-    // ✅ First refresh succeeds
-    Result<AuthTokens> first = authService.refresh("token");
-    assertTrue(first.isOk());
+                // ✅ First refresh succeeds
+                Result<AuthTokens> first = authService.refresh("token");
+                assertTrue(first.isOk());
 
-    // ❌ Second refresh triggers reuse detection
-    Result<AuthTokens> second = authService.refresh("token");
-    assertTrue(second.isFail());
-    assertEquals("Refresh token reuse detected", second.error().message());
+                // ❌ Second refresh triggers reuse detection
+                Result<AuthTokens> second = authService.refresh("token");
+                assertTrue(second.isFail());
+                assertEquals("Refresh token reuse detected", second.error().message());
 
-    verify(refreshTokenService).revokeAllForUser(user);
-}
-
+                verify(refreshTokenService).revokeAllForUser(user);
+        }
 
         @Test
         void logout_alwaysReturnsOk() {
