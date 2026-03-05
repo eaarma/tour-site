@@ -40,6 +40,12 @@ class RegistrationServiceTest {
         @InjectMocks
         private RegistrationService registrationService;
 
+        @Mock
+        private VerificationService verificationService;
+
+        @Mock
+        private EmailService emailService;
+
         @Test
         void registerUser_returnsOk_whenEmailNotUsed() {
                 UserRegisterRequestDto dto = new UserRegisterRequestDto();
@@ -61,11 +67,15 @@ class RegistrationServiceTest {
                 when(userRepository.save(any(User.class)))
                                 .thenReturn(savedUser);
 
+                when(verificationService.createVerificationToken(any(User.class)))
+                                .thenReturn("token-123");
+
                 Result<UserResponseDto> result = registrationService.registerUser(dto);
 
                 assertTrue(result.isOk());
                 assertEquals(savedUser.getId(), result.get().getId());
                 assertEquals("test@example.com", result.get().getEmail());
+                verify(emailService).sendVerificationEmail(any(User.class), eq("token-123"));
         }
 
         @Test
@@ -101,12 +111,17 @@ class RegistrationServiceTest {
 
                 when(userRepository.save(any(User.class))).thenReturn(savedManager);
 
+                when(verificationService.createVerificationToken(any(User.class)))
+                                .thenReturn("token-123");
+
                 Result<UserResponseDto> result = registrationService.registerManager(dto);
 
                 assertTrue(result.isOk());
                 assertEquals(savedManager.getId(), result.get().getId());
 
                 verifyNoInteractions(shopUserRepository);
+                verify(emailService).sendVerificationEmail(any(User.class), eq("token-123"));
+
         }
 
         @Test

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.store_manager.dto.auth.AuthResponseDto;
 import com.example.store_manager.dto.auth.AuthTokens;
+import com.example.store_manager.dto.auth.VerifyEmailRequestDto;
 import com.example.store_manager.dto.user.LoginRequestDto;
 import com.example.store_manager.dto.user.ManagerRegisterRequestDto;
 import com.example.store_manager.dto.user.UserRegisterRequestDto;
@@ -30,6 +31,7 @@ import com.example.store_manager.security.JwtService;
 import com.example.store_manager.security.RefreshSecurityProperties;
 import com.example.store_manager.service.AuthService;
 import com.example.store_manager.service.RegistrationService;
+import com.example.store_manager.service.VerificationService;
 import com.example.store_manager.utility.Result;
 import com.example.store_manager.utility.ResultResponseMapper;
 
@@ -52,6 +54,8 @@ public class AuthenticationController {
         private final AuthService authService;
 
         private final RegistrationService registrationService;
+
+        private final VerificationService verificationService;
 
         private final RefreshSecurityProperties refreshSecurityProperties;
 
@@ -174,4 +178,10 @@ public class AuthenticationController {
                 return ResponseEntity.ok(Map.of("accessToken", tokens.accessToken()));
         }
 
+        @PostMapping("/verify-email")
+        public ResponseEntity<?> verifyEmail(@RequestBody VerifyEmailRequestDto request) {
+
+                return ResultResponseMapper.toResponse(
+                                verificationService.verifyEmail(request.getToken()));
+        }
 }

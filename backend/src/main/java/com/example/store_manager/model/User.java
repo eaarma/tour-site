@@ -60,4 +60,6 @@ public class User {
 
     @Column(name = "profile_image_url")
     private String profileImageUrl;
+
+    private boolean emailVerified;
 }

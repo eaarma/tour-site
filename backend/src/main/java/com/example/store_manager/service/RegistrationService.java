@@ -25,6 +25,8 @@ public class RegistrationService {
     private final PasswordEncoder passwordEncoder;
     private final ShopAssignmentUtil shopAssignmentUtil;
     private final ShopUserRepository shopUserRepository;
+    private final VerificationService verificationService;
+    private final EmailService emailService;
 
     @Transactional
     public Result<UserResponseDto> registerUser(UserRegisterRequestDto request) {
@@ -42,9 +44,13 @@ public class RegistrationService {
                 .phone(request.getPhone() != null ? request.getPhone().trim() : null)
                 .nationality(request.getNationality())
                 .role(Role.USER)
+                .emailVerified(false)
                 .build();
 
         User saved = userRepository.save(user);
+
+        String token = verificationService.createVerificationToken(saved);
+        emailService.sendVerificationEmail(saved, token);
 
         return Result.ok(UserResponseDto.builder()
                 .id(saved.getId())
@@ -72,9 +78,13 @@ public class RegistrationService {
                 .experience(request.getExperience())
                 .languages(request.getLanguages())
                 .role(Role.MANAGER)
+                .emailVerified(false)
                 .build();
 
         User saved = userRepository.save(manager);
+
+        String token = verificationService.createVerificationToken(saved);
+        emailService.sendVerificationEmail(saved, token);
 
         return Result.ok(UserResponseDto.builder()
                 .id(saved.getId())
@@ -83,4 +93,5 @@ public class RegistrationService {
                 .role(saved.getRole().name())
                 .build());
     }
+
 }

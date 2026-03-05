@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import api from "@/lib/api/axios";
 import { RootState } from "@/store/store";
 import { clearExpired } from "@/store/sessionSlice";
+import { ApiError } from "@/lib/api/ApiError";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -52,7 +53,6 @@ export default function LoginPage() {
     }
   };
 
-  // 🔹 If already logged in → show message instead of login form
   if (user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
@@ -78,7 +78,6 @@ export default function LoginPage() {
     );
   }
 
-  // Normal login flow
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -97,8 +96,12 @@ export default function LoginPage() {
         user.role === "ADMIN" || user.role === "MANAGER" ? "/shops" : "/user";
 
       router.push(redirect);
-    } catch (err) {
-      setError("Invalid email or password: " + err);
+    } catch (err: unknown) {
+      if (err instanceof ApiError) {
+        setError(err.data?.message || err.message);
+      } else {
+        setError("Login failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

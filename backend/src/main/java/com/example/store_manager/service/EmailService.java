@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.store_manager.model.Order;
 import com.example.store_manager.model.OrderItem;
+import com.example.store_manager.model.User;
 
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -312,5 +313,93 @@ public class EmailService {
                 formattedDate,
                 item.getParticipants(),
                 refundSection);
+    }
+
+    public void sendVerificationEmail(User user, String token) {
+
+        if (user.getEmail() == null) {
+            log.warn("User {} has no email — skipping verification email", user.getId());
+            return;
+        }
+
+        String verifyUrl = frontendBaseUrl + "/verify-email?token=" + token;
+
+        String subject = "Verify your email address";
+
+        String html = """
+                <html>
+                <body style="margin:0; padding:0; background-color:#ffffff; font-family:Arial, sans-serif;">
+                    <table width="100%%" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td align="center">
+                                <table width="600" cellpadding="0" cellspacing="0"
+                                       style="background:#ffffff; padding:30px; border-radius:8px;">
+
+                                    <!-- Header -->
+                                    <tr>
+                                        <td align="center" style="padding-bottom:20px;">
+                                            <h2 style="margin:0; color:#16a34a;">
+                                                Confirm Your Email
+                                            </h2>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Greeting -->
+                                    <tr>
+                                        <td style="padding-bottom:20px; font-size:14px; color:#374151;">
+                                            Hi <strong>%s</strong>,<br/><br/>
+                                            Please confirm your email address to activate your account.
+                                        </td>
+                                    </tr>
+
+                                    <!-- Verify Button -->
+                                    <tr>
+                                        <td align="center" style="padding-top:20px;">
+                                            <a href="%s"
+                                               style="background-color:#16a34a;
+                                                      color:#ffffff;
+                                                      text-decoration:none;
+                                                      padding:12px 24px;
+                                                      border-radius:6px;
+                                                      display:inline-block;
+                                                      font-weight:bold;
+                                                      font-size:14px;">
+                                                Verify Email
+                                            </a>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Footer -->
+                                    <tr>
+                                        <td style="padding-top:30px; font-size:13px; color:#6b7280; text-align:center;">
+                                            If you did not create this account, you can ignore this email.
+                                        </td>
+                                    </tr>
+
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+                """.formatted(
+                user.getName() != null ? user.getName() : "there",
+                verifyUrl);
+
+        MimeMessage message = mailSender.createMimeMessage();
+
+        try {
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setTo(user.getEmail());
+            helper.setSubject(subject);
+            helper.setText(html, true);
+
+            mailSender.send(message);
+
+            log.info("Verification email sent to user {}", user.getEmail());
+
+        } catch (Exception e) {
+            log.error("Failed to send verification email to {}", user.getEmail(), e);
+        }
     }
 }
