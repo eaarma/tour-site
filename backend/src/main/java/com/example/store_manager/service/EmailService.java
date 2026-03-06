@@ -48,6 +48,7 @@ public class EmailService {
 
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setFrom("info@tourhub.space", "TourHub");
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(html, true);
@@ -212,6 +213,7 @@ public class EmailService {
 
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setFrom("info@tourhub.space", "TourHub");
             helper.setTo(item.getEmail());
             helper.setSubject(subject);
             helper.setText(html, true);
@@ -390,6 +392,7 @@ public class EmailService {
 
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setFrom("info@tourhub.space", "TourHub");
             helper.setTo(user.getEmail());
             helper.setSubject(subject);
             helper.setText(html, true);
@@ -440,7 +443,7 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
 
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
-
+            helper.setFrom("info@tourhub.space", "TourHub");
             helper.setTo(user.getEmail());
             helper.setSubject(subject);
             helper.setText(html, true);
