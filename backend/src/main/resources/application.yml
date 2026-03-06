@@ -24,6 +24,9 @@ jwt:
   access-expiration-ms: 900000 #  900 000 = 15 minutes
   refresh-expiration-ms: 86400000 # 24 hours
 
+resend:
+  api-key: ${RESEND_API_KEY}
+  from-email: info@tourhub.space
 security:
   refresh:
     allowed-origins:
@@ -51,10 +54,13 @@ management:
       probes:
         enabled: true
 
+
   metrics:
     distribution:
       percentiles-histogram:
         http.server.requests: true
+
+    
 
     export:
       prometheus:

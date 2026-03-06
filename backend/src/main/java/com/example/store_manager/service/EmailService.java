@@ -25,6 +25,7 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+    private final ResendClient resendClient;
     @Value("${app.frontend-base-url}")
     private String frontendBaseUrl;
 
@@ -44,18 +45,9 @@ public class EmailService {
 
         String subject = "Order Confirmation #" + order.getId();
         String html = buildHtml(order, firstItem, manageUrl);
-        MimeMessage message = mailSender.createMimeMessage();
-
         try {
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setFrom("info@tourhub.space", "TourHub");
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(html, true);
-
-            mailSender.send(message);
+            resendClient.sendEmail(to, subject, html);
             log.info("Confirmation email sent for order {}", order.getId());
-
         } catch (Exception e) {
             log.error("Failed to send confirmation email for order {}", order.getId(), e);
         }
@@ -209,16 +201,9 @@ public class EmailService {
         String subject = "Booking Cancellation – " + item.getTourTitle();
         String html = buildCancellationHtml(item, refundable, refundAmount);
 
-        MimeMessage message = mailSender.createMimeMessage();
-
         try {
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setFrom("info@tourhub.space", "TourHub");
-            helper.setTo(item.getEmail());
-            helper.setSubject(subject);
-            helper.setText(html, true);
 
-            mailSender.send(message);
+            resendClient.sendEmail(item.getEmail(), subject, html);
 
             log.info("Cancellation email sent for orderItem {}", item.getId());
 
@@ -388,16 +373,9 @@ public class EmailService {
                 user.getName() != null ? user.getName() : "there",
                 verifyUrl);
 
-        MimeMessage message = mailSender.createMimeMessage();
-
         try {
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setFrom("info@tourhub.space", "TourHub");
-            helper.setTo(user.getEmail());
-            helper.setSubject(subject);
-            helper.setText(html, true);
 
-            mailSender.send(message);
+            resendClient.sendEmail(user.getEmail(), subject, html);
 
             log.info("Verification email sent to user {}", user.getEmail());
 
@@ -439,16 +417,7 @@ public class EmailService {
                 """.formatted(user.getName(), resetUrl);
 
         try {
-
-            MimeMessage message = mailSender.createMimeMessage();
-
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setFrom("info@tourhub.space", "TourHub");
-            helper.setTo(user.getEmail());
-            helper.setSubject(subject);
-            helper.setText(html, true);
-
-            mailSender.send(message);
+            resendClient.sendEmail(user.getEmail(), subject, html);
 
             log.info("Password reset email sent to {}", user.getEmail());
 
