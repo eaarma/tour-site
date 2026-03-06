@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.store_manager.dto.auth.AuthResponseDto;
 import com.example.store_manager.dto.auth.AuthTokens;
+import com.example.store_manager.dto.auth.ForgotPasswordRequestDto;
+import com.example.store_manager.dto.auth.ResetPasswordRequestDto;
 import com.example.store_manager.dto.auth.VerifyEmailRequestDto;
 import com.example.store_manager.dto.user.LoginRequestDto;
 import com.example.store_manager.dto.user.ManagerRegisterRequestDto;
@@ -30,6 +32,7 @@ import com.example.store_manager.security.CustomUserDetails;
 import com.example.store_manager.security.JwtService;
 import com.example.store_manager.security.RefreshSecurityProperties;
 import com.example.store_manager.service.AuthService;
+import com.example.store_manager.service.PasswordResetService;
 import com.example.store_manager.service.RegistrationService;
 import com.example.store_manager.service.VerificationService;
 import com.example.store_manager.utility.Result;
@@ -56,6 +59,8 @@ public class AuthenticationController {
         private final RegistrationService registrationService;
 
         private final VerificationService verificationService;
+
+        private final PasswordResetService passwordResetService;
 
         private final RefreshSecurityProperties refreshSecurityProperties;
 
@@ -184,4 +189,21 @@ public class AuthenticationController {
                 return ResultResponseMapper.toResponse(
                                 verificationService.verifyEmail(request.getToken()));
         }
+
+        @PostMapping("/password/forgot")
+        public ResponseEntity<?> forgotPassword(
+                        @RequestBody ForgotPasswordRequestDto dto) {
+
+                return ResultResponseMapper.toResponse(
+                                passwordResetService.requestPasswordReset(dto.getEmail()));
+        }
+
+        @PostMapping("/password/reset")
+        public ResponseEntity<?> resetPassword(
+                        @RequestBody ResetPasswordRequestDto dto) {
+
+                return ResultResponseMapper.toResponse(
+                                passwordResetService.resetPassword(dto.getToken(), dto.getNewPassword()));
+        }
+
 }

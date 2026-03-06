@@ -71,7 +71,7 @@ export default function VerifyEmailPage() {
         <div className="pt-4 flex gap-3">
           <button
             className="btn btn-primary"
-            onClick={() => router.push("/api/login")}
+            onClick={() => router.push("/auth/login")}
           >
             Go to Login
           </button>

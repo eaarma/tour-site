@@ -133,14 +133,24 @@ export default function LoginPage() {
               }}
             />
 
-            <input
-              type="password"
-              placeholder="Password"
-              className="input input-bordered w-full"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className="flex flex-col gap-1">
+              <input
+                type="password"
+                placeholder="Password"
+                className="input input-bordered w-full"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+
+              <button
+                type="button"
+                onClick={() => router.push("/auth/forgot-password")}
+                className="text-xs text-primary hover:underline text-left mt-2 mb-1"
+              >
+                Forgot your password?
+              </button>
+            </div>
 
             <button
               className={`btn btn-primary w-full ${loading ? "loading" : ""}`}

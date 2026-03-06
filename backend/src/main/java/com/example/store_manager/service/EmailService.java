@@ -402,4 +402,55 @@ public class EmailService {
             log.error("Failed to send verification email to {}", user.getEmail(), e);
         }
     }
+
+    public void sendPasswordResetEmail(User user, String token) {
+
+        String resetUrl = frontendBaseUrl + "/reset-password?token=" + token;
+
+        String subject = "Reset Your Password";
+
+        String html = """
+                <html>
+                <body style="font-family:Arial, sans-serif;">
+                    <h2>Password Reset</h2>
+                    <p>Hello %s,</p>
+                    <p>You requested a password reset.</p>
+
+                    <p>
+                        <a href="%s"
+                           style="background:#16a34a;
+                                  color:white;
+                                  padding:12px 24px;
+                                  text-decoration:none;
+                                  border-radius:6px;
+                                  font-weight:bold;">
+                           Reset Password
+                        </a>
+                    </p>
+
+                    <p>If you did not request this, you can safely ignore this email.</p>
+
+                    <p>This link will expire in 30 minutes.</p>
+                </body>
+                </html>
+                """.formatted(user.getName(), resetUrl);
+
+        try {
+
+            MimeMessage message = mailSender.createMimeMessage();
+
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+            helper.setTo(user.getEmail());
+            helper.setSubject(subject);
+            helper.setText(html, true);
+
+            mailSender.send(message);
+
+            log.info("Password reset email sent to {}", user.getEmail());
+
+        } catch (Exception e) {
+            log.error("Failed to send password reset email", e);
+        }
+    }
 }
