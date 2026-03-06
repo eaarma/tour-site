@@ -21,6 +21,7 @@ import com.example.store_manager.dto.auth.AuthTokens;
 import com.example.store_manager.dto.auth.ForgotPasswordRequestDto;
 import com.example.store_manager.dto.auth.ResetPasswordRequestDto;
 import com.example.store_manager.dto.auth.VerifyEmailRequestDto;
+import com.example.store_manager.dto.auth.VerifyEmailResendRequestDto;
 import com.example.store_manager.dto.user.LoginRequestDto;
 import com.example.store_manager.dto.user.ManagerRegisterRequestDto;
 import com.example.store_manager.dto.user.UserRegisterRequestDto;
@@ -204,6 +205,14 @@ public class AuthenticationController {
 
                 return ResultResponseMapper.toResponse(
                                 passwordResetService.resetPassword(dto.getToken(), dto.getNewPassword()));
+        }
+
+        @PostMapping("/resend-verification")
+        public ResponseEntity<?> resendVerification(
+                        @RequestBody @Valid VerifyEmailResendRequestDto request) {
+
+                return ResultResponseMapper.toResponse(
+                                verificationService.resendVerificationEmail(request.getEmail()));
         }
 
 }

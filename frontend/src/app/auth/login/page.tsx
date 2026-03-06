@@ -54,6 +54,25 @@ export default function LoginPage() {
     }
   };
 
+  const handleResendVerification = async () => {
+    if (!email) {
+      setError("Enter your email to resend verification.");
+      return;
+    }
+
+    try {
+      await api.post(
+        "/auth/resend-verification",
+        { email },
+        { withCredentials: false },
+      );
+
+      toast.success("Verification email sent.");
+    } catch {
+      toast.error("Failed to resend verification email.");
+    }
+  };
+
   if (user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
@@ -164,10 +183,15 @@ export default function LoginPage() {
           {error && <p className="text-error text-sm mt-2">{error}</p>}
 
           {needsVerification && (
-            <p className="text-sm text-muted-foreground mt-2">
-              Please check your email for the verification link before logging
-              in.
-            </p>
+            <div className="text-sm text-muted-foreground mt-2 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleResendVerification}
+                className="text-primary hover:underline text-left text-xs"
+              >
+                Resend verification email
+              </button>
+            </div>
           )}
 
           <div className="mt-10 flex flex-col gap-3">
