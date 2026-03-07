@@ -59,7 +59,9 @@ export default function ContactPage() {
 
       <div className="text-center mb-6">
         <h2 className="text-lg font-semibold">Email</h2>
-        <p className="text-sm text-gray-500">helpsprtcontact@gmail.com</p>
+        <p className="text-sm text-gray-500">
+          {process.env.NEXT_PUBLIC_SITE_EMAIL}
+        </p>
       </div>
 
       <form

@@ -81,7 +81,7 @@ export default function PrivacyPolicyPage() {
           <h2 className="text-xl font-semibold">8. Contact</h2>
           <p>
             If you have questions about this Privacy Policy, please contact us
-            at: helpsprtcontact@gmail.com
+            at: {process.env.NEXT_PUBLIC_SITE_EMAIL}
           </p>
         </section>
 

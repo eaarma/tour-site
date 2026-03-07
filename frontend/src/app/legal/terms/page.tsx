@@ -86,7 +86,7 @@ export default function TermsOfServicePage() {
           <h2 className="text-xl font-semibold">8. Contact</h2>
           <p>
             For questions regarding these Terms, please contact:
-            helpsprtcontact@gmail.com
+            {process.env.NEXT_PUBLIC_SITE_EMAIL}
           </p>
         </section>
 
