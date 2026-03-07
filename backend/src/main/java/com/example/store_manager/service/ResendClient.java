@@ -12,7 +12,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ResendClient {
 
-    @Value("${resend.api-key}")
+    @Value("${resend.api-key:dummy-test-key}")
     private String apiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();

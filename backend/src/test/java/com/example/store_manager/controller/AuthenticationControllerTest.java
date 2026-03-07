@@ -31,6 +31,7 @@ import com.example.store_manager.security.CustomUserDetailsService;
 import com.example.store_manager.security.JwtService;
 import com.example.store_manager.security.testutil.TestUserFactory;
 import com.example.store_manager.service.AuthService;
+import com.example.store_manager.service.EmailService;
 import com.example.store_manager.service.RegistrationService;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
@@ -63,6 +64,9 @@ class AuthenticationControllerTest {
 
         @MockitoBean
         private UserRepository userRepository;
+
+        @MockitoBean
+        private EmailService emailService;
 
         /* ===================== REGISTER ===================== */
 
@@ -183,32 +187,31 @@ class AuthenticationControllerTest {
 
         /* ===================== REFRESH ===================== */
 
-@Test
-void refresh_returnsAccessTokenJson_andSetsRefreshCookie_whenSuccess() throws Exception {
-    AuthTokens tokens = new AuthTokens("new-access", "new-refresh", Instant.now());
-    when(authService.refresh("refresh")).thenReturn(Result.ok(tokens));
+        @Test
+        void refresh_returnsAccessTokenJson_andSetsRefreshCookie_whenSuccess() throws Exception {
+                AuthTokens tokens = new AuthTokens("new-access", "new-refresh", Instant.now());
+                when(authService.refresh("refresh")).thenReturn(Result.ok(tokens));
 
-    mockMvc.perform(post("/auth/refresh")
-            .header("X-Refresh-Request", "true")
-            .header("Origin", "http://localhost:3000") 
-            .cookie(new Cookie("refreshToken", "refresh")))
-        .andExpect(status().isOk())
-        .andExpect(header().string(HttpHeaders.SET_COOKIE,
-                org.hamcrest.Matchers.containsString("refreshToken=")))
-        .andExpect(jsonPath("$.accessToken").value("new-access"));
-}
+                mockMvc.perform(post("/auth/refresh")
+                                .header("X-Refresh-Request", "true")
+                                .header("Origin", "http://localhost:3000")
+                                .cookie(new Cookie("refreshToken", "refresh")))
+                                .andExpect(status().isOk())
+                                .andExpect(header().string(HttpHeaders.SET_COOKIE,
+                                                org.hamcrest.Matchers.containsString("refreshToken=")))
+                                .andExpect(jsonPath("$.accessToken").value("new-access"));
+        }
 
-@Test
-void refresh_returnsUnauthorized_whenServiceFails() throws Exception {
-    when(authService.refresh(any()))
-        .thenReturn(Result.fail(ApiError.forbidden("Invalid refresh token")));
+        @Test
+        void refresh_returnsUnauthorized_whenServiceFails() throws Exception {
+                when(authService.refresh(any()))
+                                .thenReturn(Result.fail(ApiError.forbidden("Invalid refresh token")));
 
-    mockMvc.perform(post("/auth/refresh")
-            .header("X-Refresh-Request", "true")
-            .header("Origin", "http://localhost:3000") 
-            .cookie(new Cookie("refreshToken", "bad")))
-        .andExpect(status().isUnauthorized());
-}
-
+                mockMvc.perform(post("/auth/refresh")
+                                .header("X-Refresh-Request", "true")
+                                .header("Origin", "http://localhost:3000")
+                                .cookie(new Cookie("refreshToken", "bad")))
+                                .andExpect(status().isUnauthorized());
+        }
 
 }

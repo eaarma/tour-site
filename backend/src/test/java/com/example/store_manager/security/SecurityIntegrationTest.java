@@ -19,6 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.store_manager.dto.shop.ShopDto;
 import com.example.store_manager.security.testutil.TestUserFactory;
+import com.example.store_manager.service.EmailService;
 import com.example.store_manager.service.ShopService;
 import com.example.store_manager.utility.Result;
 
@@ -43,6 +44,9 @@ class SecurityIntegrationTest {
 
         @MockitoBean
         private ShopService shopService;
+
+        @MockitoBean
+        private EmailService emailService;
 
         @Test
         void postWithoutAuth_returns401() throws Exception {
