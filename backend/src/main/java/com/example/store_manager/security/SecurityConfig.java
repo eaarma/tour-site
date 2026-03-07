@@ -59,8 +59,7 @@ public class SecurityConfig {
                         .requestMatchers("/checkout/stripe/**").permitAll()
                         .requestMatchers("/stripe/webhook").permitAll()
                         .requestMatchers(HttpMethod.GET, "/payments/order/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/public/orders/manage").permitAll()
-
+                        .requestMatchers("/public/orders/**").permitAll()
                         // Tours
                         .requestMatchers(HttpMethod.GET, "/tours").permitAll()
                         .requestMatchers(HttpMethod.GET, "/tours/**").permitAll()
@@ -81,6 +80,7 @@ public class SecurityConfig {
 
                         // Order items
                         .requestMatchers(HttpMethod.PATCH, "/orders/items/**").hasAnyRole("MANAGER", "OWNER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/orders/items/*/cancel").permitAll()
 
                         // Checkout
                         .requestMatchers(HttpMethod.POST, "/checkout/reserve").permitAll()

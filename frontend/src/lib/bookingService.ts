@@ -1,3 +1,4 @@
+import { CancellationReasonType } from "@/types/cancellation";
 import api from "./api/axios";
 import { CancelBookingResponseDto, OrderResponseDto } from "@/types/order";
 
@@ -14,12 +15,15 @@ export const BookingService = {
   cancelItem: async (
     token: string,
     orderItemId: number,
+    reasonType: CancellationReasonType,
     reason?: string,
   ): Promise<CancelBookingResponseDto> => {
     const res = await api.post(`${BASE_URL}/items/${orderItemId}/cancel`, {
       token,
+      reasonType,
       reason,
     });
+
     return res.data;
   },
 };

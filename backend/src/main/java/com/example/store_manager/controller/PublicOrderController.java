@@ -42,7 +42,7 @@ public class PublicOrderController {
 
         @GetMapping("/manage")
         public ResponseEntity<OrderResponseDto> getOrderByToken(
-                        @RequestParam String token) {
+                        @RequestParam(name = "token") String token) {
 
                 Order order = tokenService.requireValidOrder(token);
 
@@ -51,7 +51,7 @@ public class PublicOrderController {
 
         @PostMapping("/items/{orderItemId}/cancel")
         public ResponseEntity<CancelBookingResponseDto> cancelOrderItem(
-                        @PathVariable Long orderItemId,
+                        @PathVariable("orderItemId") Long orderItemId,
                         @Valid @RequestBody CancelBookingRequestDto req) {
 
                 Order order = tokenService.requireValidOrder(req.getToken());

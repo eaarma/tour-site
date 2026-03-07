@@ -5,6 +5,8 @@ import { format } from "date-fns";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 import { BookingService } from "@/lib/bookingService";
 import { OrderItemResponseDto, OrderStatus } from "@/types/order";
+import { CancellationReasonType } from "@/types/cancellation";
+import toast from "react-hot-toast";
 
 interface ManageOrderItemCardProps {
   item: OrderItemResponseDto;
@@ -21,6 +23,10 @@ export default function ManageOrderItemCard({
 }: ManageOrderItemCardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [reasonType, setReasonType] = useState<CancellationReasonType | null>(
+    null,
+  );
+  const [reasonText, setReasonText] = useState("");
 
   const scheduled = format(
     new Date(item.scheduledAt),
@@ -30,16 +36,30 @@ export default function ManageOrderItemCard({
   const handleCancel = async () => {
     if (!token) return;
 
+    if (!reasonType) {
+      toast.error("Please select a cancellation reason.");
+      return;
+    }
+
+    if (reasonType === "OTHER" && reasonText.trim().length === 0) {
+      toast.error("Please provide additional details.");
+      return;
+    }
+
     try {
       setLoading(true);
 
-      const res = await BookingService.cancelItem(token, item.id);
-
+      const res = await BookingService.cancelItem(
+        token,
+        item.id,
+        reasonType,
+        reasonText,
+      );
       onCancelled(item.id, res.newStatus as OrderStatus);
 
       setConfirmOpen(false);
 
-      alert(
+      toast.success(
         res.refundable
           ? `Booking cancelled. Refund €${res.refundAmount.toFixed(
               2,
@@ -47,7 +67,7 @@ export default function ManageOrderItemCard({
           : "Booking cancelled. This booking was non-refundable.",
       );
     } catch {
-      alert("Cancellation failed.");
+      toast.error("Cancellation failed.");
     } finally {
       setLoading(false);
     }
@@ -109,16 +129,57 @@ export default function ManageOrderItemCard({
       {/* Confirmation Modal */}
       {confirmOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-base-100 rounded-xl shadow-xl p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">
+          <div className="bg-base-100 rounded-xl shadow-xl p-6 w-full max-w-md space-y-4">
+            <h3 className="text-lg font-semibold mb-2">
               Cancel {item.tourTitle}?
             </h3>
 
-            <p className="text-sm text-base-content/70 mb-6">
+            <p className="text-sm text-base-content/70">
               This action cannot be undone.
             </p>
 
-            <div className="flex justify-end gap-3">
+            <div>
+              <label className="text-sm font-semibold">
+                Reason for cancellation
+              </label>
+
+              <select
+                className="select select-bordered w-full mt-1"
+                value={reasonType ?? ""}
+                onChange={(e) =>
+                  setReasonType(e.target.value as CancellationReasonType)
+                }
+              >
+                <option value="">Select a reason</option>
+                <option value="SCHEDULE_CONFLICT">Schedule conflict</option>
+                <option value="FOUND_ALTERNATIVE">Found alternative</option>
+                <option value="WEATHER">Weather</option>
+                <option value="PERSONAL">Personal reasons</option>
+                <option value="HEALTH">Health</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+
+            {reasonType === "OTHER" && (
+              <div>
+                <label className="text-sm font-semibold">
+                  Additional details
+                </label>
+
+                <textarea
+                  className="textarea textarea-bordered w-full mt-1"
+                  maxLength={500}
+                  value={reasonText}
+                  onChange={(e) => setReasonText(e.target.value)}
+                />
+
+                <p className="text-xs text-base-content/60 text-right">
+                  {reasonText.length}/500
+                </p>
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={() => setConfirmOpen(false)}
                 className="btn btn-outline btn-sm"
@@ -130,7 +191,7 @@ export default function ManageOrderItemCard({
               <button
                 onClick={handleCancel}
                 className="btn btn-error btn-sm"
-                disabled={loading}
+                disabled={loading || !reasonType}
               >
                 {loading ? "Cancelling..." : "Yes, Cancel"}
               </button>
