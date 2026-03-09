@@ -172,26 +172,6 @@ public class TourService {
     }
 
     @Transactional(readOnly = true)
-    public Result<TourResponseDto> getTourById(Long id) {
-
-        return tourRepository.findById(id)
-                .map(tourMapper::toDto)
-                .map(Result::ok)
-                .orElseGet(() -> Result.fail(ApiError.notFound("Tour not found")));
-    }
-
-    @Transactional(readOnly = true)
-    public Result<List<TourResponseDto>> getToursByShopId(Long shopId) {
-
-        List<TourResponseDto> tours = tourRepository.findByShopId(shopId)
-                .stream()
-                .map(tourMapper::toDto)
-                .toList();
-
-        return Result.ok(tours);
-    }
-
-    @Transactional(readOnly = true)
     public Result<List<TourResponseDto>> getRandomTours(int count) {
 
         List<TourResponseDto> tours = tourRepository
@@ -210,6 +190,26 @@ public class TourService {
                 .map(tourMapper::toDto)
                 .map(Result::ok)
                 .orElseGet(() -> Result.fail(ApiError.notFound("No active tours found")));
+    }
+
+    @Transactional(readOnly = true)
+    public Result<TourResponseDto> getTourById(Long id) {
+
+        return tourRepository.findById(id)
+                .map(tourMapper::toDto)
+                .map(Result::ok)
+                .orElseGet(() -> Result.fail(ApiError.notFound("Tour not found")));
+    }
+
+    @Transactional(readOnly = true)
+    public Result<List<TourResponseDto>> getToursByShopId(Long shopId) {
+
+        List<TourResponseDto> tours = tourRepository.findByShopId(shopId)
+                .stream()
+                .map(tourMapper::toDto)
+                .toList();
+
+        return Result.ok(tours);
     }
 
 }

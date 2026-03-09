@@ -16,9 +16,15 @@ import OrderItemCard from "./OrderItemCard";
 import { useSessionManager } from "@/hooks/useSessionManager";
 import SessionDetailsModal from "../session/SessionDetailsModal";
 
-const ACTIVE_STATUSES = ["PAID"];
+const ACTIVE_STATUSES = ["PAID", "CONFIRMED", "PENDING"];
 
-const PAST_STATUSES = ["FAILED", "EXPIRED", "CANCELLED", "COMPLETED"];
+const PAST_STATUSES = [
+  "FAILED",
+  "EXPIRED",
+  "CANCELLED",
+  "COMPLETED",
+  "CANCELLED_CONFIRMED",
+];
 
 const ALL_STATUSES: OrderItemCardDto["status"][] = [
   "PENDING",

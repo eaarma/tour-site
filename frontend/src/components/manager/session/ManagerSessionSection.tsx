@@ -32,10 +32,7 @@ interface Props {
   shopId: number;
 }
 
-export default function ManagerSessionSection({
-  tours,
-  shopId,
-}: Props) {
+export default function ManagerSessionSection({ tours, shopId }: Props) {
   const [activeTab, setActiveTab] = useState<"today" | "active" | "past">(
     "today",
   );
@@ -50,7 +47,8 @@ export default function ManagerSessionSection({
   const statusFilterRef = useRef<HTMLDivElement | null>(null);
   const hasDateFilter = Boolean(fromDate || toDate);
 
-  //const { user } = useAuth();
+  const isActiveOrder = (status: string) =>
+    status !== "CANCELLED" && status !== "CANCELLED_CONFIRMED";
 
   const {
     sessionList,
@@ -91,6 +89,13 @@ export default function ManagerSessionSection({
   //  Filter sessions
   // ============================
   let filtered = [...sessionList];
+
+  filtered = filtered.filter((session) => {
+    const activeParticipants =
+      session.participants?.filter((p) => isActiveOrder(p.status)) ?? [];
+
+    return activeParticipants.length > 0;
+  });
 
   // 🔹 Tab logic
   if (activeTab === "today") {

@@ -84,7 +84,7 @@ export default function ShopHeaderSection({
           </div>
           <div>
             <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
-              Tours Offered
+              Tours available
             </p>
             <p className="font-semibold text-base">{tourCount ?? "—"}</p>
           </div>

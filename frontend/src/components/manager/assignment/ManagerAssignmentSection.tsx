@@ -9,6 +9,9 @@ import { useSessionManager } from "@/hooks/useSessionManager";
 
 type AssignmentStatusFilter = "ALL" | "COMPLETED" | "CONFIRMED" | "PLANNED";
 
+const isActiveOrder = (status: string) =>
+  status !== "CANCELLED" && status !== "CANCELLED_CONFIRMED";
+
 interface Props {
   shopId: number;
 }
@@ -88,16 +91,15 @@ export default function ManagerAssignmentSection({ shopId }: Props) {
     () => calculateOverviewFinance(filteredSessions),
     [filteredSessions],
   );
+
   // =============================
   // Current month revenue calculator
   // =============================
-
   function calculateSessionFinance(session: TourSessionDto) {
     const gross =
-      session.participants?.reduce(
-        (sum, item) => sum + (item.pricePaid ?? 0),
-        0,
-      ) ?? 0;
+      session.participants
+        ?.filter((item) => isActiveOrder(item.status))
+        .reduce((sum, item) => sum + (item.pricePaid ?? 0), 0) ?? 0;
 
     const fee = gross * 0.1;
     const payout = gross - fee;
@@ -116,10 +118,9 @@ export default function ManagerAssignmentSection({ shopId }: Props) {
   function calculateManagerFinance(sessions: TourSessionDto[]) {
     const gross = sessions.reduce((sum, session) => {
       const sessionGross =
-        session.participants?.reduce(
-          (s, item) => s + (item.pricePaid ?? 0),
-          0,
-        ) ?? 0;
+        session.participants
+          ?.filter((item) => isActiveOrder(item.status))
+          .reduce((s, item) => s + (item.pricePaid ?? 0), 0) ?? 0;
 
       return sum + sessionGross;
     }, 0);
@@ -136,10 +137,9 @@ export default function ManagerAssignmentSection({ shopId }: Props) {
 
     sessions.forEach((session) => {
       const gross =
-        session.participants?.reduce(
-          (sum, item) => sum + (item.pricePaid ?? 0),
-          0,
-        ) ?? 0;
+        session.participants
+          ?.filter((item) => isActiveOrder(item.status))
+          .reduce((sum, item) => sum + (item.pricePaid ?? 0), 0) ?? 0;
 
       if (session.status === "COMPLETED") {
         completedGross += gross;

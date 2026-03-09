@@ -21,18 +21,24 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
   List<Tour> findByShopId(Long shopId);
 
   @Query("""
-          SELECT DISTINCT t FROM Tour t
-          LEFT JOIN t.language l
-          WHERE (:type IS NULL OR t.type IN :type)
-            AND (:language IS NULL OR l IN :language)
-            AND t.status = 'ACTIVE'
-            AND (
-              COALESCE(:keyword, '') = '' OR (
-                LOWER(t.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                LOWER(t.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                LOWER(t.location) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              )
-            )
+      SELECT DISTINCT t FROM Tour t
+      LEFT JOIN t.language l
+      WHERE EXISTS (
+          SELECT 1 FROM TourSchedule ts
+          WHERE ts.tour = t
+          AND ts.date >= CURRENT_DATE
+          AND ts.bookedParticipants < ts.maxParticipants
+      )
+      AND (:type IS NULL OR t.type IN :type)
+      AND (:language IS NULL OR l IN :language)
+      AND t.status = 'ACTIVE'
+      AND (
+        COALESCE(:keyword, '') = '' OR (
+          LOWER(t.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+          LOWER(t.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+          LOWER(t.location) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        )
+      )
       """)
   Page<Tour> searchBase(
       @Param("type") List<String> type,
@@ -41,21 +47,27 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
       Pageable pageable);
 
   @Query("""
-          SELECT DISTINCT t FROM Tour t
-          LEFT JOIN t.categories c
-          LEFT JOIN t.language l
-          WHERE (:type IS NULL OR t.type IN :type)
-            AND (:language IS NULL OR l IN :language)
-            AND (:categories IS NULL OR c IN :categories)
-            AND t.status = 'ACTIVE'
-            AND (
-              COALESCE(:keyword, '') = '' OR (
-                LOWER(t.title) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%')) OR
-                LOWER(t.description) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%')) OR
-                LOWER(t.location) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%'))
-              )
-            )
-      """)
+                SELECT DISTINCT t FROM Tour t
+                LEFT JOIN t.categories c
+                LEFT JOIN t.language l
+                WHERE (:type IS NULL OR t.type IN :type)
+                AND EXISTS (
+        SELECT 1 FROM TourSchedule ts
+        WHERE ts.tour = t
+        AND ts.date >= CURRENT_DATE
+        AND ts.bookedParticipants < ts.maxParticipants
+      )
+                  AND (:language IS NULL OR l IN :language)
+                  AND (:categories IS NULL OR c IN :categories)
+                  AND t.status = 'ACTIVE'
+                  AND (
+                    COALESCE(:keyword, '') = '' OR (
+                      LOWER(t.title) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%')) OR
+                      LOWER(t.description) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%')) OR
+                      LOWER(t.location) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%'))
+                    )
+                  )
+            """)
   Page<Tour> searchByFiltersWithoutDate(
       @Param("categories") List<TourCategory> categories,
       @Param("type") List<String> type,
@@ -64,23 +76,24 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
       Pageable pageable);
 
   @Query("""
-          SELECT DISTINCT t FROM Tour t
-          LEFT JOIN t.language l
-          WHERE EXISTS (
-              SELECT 1 FROM TourSchedule ts
-              WHERE ts.tour = t
-                AND ts.date = :date
-          )
-            AND (:type IS NULL OR t.type IN :type)
-            AND (:language IS NULL OR l IN :language)
-            AND t.status = 'ACTIVE'
-            AND (
-              COALESCE(:keyword, '') = '' OR (
-                LOWER(t.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                LOWER(t.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                LOWER(t.location) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              )
-            )
+      SELECT DISTINCT t FROM Tour t
+      LEFT JOIN t.language l
+      WHERE EXISTS (
+          SELECT 1 FROM TourSchedule ts
+          WHERE ts.tour = t
+          AND ts.date = :date
+          AND ts.bookedParticipants < ts.maxParticipants
+      )
+      AND (:type IS NULL OR t.type IN :type)
+      AND (:language IS NULL OR l IN :language)
+      AND t.status = 'ACTIVE'
+      AND (
+        COALESCE(:keyword, '') = '' OR (
+          LOWER(t.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+          LOWER(t.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+          LOWER(t.location) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        )
+      )
       """)
   Page<Tour> searchWithDate(
       @Param("type") List<String> type,
@@ -90,19 +103,25 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
       Pageable pageable);
 
   @Query("""
-          SELECT DISTINCT t FROM Tour t
-          LEFT JOIN t.language l
-          WHERE (:type IS NULL OR t.type IN :type)
-            AND (:language IS NULL OR l IN :language)
-            AND t.status = 'ACTIVE'
-            AND (
-              COALESCE(:keyword, '') = '' OR (
-                LOWER(t.title) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%')) OR
-                LOWER(t.description) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%')) OR
-                LOWER(t.location) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%'))
-              )
-            )
-      """)
+                SELECT DISTINCT t FROM Tour t
+                LEFT JOIN t.language l
+                WHERE (:type IS NULL OR t.type IN :type)
+                AND EXISTS (
+        SELECT 1 FROM TourSchedule ts
+        WHERE ts.tour = t
+        AND ts.date >= CURRENT_DATE
+        AND ts.bookedParticipants < ts.maxParticipants
+      )
+                  AND (:language IS NULL OR l IN :language)
+                  AND t.status = 'ACTIVE'
+                  AND (
+                    COALESCE(:keyword, '') = '' OR (
+                      LOWER(t.title) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%')) OR
+                      LOWER(t.description) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%')) OR
+                      LOWER(t.location) LIKE LOWER(CONCAT('%', COALESCE(:keyword, ''), '%'))
+                    )
+                  )
+            """)
   Page<Tour> searchWithoutCategory(
       @Param("type") List<String> type,
       @Param("language") List<String> language,
@@ -110,23 +129,30 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
       Pageable pageable);
 
   @Query("""
-          SELECT DISTINCT t FROM Tour t
-          LEFT JOIN t.language l
-          WHERE EXISTS (
-              SELECT 1 FROM t.categories c
-              WHERE c IN :categories
-          )
-            AND (:type IS NULL OR t.type IN :type)
-            AND (:language IS NULL OR l IN :language)
-            AND t.status = 'ACTIVE'
-            AND (
-              COALESCE(:keyword, '') = '' OR (
-                LOWER(t.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                LOWER(t.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                LOWER(t.location) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              )
-            )
-      """)
+                SELECT DISTINCT t FROM Tour t
+                LEFT JOIN t.language l
+
+                WHERE EXISTS (
+                    SELECT 1 FROM t.categories c
+                    WHERE c IN :categories
+                )
+                    AND EXISTS (
+        SELECT 1 FROM TourSchedule ts
+        WHERE ts.tour = t
+        AND ts.date >= CURRENT_DATE
+        AND ts.bookedParticipants < ts.maxParticipants
+      )
+                  AND (:type IS NULL OR t.type IN :type)
+                  AND (:language IS NULL OR l IN :language)
+                  AND t.status = 'ACTIVE'
+                  AND (
+                    COALESCE(:keyword, '') = '' OR (
+                      LOWER(t.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                      LOWER(t.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                      LOWER(t.location) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                    )
+                  )
+            """)
   Page<Tour> searchWithCategory(
       @Param("categories") List<TourCategory> categories,
       @Param("type") List<String> type,
@@ -135,27 +161,28 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
       Pageable pageable);
 
   @Query("""
-          SELECT DISTINCT t FROM Tour t
-          LEFT JOIN t.language l
-          WHERE EXISTS (
-              SELECT 1 FROM t.categories c
-              WHERE c IN :categories
-          )
-            AND EXISTS (
-              SELECT 1 FROM TourSchedule ts
-              WHERE ts.tour = t
-                AND ts.date = :date
-            )
-            AND (:type IS NULL OR t.type IN :type)
-            AND (:language IS NULL OR l IN :language)
-            AND t.status = 'ACTIVE'
-            AND (
-              COALESCE(:keyword, '') = '' OR (
-                LOWER(t.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                LOWER(t.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                LOWER(t.location) LIKE LOWER(CONCAT('%', :keyword, '%'))
-              )
-            )
+      SELECT DISTINCT t FROM Tour t
+      LEFT JOIN t.language l
+      WHERE EXISTS (
+          SELECT 1 FROM t.categories c
+          WHERE c IN :categories
+      )
+      AND EXISTS (
+          SELECT 1 FROM TourSchedule ts
+          WHERE ts.tour = t
+          AND ts.date = :date
+          AND ts.bookedParticipants < ts.maxParticipants
+      )
+      AND (:type IS NULL OR t.type IN :type)
+      AND (:language IS NULL OR l IN :language)
+      AND t.status = 'ACTIVE'
+      AND (
+        COALESCE(:keyword, '') = '' OR (
+          LOWER(t.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+          LOWER(t.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+          LOWER(t.location) LIKE LOWER(CONCAT('%', :keyword, '%'))
+        )
+      )
       """)
   Page<Tour> searchWithCategoryAndDate(
       @Param("categories") List<TourCategory> categories,
@@ -165,10 +192,36 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
       @Param("date") LocalDate date,
       Pageable pageable);
 
-  @Query(value = "SELECT * FROM tours WHERE status = 'ACTIVE' ORDER BY random() LIMIT :count", nativeQuery = true)
+  @Query(value = """
+      SELECT t.*
+      FROM tours t
+      WHERE t.status = 'ACTIVE'
+      AND EXISTS (
+          SELECT 1
+          FROM tour_schedules ts
+          WHERE ts.tour_id = t.id
+          AND ts.date >= CURRENT_DATE
+          AND ts.booked_participants < ts.max_participants
+      )
+      ORDER BY random()
+      LIMIT :count
+      """, nativeQuery = true)
   List<Tour> findRandomActiveTours(@Param("count") int count);
 
-  @Query(value = "SELECT * FROM tours WHERE status = 'ACTIVE' ORDER BY random() LIMIT 1", nativeQuery = true)
+  @Query(value = """
+      SELECT t.*
+      FROM tours t
+      WHERE t.status = 'ACTIVE'
+      AND EXISTS (
+          SELECT 1
+          FROM tour_schedules ts
+          WHERE ts.tour_id = t.id
+          AND ts.date >= CURRENT_DATE
+          AND ts.booked_participants < ts.max_participants
+      )
+      ORDER BY random()
+      LIMIT 1
+      """, nativeQuery = true)
   Optional<Tour> findRandomActiveTour();
 
   @Query("""

@@ -26,6 +26,8 @@ import ManagerScheduleSection from "@/components/manager/schedule/ManagerSchedul
 import ManagerOrderSection from "@/components/manager/order/ManagerOrderSection";
 import ManagerAssignmentSection from "@/components/manager/assignment/ManagerAssignmentSection";
 
+
+
 export default function ShopManagerPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -42,6 +44,7 @@ export default function ShopManagerPage() {
   const [activeTab, setActiveTab] = useState<
     "sessions" | "tours" | "payments" | "orders" | "schedules" | "assignments"
   >("sessions");
+  
 
   const [stats, setStats] = useState({
     totalTours: 0,
@@ -71,9 +74,15 @@ export default function ShopManagerPage() {
         }
 
         // ⭐ Filter: only sessions with participants
-        const bookedSessions = allSessions.filter(
-          (s) => (s.participants?.length ?? 0) > 0,
-        );
+        const bookedSessions = allSessions.filter((s) => {
+          const activeParticipants =
+            s.participants?.filter(
+              (p) =>
+                p.status !== "CANCELLED" && p.status !== "CANCELLED_CONFIRMED",
+            ) ?? [];
+
+          return activeParticipants.length > 0;
+        });
 
         setSessions(bookedSessions);
         const now = new Date();
@@ -94,18 +103,27 @@ export default function ShopManagerPage() {
           (s) => s.status === "COMPLETED",
         ).length;
 
-        const totalOrders = bookedSessions.reduce(
-          (sum, s) => sum + (s.participants?.length ?? 0),
-          0,
-        );
+        const totalOrders = bookedSessions.reduce((sum, s) => {
+          const activeOrders =
+            s.participants?.filter(
+              (p) =>
+                p.status !== "CANCELLED" && p.status !== "CANCELLED_CONFIRMED",
+            ) ?? [];
 
-        const totalParticipants = bookedSessions.reduce(
-          (sum, s) =>
-            sum +
-            (s.participants?.reduce((pSum, p) => pSum + p.participants, 0) ??
-              0),
-          0,
-        );
+          return sum + activeOrders.length;
+        }, 0);
+
+        const totalParticipants = bookedSessions.reduce((sum, s) => {
+          const activeOrders =
+            s.participants?.filter(
+              (p) =>
+                p.status !== "CANCELLED" && p.status !== "CANCELLED_CONFIRMED",
+            ) ?? [];
+
+          return (
+            sum + activeOrders.reduce((pSum, p) => pSum + p.participants, 0)
+          );
+        }, 0);
 
         setStats({
           totalTours,
