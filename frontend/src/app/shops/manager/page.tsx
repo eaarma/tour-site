@@ -19,14 +19,12 @@ import {
 } from "lucide-react";
 
 import { TourSessionDto } from "@/types/tourSession";
-import { TourSessionService } from "@/lib/tourSessionService";
 import ShopManagerPaymentSection from "@/components/manager/payment/ShopManagerPaymentSection";
 import ManagerSessionSection from "@/components/manager/session/ManagerSessionSection";
 import ManagerScheduleSection from "@/components/manager/schedule/ManagerScheduleSection";
 import ManagerOrderSection from "@/components/manager/order/ManagerOrderSection";
 import ManagerAssignmentSection from "@/components/manager/assignment/ManagerAssignmentSection";
-
-
+import { useSessionManager } from "@/hooks/useSessionManager";
 
 export default function ShopManagerPage() {
   const router = useRouter();
@@ -35,16 +33,15 @@ export default function ShopManagerPage() {
   const shopIdParam = searchParams.get("shopId");
   const shopId = shopIdParam ? Number(shopIdParam) : null;
 
+  const { sessionList } = useSessionManager(shopId ?? 0);
+
   const access = useShopAccess(shopId ?? 0); // null | true | false
 
   const [tours, setTours] = useState<Tour[]>([]);
 
-  const [sessions, setSessions] = useState<TourSessionDto[]>([]);
-
   const [activeTab, setActiveTab] = useState<
     "sessions" | "tours" | "payments" | "orders" | "schedules" | "assignments"
   >("sessions");
-  
 
   const [stats, setStats] = useState({
     totalTours: 0,
@@ -66,64 +63,52 @@ export default function ShopManagerPage() {
         const shopTours = await TourService.getByShopId(shopId);
         setTours(shopTours);
 
-        // ⭐ NEW — fetch sessions for each tour
-        const allSessions: TourSessionDto[] = [];
-        for (const t of shopTours) {
-          const tourSessions = await TourSessionService.getByTour(t.id);
-          allSessions.push(...tourSessions);
-        }
-
-        // ⭐ Filter: only sessions with participants
-        const bookedSessions = allSessions.filter((s) => {
-          const activeParticipants =
-            s.participants?.filter(
-              (p) =>
-                p.status !== "CANCELLED" && p.status !== "CANCELLED_CONFIRMED",
-            ) ?? [];
-
-          return activeParticipants.length > 0;
-        });
-
-        setSessions(bookedSessions);
         const now = new Date();
 
         const totalTours = shopTours.filter(
           (t) => t.status === "ACTIVE",
         ).length;
 
-        const totalSessions = bookedSessions.length;
+        const totalSessions = sessionList.length;
 
-        const upcomingSessions = bookedSessions.filter((s) => {
+        const upcomingSessions = sessionList.filter((s) => {
           if (s.status !== "CONFIRMED") return false;
           const dt = new Date(`${s.date}T${s.time}`);
           return dt > now;
         }).length;
 
-        const completedSessions = bookedSessions.filter(
+        const completedSessions = sessionList.filter(
           (s) => s.status === "COMPLETED",
         ).length;
 
-        const totalOrders = bookedSessions.reduce((sum, s) => {
-          const activeOrders =
-            s.participants?.filter(
-              (p) =>
-                p.status !== "CANCELLED" && p.status !== "CANCELLED_CONFIRMED",
-            ) ?? [];
+        const totalOrders = sessionList.reduce(
+          (sum: number, s: TourSessionDto) => {
+            const activeOrders =
+              s.participants?.filter(
+                (p) =>
+                  p.status !== "CANCELLED" &&
+                  p.status !== "CANCELLED_CONFIRMED",
+              ) ?? [];
 
-          return sum + activeOrders.length;
-        }, 0);
+            return sum + activeOrders.length;
+          },
+          0,
+        );
+        const totalParticipants = sessionList
+          .filter((s) => s.status === "COMPLETED")
+          .reduce((sum: number, s: TourSessionDto) => {
+            const activeOrders =
+              s.participants?.filter(
+                (p) =>
+                  p.status !== "CANCELLED" &&
+                  p.status !== "CANCELLED_CONFIRMED",
+              ) ?? [];
 
-        const totalParticipants = bookedSessions.reduce((sum, s) => {
-          const activeOrders =
-            s.participants?.filter(
-              (p) =>
-                p.status !== "CANCELLED" && p.status !== "CANCELLED_CONFIRMED",
-            ) ?? [];
-
-          return (
-            sum + activeOrders.reduce((pSum, p) => pSum + p.participants, 0)
-          );
-        }, 0);
+            return (
+              sum +
+              activeOrders.reduce((pSum: number, p) => pSum + p.participants, 0)
+            );
+          }, 0);
 
         setStats({
           totalTours,
@@ -139,7 +124,7 @@ export default function ShopManagerPage() {
     };
 
     load();
-  }, [shopId, access]);
+  }, [shopId, access, sessionList]);
 
   // ============================
   // 🌀 Loading state (auth + access)
@@ -351,7 +336,7 @@ export default function ShopManagerPage() {
         {/* Tab panels */}
         {activeTab === "sessions" && (
           <ManagerSessionSection
-            sessions={sessions}
+            sessions={sessionList}
             tours={tours}
             shopId={shopId}
           />

@@ -16,25 +16,25 @@ export const TourSessionService = {
 
   updateStatus: async (
     sessionId: number,
-    status: SessionStatus
+    status: SessionStatus,
   ): Promise<TourSessionDto> => {
     const res = await api.patch<TourSessionDto>(
       `/api/sessions/${sessionId}/status`,
       null,
-      { params: { status } }
+      { params: { status } },
     );
     return res.data; // ⬅️ important
   },
 
   assignManager: async (
     sessionId: number,
-    managerId: string | null
+    managerId: string | null,
   ): Promise<TourSessionDto> => {
     // ✅ unassign: don't send the param at all
     if (!managerId) {
       const res = await api.patch<TourSessionDto>(
         `/api/sessions/${sessionId}/assign-manager`,
-        null
+        null,
       );
       return res.data;
     }
@@ -43,17 +43,24 @@ export const TourSessionService = {
     const res = await api.patch<TourSessionDto>(
       `/api/sessions/${sessionId}/assign-manager`,
       null,
-      { params: { managerId } }
+      { params: { managerId } },
     );
     return res.data;
   },
 
-  getByShopId: (shopId: number) =>
+  getByShopId: (shopId: number): Promise<TourSessionDto[]> =>
     api.get(`/api/sessions/shop/${shopId}`).then((res) => res.data),
 
   async getByManagerId(managerId: string) {
     const res = await api.get<TourSessionDto[]>(
-      `/api/sessions/manager/${managerId}`
+      `/api/sessions/manager/${managerId}`,
+    );
+    return res.data;
+  },
+
+  async getCompletedCount(shopId: number): Promise<number> {
+    const res = await api.get<number>(
+      `/api/sessions/shops/${shopId}/stats/tours-given`,
     );
     return res.data;
   },

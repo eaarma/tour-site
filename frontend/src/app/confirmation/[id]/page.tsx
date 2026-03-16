@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { OrderResponseDto } from "@/types/order";
 import { OrderService } from "@/lib/orderService";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,6 +13,9 @@ export default function ConfirmationPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
 
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token") || undefined;
+
   const [order, setOrder] = useState<OrderResponseDto | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +24,7 @@ export default function ConfirmationPage() {
 
     const load = async () => {
       try {
-        const data = await OrderService.getById(id, !isAuthenticated);
+        const data = await OrderService.getById(id, token);
         setOrder(data);
       } catch {
         toast.error("Unable to load order");
@@ -32,7 +35,7 @@ export default function ConfirmationPage() {
     };
 
     load();
-  }, [id, isAuthenticated, router]);
+  }, [id, token, router]);
 
   if (loading) {
     return (

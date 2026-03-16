@@ -16,10 +16,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,23 +32,34 @@ import lombok.Setter;
 @Audited
 @EntityListeners(AuditingEntityListener.class)
 @Entity
-@Table(name = "payment_lines", uniqueConstraints = @UniqueConstraint(name = "uk_payment_lines_order_item", columnNames = "order_item_id"))
+@Table(name = "payment_lines")
 public class PaymentLine {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "payment_id", nullable = false)
+    // Optional: Stripe / order payment group
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_id")
     private Payment payment;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_item_id", nullable = false)
+    // Optional: booking reference
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_item_id")
     private OrderItem orderItem;
+
+    // Optional: session reference (for cancellation fees)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "session_id")
+    private TourSession session;
 
     @Column(name = "shop_id", nullable = false)
     private Long shopId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false)
+    private PaymentLineType type;
 
     @Column(name = "gross_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal grossAmount;
@@ -69,7 +77,7 @@ public class PaymentLine {
     @Column(nullable = false)
     private PaymentStatus status;
 
-    // payout is per shop allocation
+    // Optional: payout grouping
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payout_id")
     private Payout payout;

@@ -87,6 +87,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/checkout/finalize").permitAll()
 
                         // Shops & Shop Users
+                        .requestMatchers(HttpMethod.GET, "/api/shop-users/user/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/shops/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/shops/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/shop-users/**").permitAll()
@@ -111,6 +112,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/sessions/**").hasRole("MANAGER")
                         .requestMatchers(HttpMethod.PATCH, "/api/sessions/**").hasRole("MANAGER")
                         .requestMatchers(HttpMethod.DELETE, "/api/sessions/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.GET, "/api/sessions/shops/*/stats/tours-given").permitAll()
 
                         // Actuator
                         .requestMatchers("/actuator/**").permitAll()

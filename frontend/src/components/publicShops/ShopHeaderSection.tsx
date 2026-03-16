@@ -7,7 +7,8 @@ interface Props {
   shop: ShopDto;
   guideCount?: number;
   tourCount?: number;
-  dateFormat?: "short" | "long"; // 24.02.2026 or 24 February 2026
+  toursGiven?: number; // ⭐ NEW
+  dateFormat?: "short" | "long";
 }
 
 function formatEuropeanDate(dateString: string, format: "short" | "long") {
@@ -15,7 +16,6 @@ function formatEuropeanDate(dateString: string, format: "short" | "long") {
 
   if (format === "short") {
     return date.toLocaleDateString("en-GB");
-    // -> 24/02/2026 (we’ll convert slashes below)
   }
 
   return date.toLocaleDateString("en-GB", {
@@ -29,6 +29,7 @@ export default function ShopHeaderSection({
   shop,
   guideCount,
   tourCount,
+  toursGiven,
   dateFormat = "long",
 }: Props) {
   const formattedDateRaw = formatEuropeanDate(shop.createdAt, dateFormat);
@@ -64,8 +65,9 @@ export default function ShopHeaderSection({
         </p>
       )}
 
-      {/* Stats Row (future-proofed) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-base-300">
+      {/* Stats Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-base-300">
+        {/* Guides */}
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center size-10 rounded-lg bg-muted shrink-0">
             <Users className="size-5 text-muted-foreground" />
@@ -78,6 +80,7 @@ export default function ShopHeaderSection({
           </div>
         </div>
 
+        {/* Tours Available */}
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center size-10 rounded-lg bg-muted shrink-0">
             <Store className="size-5 text-muted-foreground" />
@@ -90,9 +93,23 @@ export default function ShopHeaderSection({
           </div>
         </div>
 
+        {/* ⭐ Tours Given */}
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center size-10 rounded-lg bg-muted shrink-0">
             <CalendarDays className="size-5 text-muted-foreground" />
+          </div>
+          <div>
+            <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
+              Tours given
+            </p>
+            <p className="font-semibold text-base">{toursGiven ?? "—"}</p>
+          </div>
+        </div>
+
+        {/* Shop ID */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center size-10 rounded-lg bg-muted shrink-0">
+            <Store className="size-5 text-muted-foreground" />
           </div>
           <div>
             <p className="text-[11px] uppercase tracking-wider text-muted-foreground">

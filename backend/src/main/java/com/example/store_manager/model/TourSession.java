@@ -3,6 +3,8 @@ package com.example.store_manager.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -42,4 +44,9 @@ public class TourSession {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "manager_id")
     private User manager;
+
+    @Enumerated(EnumType.STRING)
+    private CancelledBy cancelledBy;
+
+    private Instant cancelledAt;
 }

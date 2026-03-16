@@ -16,60 +16,41 @@ import com.example.store_manager.model.ShopUserStatus;
 @Repository
 public interface ShopUserRepository extends JpaRepository<ShopUser, Long> {
 
-  /*
-   * -----------------------------
-   * Basic lookups
-   * -----------------------------
-   */
+    List<ShopUser> findByShopId(Long shopId);
 
-  List<ShopUser> findByShopId(Long shopId);
+    List<ShopUser> findByUserId(UUID userId);
 
-  List<ShopUser> findByUserId(UUID userId);
+    Optional<ShopUser> findByShopIdAndUserId(Long shopId, UUID userId);
 
-  Optional<ShopUser> findByShopIdAndUserId(Long shopId, UUID userId);
+    List<ShopUser> findByShopIdAndStatus(Long shopId, ShopUserStatus status);
 
-  List<ShopUser> findByShopIdAndStatus(Long shopId, ShopUserStatus status);
+    boolean existsByUserIdAndShopId(UUID userId, Long shopId);
 
-  /*
-   * -----------------------------
-   * Existence checks (fast paths)
-   * -----------------------------
-   */
+    boolean existsByUserIdAndShopIdAndRole(
+            UUID userId,
+            Long shopId,
+            ShopUserRole role);
 
-  boolean existsByUserIdAndShopId(UUID userId, Long shopId);
+    @Query("""
+                SELECT su.role
+                FROM ShopUser su
+                WHERE su.user.id = :userId
+                  AND su.shop.id = :shopId
+            """)
+    Optional<ShopUserRole> findRole(
+            @Param("userId") UUID userId,
+            @Param("shopId") Long shopId);
 
-  boolean existsByUserIdAndShopIdAndRole(
-      UUID userId,
-      Long shopId,
-      ShopUserRole role);
+    @Query("""
+                SELECT su
+                FROM ShopUser su
+                JOIN FETCH su.user
+                WHERE su.shop.id = :shopId
+            """)
+    List<ShopUser> findByShopIdWithUser(@Param("shopId") Long shopId);
 
-  /*
-   * -----------------------------
-   * Role lookup (authorization)
-   * -----------------------------
-   */
-
-  @Query("""
-          SELECT su.role
-          FROM ShopUser su
-          WHERE su.user.id = :userId
-            AND su.shop.id = :shopId
-      """)
-  Optional<ShopUserRole> findRole(
-      @Param("userId") UUID userId,
-      @Param("shopId") Long shopId);
-
-  /*
-   * -----------------------------
-   * Fetch joins (avoid N+1)
-   * -----------------------------
-   */
-
-  @Query("""
-          SELECT su
-          FROM ShopUser su
-          JOIN FETCH su.user
-          WHERE su.shop.id = :shopId
-      """)
-  List<ShopUser> findByShopIdWithUser(@Param("shopId") Long shopId);
+    boolean existsByShopIdAndUserIdAndStatus(
+            Long shopId,
+            UUID userId,
+            ShopUserStatus status);
 }

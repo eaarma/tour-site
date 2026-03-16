@@ -113,8 +113,7 @@ class TourSessionServiceTest {
     @Test
     void getSessionsForShop_returnsEmptyOkResult_whenNoTours() {
 
-        when(tourRepository.findByShopId(1L)).thenReturn(List.of());
-
+        when(repo.findByShopIdWithParticipants(1L)).thenReturn(List.of());
         Result<List<TourSessionDetailsDto>> result = service.getSessionsForShop(1L);
 
         assertTrue(result.isOk());
@@ -128,19 +127,10 @@ class TourSessionServiceTest {
     @Test
     void getSessionsForShop_returnsSessionsForAllTours() {
 
-        Tour tour1 = new Tour();
-        tour1.setId(1L);
-
-        Tour tour2 = new Tour();
-        tour2.setId(2L);
-
         TourSession session = new TourSession();
         TourSessionDetailsDto dto = new TourSessionDetailsDto();
 
-        when(tourRepository.findByShopId(1L))
-                .thenReturn(List.of(tour1, tour2));
-
-        when(repo.findBySchedule_Tour_IdIn(List.of(1L, 2L)))
+        when(repo.findByShopIdWithParticipants(1L))
                 .thenReturn(List.of(session));
 
         when(mapper.toDto(session))
@@ -152,7 +142,7 @@ class TourSessionServiceTest {
         assertEquals(1, result.get().size());
         assertSame(dto, result.get().get(0));
 
-        verify(repo).findBySchedule_Tour_IdIn(List.of(1L, 2L));
+        verify(repo).findByShopIdWithParticipants(1L);
         verify(mapper).toDto(session);
     }
 

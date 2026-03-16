@@ -3,8 +3,8 @@ import { OrderItemResponseDto, OrderStatus } from "./order";
 export type SessionStatus =
   | "PLANNED"
   | "CONFIRMED"
-  | "CANCELLED"
   | "COMPLETED"
+  | "CANCELLED"
   | "CANCELLED_CONFIRMED";
 
 export interface OrderItemParticipantDto {

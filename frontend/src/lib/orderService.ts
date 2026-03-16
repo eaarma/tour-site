@@ -10,19 +10,25 @@ const BASE_URL = "/orders";
 
 export const OrderService = {
   // 🔹 Fetch a specific order, filtered by guest or user
-  getById: async (
-    id: string,
-    isGuest: boolean = false,
-  ): Promise<OrderResponseDto> => {
-    const endpoint = isGuest ? `/orders/guest/${id}` : `/orders/${id}`;
-    const res = await api.get(endpoint);
+  getById: async (id: string, token?: string): Promise<OrderResponseDto> => {
+    const url = token ? `/orders/${id}?token=${token}` : `/orders/${id}`;
+
+    const res = await api.get(url);
     return res.data;
   },
 
-  getOrderById: async (id: number): Promise<OrderResponseDto> => {
-    const res = await api.get(`${BASE_URL}/${id}`, {
-      withCredentials: false, // allow both guests and logged-in users to fetch orders
+  getOrderById: async (
+    id: number,
+    token?: string,
+  ): Promise<OrderResponseDto> => {
+    const url = token
+      ? `${BASE_URL}/${id}?token=${token}`
+      : `${BASE_URL}/${id}`;
+
+    const res = await api.get(url, {
+      withCredentials: false,
     });
+
     return res.data;
   },
 

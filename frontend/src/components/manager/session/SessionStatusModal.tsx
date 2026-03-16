@@ -18,8 +18,6 @@ const ALL_SESSION_STATUSES: SessionStatus[] = [
   "PLANNED",
   "CONFIRMED",
   "COMPLETED",
-  "CANCELLED",
-  "CANCELLED_CONFIRMED",
 ];
 
 export default function SessionStatusModal({
@@ -42,7 +40,7 @@ export default function SessionStatusModal({
 
       const updated = await TourSessionService.updateStatus(
         sessionId,
-        selected
+        selected,
       );
 
       toast.success("Session status updated");

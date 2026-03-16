@@ -16,6 +16,15 @@ export default function PaymentSectionRow({ payment, onView }: Props) {
         ? "badge-error"
         : "badge-neutral";
 
+  const typeLabel =
+    payment.type === "SALE"
+      ? "Payment"
+      : payment.type === "REFUND"
+        ? "Refund"
+        : payment.type === "CANCELLATION_FEE"
+          ? "Session cancellation fee"
+          : payment.type;
+
   return (
     <div className="px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 hover:bg-base-200/40 transition-colors border-b border-base-200">
       {/* LEFT */}
@@ -27,7 +36,7 @@ export default function PaymentSectionRow({ payment, onView }: Props) {
 
         <div className="flex items-center gap-2 text-sm font-medium">
           <CreditCard className="w-4 h-4 text-primary" />
-          Order #{payment.orderId}
+          {payment.orderItemId ? `Order #${payment.orderItemId}` : typeLabel}
         </div>
       </div>
 
@@ -50,7 +59,7 @@ export default function PaymentSectionRow({ payment, onView }: Props) {
           {payment.status}
         </span>
 
-        {onView && (
+        {onView && (payment.orderItemId || payment.sessionId) && (
           <button
             className="btn btn-sm btn-outline hover:border-primary hover:text-primary"
             onClick={() => onView(payment)}

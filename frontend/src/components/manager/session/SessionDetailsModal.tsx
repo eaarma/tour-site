@@ -18,6 +18,7 @@ import SessionStatusModal from "./SessionStatusModal";
 import SessionOwnershipModal from "./SessionOwnershipModal";
 import { OrderItemResponseDto } from "@/types";
 import { FaUser } from "react-icons/fa";
+import SessionCancellationModal from "./SessionCancellationModal";
 
 interface Props {
   session: TourSessionDto;
@@ -40,23 +41,36 @@ export default function SessionDetailsModal({
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [isOwnershipModalOpen, setIsOwnershipModalOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [sessionData, setSessionData] = useState(session);
 
-  const paidParticipants = (session.participants ?? []).filter(
-    (p) => p.status === "PAID",
+  const visibleParticipants = useMemo(() => {
+    const participants = sessionData.participants ?? [];
+
+    if (
+      sessionData.status === "CANCELLED" ||
+      sessionData.status === "CANCELLED_CONFIRMED"
+    ) {
+      return participants;
+    }
+
+    return participants.filter((p) => p.status === "PAID");
+  }, [sessionData.participants, sessionData.status]);
+
+  const paidParticipants = useMemo(
+    () => (sessionData.participants ?? []).filter((p) => p.status === "PAID"),
+    [sessionData.participants],
   );
-
   const bookedCount = paidParticipants.reduce(
     (sum, p) => sum + p.participants,
     0,
   );
-
-  const remaining = session.maxParticipants - bookedCount;
+  const remaining = sessionData.maxParticipants - bookedCount;
 
   const datetime = useMemo(
-    () => new Date(`${session.date}T${session.time}`),
-    [session.date, session.time],
+    () => new Date(`${sessionData.date}T${sessionData.time}`),
+    [sessionData.date, sessionData.time],
   );
-  const [sessionData, setSessionData] = useState(session);
 
   useEffect(() => {
     setSessionData(session);
@@ -71,19 +85,39 @@ export default function SessionDetailsModal({
       0,
     );
 
-    const fee = gross * 0.1;
-    const payout = gross - fee;
+    const platformFee = gross * 0.1;
+    const payout = gross - platformFee;
+
+    // cancellation fee based on original booking value
+    const originalGross = (sessionData.participants ?? []).reduce(
+      (sum, item) => sum + (item.pricePaid ?? 0),
+      0,
+    );
+
+    const cancellationFee =
+      session.status === "CANCELLED" ? originalGross * 0.02 : 0;
 
     const isProjected =
       session.status === "PLANNED" || session.status === "CONFIRMED";
 
+    if (session.status === "CANCELLED") {
+      return {
+        gross: 0,
+        platformFee: 0,
+        payout: 0,
+        cancellationFee,
+        label: "Session cancelled",
+      };
+    }
+
     return {
       gross,
-      fee,
+      platformFee,
       payout,
+      cancellationFee: 0,
       label: isProjected ? "Projected income" : "Session income",
     };
-  }, [paidParticipants, session.status]);
+  }, [paidParticipants, sessionData.participants, session.status]);
 
   return (
     <>
@@ -147,7 +181,7 @@ export default function SessionDetailsModal({
           <div className="border-t border-base-300" />
 
           {/* Logistics Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="flex justify-between sm:justify-start sm:gap-8 ml-2">
             {/* Manager */}
             <div className="flex flex-col gap-1">
               <span className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -182,6 +216,16 @@ export default function SessionDetailsModal({
 
             {/* Financial Numbers */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:gap-8 text-sm">
+              {session.status === "CANCELLED" && (
+                <div className="flex justify-between sm:flex-col sm:items-end">
+                  <span className="text-xs text-muted-foreground">
+                    Cancellation processing fee (2%)
+                  </span>
+                  <span className="font-semibold text-orange-500">
+                    €{finance.cancellationFee.toFixed(2)}
+                  </span>
+                </div>
+              )}
               {/* Gross */}
               <div className="flex justify-between sm:flex-col sm:items-end">
                 <span className="text-xs text-muted-foreground">Gross</span>
@@ -196,7 +240,7 @@ export default function SessionDetailsModal({
                   Platform fee (10%)
                 </span>
                 <span className="font-semibold text-red-500">
-                  €{finance.fee.toFixed(2)}
+                  €{finance.platformFee.toFixed(2)}
                 </span>
               </div>
 
@@ -230,8 +274,8 @@ export default function SessionDetailsModal({
         </h3>
 
         {/* PARTICIPANT LIST */}
-        <div className="space-y-3 max-h-[300px] sm:max-h-[350px] overflow-y-auto pr-2">
-          {paidParticipants.map((item) => (
+        <div className="space-y-3 max-h-[290px] sm:max-h-[330px] overflow-y-auto pr-2">
+          {visibleParticipants.map((item) => (
             <OrderItemCard
               key={item.id}
               item={item}
@@ -289,26 +333,44 @@ export default function SessionDetailsModal({
                 </button>
 
                 {/* ASSIGN MANAGER */}
-                <button
-                  className="block w-full text-left px-4 py-2 hover:bg-base-200"
-                  onClick={() => {
-                    setOptionsOpen(false);
-                    setIsOwnershipModalOpen(true);
-                  }}
-                >
-                  Assign Manager
-                </button>
+                {sessionData.status !== "CANCELLED" &&
+                  sessionData.status !== "COMPLETED" &&
+                  sessionData.status !== "CANCELLED_CONFIRMED" && (
+                    <>
+                      <button
+                        className="block w-full text-left px-4 py-2 hover:bg-base-200"
+                        onClick={() => {
+                          setOptionsOpen(false);
+                          setIsOwnershipModalOpen(true);
+                        }}
+                      >
+                        Assign Manager
+                      </button>
 
-                {/* UPDATE STATUS */}
-                <button
-                  className="block w-full text-left px-4 py-2 hover:bg-base-200"
-                  onClick={() => {
-                    setOptionsOpen(false);
-                    setIsStatusModalOpen(true);
-                  }}
-                >
-                  Set Session Status
-                </button>
+                      {/* UPDATE STATUS */}
+                      <button
+                        className="block w-full text-left px-4 py-2 hover:bg-base-200"
+                        onClick={() => {
+                          setOptionsOpen(false);
+                          setIsStatusModalOpen(true);
+                        }}
+                      >
+                        Set Session Status
+                      </button>
+
+                      {/* CANCEL SESSION */}
+                      <div className="border-t border-base-300 my-1" />
+                      <button
+                        className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                        onClick={() => {
+                          setOptionsOpen(false);
+                          setIsCancelModalOpen(true);
+                        }}
+                      >
+                        Cancel Session
+                      </button>
+                    </>
+                  )}
               </div>
             )}
           </div>
@@ -353,6 +415,19 @@ export default function SessionDetailsModal({
           isOpen
           orderItem={selectedItem}
           onClose={() => setSelectedItem(null)}
+        />
+      )}
+
+      {isCancelModalOpen && (
+        <SessionCancellationModal
+          isOpen={isCancelModalOpen}
+          sessionId={session.id}
+          onClose={() => setIsCancelModalOpen(false)}
+          onCancelled={() => {
+            const updated = { ...sessionData, status: "CANCELLED" as const };
+            setSessionData(updated);
+            onSessionUpdated(updated);
+          }}
         />
       )}
     </>

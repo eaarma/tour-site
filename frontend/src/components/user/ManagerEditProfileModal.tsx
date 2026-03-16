@@ -8,6 +8,7 @@ import { UserService } from "@/lib/userService";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import EditableLanguages from "../manager/item/EditableLanguages";
+import PhoneInput from "../common/PhoneInput";
 
 export default function EditProfileModal({
   isOpen,
@@ -34,8 +35,13 @@ export default function EditProfileModal({
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  if (formData.phone && !/^\+[1-9]\d{7,14}$/.test(formData.phone)) {
+    toast.error("Please enter a valid phone number");
+    return;
+  }
+
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -69,7 +75,7 @@ export default function EditProfileModal({
           setFormData((prev) => ({ ...prev, profileImageUrl: url }));
           toast.success("Image uploaded successfully!");
           setUploading(false);
-        }
+        },
       );
     } catch (err) {
       console.error("Upload error:", err);
@@ -146,12 +152,15 @@ export default function EditProfileModal({
 
           <label className="form-control">
             <span className="label-text font-medium">Phone</span>
-            <input
-              type="text"
-              name="phone"
-              className="input input-bordered input-sm"
-              value={formData.phone}
-              onChange={handleChange}
+
+            <PhoneInput
+              value={formData.phone ?? ""}
+              onChange={(phone) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  phone,
+                }))
+              }
             />
           </label>
 

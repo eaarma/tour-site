@@ -21,8 +21,10 @@ import com.example.store_manager.model.CancelledBy;
 import com.example.store_manager.model.Order;
 import com.example.store_manager.model.OrderItem;
 import com.example.store_manager.model.OrderStatus;
+import com.example.store_manager.model.PaymentLine;
 import com.example.store_manager.repository.OrderItemRepository;
 import com.example.store_manager.repository.OrderRepository;
+import com.example.store_manager.repository.PaymentLineRepository;
 import com.example.store_manager.service.BookingAccessTokenService;
 import com.example.store_manager.service.CancellationService;
 import com.example.store_manager.utility.Result;
@@ -39,6 +41,7 @@ public class PublicOrderController {
         private final CancellationService cancellationService;
         private final OrderItemRepository orderItemRepository;
         private final OrderMapper orderMapper;
+        private final PaymentLineRepository paymentLineRepository;
 
         @GetMapping("/manage")
         public ResponseEntity<OrderResponseDto> getOrderByToken(
@@ -64,9 +67,13 @@ public class PublicOrderController {
                         throw new ResponseStatusException(
                                         HttpStatus.NOT_FOUND, "Invalid link");
                 }
+                PaymentLine saleLine = paymentLineRepository
+                                .findSaleLineForUpdate(orderItemId)
+                                .orElseThrow(() -> new IllegalStateException("Payment line not found"));
 
                 Result<CancellationService.CancellationResult> result = cancellationService.cancelOrderItem(
-                                orderItemId,
+                                item,
+                                saleLine,
                                 CancelledBy.GUEST,
                                 req.getReasonType(),
                                 req.getReason());

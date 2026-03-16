@@ -25,6 +25,7 @@ import com.example.store_manager.model.OrderItem;
 import com.example.store_manager.model.OrderStatus;
 import com.example.store_manager.model.Payment;
 import com.example.store_manager.model.PaymentLine;
+import com.example.store_manager.model.PaymentLineType;
 import com.example.store_manager.model.PaymentStatus;
 import com.example.store_manager.model.Tour;
 import com.example.store_manager.model.TourSchedule;
@@ -81,6 +82,7 @@ public class PaymentService {
                     .payment(saved)
                     .orderItem(item)
                     .shopId(item.getShopId())
+                    .type(PaymentLineType.SALE)
                     .grossAmount(gross)
                     .platformFee(fee)
                     .shopAmount(shopAmount)

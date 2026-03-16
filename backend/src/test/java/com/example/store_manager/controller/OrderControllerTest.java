@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,9 +18,11 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+
 import com.example.store_manager.dto.order.OrderCreateRequestDto;
 import com.example.store_manager.dto.order.OrderItemCreateRequestDto;
 import com.example.store_manager.dto.order.OrderItemResponseDto;
@@ -27,6 +30,7 @@ import com.example.store_manager.dto.order.OrderResponseDto;
 import com.example.store_manager.dto.order.StatusUpdateRequestDto;
 import com.example.store_manager.model.Order;
 import com.example.store_manager.model.OrderStatus;
+import com.example.store_manager.repository.PaymentLineRepository;
 import com.example.store_manager.security.CustomUserDetailsService;
 import com.example.store_manager.security.JwtAuthenticationFilter;
 import com.example.store_manager.security.JwtService;
@@ -60,6 +64,9 @@ class OrderControllerTest {
         @MockitoBean
         private CancellationService cancellationService;
 
+        @MockitoBean
+        private PaymentLineRepository paymentLineRepository;
+
         @MockBean
         MeterRegistry meterRegistry;
 
@@ -90,7 +97,11 @@ class OrderControllerTest {
 
         @Test
         void getOrderById_returnsOk_whenFound() throws Exception {
-                when(orderService.getOrderById(1L))
+
+                when(orderService.getOrderById(
+                                eq(1L),
+                                nullable(Authentication.class),
+                                nullable(String.class)))
                                 .thenReturn(Result.ok(new OrderResponseDto()));
 
                 mockMvc.perform(get("/orders/1"))
@@ -99,33 +110,16 @@ class OrderControllerTest {
 
         @Test
         void getOrderById_returnsNotFound_whenMissing() throws Exception {
-                when(orderService.getOrderById(1L))
+
+                when(orderService.getOrderById(
+                                eq(1L),
+                                nullable(Authentication.class),
+                                nullable(String.class)))
                                 .thenReturn(Result.fail(ApiError.notFound("Order not found")));
 
                 mockMvc.perform(get("/orders/1"))
                                 .andExpect(status().isNotFound());
         }
-
-        /* ---------------- GUEST ORDER VIEW ---------------- */
-
-        @Test
-        void getGuestOrder_stripsSensitiveFields_andReturnsOk() throws Exception {
-                OrderItemResponseDto item = new OrderItemResponseDto();
-                item.setEmail("test@example.com");
-                item.setPhone("+123");
-
-                OrderResponseDto response = new OrderResponseDto();
-                response.setItems(List.of(item));
-
-                when(orderService.getOrderById(1L))
-                                .thenReturn(Result.ok(response));
-
-                mockMvc.perform(get("/orders/guest/1"))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.items[0].email").doesNotExist())
-                                .andExpect(jsonPath("$.items[0].phone").doesNotExist());
-        }
-
         /* ---------------- USER ORDERS ---------------- */
 
         @Test

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.store_manager.dto.booking.CancelBookingRequestDto;
@@ -22,6 +23,9 @@ import com.example.store_manager.dto.order.OrderItemResponseDto;
 import com.example.store_manager.dto.order.OrderResponseDto;
 import com.example.store_manager.dto.order.StatusUpdateRequestDto;
 import com.example.store_manager.model.CancelledBy;
+import com.example.store_manager.model.OrderItem;
+import com.example.store_manager.model.PaymentLine;
+import com.example.store_manager.repository.PaymentLineRepository;
 import com.example.store_manager.security.CustomUserDetails;
 import com.example.store_manager.service.CancellationService;
 import com.example.store_manager.service.OrderService;
@@ -36,213 +40,196 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class OrderController {
 
-    private final OrderService orderService;
-    private final CancellationService cancellationService;
+        private final OrderService orderService;
+        private final CancellationService cancellationService;
+        private final PaymentLineRepository paymentLineRepository;
 
-    // Create multi-item order
-    @PostMapping
-    public ResponseEntity<?> createOrder(
-            @RequestBody @Valid OrderCreateRequestDto dto) {
+        // Create multi-item order
+        @PostMapping
+        public ResponseEntity<?> createOrder(
+                        @RequestBody @Valid OrderCreateRequestDto dto) {
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        UUID userId = null;
-        if (auth != null && auth.isAuthenticated()
-                && auth.getPrincipal() instanceof CustomUserDetails userDetails) {
-            userId = userDetails.getId();
+                UUID userId = null;
+                if (auth != null && auth.isAuthenticated()
+                                && auth.getPrincipal() instanceof CustomUserDetails userDetails) {
+                        userId = userDetails.getId();
+                }
+
+                return ResultResponseMapper.toResponse(
+                                orderService.createOrder(dto, userId));
         }
 
-        return ResultResponseMapper.toResponse(
-                orderService.createOrder(dto, userId));
-    }
+        @GetMapping("/{id}")
+        public ResponseEntity<?> getOrderById(
+                        @PathVariable("id") Long id,
+                        @RequestParam(value = "token", required = false) String token,
+                        Authentication auth) {
 
-    // Get single order by ID
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getOrderById(@PathVariable("id") Long id) {
-        return ResultResponseMapper.toResponse(
-                orderService.getOrderById(id));
-    }
-
-    // Guest-safe order view
-    @GetMapping("/guest/{id}")
-    public ResponseEntity<?> getGuestOrder(@PathVariable("id") Long id) {
-
-        Result<OrderResponseDto> result = orderService.getOrderById(id);
-
-        if (result.isFail()) {
-            return ResultResponseMapper.toResponse(result);
+                return ResultResponseMapper.toResponse(
+                                orderService.getOrderById(id, auth, token));
         }
 
-        OrderResponseDto order = result.get();
+        // Get all orders for authenticated user
+        @GetMapping
+        public ResponseEntity<?> getUserOrders() {
 
-        // Remove sensitive fields
-        if (order.getItems() != null) {
-            order.getItems().forEach(item -> {
-                item.setEmail(null);
-                item.setPhone(null);
-                // item.setName(null);
-                // item.setNationality(null);
-            });
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                UUID userId = null;
+
+                if (auth != null
+                                && auth.isAuthenticated()
+                                && auth.getPrincipal() instanceof CustomUserDetails userDetails) {
+                        userId = userDetails.getId();
+                }
+
+                return ResultResponseMapper.toResponse(
+                                orderService.getOrdersByUser(userId));
         }
 
-        return ResponseEntity.ok(order);
-    }
-
-    // Get all orders for authenticated user
-    @GetMapping
-    public ResponseEntity<?> getUserOrders() {
-
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        UUID userId = null;
-
-        if (auth != null
-                && auth.isAuthenticated()
-                && auth.getPrincipal() instanceof CustomUserDetails userDetails) {
-            userId = userDetails.getId();
+        // Get all order items for a given shop (provider)
+        @GetMapping("/shop/{shopId}/items")
+        public ResponseEntity<?> getOrderItemsByShop(@PathVariable("shopId") Long shopId) {
+                return ResultResponseMapper.toResponse(
+                                orderService.getOrderItemsByShop(shopId));
         }
 
-        return ResultResponseMapper.toResponse(
-                orderService.getOrdersByUser(userId));
-    }
-
-    // Get all order items for a given shop (provider)
-    @GetMapping("/shop/{shopId}/items")
-    public ResponseEntity<?> getOrderItemsByShop(@PathVariable("shopId") Long shopId) {
-        return ResultResponseMapper.toResponse(
-                orderService.getOrderItemsByShop(shopId));
-    }
-
-    @GetMapping("/items/{id}")
-    public ResponseEntity<?> getOrderItem(@PathVariable("id") Long id) {
-        return ResultResponseMapper.toResponse(
-                orderService.getOrderItemById(id));
-    }
-
-    @PatchMapping("/items/{itemId}/status")
-    public ResponseEntity<?> updateOrderItemStatus(
-            @PathVariable Long itemId,
-            @RequestBody StatusUpdateRequestDto request) {
-
-        return ResultResponseMapper.toResponse(
-                orderService.updateOrderItemStatus(itemId, request.getStatus()));
-    }
-
-    @PostMapping("/items/{orderItemId}/cancel")
-    public ResponseEntity<?> cancelMyOrderItem(
-            @PathVariable("orderItemId") Long orderItemId,
-            @RequestBody(required = false) CancelBookingRequestDto req) {
-
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth == null || !auth.isAuthenticated() ||
-                !(auth.getPrincipal() instanceof CustomUserDetails userDetails)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        @GetMapping("/items/{id}")
+        public ResponseEntity<?> getOrderItem(@PathVariable("id") Long id) {
+                return ResultResponseMapper.toResponse(
+                                orderService.getOrderItemById(id));
         }
 
-        UUID userId = userDetails.getId();
+        @PatchMapping("/items/{itemId}/status")
+        public ResponseEntity<?> updateOrderItemStatus(
+                        @PathVariable Long itemId,
+                        @RequestBody StatusUpdateRequestDto request) {
 
-        // Load order item with order + user
-        Result<OrderItemResponseDto> itemResult = orderService.getOrderItemById(orderItemId);
-
-        if (itemResult.isFail()) {
-            return ResultResponseMapper.toResponse(itemResult);
+                return ResultResponseMapper.toResponse(
+                                orderService.updateOrderItemStatus(itemId, request.getStatus()));
         }
 
-        // We need the actual entity to validate ownership properly
-        var itemEntityResult = orderService.getOrderItemEntity(orderItemId);
+        @PostMapping("/items/{orderItemId}/cancel")
+        public ResponseEntity<?> cancelMyOrderItem(
+                        @PathVariable("orderItemId") Long orderItemId,
+                        @RequestBody(required = false) CancelBookingRequestDto req) {
 
-        if (itemEntityResult.isFail()) {
-            return ResultResponseMapper.toResponse(itemEntityResult);
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+                if (auth == null || !auth.isAuthenticated() ||
+                                !(auth.getPrincipal() instanceof CustomUserDetails userDetails)) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                }
+
+                UUID userId = userDetails.getId();
+
+                // Load order item with order + user
+                Result<OrderItemResponseDto> itemResult = orderService.getOrderItemById(orderItemId);
+
+                if (itemResult.isFail()) {
+                        return ResultResponseMapper.toResponse(itemResult);
+                }
+
+                // We need the actual entity to validate ownership properly
+                var itemEntityResult = orderService.getOrderItemEntity(orderItemId);
+
+                if (itemEntityResult.isFail()) {
+                        return ResultResponseMapper.toResponse(itemEntityResult);
+                }
+
+                var item = itemEntityResult.get();
+
+                if (item.getOrder().getUser() == null ||
+                                !item.getOrder().getUser().getId().equals(userId)) {
+
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+
+                PaymentLine saleLine = paymentLineRepository
+                                .findSaleLineForUpdate(orderItemId)
+                                .orElseThrow(() -> new IllegalStateException("Payment line not found"));
+
+                Result<CancellationService.CancellationResult> result = cancellationService.cancelOrderItem(
+                                item,
+                                saleLine,
+                                CancelledBy.USER,
+                                req != null ? req.getReasonType() : null,
+                                req != null ? req.getReason() : null);
+                if (result.isFail()) {
+                        return ResponseEntity
+                                        .status(HttpStatus.BAD_REQUEST)
+                                        .body(result.getErrorOrThrow());
+                }
+
+                var r = result.get();
+
+                return ResponseEntity.ok(
+                                new CancelBookingResponseDto(
+                                                item.getOrder().getId(),
+                                                orderItemId,
+                                                r.refundable(),
+                                                r.refundAmount(),
+                                                r.newStatus()));
         }
 
-        var item = itemEntityResult.get();
+        // Get order items by manager
+        @GetMapping("/manager/{managerId}/items")
+        public ResponseEntity<?> getOrderItemsByManager(
+                        @PathVariable("managerId") UUID managerId) {
 
-        if (item.getOrder().getUser() == null ||
-                !item.getOrder().getUser().getId().equals(userId)) {
-
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return ResultResponseMapper.toResponse(
+                                orderService.getOrderItemsByManager(managerId));
         }
 
-        Result<CancellationService.CancellationResult> result = cancellationService.cancelOrderItem(
-                orderItemId,
-                CancelledBy.USER,
-                req != null ? req.getReasonType() : null,
-                req != null ? req.getReason() : null);
+        // ✅ Confirm order item by manager and set status to CONFIRMED
+        @PatchMapping("/items/{itemId}/confirm/{managerId}")
+        public ResponseEntity<?> confirmOrderItem(
+                        @PathVariable("itemId") Long itemId,
+                        @PathVariable("managerId") UUID managerId) {
 
-        if (result.isFail()) {
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(result.getErrorOrThrow());
+                return ResultResponseMapper.toResponse(
+                                orderService.confirmOrderItem(itemId, managerId));
         }
 
-        var r = result.get();
+        @PatchMapping("/items/{itemId}/assign")
+        public ResponseEntity<?> assignManagerToOrderItem(
+                        @PathVariable("itemId") Long itemId,
+                        @RequestBody(required = false) Map<String, UUID> body) {
 
-        return ResponseEntity.ok(
-                new CancelBookingResponseDto(
-                        item.getOrder().getId(),
-                        orderItemId,
-                        r.refundable(),
-                        r.refundAmount(),
-                        r.newStatus()));
-    }
+                UUID managerId = body != null ? body.get("managerId") : null;
 
-    // Get order items by manager
-    @GetMapping("/manager/{managerId}/items")
-    public ResponseEntity<?> getOrderItemsByManager(
-            @PathVariable("managerId") UUID managerId) {
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                if (auth == null || !auth.isAuthenticated() ||
+                                !(auth.getPrincipal() instanceof CustomUserDetails userDetails)) {
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                }
 
-        return ResultResponseMapper.toResponse(
-                orderService.getOrderItemsByManager(managerId));
-    }
+                UUID actingUserId = userDetails.getId();
+                String actingUserRole = userDetails.getRole();
 
-    // ✅ Confirm order item by manager and set status to CONFIRMED
-    @PatchMapping("/items/{itemId}/confirm/{managerId}")
-    public ResponseEntity<?> confirmOrderItem(
-            @PathVariable("itemId") Long itemId,
-            @PathVariable("managerId") UUID managerId) {
-
-        return ResultResponseMapper.toResponse(
-                orderService.confirmOrderItem(itemId, managerId));
-    }
-
-    @PatchMapping("/items/{itemId}/assign")
-    public ResponseEntity<?> assignManagerToOrderItem(
-            @PathVariable("itemId") Long itemId,
-            @RequestBody(required = false) Map<String, UUID> body) {
-
-        UUID managerId = body != null ? body.get("managerId") : null;
-
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() ||
-                !(auth.getPrincipal() instanceof CustomUserDetails userDetails)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                return ResultResponseMapper.toResponse(
+                                orderService.assignManagerToOrderItem(
+                                                itemId,
+                                                managerId,
+                                                actingUserId,
+                                                actingUserRole));
         }
 
-        UUID actingUserId = userDetails.getId();
-        String actingUserRole = userDetails.getRole();
+        @GetMapping("/user/{userId}/items")
+        public ResponseEntity<?> getOrderItemsByUser(@PathVariable("userId") UUID userId) {
+                return ResultResponseMapper.toResponse(
+                                orderService.getOrderItemsByUser(userId));
+        }
 
-        return ResultResponseMapper.toResponse(
-                orderService.assignManagerToOrderItem(
-                        itemId,
-                        managerId,
-                        actingUserId,
-                        actingUserRole));
-    }
+        // 🔹 Guest checkout (no authentication)
+        @PostMapping("/guest")
+        public ResponseEntity<?> createGuestOrder(
+                        @RequestBody @Valid OrderCreateRequestDto dto) {
 
-    @GetMapping("/user/{userId}/items")
-    public ResponseEntity<?> getOrderItemsByUser(@PathVariable("userId") UUID userId) {
-        return ResultResponseMapper.toResponse(
-                orderService.getOrderItemsByUser(userId));
-    }
-
-    // 🔹 Guest checkout (no authentication)
-    @PostMapping("/guest")
-    public ResponseEntity<?> createGuestOrder(
-            @RequestBody @Valid OrderCreateRequestDto dto) {
-
-        // userId = null → guest order
-        return ResultResponseMapper.toResponse(
-                orderService.createOrder(dto, null));
-    }
+                // userId = null → guest order
+                return ResultResponseMapper.toResponse(
+                                orderService.createOrder(dto, null));
+        }
 
 }

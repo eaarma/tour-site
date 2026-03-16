@@ -6,6 +6,7 @@ import { AuthService } from "@/lib/authService";
 import { ManagerRegisterRequestDto } from "@/types/user";
 import toast from "react-hot-toast";
 import { ApiError } from "@/lib/api/ApiError";
+import PhoneInput from "@/components/common/PhoneInput";
 
 const LANGUAGE_OPTIONS = [
   "English",
@@ -62,8 +63,8 @@ export default function ManagerRegisterPage() {
     if (!fullName || fullName.trim().length < 2) {
       newErrors.fullName = "Full name must be at least 2 characters.";
     }
-    if (!phone || !/^\+?\d{7,15}$/.test(phone)) {
-      newErrors.phone = "Phone number must be valid.";
+    if (!phone || !/^\+[1-9]\d{7,14}$/.test(phone)) {
+      newErrors.phone = "Phone number must include country code.";
     }
     if (!nationality.trim()) {
       newErrors.nationality = "Nationality is required.";
@@ -226,13 +227,8 @@ export default function ManagerRegisterPage() {
             </div>
 
             <div>
-              <input
-                type="tel"
-                placeholder="Phone Number"
-                className="input input-bordered w-full"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
+              <PhoneInput value={phone} onChange={(p) => setPhone(p)} />
+
               {errors.phone && (
                 <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
               )}

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { UserResponseDto } from "@/types/user";
 import { UserService } from "@/lib/userService";
 import toast from "react-hot-toast";
+import PhoneInput from "../common/PhoneInput";
 
 interface UserEditProfileModalProps {
   isOpen: boolean;
@@ -23,11 +24,22 @@ export default function UserEditProfileModal({
   const [nationality, setNationality] = useState(profile.nationality || "");
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    setName(profile.name || "");
+    setPhone(profile.phone || "");
+    setNationality(profile.nationality || "");
+  }, [profile]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    if (phone && !/^\+[1-9]\d{7,14}$/.test(phone)) {
+      toast.error("Please enter a valid phone number");
+      setLoading(false);
+      return;
+    }
     try {
       const updated = await UserService.updateProfile({
         name,
@@ -91,12 +103,7 @@ export default function UserEditProfileModal({
             <label className="label">
               <span className="label-text font-semibold">Phone</span>
             </label>
-            <input
-              type="text"
-              className="input input-bordered w-full"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
+            <PhoneInput value={phone} onChange={setPhone} />
           </div>
 
           <div>

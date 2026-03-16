@@ -6,5 +6,6 @@ public enum CancellationReasonType {
     WEATHER,
     PERSONAL,
     HEALTH,
-    OTHER
+    OTHER,
+    PROVIDER_CANCELLED
 }

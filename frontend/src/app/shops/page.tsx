@@ -22,6 +22,10 @@ export default function ShopsPage() {
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const router = useRouter();
 
+  const sessionExpired = useSelector(
+    (state: RootState) => state.session.expired,
+  );
+
   const authInitialized = useSelector(
     (state: RootState) => state.auth.initialized,
   );
@@ -53,9 +57,12 @@ export default function ShopsPage() {
       }
     };
 
-    if (!authInitialized) return;
+    if (!authInitialized || sessionExpired) {
+      setLoading(false);
+      return;
+    }
     fetchShops();
-  }, [authInitialized]);
+  }, [authInitialized, sessionExpired]);
 
   const handleRequestSent = () => {
     toast.success("Request sent ✅");
@@ -63,6 +70,14 @@ export default function ShopsPage() {
     // Give user a moment to see toast before refreshing
     setTimeout(() => window.location.reload(), 1000);
   };
+
+  if (sessionExpired) {
+    return (
+      <RequireAuth requiredRole={["MANAGER"]}>
+        <div />
+      </RequireAuth>
+    );
+  }
 
   if (loading) return <div className="p-6">Loading shops...</div>;
 

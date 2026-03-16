@@ -106,7 +106,7 @@ export default function PaymentPage() {
 
     const load = async () => {
       try {
-        const data = await OrderService.getOrderById(orderId);
+        const data = await OrderService.getOrderById(orderId, reservationToken);
 
         console.log("Order status:", data.status);
 
@@ -117,7 +117,7 @@ export default function PaymentPage() {
 
         // ✅ Redirect logic
         if (data.status === "PAID") {
-          router.replace(`/confirmation/${orderId}`);
+          router.replace(`/confirmation/${orderId}?token=${reservationToken}`);
           return;
         }
 
@@ -183,7 +183,7 @@ export default function PaymentPage() {
     }
 
     if (order.status === "PAID") {
-      router.replace(`/confirmation/${orderId}`);
+      router.replace(`/confirmation/${orderId}?token=${reservationToken}`);
       return;
     }
 
@@ -201,7 +201,10 @@ export default function PaymentPage() {
         effectiveOrderId = finalized.id;
 
         // reload order state
-        const updated = await OrderService.getOrderById(orderId);
+        const updated = await OrderService.getOrderById(
+          orderId,
+          reservationToken,
+        );
         setOrder(updated);
       }
 
@@ -243,7 +246,7 @@ export default function PaymentPage() {
     });
 
     toast.success("Payment successful ✅");
-    router.push(`/confirmation/${orderId}`);
+    router.push(`/confirmation/${orderId}?token=${reservationToken}`);
   };
 
   const handleStripeError = (msg: string) => {

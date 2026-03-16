@@ -3,26 +3,22 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
-import { countryDialCodes } from "@/utils/countryDialCodes";
 import { setCheckoutInfo, updateCheckoutInfo } from "@/store/checkoutSlice";
 import { RootState, store } from "@/store/store";
 import { UserService } from "@/lib/userService";
 import toast from "react-hot-toast";
 import { ReservationService } from "@/lib/reservationService";
 import { OrderCreateRequestDto } from "@/types/order";
+import PhoneInput from "@/components/common/PhoneInput";
 
 export default function CheckoutPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const checkout = useSelector((state: RootState) => state.checkout);
 
-  const [countryCode, setCountryCode] = useState("");
-  const [query, setQuery] = useState("");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phone, setPhone] = useState("");
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const [highlightIndex, setHighlightIndex] = useState(0);
+
   // ✅ 1. Pre-fill checkout info from logged-in user
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -30,29 +26,13 @@ export default function CheckoutPage() {
         const user = await UserService.getProfile();
 
         if (user) {
-          // detect country code from phone if available
-          let detectedCode = "+";
-          let localNumber = user.phone || "";
-          if (user.phone?.startsWith("+")) {
-            const match = countryDialCodes.find((c) =>
-              user.phone?.startsWith(c.dial_code),
-            );
-            if (match) {
-              detectedCode = match.dial_code;
-              localNumber = user.phone.replace(match.dial_code, "");
-            }
-          }
+          setPhone(user.phone || "");
 
-          // set local states immediately
-          setCountryCode(detectedCode);
-          setPhoneNumber(localNumber);
-
-          // update Redux checkout state
           dispatch(
             setCheckoutInfo({
               name: user.name || "",
               email: user.email || "",
-              phone: `${detectedCode}${localNumber}` || "",
+              phone: user.phone || "",
               nationality: user.nationality || "",
             }),
           );
@@ -75,18 +55,13 @@ export default function CheckoutPage() {
     loadUserProfile();
   }, [dispatch]);
 
-  // ✅ 2. Sync Redux state when phone or code changes
-  useEffect(() => {
-    dispatch(updateCheckoutInfo({ phone: `${countryCode}${phoneNumber}` }));
-  }, [countryCode, phoneNumber, dispatch]);
-
-  // ✅ 3. Handle submit
+  //  Handle submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const fullPhone = `${countryCode}${phoneNumber}`.replace(/\D/g, "");
+    const fullPhone = phone;
 
-    if (!checkout.name || !checkout.email || !phoneNumber) {
+    if (!checkout.name || !checkout.email || !phone) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -96,8 +71,8 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (fullPhone.length < 7 || fullPhone.length > 15) {
-      toast.error("Phone number must be between 7 and 15 digits long");
+    if (!/^\+[1-9]\d{7,14}$/.test(phone)) {
+      toast.error("Please enter a valid phone number");
       return;
     }
 
@@ -115,7 +90,7 @@ export default function CheckoutPage() {
         paymentMethod: "CARD",
         name: checkout.name.trim(),
         email: checkout.email.trim(),
-        phone: `+${fullPhone}`,
+        phone: fullPhone,
         nationality: checkout.nationality,
         items: cartItems.map((item) => ({
           tourId: Number(item.id),
@@ -141,25 +116,6 @@ export default function CheckoutPage() {
       toast.dismiss();
       toast.error("Failed to reserve order");
     }
-  };
-
-  // ✅ Unified search by name or dial code
-  const filteredCountries = countryDialCodes.filter((country) => {
-    const lowerQuery = query.toLowerCase();
-    return (
-      country.name.toLowerCase().includes(lowerQuery) ||
-      country.dial_code.replace("+", "").startsWith(lowerQuery)
-    );
-  });
-
-  useEffect(() => {
-    setHighlightIndex(0);
-  }, [query]);
-
-  const handleSelect = (dial_code: string) => {
-    setCountryCode(dial_code.replace("+", "")); // store digits only
-    setQuery("");
-    setDropdownOpen(false);
   };
 
   return (
@@ -208,91 +164,13 @@ export default function CheckoutPage() {
             <label className="label">
               <span className="label-text">Phone Number</span>
             </label>
-            <div className="flex gap-2 relative">
-              <div className="flex gap-2 relative">
-                <div className="w-40 relative">
-                  <input
-                    type="text"
-                    className="input input-bordered w-full rounded-lg"
-                    placeholder="+372"
-                    value={
-                      isFocused ? query : countryCode ? `+${countryCode}` : ""
-                    }
-                    onChange={(e) => {
-                      setQuery(e.target.value);
-                      setDropdownOpen(true);
-                    }}
-                    onFocus={() => {
-                      setIsFocused(true);
-                      setQuery("");
-                      setDropdownOpen(true);
-                    }}
-                    onBlur={() => {
-                      setTimeout(() => {
-                        if (
-                          filteredCountries.length > 0 &&
-                          query.trim() !== ""
-                        ) {
-                          handleSelect(filteredCountries[0].dial_code);
-                        }
-
-                        setIsFocused(false);
-                        setDropdownOpen(false);
-                      }, 150);
-                    }}
-                    onKeyDown={(e) => {
-                      if (
-                        !dropdownOpen &&
-                        (e.key === "ArrowDown" || e.key === "ArrowUp")
-                      ) {
-                        setDropdownOpen(true);
-                      }
-
-                      if (e.key === "ArrowDown") {
-                        e.preventDefault();
-                        setHighlightIndex((i) =>
-                          Math.min(i + 1, filteredCountries.length - 1),
-                        );
-                      }
-
-                      if (e.key === "ArrowUp") {
-                        e.preventDefault();
-                        setHighlightIndex((i) => Math.max(i - 1, 0));
-                      }
-                    }}
-                  />
-                  {dropdownOpen && (
-                    <ul className="absolute z-20 mt-1 max-h-60 overflow-y-auto w-full bg-base-100 border border-base-300 rounded-box shadow-lg">
-                      {filteredCountries.map((country, index) => (
-                        <li
-                          key={country.code}
-                          className={`px-3 py-2 cursor-pointer ${
-                            index === highlightIndex ? "bg-base-300" : ""
-                          }`}
-                          onMouseDown={() => handleSelect(country.dial_code)}
-                        >
-                          {country.name} ({country.dial_code})
-                        </li>
-                      ))}
-                      {filteredCountries.length === 0 && (
-                        <li className="px-3 py-2 text-sm text-gray-500">
-                          No results
-                        </li>
-                      )}
-                    </ul>
-                  )}
-                </div>
-              </div>
-
-              <input
-                type="tel"
-                className="input input-bordered flex-1 rounded-lg"
-                placeholder="1234567890"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                required
-              />
-            </div>
+            <PhoneInput
+              value={phone}
+              onChange={(p) => {
+                setPhone(p);
+                dispatch(updateCheckoutInfo({ phone: p }));
+              }}
+            />
           </div>
 
           {/* Nationality */}

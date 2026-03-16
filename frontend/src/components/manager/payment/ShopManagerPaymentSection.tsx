@@ -80,16 +80,25 @@ export default function ShopManagerPaymentSection({ shopId }: Props) {
 
   const handleViewPayment = async (payment: PaymentLineResponseDto) => {
     try {
-      const item = await OrderService.getShopOrderItemById(payment.orderItemId);
+      // Order-based payment
+      if (payment.orderItemId) {
+        const item = await OrderService.getShopOrderItemById(
+          payment.orderItemId,
+        );
+        if (!item) return;
+        setSelectedOrder(item);
+        return;
+      }
 
-      if (!item) return;
-
-      setSelectedOrder(item);
+      // Session-based fee
+      if (payment.sessionId) {
+        setSelectedSessionId(payment.sessionId);
+        return;
+      }
     } catch (err) {
-      console.error("Failed to load order details", err);
+      console.error("Failed to load payment details", err);
     }
   };
-
   // ============================
   // Filtering logic
   // ============================

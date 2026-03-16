@@ -70,4 +70,10 @@ public class TourSessionController {
         return ResultResponseMapper.toResponse(
                 service.getSessionsForManager(managerId));
     }
+
+    @GetMapping("/shops/{shopId}/stats/tours-given")
+    public ResponseEntity<Long> getToursGiven(@PathVariable("shopId") Long shopId) {
+        long count = service.getCompletedSessionsCount(shopId);
+        return ResponseEntity.ok(count);
+    }
 }

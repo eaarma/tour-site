@@ -27,7 +27,7 @@ import com.example.store_manager.utility.Result;
 @Service
 @RequiredArgsConstructor
 public class TourSessionService {
-    private final TourSessionRepository repo;
+    private final TourSessionRepository tourSessionRepository;
     private final TourSessionMapper mapper;
     private final UserRepository userRepository;
     private final TourRepository tourRepository;
@@ -35,7 +35,7 @@ public class TourSessionService {
     @Transactional(readOnly = true)
     public Result<List<TourSessionDetailsDto>> getSessions(Long tourId) {
         return Result.ok(
-                repo.findBySchedule_Tour_Id(tourId)
+                tourSessionRepository.findBySchedule_Tour_Id(tourId)
                         .stream()
                         .map(mapper::toDto)
                         .toList());
@@ -43,7 +43,7 @@ public class TourSessionService {
 
     @Transactional(readOnly = true)
     public Result<TourSessionDetailsDto> getSession(Long sessionId) {
-        return repo.findById(sessionId)
+        return tourSessionRepository.findById(sessionId)
                 .map(mapper::toDto)
                 .map(Result::ok)
                 .orElseGet(() -> Result.fail(ApiError.notFound("Session not found")));
@@ -53,7 +53,7 @@ public class TourSessionService {
     @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.SESSION_ID)
     public Result<TourSessionDetailsDto> assignManager(Long sessionId, UUID managerId) {
 
-        TourSession session = repo.findById(sessionId)
+        TourSession session = tourSessionRepository.findById(sessionId)
                 .orElse(null);
 
         if (session == null) {
@@ -73,14 +73,14 @@ public class TourSessionService {
             session.setManager(manager);
         }
 
-        return Result.ok(mapper.toDto(repo.save(session)));
+        return Result.ok(mapper.toDto(tourSessionRepository.save(session)));
     }
 
     @Transactional
     @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.SESSION_ID)
     public Result<TourSessionDetailsDto> updateStatus(Long sessionId, SessionStatus newStatus) {
 
-        TourSession session = repo.findById(sessionId)
+        TourSession session = tourSessionRepository.findById(sessionId)
                 .orElse(null);
 
         if (session == null) {
@@ -92,25 +92,15 @@ public class TourSessionService {
         }
 
         session.setStatus(newStatus);
-        return Result.ok(mapper.toDto(repo.save(session)));
+        return Result.ok(mapper.toDto(tourSessionRepository.save(session)));
     }
 
     @Transactional(readOnly = true)
     @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.SHOP_ID)
     public Result<List<TourSessionDetailsDto>> getSessionsForShop(Long shopId) {
 
-        List<Tour> tours = tourRepository.findByShopId(shopId);
-
-        if (tours.isEmpty()) {
-            return Result.ok(Collections.emptyList());
-        }
-
-        List<Long> tourIds = tours.stream()
-                .map(Tour::getId)
-                .toList();
-
-        List<TourSessionDetailsDto> sessions = repo
-                .findBySchedule_Tour_IdIn(tourIds)
+        List<TourSessionDetailsDto> sessions = tourSessionRepository
+                .findByShopIdWithParticipants(shopId)
                 .stream()
                 .map(mapper::toDto)
                 .toList();
@@ -126,9 +116,23 @@ public class TourSessionService {
         }
 
         return Result.ok(
-                repo.findByManagerId(managerId)
+                tourSessionRepository.findByManagerId(managerId)
                         .stream()
                         .map(mapper::toDto)
                         .toList());
+    }
+
+    @Transactional(readOnly = true)
+    public long getCompletedSessionsCount(Long shopId) {
+        return tourSessionRepository.countCompletedSessionsByShop(shopId);
+    }
+
+    public List<TourSessionDetailsDto> getByShopId(Long shopId) {
+
+        List<TourSession> sessions = tourSessionRepository.findByShopIdWithParticipants(shopId);
+
+        return sessions.stream()
+                .map(mapper::toDto)
+                .toList();
     }
 }

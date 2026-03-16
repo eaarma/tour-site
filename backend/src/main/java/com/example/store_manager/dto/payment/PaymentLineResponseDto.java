@@ -3,6 +3,8 @@ package com.example.store_manager.dto.payment;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+
+import com.example.store_manager.model.PaymentLineType;
 import com.example.store_manager.model.PaymentStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,6 +30,10 @@ public class PaymentLineResponseDto {
     private String tourTitle;
     private LocalDateTime scheduledAt;
     private Integer participants;
+
+    private PaymentLineType type;
+
+    private Long sessionId;
 
     private BigDecimal grossAmount;
     private BigDecimal platformFee;

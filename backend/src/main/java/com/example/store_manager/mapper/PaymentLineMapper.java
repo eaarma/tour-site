@@ -16,6 +16,8 @@ public interface PaymentLineMapper {
     @Mapping(target = "tourTitle", source = "orderItem.tourTitle")
     @Mapping(target = "scheduledAt", source = "orderItem.scheduledAt")
     @Mapping(target = "participants", source = "orderItem.participants")
+    @Mapping(target = "type", source = "type")
+    @Mapping(target = "sessionId", source = "session.id")
 
     PaymentLineResponseDto toDto(PaymentLine line);
 

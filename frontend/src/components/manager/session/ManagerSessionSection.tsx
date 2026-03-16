@@ -91,10 +91,18 @@ export default function ManagerSessionSection({ tours, shopId }: Props) {
   let filtered = [...sessionList];
 
   filtered = filtered.filter((session) => {
-    const activeParticipants =
-      session.participants?.filter((p) => isActiveOrder(p.status)) ?? [];
+    const participants = session.participants ?? [];
 
-    return activeParticipants.length > 0;
+    if (participants.length === 0) return false;
+
+    if (
+      session.status === "CANCELLED" ||
+      session.status === "CANCELLED_CONFIRMED"
+    ) {
+      return true;
+    }
+
+    return participants.some((p) => isActiveOrder(p.status));
   });
 
   // 🔹 Tab logic

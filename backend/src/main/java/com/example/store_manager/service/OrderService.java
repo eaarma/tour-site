@@ -246,7 +246,6 @@ public class OrderService {
                 order.setStatus(OrderStatus.FINALIZED);
 
                 paymentService.createPendingForOrder(order);
-                order.setReservationToken(null);
 
                 Order saved = orderRepository.save(order);
 
@@ -285,12 +284,53 @@ public class OrderService {
 
         /* Get a single order by ID. */
         @Transactional(readOnly = true)
-        public Result<OrderResponseDto> getOrderById(Long orderId) {
+        public Result<OrderResponseDto> getOrderById(
+                        Long orderId,
+                        Authentication auth,
+                        String token) {
 
-                return orderRepository.findById(orderId)
-                                .map(orderMapper::toDto)
-                                .map(Result::ok)
-                                .orElseGet(() -> Result.fail(ApiError.notFound("Order not found")));
+                Order order = orderRepository.findById(orderId).orElse(null);
+
+                if (order == null) {
+                        return Result.fail(ApiError.notFound("Order not found"));
+                }
+
+                // ----------------------------
+                // 1️⃣ Manager / Admin access
+                // ----------------------------
+                if (auth != null && auth.isAuthenticated()
+                                && auth.getPrincipal() instanceof CustomUserDetails user) {
+
+                        boolean isManager = user.getAuthorities().stream()
+                                        .anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER")
+                                                        || a.getAuthority().equals("ROLE_ADMIN")
+                                                        || a.getAuthority().equals("ROLE_OWNER"));
+
+                        if (isManager) {
+                                return Result.ok(orderMapper.toDto(order));
+                        }
+
+                        // ----------------------------
+                        // 2️⃣ Logged-in user access
+                        // ----------------------------
+                        if (order.getUser() != null &&
+                                        order.getUser().getId().equals(user.getId())) {
+
+                                return Result.ok(orderMapper.toDto(order));
+                        }
+                }
+
+                // ----------------------------
+                // 3️⃣ Guest access via token
+                // ----------------------------
+                if (token != null
+                                && order.getReservationToken() != null
+                                && token.equals(order.getReservationToken().toString())) {
+
+                        return Result.ok(orderMapper.toDto(order));
+                }
+
+                return Result.fail(ApiError.forbidden("Not allowed to view this order"));
         }
 
         @Transactional(readOnly = true)

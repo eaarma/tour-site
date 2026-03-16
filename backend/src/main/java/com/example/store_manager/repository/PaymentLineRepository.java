@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.example.store_manager.model.PaymentLine;
+import com.example.store_manager.model.PaymentLineType;
 import com.example.store_manager.model.PaymentStatus;
 
 import jakarta.persistence.LockModeType;
@@ -22,15 +23,16 @@ public interface PaymentLineRepository extends JpaRepository<PaymentLine, Long> 
   @Query("""
           SELECT pl
           FROM PaymentLine pl
-          JOIN FETCH pl.payment p
-          JOIN FETCH pl.orderItem oi
-          JOIN FETCH oi.order o
+          LEFT JOIN FETCH pl.payment p
+          LEFT JOIN FETCH pl.orderItem oi
+          LEFT JOIN FETCH oi.order o
           WHERE pl.shopId = :shopId
             AND pl.status = :status
             AND pl.payout IS NULL
           ORDER BY pl.createdAt DESC
       """)
-  List<PaymentLine> findUnpaidByShopId(@Param("shopId") Long shopId,
+  List<PaymentLine> findUnpaidByShopId(
+      @Param("shopId") Long shopId,
       @Param("status") PaymentStatus status);
 
   @Query("""
@@ -44,8 +46,22 @@ public interface PaymentLineRepository extends JpaRepository<PaymentLine, Long> 
 
   Page<PaymentLine> findByShopIdOrderByCreatedAtDesc(Long shopId, Pageable pageable);
 
-  @Lock(LockModeType.PESSIMISTIC_WRITE)
-  @Query("SELECT pl FROM PaymentLine pl WHERE pl.orderItem.id = :orderItemId")
-  Optional<PaymentLine> findByOrderItemIdForUpdate(@Param("orderItemId") Long orderItemId);
+  boolean existsByOrderItemIdAndType(Long orderItemId, PaymentLineType type);
 
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  @Query("""
+            SELECT pl
+            FROM PaymentLine pl
+            WHERE pl.orderItem.id = :orderItemId
+              AND pl.type = com.example.store_manager.model.PaymentLineType.SALE
+      """)
+  Optional<PaymentLine> findSaleLineForUpdate(@Param("orderItemId") Long orderItemId);
+
+  @Query("""
+          SELECT pl
+          FROM PaymentLine pl
+          WHERE pl.orderItem.id IN :orderItemIds
+          AND pl.type = 'SALE'
+      """)
+  List<PaymentLine> findSaleLinesForOrderItems(@Param("orderItemIds") List<Long> orderItemIds);
 }

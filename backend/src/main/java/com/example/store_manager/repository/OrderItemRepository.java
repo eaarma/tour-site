@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import com.example.store_manager.model.OrderItem;
 import com.example.store_manager.model.OrderStatus;
+import com.example.store_manager.model.TourSession;
 
 @Repository
 public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
@@ -57,4 +58,33 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
                 where oi.id = :id
             """)
     Optional<OrderItem> findByIdWithOrderAndUser(@Param("id") Long id);
+
+    @Query("""
+                SELECT oi
+                FROM OrderItem oi
+                JOIN FETCH oi.order o
+                WHERE oi.session.id = :sessionId
+                  AND oi.status = :status
+            """)
+    List<OrderItem> findBySessionIdAndStatus(
+            @Param("sessionId") Long sessionId,
+            @Param("status") OrderStatus status);
+
+    @Query("""
+                SELECT oi
+                FROM OrderItem oi
+                WHERE oi.session.id = :sessionId
+                  AND oi.status = com.example.store_manager.model.OrderStatus.PAID
+            """)
+    List<OrderItem> findPaidBySessionId(@Param("sessionId") Long sessionId);
+
+    @Query("""
+                SELECT oi
+                FROM OrderItem oi
+                JOIN FETCH oi.schedule sch
+                WHERE oi.session.id = :sessionId
+                AND oi.status = 'PAID'
+            """)
+    List<OrderItem> findPaidBySessionIdWithSchedule(@Param("sessionId") Long sessionId);
+
 }

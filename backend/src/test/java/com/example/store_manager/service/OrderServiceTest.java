@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -98,14 +99,26 @@ public class OrderServiceTest {
 
     // getOrderById
     @Test
-    void getOrderById_returnsOk_whenOrderExists() {
+    void getOrderById_returnsOk_whenManagerAccess() {
+
         Order order = new Order();
         OrderResponseDto dto = new OrderResponseDto();
+
+        CustomUserDetails manager = mock(CustomUserDetails.class);
+
+        Collection<GrantedAuthority> authorities = Collections
+                .singletonList(new SimpleGrantedAuthority("ROLE_MANAGER"));
+
+        doReturn(authorities).when(manager).getAuthorities();
+
+        Authentication auth = mock(Authentication.class);
+        when(auth.isAuthenticated()).thenReturn(true);
+        when(auth.getPrincipal()).thenReturn(manager);
 
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
         when(orderMapper.toDto(order)).thenReturn(dto);
 
-        Result<OrderResponseDto> result = service.getOrderById(1L);
+        Result<OrderResponseDto> result = service.getOrderById(1L, auth, null);
 
         assertTrue(result.isOk());
         assertSame(dto, result.get());
@@ -113,13 +126,79 @@ public class OrderServiceTest {
 
     @Test
     void getOrderById_returnsFail_whenOrderNotFound() {
+
         when(orderRepository.findById(99L)).thenReturn(Optional.empty());
 
-        Result<OrderResponseDto> result = service.getOrderById(99L);
+        Result<OrderResponseDto> result = service.getOrderById(99L, null, null);
 
         assertTrue(result.isFail());
         assertEquals("NOT_FOUND", result.error().code());
         assertEquals("Order not found", result.error().message());
+    }
+
+    @Test
+    void getOrderById_returnsOk_whenUserOwnsOrder() {
+
+        UUID userId = UUID.randomUUID();
+
+        User user = new User();
+        user.setId(userId);
+
+        Order order = new Order();
+        order.setUser(user);
+
+        OrderResponseDto dto = new OrderResponseDto();
+
+        CustomUserDetails principal = mock(CustomUserDetails.class);
+        when(principal.getId()).thenReturn(userId);
+        when(principal.getAuthorities()).thenReturn(Collections.emptyList());
+
+        Authentication auth = mock(Authentication.class);
+        when(auth.isAuthenticated()).thenReturn(true);
+        when(auth.getPrincipal()).thenReturn(principal);
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderMapper.toDto(order)).thenReturn(dto);
+
+        Result<OrderResponseDto> result = service.getOrderById(1L, auth, null);
+
+        assertTrue(result.isOk());
+        assertSame(dto, result.get());
+    }
+
+    @Test
+    void getOrderById_returnsOk_whenTokenMatches() {
+
+        UUID token = UUID.randomUUID();
+
+        Order order = new Order();
+        order.setReservationToken(token);
+
+        OrderResponseDto dto = new OrderResponseDto();
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderMapper.toDto(order)).thenReturn(dto);
+
+        Result<OrderResponseDto> result = service.getOrderById(1L, null, token.toString());
+
+        assertTrue(result.isOk());
+        assertSame(dto, result.get());
+    }
+
+    @Test
+    void getOrderById_returnsFail_whenUnauthorized() {
+
+        UUID token = UUID.randomUUID();
+
+        Order order = new Order();
+        order.setReservationToken(token);
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+
+        Result<OrderResponseDto> result = service.getOrderById(1L, null, "wrong-token");
+
+        assertTrue(result.isFail());
+        assertEquals("FORBIDDEN", result.error().code());
     }
 
     // getOrderItemById

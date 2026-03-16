@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "./useAuth";
 import { TourSessionDto } from "@/types/tourSession";
 import { TourSessionService } from "@/lib/tourSessionService";
@@ -11,19 +11,25 @@ export function useSessionManager(shopId: number) {
     null,
   );
 
-  useEffect(() => {
+  const reloadSessions = useCallback(async () => {
     if (!shopId) return;
-    reloadSessions();
-  }, [shopId]);
 
-  const reloadSessions = async () => {
-    if (!shopId) return;
-    const updated = await TourSessionService.getByShopId(shopId);
-    const filtered = updated.filter(
-      (s: TourSessionDto) => (s.participants?.length ?? 0) > 0,
-    );
+    const sessions = await TourSessionService.getByShopId(shopId);
+
+    const filtered = sessions.filter((s) => {
+      const participants = s.participants ?? [];
+
+      if (participants.length === 0) return false;
+
+      if (s.status === "CANCELLED") return true;
+
+      return participants.some(
+        (p) => p.status !== "CANCELLED" && p.status !== "CANCELLED_CONFIRMED",
+      );
+    });
+
     setSessionList(filtered);
-  };
+  }, [shopId]);
 
   const confirmSession = async (sessionId: number) => {
     if (!user?.id) return;
@@ -45,6 +51,10 @@ export function useSessionManager(shopId: number) {
       prev.map((s) => (s.id === updated.id ? updated : s)),
     );
   };
+
+  useEffect(() => {
+    reloadSessions();
+  }, [reloadSessions]);
 
   return {
     sessionList,

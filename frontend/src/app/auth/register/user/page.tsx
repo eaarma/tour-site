@@ -6,6 +6,7 @@ import { AuthService } from "@/lib/authService";
 import { UserRegisterRequestDto } from "@/types/user";
 import toast from "react-hot-toast";
 import { ApiError } from "@/lib/api/ApiError";
+import PhoneInput from "@/components/common/PhoneInput";
 
 export default function UserRegisterPage() {
   const router = useRouter();
@@ -32,8 +33,8 @@ export default function UserRegisterPage() {
     if (!password || password.length < 6) {
       newErrors.password = "Password must be at least 6 characters.";
     }
-    if (!phone || !/^\+?\d{7,15}$/.test(phone)) {
-      newErrors.phone = "Phone number must be valid.";
+    if (!phone || !/^\+[1-9]\d{7,14}$/.test(phone)) {
+      newErrors.phone = "Phone number must include country code.";
     }
     if (!nationality.trim()) {
       newErrors.nationality = "Nationality is required.";
@@ -180,13 +181,8 @@ export default function UserRegisterPage() {
           </div>
 
           <div>
-            <input
-              type="tel"
-              placeholder="Phone Number"
-              className="input input-bordered w-full"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
+            <PhoneInput value={phone} onChange={(p) => setPhone(p)} />
+
             {errors.phone && (
               <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
             )}

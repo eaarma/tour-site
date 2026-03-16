@@ -422,4 +422,105 @@ public class EmailService {
             log.error("Failed to send password reset email", e);
         }
     }
+
+    public void sendProviderCancellationNotice(
+            OrderItem item,
+            BigDecimal refundAmount) {
+
+        if (item.getEmail() == null) {
+            log.warn("OrderItem {} has no email — skipping provider cancellation email", item.getId());
+            return;
+        }
+
+        String subject = "Tour Cancelled by Guide – " + item.getTourTitle();
+        String html = buildProviderCancellationHtml(item, refundAmount);
+
+        try {
+
+            resendClient.sendEmail(item.getEmail(), subject, html);
+
+            log.info("Provider cancellation email sent for orderItem {}", item.getId());
+
+        } catch (Exception e) {
+            log.error("Failed to send provider cancellation email for orderItem {}", item.getId(), e);
+        }
+    }
+
+    private String buildProviderCancellationHtml(
+            OrderItem item,
+            BigDecimal refundAmount) {
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEEE, dd MMM yyyy HH:mm");
+
+        String formattedDate = item.getScheduledAt().format(formatter);
+
+        return """
+                <html>
+                <body style="margin:0; padding:0; background-color:#ffffff; font-family:Arial, sans-serif;">
+                    <table width="100%%" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td align="center">
+                                <table width="600" cellpadding="0" cellspacing="0"
+                                       style="background:#ffffff; padding:30px; border-radius:8px;">
+
+                                    <!-- Header -->
+                                    <tr>
+                                        <td align="center" style="padding-bottom:20px;">
+                                            <h2 style="margin:0; color:#dc2626;">
+                                                Tour Cancelled
+                                            </h2>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Greeting -->
+                                    <tr>
+                                        <td style="padding-bottom:20px; font-size:14px; color:#374151;">
+                                            Hi <strong>%s</strong>,<br/><br/>
+                                            Unfortunately, the guide had to cancel this tour session.
+                                            We sincerely apologize for the inconvenience.
+                                        </td>
+                                    </tr>
+
+                                    <!-- Booking Info -->
+                                    <tr>
+                                        <td style="padding:20px 0; border-bottom:1px solid #e5e7eb;">
+                                            <h3 style="margin:0; font-size:16px; color:#111827;">
+                                                %s
+                                            </h3>
+                                            <p style="margin:6px 0; font-size:14px; color:#374151;">
+                                                <strong>Date:</strong> %s<br/>
+                                                <strong>Participants:</strong> %d
+                                            </p>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Refund -->
+                                    <tr>
+                                        <td style="padding-top:20px; font-size:14px; color:#374151;">
+                                            <strong>Refund Amount:</strong> €%.2f<br/>
+                                            The refund has been issued to your original payment method.
+                                            Depending on your bank provider, this may take 5–10 business days.
+                                        </td>
+                                    </tr>
+
+                                    <!-- Footer -->
+                                    <tr>
+                                        <td style="padding-top:30px; font-size:13px; color:#6b7280; text-align:center;">
+                                            If you have any questions, feel free to reply to this email.
+                                        </td>
+                                    </tr>
+
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+                """.formatted(
+                item.getName(),
+                item.getTourTitle(),
+                formattedDate,
+                item.getParticipants(),
+                refundAmount);
+    }
 }

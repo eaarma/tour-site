@@ -6,6 +6,8 @@ export type PaymentStatus =
   | "REFUNDED"
   | "PARTIALLY_REFUNDED";
 
+export type PaymentLineType = "SALE" | "REFUND" | "CANCELLATION_FEE";
+
 export interface PaymentLineResponseDto {
   id: number;
 
@@ -14,6 +16,10 @@ export interface PaymentLineResponseDto {
   orderId: number;
 
   shopId: number;
+
+  type: PaymentLineType;
+
+  sessionId: number | null;
 
   grossAmount: number;
   platformFee: number;

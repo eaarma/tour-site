@@ -5,9 +5,9 @@ export type OrderStatus =
   | "PENDING"
   | "FAILED"
   | "CONFIRMED"
-  | "CANCELLED"
   | "COMPLETED"
   | "FINALIZED"
+  | "CANCELLED"
   | "CANCELLED_CONFIRMED";
 
 export interface OrderItemCreateRequestDto {

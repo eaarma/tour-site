@@ -30,7 +30,7 @@ export default function OrderItemCard({ item, onClick }: Props) {
         hover:border-primary/60 hover:shadow-lg transition-all p-4 flex justify-between items-start gap-4"
     >
       {/* LEFT SIDE */}
-      <div className="flex-1">
+      <div className="flex-1 sm:ml-2">
         {/* Name */}
         <h3 className="text-base font-semibold text-gray-800 tracking-wide">
           {item.name}
@@ -48,7 +48,7 @@ export default function OrderItemCard({ item, onClick }: Props) {
         </div>
 
         {/* Participants + Price + Status */}
-        <div className="flex items-center gap-5 text-sm mt-2 text-gray-600">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-10 text-sm mt-2 text-gray-600">
           <div className="flex items-center gap-1 font-medium text-gray-700">
             <Users className="w-4 h-4" />
             {item.participants}
@@ -65,7 +65,7 @@ export default function OrderItemCard({ item, onClick }: Props) {
         </div>
 
         {/* Footer metadata */}
-        <div className="flex items-center gap-4 mt-3 text-xs text-gray-400">
+        <div className="flex items-center gap-4 sm:gap-10 mt-3 text-xs text-gray-400">
           <span>Order Item #{item.id}</span>
           <span>
             Created {created.toLocaleDateString("en-GB")}{" "}
@@ -75,19 +75,6 @@ export default function OrderItemCard({ item, onClick }: Props) {
             })}
           </span>
         </div>
-      </div>
-
-      {/* ACTIONS */}
-      <div className="flex flex-row items-end gap-2 shrink-0">
-        <button
-          className="btn btn-sm btn-outline"
-          onClick={(e) => {
-            e.stopPropagation();
-            onClick();
-          }}
-        >
-          View
-        </button>
       </div>
     </div>
   );

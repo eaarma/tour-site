@@ -29,9 +29,6 @@ const Header: React.FC = () => {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const [searchOpen, setSearchOpen] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
-  const [searchId, setSearchId] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -47,19 +44,6 @@ const Header: React.FC = () => {
       }
     }
   };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        searchRef.current &&
-        !searchRef.current.contains(event.target as Node)
-      ) {
-        setSearchOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   // 🔹 Close dropdown on outside click
   useEffect(() => {
@@ -109,57 +93,6 @@ const Header: React.FC = () => {
         <nav className="hidden md:flex flex-grow justify-center">
           <HorizontalMenu items={menuItems} />
         </nav>
-
-        {/* Search booking */}
-        <div className="relative mr-4 hidden md:block" ref={searchRef}>
-          <button
-            type="button"
-            className="btn btn-sm btn-outline flex items-center rounded-lg gap-2 hover:bg-base-200 hover:text-primary"
-            onClick={() => setSearchOpen((prev) => !prev)}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-5 h-5"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="m21 21-5.197-5.197m0 0a7.5
-          7.5 0 1 0-10.606-10.606 7.5 
-          7.5 0 0 0 10.606 10.606Z"
-              />
-            </svg>
-          </button>
-
-          {searchOpen && (
-            <div className="absolute right-0 mt-2 w-60 bg-base-100 border border-gray-700 rounded shadow-lg p-4 space-y-3 z-50">
-              <h4 className="font-semibold text-sm">Search by booking id</h4>
-
-              <input
-                type="text"
-                placeholder="Enter booking id"
-                value={searchId}
-                onChange={(e) => setSearchId(e.target.value)}
-                className="input input-bordered input-sm w-full"
-              />
-
-              <button
-                className="btn btn-primary btn-sm w-full"
-                onClick={() => {
-                  if (!searchId.trim()) return;
-                  router.push(`/orders/${searchId}`); // you'll create this page later
-                  setSearchOpen(false);
-                }}
-              >
-                Search
-              </button>
-            </div>
-          )}
-        </div>
 
         {/* Right: Avatar + Cart */}
         <div className="flex items-center gap-4 relative">
@@ -255,26 +188,6 @@ const Header: React.FC = () => {
                   {item.label}
                 </Link>
               ))}
-
-              <div className="pt-2 border-t">
-                <input
-                  type="text"
-                  placeholder="Search booking id"
-                  value={searchId}
-                  onChange={(e) => setSearchId(e.target.value)}
-                  className="input input-bordered input-sm w-full mb-2"
-                />
-                <button
-                  className="btn btn-primary btn-sm w-full"
-                  onClick={() => {
-                    if (!searchId.trim()) return;
-                    router.push(`/orders/${searchId}`);
-                    setMobileMenuOpen(false);
-                  }}
-                >
-                  Search
-                </button>
-              </div>
             </div>
           </div>
         </div>

@@ -10,6 +10,7 @@ import ShopHeaderSection from "@/components/publicShops/ShopHeaderSection";
 import ShopGuidesSection from "@/components/publicShops/ShopGuidesSection";
 import ShopToursSection from "@/components/publicShops/ShopToursSection";
 import { TourService } from "@/lib/tourService";
+import { TourSessionService } from "@/lib/tourSessionService";
 
 export default function PublicShopPage() {
   const params = useParams();
@@ -19,7 +20,7 @@ export default function PublicShopPage() {
   const [guides, setGuides] = useState<ShopUserDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [tours, setTours] = useState<Tour[]>([]);
-
+  const [toursGiven, setToursGiven] = useState<number>(0);
   useEffect(() => {
     if (!shopId) return;
 
@@ -33,6 +34,8 @@ export default function PublicShopPage() {
 
         const shopTours = await TourService.getByShopId(shopId);
         setTours(shopTours);
+        const toursGiven = await TourSessionService.getCompletedCount(shopId);
+        setToursGiven(toursGiven);
       } catch (err) {
         console.error("Failed to load shop:", err);
       } finally {
@@ -55,11 +58,12 @@ export default function PublicShopPage() {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
       <ShopHeaderSection
         shop={shop}
+        toursGiven={toursGiven}
         guideCount={guides.length}
         tourCount={tours.length}
       />
       <ShopGuidesSection guides={guides} />
-      <ShopToursSection shopId={shop.id} tours={tours} />{" "}
+      <ShopToursSection shopId={shop.id} tours={tours} />
     </div>
   );
 }

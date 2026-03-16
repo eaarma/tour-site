@@ -6,8 +6,11 @@ import com.example.store_manager.utility.Result;
 import com.stripe.model.Refund;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.RefundCreateParams;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +18,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
+
+import com.example.store_manager.events.OrderItemCancelledEvent;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +29,7 @@ public class CancellationService {
         private final OrderItemRepository orderItemRepository;
         private final TourScheduleRepository tourScheduleRepository;
         private final PaymentLineRepository paymentLineRepository;
-        private final EmailService emailService;
+        private final ApplicationEventPublisher eventPublisher;
 
         /**
          * Core cancellation entry point.
@@ -34,13 +39,11 @@ public class CancellationService {
 
         @Transactional
         public Result<CancellationResult> cancelOrderItem(
-                        Long orderItemId,
-                        CancelledBy actor,
-                        CancellationReasonType reasonType,
-                        String reason) {
-
-                OrderItem item = orderItemRepository.findById(orderItemId)
-                                .orElseThrow(() -> new IllegalStateException("OrderItem not found"));
+        OrderItem item,
+        PaymentLine saleLine,
+        CancelledBy actor,
+        CancellationReasonType reasonType,
+        String reason) {
 
                 // ----------------------------
                 // 1️⃣ Idempotency guard
@@ -48,9 +51,13 @@ public class CancellationService {
                 if (item.getStatus() == OrderStatus.CANCELLED ||
                                 item.getStatus() == OrderStatus.CANCELLED_CONFIRMED) {
 
-                        log.info("OrderItem {} already cancelled", orderItemId);
+                        log.info("OrderItem {} already cancelled", item.
+getId()         
+                        );
 
                         return Result.ok(new CancellationResult(
+                                        item.getId(),
+                                        actor,
                                         item.getStatus() == OrderStatus.CANCELLED_CONFIRMED,
                                         BigDecimal.ZERO,
                                         item.getStatus()));
@@ -69,8 +76,7 @@ public class CancellationService {
                 // 3️⃣ Stripe refund (if refundable)
                 // ----------------------------
                 if (refundable) {
-                        processStripeRefund(item, refundAmount);
-                }
+processStripeRefund(item, saleLine, refundAmount);                }
 
                 // ----------------------------
                 // 4️⃣ Reverse inventory
@@ -89,16 +95,19 @@ public class CancellationService {
                 item.setCancelledBy(actor);
                 item.setCancellationReasonType(reasonType);
 
-                emailService.sendCancellationConfirmation(
-                                item,
-                                refundable,
-                                refundAmount);
-
                 updateOrderStatusIfNecessary(item.getOrder());
 
-                log.info("OrderItem {} cancelled. Refundable={}", orderItemId, refundable);
+                log.info("OrderItem {} cancelled. Refundable={}", item.getId(), refundable);
+
+                eventPublisher.publishEvent(new OrderItemCancelledEvent(
+                                item.getId(),
+                                actor,
+                                refundable,
+                                refundAmount));
 
                 return Result.ok(new CancellationResult(
+                                item.getId(),
+                                actor,
                                 refundable,
                                 refundAmount,
                                 item.getStatus()));
@@ -123,19 +132,26 @@ public class CancellationService {
          * Calls Stripe to create refund.
          * Uses idempotency key to prevent duplicate refunds.
          */
-        private void processStripeRefund(OrderItem item, BigDecimal amount) {
+      private void processStripeRefund(OrderItem item, PaymentLine saleLine, BigDecimal amount) {
 
-                PaymentLine paymentLine = paymentLineRepository
-                                .findByOrderItemIdForUpdate(item.getId())
-                                .orElseThrow(() -> new IllegalStateException(
-                                                "PaymentLine not found for order item " + item.getId()));
+    if (saleLine == null) {
+        throw new IllegalStateException("PaymentLine not found for order item " + item.getId());
+    }
 
-                if (paymentLine.getStatus() == PaymentStatus.REFUNDED) {
-                        log.info("PaymentLine {} already refunded", paymentLine.getId());
-                        return; // idempotency guard
+                boolean refundExists = paymentLineRepository
+                                .existsByOrderItemIdAndType(item.getId(), PaymentLineType.REFUND);
+
+                if (refundExists) {
+                        log.info("Refund PaymentLine already exists for order item {}", item.getId());
+                        return;
+                }
+                if (saleLine.getStatus() != PaymentStatus.SUCCEEDED) {
+                        log.warn("Skipping Stripe refund because payment line is not SUCCEEDED for item {}",
+                                        item.getId());
+                        return;
                 }
 
-                Payment payment = paymentLine.getPayment();
+                Payment payment = saleLine.getPayment();
 
                 if (payment.getProviderPaymentId() == null) {
                         throw new IllegalStateException("Stripe payment id missing");
@@ -161,7 +177,20 @@ public class CancellationService {
                         throw new IllegalStateException("Refund failed");
                 }
 
-                paymentLine.setStatus(PaymentStatus.REFUNDED);
+                // paymentLine.setStatus(PaymentStatus.REFUNDED);
+                PaymentLine refundLine = PaymentLine.builder()
+                                .payment(saleLine.getPayment())
+                                .orderItem(item)
+                                .shopId(saleLine.getShopId())
+                                .type(PaymentLineType.REFUND)
+                                .grossAmount(amount.negate())
+                                .platformFee(saleLine.getPlatformFee().negate())
+                                .shopAmount(saleLine.getShopAmount().negate())
+                                .currency(saleLine.getCurrency())
+                                .status(PaymentStatus.SUCCEEDED)
+                                .build();
+
+                paymentLineRepository.save(refundLine);
         }
 
         /**
@@ -208,6 +237,8 @@ public class CancellationService {
         // ---------------------------------------
 
         public record CancellationResult(
+                        Long orderItemId,
+                        CancelledBy actor,
                         boolean refundable,
                         BigDecimal refundAmount,
                         OrderStatus newStatus) {
