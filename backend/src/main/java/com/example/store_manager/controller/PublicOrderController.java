@@ -67,13 +67,9 @@ public class PublicOrderController {
                         throw new ResponseStatusException(
                                         HttpStatus.NOT_FOUND, "Invalid link");
                 }
-                PaymentLine saleLine = paymentLineRepository
-                                .findSaleLineForUpdate(orderItemId)
-                                .orElseThrow(() -> new IllegalStateException("Payment line not found"));
 
                 Result<CancellationService.CancellationResult> result = cancellationService.cancelOrderItem(
                                 item,
-                                saleLine,
                                 CancelledBy.GUEST,
                                 req.getReasonType(),
                                 req.getReason());
@@ -88,7 +84,8 @@ public class PublicOrderController {
 
                 // Optional: consume only if all items cancelled
                 boolean allCancelled = order.getOrderItems().stream()
-                                .allMatch(i -> i.getStatus() == OrderStatus.CANCELLED);
+                                .allMatch(i -> i.getStatus() == OrderStatus.CANCELLED ||
+                                                i.getStatus() == OrderStatus.CANCELLED_CONFIRMED);
 
                 if (allCancelled) {
                         tokenService.consumeToken(order);

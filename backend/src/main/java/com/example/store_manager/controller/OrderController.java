@@ -146,16 +146,12 @@ public class OrderController {
                         return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
                 }
 
-                PaymentLine saleLine = paymentLineRepository
-                                .findSaleLineForUpdate(orderItemId)
-                                .orElseThrow(() -> new IllegalStateException("Payment line not found"));
-
                 Result<CancellationService.CancellationResult> result = cancellationService.cancelOrderItem(
                                 item,
-                                saleLine,
                                 CancelledBy.USER,
                                 req != null ? req.getReasonType() : null,
                                 req != null ? req.getReason() : null);
+
                 if (result.isFail()) {
                         return ResponseEntity
                                         .status(HttpStatus.BAD_REQUEST)

@@ -36,24 +36,18 @@ public class CancellationService {
          * This method is agnostic of how authorization was performed.
          * It only operates on domain state.
          */
-
         @Transactional
         public Result<CancellationResult> cancelOrderItem(
-        OrderItem item,
-        PaymentLine saleLine,
-        CancelledBy actor,
-        CancellationReasonType reasonType,
-        String reason) {
+                        OrderItem item,
+                        CancelledBy actor,
+                        CancellationReasonType reasonType,
+                        String reason) {
 
-                // ----------------------------
                 // 1️⃣ Idempotency guard
-                // ----------------------------
                 if (item.getStatus() == OrderStatus.CANCELLED ||
                                 item.getStatus() == OrderStatus.CANCELLED_CONFIRMED) {
 
-                        log.info("OrderItem {} already cancelled", item.
-getId()         
-                        );
+                        log.info("OrderItem {} already cancelled", item.getId());
 
                         return Result.ok(new CancellationResult(
                                         item.getId(),
@@ -63,29 +57,26 @@ getId()
                                         item.getStatus()));
                 }
 
-                // ----------------------------
                 // 2️⃣ Refund eligibility
-                // ----------------------------
                 boolean refundable = isRefundable(item);
-                // boolean refundable = false; // For testing, disable refunds for now
                 BigDecimal refundAmount = refundable
                                 ? item.getPricePaid()
                                 : BigDecimal.ZERO;
 
-                // ----------------------------
                 // 3️⃣ Stripe refund (if refundable)
-                // ----------------------------
                 if (refundable) {
-processStripeRefund(item, saleLine, refundAmount);                }
+                        PaymentLine saleLine = paymentLineRepository
+                                        .findSaleLineForUpdate(item.getId())
+                                        .orElseThrow(() -> new IllegalStateException(
+                                                        "Payment line not found for order item " + item.getId()));
 
-                // ----------------------------
+                        processStripeRefund(item, saleLine, refundAmount);
+                }
+
                 // 4️⃣ Reverse inventory
-                // ----------------------------
                 releaseInventory(item);
 
-                // ----------------------------
                 // 5️⃣ Update domain state
-                // ----------------------------
                 item.setStatus(refundable
                                 ? OrderStatus.CANCELLED_CONFIRMED
                                 : OrderStatus.CANCELLED);
@@ -132,11 +123,11 @@ processStripeRefund(item, saleLine, refundAmount);                }
          * Calls Stripe to create refund.
          * Uses idempotency key to prevent duplicate refunds.
          */
-      private void processStripeRefund(OrderItem item, PaymentLine saleLine, BigDecimal amount) {
+        private void processStripeRefund(OrderItem item, PaymentLine saleLine, BigDecimal amount) {
 
-    if (saleLine == null) {
-        throw new IllegalStateException("PaymentLine not found for order item " + item.getId());
-    }
+                if (saleLine == null) {
+                        throw new IllegalStateException("PaymentLine not found for order item " + item.getId());
+                }
 
                 boolean refundExists = paymentLineRepository
                                 .existsByOrderItemIdAndType(item.getId(), PaymentLineType.REFUND);

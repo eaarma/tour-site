@@ -24,104 +24,92 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class SessionCancellationService {
 
-    private final TourSessionRepository sessionRepository;
-    private final OrderItemRepository orderItemRepository;
-    private final CancellationService cancellationService;
-    private final PaymentLineRepository paymentLineRepository;
-    private final ShopUserRepository shopUserRepository;
+        private final TourSessionRepository sessionRepository;
+        private final OrderItemRepository orderItemRepository;
+        private final CancellationService cancellationService;
+        private final PaymentLineRepository paymentLineRepository;
+        private final ShopUserRepository shopUserRepository;
 
-    private static final BigDecimal PROCESSING_RATE = new BigDecimal("0.02");
+        private static final BigDecimal PROCESSING_RATE = new BigDecimal("0.02");
 
-    @Transactional
-    public void cancelSessionByGuide(Long sessionId, UUID userId) {
+        @Transactional
+        public void cancelSessionByGuide(Long sessionId, UUID userId) {
 
-        TourSession session = sessionRepository
-                .findByIdForUpdate(sessionId)
-                .orElseThrow(() -> new IllegalStateException("Session not found"));
+                TourSession session = sessionRepository
+                                .findByIdForUpdate(sessionId)
+                                .orElseThrow(() -> new IllegalStateException("Session not found"));
 
-        Long shopId = session.getSchedule()
-                .getTour()
-                .getShop()
-                .getId();
+                Long shopId = session.getSchedule()
+                                .getTour()
+                                .getShop()
+                                .getId();
 
-        // 🔒 Authorization check
-        boolean allowed = shopUserRepository
-                .existsByShopIdAndUserIdAndStatus(
-                        shopId,
-                        userId,
-                        ShopUserStatus.ACTIVE);
+                // 🔒 Authorization check
+                boolean allowed = shopUserRepository
+                                .existsByShopIdAndUserIdAndStatus(
+                                                shopId,
+                                                userId,
+                                                ShopUserStatus.ACTIVE);
 
-        if (!allowed) {
-            throw new IllegalStateException("Not allowed to cancel this session");
+                if (!allowed) {
+                        throw new IllegalStateException("Not allowed to cancel this session");
+                }
+
+                if (session.getStatus() == SessionStatus.CANCELLED) {
+                        return;
+                }
+
+                List<OrderItem> items = orderItemRepository
+                                .findPaidBySessionIdWithSchedule(sessionId);
+
+                BigDecimal totalRefunded = BigDecimal.ZERO;
+
+                for (OrderItem item : items) {
+                        var result = cancellationService.cancelOrderItem(
+                                        item,
+                                        CancelledBy.GUIDE,
+                                        CancellationReasonType.PROVIDER_CANCELLED,
+                                        "Session cancelled by guide");
+
+                        if (result.isOk()) {
+                                totalRefunded = totalRefunded.add(result.get().refundAmount());
+                        }
+                }
+
+                applyProcessingFee(session, shopId, totalRefunded);
+
+                session.setStatus(SessionStatus.CANCELLED);
+                session.setCancelledBy(CancelledBy.GUIDE);
+                session.setCancelledAt(Instant.now());
+
+                session.getSchedule().setStatus("CANCELLED");
+
+                log.info("Session {} cancelled by guide. Refund total={}", sessionId, totalRefunded);
         }
 
-        if (session.getStatus() == SessionStatus.CANCELLED) {
-            return;
+        private void applyProcessingFee(TourSession session, Long shopId, BigDecimal totalRefunded) {
+
+                if (totalRefunded.compareTo(BigDecimal.ZERO) <= 0) {
+                        return;
+                }
+
+                BigDecimal fee = totalRefunded
+                                .multiply(PROCESSING_RATE)
+                                .setScale(2, RoundingMode.HALF_UP);
+
+                PaymentLine line = PaymentLine.builder()
+                                .payment(null)
+                                .orderItem(null)
+                                .session(session)
+                                .shopId(shopId)
+                                .grossAmount(fee.negate())
+                                .platformFee(BigDecimal.ZERO)
+                                .shopAmount(fee.negate())
+                                .type(PaymentLineType.CANCELLATION_FEE)
+                                .currency("EUR")
+                                .status(PaymentStatus.SUCCEEDED)
+                                .build();
+
+                paymentLineRepository.save(line);
         }
-
-        List<OrderItem> items = orderItemRepository
-                .findPaidBySessionIdWithSchedule(sessionId);
-
-        List<Long> orderItemIds = items.stream()
-                .map(OrderItem::getId)
-                .toList();
-
-        Map<Long, PaymentLine> saleLines = paymentLineRepository
-                .findSaleLinesForOrderItems(orderItemIds)
-                .stream()
-                .collect(Collectors.toMap(
-                        pl -> pl.getOrderItem().getId(),
-                        pl -> pl));
-
-        BigDecimal totalRefunded = BigDecimal.ZERO;
-
-        for (OrderItem item : items) {
-            var result = cancellationService.cancelOrderItem(
-                    item,
-                    saleLines.get(item.getId()),
-                    CancelledBy.GUIDE,
-                    CancellationReasonType.PROVIDER_CANCELLED,
-                    "Session cancelled by guide");
-
-            if (result.isOk()) {
-                totalRefunded = totalRefunded.add(result.get().refundAmount());
-            }
-        }
-
-        applyProcessingFee(session, shopId, totalRefunded);
-
-        session.setStatus(SessionStatus.CANCELLED);
-        session.setCancelledBy(CancelledBy.GUIDE);
-        session.setCancelledAt(Instant.now());
-
-        session.getSchedule().setStatus("CANCELLED");
-
-        log.info("Session {} cancelled by guide. Refund total={}", sessionId, totalRefunded);
-    }
-
-    private void applyProcessingFee(TourSession session, Long shopId, BigDecimal totalRefunded) {
-
-        if (totalRefunded.compareTo(BigDecimal.ZERO) <= 0) {
-            return;
-        }
-
-        BigDecimal fee = totalRefunded
-                .multiply(PROCESSING_RATE)
-                .setScale(2, RoundingMode.HALF_UP);
-
-        PaymentLine line = PaymentLine.builder()
-                .payment(null)
-                .orderItem(null)
-                .session(session)
-                .shopId(shopId)
-                .grossAmount(fee.negate())
-                .platformFee(BigDecimal.ZERO)
-                .shopAmount(fee.negate())
-                .type(PaymentLineType.CANCELLATION_FEE)
-                .currency("EUR")
-                .status(PaymentStatus.SUCCEEDED)
-                .build();
-
-        paymentLineRepository.save(line);
-    }
 }
