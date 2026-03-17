@@ -6,11 +6,13 @@
     night,
     customtheme;
 
-  darktheme: "light";
+  darktheme: "light_custom";
   base: false; /* Disable daisyUI's base styles to avoid conflicts */
 }
+
+
 @plugin "daisyui/theme" {
-  name: "light";
+  name: "light_custom";
   default: true;
 
   /* Core colors */
@@ -29,6 +31,14 @@
   --color-error: #ef4444; /* Red error messages */
   --color-sky-300: #7dd3fc;
   --color-sky-400: #38bdf8;
+
+  --color-base-content: #1f2937; /* main text (dark gray) */
+
+--color-primary-content: #ffffff;
+--color-secondary-content: #ffffff;
+--color-accent-content: #000000;
+
+--color-neutral-content: #ffffff;
 
   /* Rounded corners */
   --rounded-box: 0.5rem; /* softer, modern rounded container */
