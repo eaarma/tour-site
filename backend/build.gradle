@@ -72,9 +72,9 @@ dependencies {
 	annotationProcessor("org.projectlombok:lombok:1.18.38")
 
 	implementation 'jakarta.validation:jakarta.validation-api:3.0.2'
-	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5' // for JSON serialization/deserialization
+	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0' // for JSON serialization/deserialization
 	implementation 'org.hibernate.validator:hibernate-validator:8.0.1.Final'
   	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
