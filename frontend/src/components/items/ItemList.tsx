@@ -23,14 +23,6 @@ const ItemList: React.FC<ItemListProps> = ({
 }) => {
   const items = pageData?.content ?? [];
 
-  if (!loading && items.length === 0) {
-    return (
-      <div className="text-center text-gray-500 mt-6">
-        No results found. Try adjusting your search or filters.
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-6">
       {/* Items grid */}

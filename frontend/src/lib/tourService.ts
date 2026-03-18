@@ -72,6 +72,18 @@ export const TourService = {
     return res.data;
   },
 
+  // ✅ fetch random tours by category
+  async getRandomByCategory(
+    category: string,
+    count: number = 4,
+  ): Promise<Tour[]> {
+    const res = await api.get(`${BASE_URL}/category/random`, {
+      params: { category, count },
+      withCredentials: false,
+    });
+    return res.data;
+  },
+
   // ✅ fetch a single highlighted tour
   async getHighlighted(): Promise<Tour> {
     const res = await api.get(`${BASE_URL}/highlighted`, {

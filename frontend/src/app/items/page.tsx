@@ -10,6 +10,7 @@ import { PageResponse, TourService } from "@/lib/tourService";
 import { ItemListSkeleton } from "@/components/items/ItemListSkeleton";
 import { FILTER_CATEGORIES } from "@/types/filterCategories";
 import { Tour } from "@/types";
+import ItemListHorizontal from "@/components/home/ItemListHorizontal";
 
 const PAGE_SIZE = 12;
 
@@ -19,6 +20,7 @@ export default function ItemsPage() {
 
   const [loading, setLoading] = useState(true);
   const [pageData, setPageData] = useState<PageResponse<Tour> | null>(null);
+  const [suggestedTours, setSuggestedTours] = useState<Tour[]>([]);
   const currentPage = Number(params.get("page") || 0);
   // read query params
   const keyword = params.get("keyword") || "";
@@ -51,6 +53,13 @@ export default function ItemsPage() {
       try {
         const data = await TourService.getAllByQuery(query);
         setPageData(data);
+
+        if (data.content.length === 0) {
+          const fallback = await TourService.getRandom(8);
+          setSuggestedTours(fallback);
+        } else {
+          setSuggestedTours([]); // reset when results exist
+        }
       } finally {
         setLoading(false);
       }
@@ -136,6 +145,22 @@ export default function ItemsPage() {
 
         {loading || !pageData ? (
           <ItemListSkeleton />
+        ) : pageData.content.length === 0 ? (
+          <>
+            <div className="text-center text-gray-500 mt-10 sm:mt-20">
+              No results found. Try adjusting your search or filters.
+            </div>
+
+            {suggestedTours.length > 0 && (
+              <ItemListHorizontal
+title={
+  keyword
+    ? `No results for "${keyword}" – you might like these`
+    : "You might like these"
+}                items={suggestedTours}
+              />
+            )}
+          </>
         ) : (
           <ItemList
             pageData={pageData}

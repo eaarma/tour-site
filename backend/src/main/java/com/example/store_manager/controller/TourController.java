@@ -100,6 +100,16 @@ public class TourController {
                                 tourService.getRandomTours(count));
         }
 
+        // GET /tours/category/random?category=HIKING&count=4
+        @GetMapping("/category/random")
+        public ResponseEntity<?> getRandomToursByCategory(
+                        @RequestParam(name = "category") String category,
+                        @RequestParam(name = "count", defaultValue = "4") int count) {
+
+                return ResultResponseMapper.toResponse(
+                                tourService.getRandomToursByCategory(category, count));
+        }
+
         // GET /tours/highlighted
         @GetMapping("/highlighted")
         public ResponseEntity<?> getHighlightedTour() {

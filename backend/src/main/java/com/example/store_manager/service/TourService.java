@@ -212,4 +212,24 @@ public class TourService {
         return Result.ok(tours);
     }
 
+    @Transactional(readOnly = true)
+    public Result<List<TourResponseDto>> getRandomToursByCategory(String category, int count) {
+
+        TourCategory categoryEnum;
+
+        try {
+            categoryEnum = TourCategory.valueOf(category.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            return Result.fail(ApiError.badRequest("Invalid category"));
+        }
+
+        List<TourResponseDto> tours = tourRepository
+                .findRandomActiveToursByCategory(categoryEnum.name(), count)
+                .stream()
+                .map(tourMapper::toDto)
+                .toList();
+
+        return Result.ok(tours);
+    }
+
 }

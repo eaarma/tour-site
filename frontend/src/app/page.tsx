@@ -9,23 +9,34 @@ import { Tour } from "@/types";
 import WelcomeImage from "@/components/home/WelcomeImage";
 import ItemListHorizontalSkeleton from "@/components/home/ItemListHorizontalSkeleton";
 import HighlightedItemSkeleton from "@/components/home/HighlightedItemSkeleton";
+import CategoryGrid from "@/components/home/CategoryGrid";
 
 export default function Home() {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Tour[]>([]);
   const [highlighted, setHighlighted] = useState<Tour | null>(null);
+  const [categories, setCategories] = useState<
+    { title: string; items: Tour[] }[]
+  >([]);
 
   // Fetch tours from backend
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [randomTours, highlightedTour] = await Promise.all([
+        const [randomTours, highlightedTour, hiking, city] = await Promise.all([
           TourService.getRandom(8),
           TourService.getHighlighted(),
+          TourService.getRandomByCategory("HIKING", 4),
+          TourService.getRandomByCategory("WALKING", 4),
         ]);
 
         setItems(randomTours);
         setHighlighted(highlightedTour);
+
+        setCategories([
+          { title: "Hiking Tours", items: hiking },
+          { title: "City Tours", items: city },
+        ]);
       } catch (err) {
         console.error("Failed to fetch home page tours:", err);
       } finally {
@@ -49,13 +60,27 @@ export default function Home() {
         ) : (
           <ItemListHorizontal title="Available Tours" items={items} />
         )}
-        {loading ? (
-          <HighlightedItemSkeleton />
-        ) : (
-          highlighted && (
-            <HighlightedItem title="Featured Tour" item={highlighted} />
-          )
-        )}
+        {/* Categories row */}
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+  {categories.map((cat) => (
+    <CategoryGrid
+      key={cat.title}
+      title={cat.title}
+      items={cat.items}
+    />
+  ))}
+</div>
+
+{/* Highlighted below */}
+<div className="mt-8">
+  {loading ? (
+    <HighlightedItemSkeleton />
+  ) : (
+    highlighted && (
+      <HighlightedItem title="Featured Tour" item={highlighted} />
+    )
+  )}
+</div>
       </div>
     </div>
   );

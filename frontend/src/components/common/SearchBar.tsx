@@ -99,7 +99,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             <input
               type="text"
               placeholder="Search tours, locations..."
-              className="w-full h-11 pl-10 hover:bg-base-100 pr-9 bg-muted/50 text-foreground placeholder:text-muted-foreground rounded-xl border border-transparent bg-base-200 focus:bg-base-100 
+              className="w-full h-10 pl-10 hover:bg-base-100 pr-9 bg-muted/50 text-foreground placeholder:text-muted-foreground rounded-xl border border-transparent bg-base-100 focus:bg-base-100 
               focus:border-border focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring/20 focus:ring-primary text-sm transition-all
               hover:border-border hover:outline-none hover:ring-2 hover:ring-ring/20 hover:ring-primary/30"
               value={keywords}
@@ -165,7 +165,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
               onClick={handleSearch}
               className="
   group
-  h-11 px-6
+  h-10 px-6
   bg-base-100
   border border-base-300
   text-foreground
@@ -190,7 +190,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
               onClick={handleClearAll}
               className="
   group
-  h-11 px-5
+  h-10 px-5
   bg-base-100
   border border-base-300
   text-muted-foreground
