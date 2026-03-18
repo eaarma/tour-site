@@ -37,7 +37,11 @@ const Header: React.FC = () => {
     try {
       await api.post("/auth/logout");
     } finally {
-      if (pathname?.startsWith("/user") || pathname?.startsWith("/manager")) {
+      if (
+        pathname?.startsWith("/user") ||
+        pathname?.startsWith("/manager") ||
+        pathname?.startsWith("/admin")
+      ) {
         router.push("/");
       } else {
         router.refresh();
@@ -109,30 +113,56 @@ const Header: React.FC = () => {
 
               {open && (
                 <div className="absolute right-0 mt-2 w-44 bg-base-100 border border-gray-700 rounded shadow-lg z-50 text-neutral">
-                  {/* View Profile */}
-                  <button
-                    className="block w-full text-left px-4 py-2 hover:bg-base-200 hover:text-primary transition-colors"
-                    onClick={() => {
-                      router.push("/user");
-                      setOpen(false);
-                    }}
-                  >
-                    View Profile
-                  </button>
-
-                  {/* View Shops (MANAGER only) */}
-                  {user.role === "MANAGER" && (
+                  {/* ADMIN */}
+                  {user.role === "ADMIN" && (
                     <button
                       className="block w-full text-left px-4 py-2 hover:bg-base-200 hover:text-primary transition-colors"
                       onClick={() => {
-                        router.push("/shops");
+                        router.push("/admin");
                         setOpen(false);
                       }}
                     >
-                      View Shops
+                      Admin Page
                     </button>
                   )}
 
+                  {/* MANAGER */}
+                  {user.role === "MANAGER" && (
+                    <>
+                      <button
+                        className="block w-full text-left px-4 py-2 hover:bg-base-200 hover:text-primary transition-colors"
+                        onClick={() => {
+                          router.push("/user");
+                          setOpen(false);
+                        }}
+                      >
+                        View Profile
+                      </button>
+
+                      <button
+                        className="block w-full text-left px-4 py-2 hover:bg-base-200 hover:text-primary transition-colors"
+                        onClick={() => {
+                          router.push("/shops");
+                          setOpen(false);
+                        }}
+                      >
+                        View Shops
+                      </button>
+                    </>
+                  )}
+
+                  {/* USER */}
+                  {user.role === "USER" && (
+                    <button
+                      className="block w-full text-left px-4 py-2 hover:bg-base-200 hover:text-primary transition-colors"
+                      onClick={() => {
+                        router.push("/user");
+                        setOpen(false);
+                      }}
+                    >
+                      View Profile
+                    </button>
+                  )}
                   {/* Logout */}
                   <button
                     className="block w-full text-left px-4 py-2 hover:bg-base-100 hover:text-red-700 transition-colors text-red-500"

@@ -39,6 +39,10 @@ public class SecurityConfig {
     private final CustomUserDetailsService userDetailsService;
     private final GlobalRateLimitFilter globalRateLimitFilter;
 
+    private static final String[] STAFF = { "MANAGER", "ADMIN" };
+    private static final String[] MANAGEMENT = { "MANAGER", "OWNER", "ADMIN" };
+    private static final String[] ALL_AUTH = { "USER", "MANAGER", "OWNER", "ADMIN" };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, HandlerMappingIntrospector introspector)
             throws Exception {
@@ -49,37 +53,40 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(csrf -> csrf.disable())
 
-                .securityContext(security -> security
-                        .requireExplicitSave(false))
+                .securityContext(security -> security.requireExplicitSave(false))
+
                 .authorizeHttpRequests(auth -> auth
+
+                        // Public / Auth
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/auth/me").authenticated()
 
+                        // Stripe / Checkout
                         .requestMatchers("/checkout/stripe/**").permitAll()
                         .requestMatchers("/stripe/webhook").permitAll()
                         .requestMatchers(HttpMethod.GET, "/payments/order/**").permitAll()
                         .requestMatchers("/public/orders/**").permitAll()
+
                         // Tours
                         .requestMatchers(HttpMethod.GET, "/tours").permitAll()
                         .requestMatchers(HttpMethod.GET, "/tours/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/tours/**").hasRole("MANAGER")
-                        .requestMatchers(HttpMethod.PUT, "/tours/**").hasRole("MANAGER")
-                        .requestMatchers(HttpMethod.DELETE, "/tours/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.POST, "/tours/**").hasAnyRole(STAFF)
+                        .requestMatchers(HttpMethod.PUT, "/tours/**").hasAnyRole(STAFF)
+                        .requestMatchers(HttpMethod.DELETE, "/tours/**").hasAnyRole(STAFF)
 
                         // Orders
                         .requestMatchers(HttpMethod.GET, "/orders/guest/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/orders/guest").permitAll()
                         .requestMatchers(HttpMethod.GET, "/orders/*/status").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/orders/**").permitAll() // allow both guests and logged-in
-                                                                                   // users to fetch orders
-                        .requestMatchers(HttpMethod.POST, "/orders/**").hasAnyRole("MANAGER", "OWNER", "ADMIN", "USER")
-                        .requestMatchers(HttpMethod.PUT, "/orders/**").hasAnyRole("MANAGER", "OWNER", "ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/orders/**").hasAnyRole("MANAGER", "OWNER", "ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/orders/**").hasAnyRole("MANAGER", "OWNER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/orders/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/orders/**").hasAnyRole(ALL_AUTH)
+                        .requestMatchers(HttpMethod.PUT, "/orders/**").hasAnyRole(MANAGEMENT)
+                        .requestMatchers(HttpMethod.PATCH, "/orders/**").hasAnyRole(MANAGEMENT)
+                        .requestMatchers(HttpMethod.DELETE, "/orders/**").hasAnyRole(MANAGEMENT)
 
                         // Order items
-                        .requestMatchers(HttpMethod.PATCH, "/orders/items/**").hasAnyRole("MANAGER", "OWNER", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/orders/items/**").hasAnyRole(MANAGEMENT)
                         .requestMatchers(HttpMethod.POST, "/orders/items/*/cancel").permitAll()
 
                         // Checkout
@@ -95,39 +102,40 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/shops/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/shop-users/**").authenticated()
 
-                        // Tour Schedules
-                        .requestMatchers(HttpMethod.GET, "/schedules/**").permitAll() // anyone can view
-                        .requestMatchers(HttpMethod.POST, "/schedules/**").hasRole("MANAGER")
-                        .requestMatchers(HttpMethod.PATCH, "/schedules/**").hasRole("MANAGER")
-                        .requestMatchers(HttpMethod.DELETE, "/schedules/**").hasRole("MANAGER")
+                        // Schedules
+                        .requestMatchers(HttpMethod.GET, "/schedules/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/schedules/**").hasAnyRole(STAFF)
+                        .requestMatchers(HttpMethod.PATCH, "/schedules/**").hasAnyRole(STAFF)
+                        .requestMatchers(HttpMethod.DELETE, "/schedules/**").hasAnyRole(STAFF)
 
                         // Tour Images
-                        .requestMatchers(HttpMethod.GET, "/tourimages/**").permitAll() // anyone can view
-                        .requestMatchers(HttpMethod.POST, "/tourimages/**").hasRole("MANAGER")
-                        .requestMatchers(HttpMethod.DELETE, "/tourimages/**").hasRole("MANAGER")
-                        .requestMatchers(HttpMethod.PUT, "/tourimages/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.GET, "/tourimages/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/tourimages/**").hasAnyRole(STAFF)
+                        .requestMatchers(HttpMethod.DELETE, "/tourimages/**").hasAnyRole(STAFF)
+                        .requestMatchers(HttpMethod.PUT, "/tourimages/**").hasAnyRole(STAFF)
 
-                        // Tour Sessions
-                        .requestMatchers(HttpMethod.GET, "/api/sessions/**").permitAll() // anyone can view
-                        .requestMatchers(HttpMethod.POST, "/api/sessions/**").hasRole("MANAGER")
-                        .requestMatchers(HttpMethod.PATCH, "/api/sessions/**").hasRole("MANAGER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/sessions/**").hasRole("MANAGER")
+                        // Sessions
+                        .requestMatchers(HttpMethod.GET, "/api/sessions/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/sessions/**").hasAnyRole(STAFF)
+                        .requestMatchers(HttpMethod.PATCH, "/api/sessions/**").hasAnyRole(STAFF)
+                        .requestMatchers(HttpMethod.DELETE, "/api/sessions/**").hasAnyRole(STAFF)
                         .requestMatchers(HttpMethod.GET, "/api/sessions/shops/*/stats/tours-given").permitAll()
 
                         // Actuator
                         .requestMatchers("/actuator/**").permitAll()
 
-                        // All other requests require authentication
+                        // Everything else
                         .anyRequest().authenticated())
 
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-
                 .addFilterAfter(globalRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                         }))
+
                 .build();
     }
 

@@ -1,6 +1,7 @@
 spring:
   application:
     name: store_manager
+    
 
   flyway:
     enabled: true
@@ -46,6 +47,10 @@ management:
       exposure:
         include: health,info,metrics,prometheus
 
+app:
+  admin:
+    email: ${APP_ADMIN_EMAIL}
+    password: ${APP_ADMIN_PASSWORD}
   endpoint:
     prometheus:
       enabled: true

@@ -23,19 +23,20 @@ export default function Home() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [randomTours, highlightedTour, hiking, city] = await Promise.all([
-          TourService.getRandom(8),
-          TourService.getHighlighted(),
-          TourService.getRandomByCategory("HIKING", 4),
-          TourService.getRandomByCategory("WALKING", 4),
-        ]);
+        const [randomTours, highlightedTour, hiking, walking] =
+          await Promise.all([
+            TourService.getRandom(8),
+            TourService.getHighlighted(),
+            TourService.getRandomByCategory("HIKING", 4),
+            TourService.getRandomByCategory("WALKING", 4),
+          ]);
 
         setItems(randomTours);
         setHighlighted(highlightedTour);
 
         setCategories([
           { title: "Hiking Tours", items: hiking },
-          { title: "City Tours", items: city },
+          { title: "Walking Tours", items: walking },
         ]);
       } catch (err) {
         console.error("Failed to fetch home page tours:", err);
@@ -61,26 +62,22 @@ export default function Home() {
           <ItemListHorizontal title="Available Tours" items={items} />
         )}
         {/* Categories row */}
-<div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-  {categories.map((cat) => (
-    <CategoryGrid
-      key={cat.title}
-      title={cat.title}
-      items={cat.items}
-    />
-  ))}
-</div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+          {categories.map((cat) => (
+            <CategoryGrid key={cat.title} title={cat.title} items={cat.items} />
+          ))}
+        </div>
 
-{/* Highlighted below */}
-<div className="mt-8">
-  {loading ? (
-    <HighlightedItemSkeleton />
-  ) : (
-    highlighted && (
-      <HighlightedItem title="Featured Tour" item={highlighted} />
-    )
-  )}
-</div>
+        {/* Highlighted below */}
+        <div className="mt-8">
+          {loading ? (
+            <HighlightedItemSkeleton />
+          ) : (
+            highlighted && (
+              <HighlightedItem title="Featured Tour" item={highlighted} />
+            )
+          )}
+        </div>
       </div>
     </div>
   );

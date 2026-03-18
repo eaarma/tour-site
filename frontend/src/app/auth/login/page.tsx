@@ -113,8 +113,13 @@ export default function LoginPage() {
       dispatch(setAuth({ user, accessToken }));
       dispatch(clearExpired());
 
-      const redirect =
-        user.role === "ADMIN" || user.role === "MANAGER" ? "/shops" : "/user";
+      let redirect = "/user";
+
+      if (user.role === "ADMIN") {
+        redirect = "/admin";
+      } else if (user.role === "MANAGER") {
+        redirect = "/shops";
+      }
 
       router.push(redirect);
     } catch (err: unknown) {
