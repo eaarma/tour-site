@@ -39,10 +39,12 @@ export default function JoinOrCreateShopModal({
       const allShops = await ShopService.getAll();
       const filtered =
         searchBy === "name"
-          ? allShops.filter((s) =>
+          ? allShops.filter((s: ShopDto) =>
               s.name.toLowerCase().includes(searchTerm.toLowerCase()),
             )
-          : allShops.filter((s) => s.id.toString() === searchTerm.trim());
+          : allShops.filter(
+              (s: ShopDto) => s.id.toString() === searchTerm.trim(),
+            );
       setResults(filtered);
     } catch (err) {
       console.error("Search failed", err);
