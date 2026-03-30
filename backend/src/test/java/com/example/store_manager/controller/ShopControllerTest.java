@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.data.domain.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityFilterAutoConfiguration;
@@ -16,6 +17,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -136,10 +138,20 @@ class ShopControllerTest {
 
         @Test
         void getAllShops_returnsOk() throws Exception {
-                when(shopService.getAllShops())
-                                .thenReturn(Result.ok(List.of(new ShopDto())));
 
-                mockMvc.perform(get("/shops"))
+                Page<ShopDto> page = new PageImpl<>(List.of(new ShopDto()));
+
+                when(shopService.searchShops(
+                                any(),
+                                any(),
+                                anyInt(),
+                                anyInt())).thenReturn(Result.ok(page));
+
+                mockMvc.perform(get("/shops")
+                                .param("query", "")
+                                .param("status", "ACTIVE")
+                                .param("page", "0")
+                                .param("size", "10"))
                                 .andExpect(status().isOk());
         }
 

@@ -17,12 +17,14 @@ spring:
 jwt:
   secret: your-super-long-random-secret-at-least-32-bytes
 
+app:
+  admin:
+    email: ${APP_ADMIN_EMAIL:admin@test.com}
+    password: ${APP_ADMIN_PASSWORD:testpassword}
+  frontend-base-url: http://localhost:3000
 security:
   booking-token:
     pepper: test-pepper
-
-app:
-  frontend-base-url: http://localhost:3000
 
 resend:
   api-key: test-key

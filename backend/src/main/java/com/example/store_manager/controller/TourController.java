@@ -7,7 +7,9 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.store_manager.dto.tour.TourCreateDto;
 import com.example.store_manager.dto.tour.TourResponseDto;
+import com.example.store_manager.dto.tour.TourUpdateDto;
 import com.example.store_manager.service.TourService;
 import com.example.store_manager.utility.ResultResponseMapper;
 
@@ -43,13 +46,24 @@ public class TourController {
         @PutMapping("/{id}")
         public ResponseEntity<?> updateTour(
                         @PathVariable("id") Long id,
-                        @RequestBody @Valid TourCreateDto dto) {
+                        @RequestBody @Valid TourUpdateDto dto) {
 
                 return ResultResponseMapper.toResponse(
                                 tourService.updateTour(id, dto));
         }
 
-        // ✅ fetch literally everything
+        @GetMapping("/admin")
+        @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<?> getToursForAdmin(
+                        @RequestParam(name = "query", required = false) String query,
+                        @RequestParam(name = "status", required = false) String status,
+                        @RequestParam(name = "page", defaultValue = "0") int page,
+                        @RequestParam(name = "size", defaultValue = "10") int size) {
+
+                return ResultResponseMapper.toResponse(
+                                tourService.searchToursForAdmin(query, status, page, size));
+        }
+
         @GetMapping
         public ResponseEntity<?> getAllTours() {
                 return ResultResponseMapper.toResponse(
@@ -83,6 +97,16 @@ public class TourController {
         public ResponseEntity<?> getTourById(@PathVariable("id") Long id) {
                 return ResultResponseMapper.toResponse(
                                 tourService.getTourById(id));
+        }
+
+        @PatchMapping("/{id}/status")
+        @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<?> updateTourStatus(
+                        @PathVariable("id") Long id,
+                        @RequestParam("status") String status) {
+
+                return ResultResponseMapper.toResponse(
+                                tourService.updateTourStatus(id, status));
         }
 
         @GetMapping("/shop/{shopId}")

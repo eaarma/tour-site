@@ -4,9 +4,29 @@ import {
   OrderItemResponseDto,
   OrderResponseDto,
   OrderCreateRequestDto,
+  OrderStatus,
 } from "@/types/order";
 
 const BASE_URL = "/orders";
+
+export interface PageResponse<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  number: number;
+  size: number;
+  first?: boolean;
+  last?: boolean;
+}
+
+interface AdminOrderParams {
+  query?: string;
+  status?: OrderStatus;
+  from?: string;
+  to?: string;
+  page?: number;
+  size?: number;
+}
 
 export const OrderService = {
   // 🔹 Fetch a specific order, filtered by guest or user
@@ -144,6 +164,17 @@ export const OrderService = {
       reasonType,
       reason,
     });
+    return res.data;
+  },
+
+  getAdminPage: async (
+    params?: AdminOrderParams,
+  ): Promise<PageResponse<OrderResponseDto>> => {
+    const res = await api.get(`${BASE_URL}/admin`, {
+      params,
+      withCredentials: true,
+    });
+
     return res.data;
   },
 };

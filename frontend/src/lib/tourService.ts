@@ -25,6 +25,13 @@ interface QueryParams {
   type?: string[];
 }
 
+interface AdminTourParams {
+  query?: string;
+  status?: string;
+  page?: number;
+  size?: number;
+}
+
 export const TourService = {
   getAll: async (): Promise<Tour[]> => {
     const res = await api.get(BASE_URL, { withCredentials: false });
@@ -43,6 +50,23 @@ export const TourService = {
 
   update: async (id: number, data: TourUpdateDto): Promise<Tour> => {
     const res = await api.put(`${BASE_URL}/${id}`, data, {
+      withCredentials: true,
+    });
+    return res.data;
+  },
+
+  updateStatus: async (id: number, status: string): Promise<Tour> => {
+    const res = await api.patch(`${BASE_URL}/${id}/status`, null, {
+      params: { status },
+      withCredentials: true,
+    });
+
+    return res.data;
+  },
+
+  getAdminPage: async (params?: AdminTourParams): Promise<PageResponse<Tour>> => {
+    const res = await api.get(`${BASE_URL}/admin`, {
+      params,
       withCredentials: true,
     });
     return res.data;

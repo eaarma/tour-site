@@ -1,6 +1,25 @@
 import api from "@/lib/api/axios";
 import { SessionStatus, TourSessionDto } from "@/types/tourSession";
 
+export interface SessionPageResponse<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  number: number;
+  size: number;
+  first?: boolean;
+  last?: boolean;
+}
+
+interface AdminSessionParams {
+  query?: string;
+  status?: SessionStatus;
+  from?: string;
+  to?: string;
+  page?: number;
+  size?: number;
+}
+
 export const TourSessionService = {
   // Get all sessions for a given tour
   getByTour: async (tourId: number): Promise<TourSessionDto[]> => {
@@ -62,6 +81,17 @@ export const TourSessionService = {
     const res = await api.get<number>(
       `/api/sessions/shops/${shopId}/stats/tours-given`,
     );
+    return res.data;
+  },
+
+  async getAdminPage(
+    params?: AdminSessionParams,
+  ): Promise<SessionPageResponse<TourSessionDto>> {
+    const res = await api.get(`/api/sessions/admin`, {
+      params,
+      withCredentials: true,
+    });
+
     return res.data;
   },
 };

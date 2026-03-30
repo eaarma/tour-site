@@ -1,7 +1,5 @@
 package com.example.store_manager.controller;
 
-import java.time.Instant;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,9 +19,7 @@ import com.example.store_manager.model.CancelledBy;
 import com.example.store_manager.model.Order;
 import com.example.store_manager.model.OrderItem;
 import com.example.store_manager.model.OrderStatus;
-import com.example.store_manager.model.PaymentLine;
 import com.example.store_manager.repository.OrderItemRepository;
-import com.example.store_manager.repository.OrderRepository;
 import com.example.store_manager.repository.PaymentLineRepository;
 import com.example.store_manager.service.BookingAccessTokenService;
 import com.example.store_manager.service.CancellationService;
@@ -41,7 +37,6 @@ public class PublicOrderController {
         private final CancellationService cancellationService;
         private final OrderItemRepository orderItemRepository;
         private final OrderMapper orderMapper;
-        private final PaymentLineRepository paymentLineRepository;
 
         @GetMapping("/manage")
         public ResponseEntity<OrderResponseDto> getOrderByToken(
@@ -82,7 +77,6 @@ public class PublicOrderController {
 
                 var r = result.get();
 
-                // Optional: consume only if all items cancelled
                 boolean allCancelled = order.getOrderItems().stream()
                                 .allMatch(i -> i.getStatus() == OrderStatus.CANCELLED ||
                                                 i.getStatus() == OrderStatus.CANCELLED_CONFIRMED);

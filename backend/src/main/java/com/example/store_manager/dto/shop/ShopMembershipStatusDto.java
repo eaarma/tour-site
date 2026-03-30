@@ -9,7 +9,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ShopMembershipStatusDto {
-    private boolean member; // true if user is part of the shop
-    private ShopUserRole role; // MANAGER / GUIDE / OWNER / etc.
-    private ShopUserStatus status; // ACTIVE / PENDING / REJECTED
+    private boolean member;
+    private ShopUserRole role;
+    private ShopUserStatus status;
 }

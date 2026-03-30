@@ -1,0 +1,12 @@
+ALTER TABLE shops
+ADD COLUMN status VARCHAR(20);
+
+UPDATE shops
+SET status = 'ACTIVE'
+WHERE status IS NULL;
+    
+ALTER TABLE shops
+ALTER COLUMN status SET NOT NULL;
+
+ALTER TABLE shops_aud
+ADD COLUMN status VARCHAR(20);

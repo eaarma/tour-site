@@ -10,7 +10,7 @@ interface Props {
 
 export default function PaymentSectionRow({ payment, onView }: Props) {
   const statusColor =
-    payment.status === "PAID"
+    payment.status === "SUCCEEDED"
       ? "badge-success"
       : payment.status === "FAILED"
         ? "badge-error"

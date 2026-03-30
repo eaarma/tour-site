@@ -10,6 +10,7 @@ import lombok.*;
 public class ShopCreateRequestDto {
     @NotBlank
     private String name;
-
     private String description;
+    private String bankAccountName;
+    private String bankAccountIban;
 }

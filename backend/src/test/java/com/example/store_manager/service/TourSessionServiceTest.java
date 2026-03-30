@@ -11,6 +11,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,6 +21,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import com.example.store_manager.dto.tourSession.TourSessionDetailsDto;
 import com.example.store_manager.mapper.TourSessionMapper;
@@ -49,6 +54,42 @@ class TourSessionServiceTest {
 
     @InjectMocks
     private TourSessionService service;
+
+    @Test
+    void searchSessionsForAdmin_returnsMappedPage_whenFiltersValid() {
+        TourSession session = new TourSession();
+        TourSessionDetailsDto dto = new TourSessionDetailsDto();
+        Page<TourSession> page = new PageImpl<>(List.of(session));
+
+        when(repo.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
+        when(mapper.toDto(session)).thenReturn(dto);
+
+        Result<Page<TourSessionDetailsDto>> result = service.searchSessionsForAdmin(
+                "session 1",
+                "PLANNED",
+                LocalDate.of(2026, 3, 1),
+                LocalDate.of(2026, 3, 31),
+                0,
+                10);
+
+        assertTrue(result.isOk());
+        assertEquals(1, result.get().getContent().size());
+        assertSame(dto, result.get().getContent().get(0));
+    }
+
+    @Test
+    void searchSessionsForAdmin_returnsFail_whenDateRangeInvalid() {
+        Result<Page<TourSessionDetailsDto>> result = service.searchSessionsForAdmin(
+                null,
+                null,
+                LocalDate.of(2026, 3, 31),
+                LocalDate.of(2026, 3, 1),
+                0,
+                10);
+
+        assertTrue(result.isFail());
+        assertEquals("BAD_REQUEST", result.error().code());
+    }
 
     @Test
     void getSession_returnsOk_whenSessionExists() {

@@ -2,6 +2,7 @@ package com.example.store_manager.mapper;
 
 import com.example.store_manager.dto.tour.TourCreateDto;
 import com.example.store_manager.dto.tour.TourResponseDto;
+import com.example.store_manager.dto.tour.TourUpdateDto;
 import com.example.store_manager.model.Tour;
 import com.example.store_manager.model.TourImage;
 import org.mapstruct.Mapper;
@@ -39,6 +40,14 @@ public interface TourMapper {
     @Mapping(target = "categories", source = "categories")
     @Mapping(target = "language", source = "language")
     void updateTourFromDto(TourCreateDto dto, @MappingTarget Tour tour);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "shop", ignore = true)
+    @Mapping(target = "madeBy", ignore = true)
+    @Mapping(target = "images", ignore = true)
+    @Mapping(target = "categories", source = "categories")
+    @Mapping(target = "language", source = "language")
+    void updateTourFromDto(TourUpdateDto dto, @MappingTarget Tour tour);
 
     // ✅ Convert List<TourImage> → List<String>
     default List<String> mapImages(List<TourImage> images) {

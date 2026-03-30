@@ -6,8 +6,13 @@ import jakarta.persistence.LockModeType;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.lang.Nullable;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
@@ -16,7 +21,11 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.List;
 
-public interface TourSessionRepository extends JpaRepository<TourSession, Long> {
+public interface TourSessionRepository extends JpaRepository<TourSession, Long>, JpaSpecificationExecutor<TourSession> {
+
+    @Override
+    @EntityGraph(attributePaths = { "schedule", "schedule.tour", "schedule.tour.shop", "manager" })
+    Page<TourSession> findAll(@Nullable Specification<TourSession> spec, Pageable pageable);
 
     Optional<TourSession> findByScheduleId(Long scheduleId);
 

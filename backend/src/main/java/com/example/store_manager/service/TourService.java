@@ -2,25 +2,24 @@ package com.example.store_manager.service;
 
 import java.security.Principal;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Locale;
+import java.util.Set;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.store_manager.dto.tour.TourCreateDto;
 import com.example.store_manager.dto.tour.TourResponseDto;
+import com.example.store_manager.dto.tour.TourUpdateDto;
 import com.example.store_manager.mapper.TourMapper;
 import com.example.store_manager.model.Shop;
 import com.example.store_manager.model.Tour;
 import com.example.store_manager.model.TourCategory;
-import com.example.store_manager.model.TourImage;
 import com.example.store_manager.repository.ShopRepository;
 import com.example.store_manager.repository.TourRepository;
 import com.example.store_manager.security.annotations.AccessLevel;
@@ -34,6 +33,11 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class TourService {
+
+    private static final Set<String> ADMIN_TOUR_STATUSES = Set.of(
+            "ACTIVE",
+            "ON_HOLD",
+            "CANCELLED");
 
     private final TourRepository tourRepository;
     private final TourMapper tourMapper;
@@ -63,7 +67,7 @@ public class TourService {
 
     @Transactional
     @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.TOUR_ID)
-    public Result<TourResponseDto> updateTour(Long tourId, TourCreateDto dto) {
+    public Result<TourResponseDto> updateTour(Long tourId, TourUpdateDto dto) {
 
         Tour tour = tourRepository.findById(tourId)
                 .orElse(null);
@@ -72,15 +76,62 @@ public class TourService {
             return Result.fail(ApiError.notFound("Tour not found"));
         }
 
-        // Update simple fields
         tourMapper.updateTourFromDto(dto, tour);
 
-        // Reattach categories safely
-        if (dto.getCategories() != null) {
-            tour.setCategories(dto.getCategories());
+        Tour saved = tourRepository.save(tour);
+        return Result.ok(tourMapper.toDto(saved));
+    }
+
+    @Transactional(readOnly = true)
+    public Result<Page<TourResponseDto>> searchToursForAdmin(
+            String query,
+            String status,
+            int page,
+            int size) {
+
+        String normalizedQuery = normalizeQuery(query);
+        String normalizedStatus = normalizeStatus(status);
+
+        if (status != null && !status.isBlank() && normalizedStatus == null) {
+            return Result.fail(ApiError.badRequest("Invalid tour status"));
         }
 
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("id").descending());
+
+        Page<Tour> result = tourRepository.searchAdminTours(
+                normalizedQuery,
+                normalizedStatus,
+                pageable);
+
+        return Result.ok(result.map(tourMapper::toDto));
+    }
+
+    @Transactional
+    public Result<TourResponseDto> updateTourStatus(Long tourId, String status) {
+
+        Tour tour = tourRepository.findById(tourId)
+                .orElse(null);
+
+        if (tour == null) {
+            return Result.fail(ApiError.notFound("Tour not found"));
+        }
+
+        String normalizedStatus = normalizeStatus(status);
+
+        if (normalizedStatus == null) {
+            return Result.fail(ApiError.badRequest("Invalid tour status"));
+        }
+
+        if (normalizedStatus.equals(tour.getStatus())) {
+            return Result.ok(tourMapper.toDto(tour));
+        }
+
+        tour.setStatus(normalizedStatus);
         Tour saved = tourRepository.save(tour);
+
         return Result.ok(tourMapper.toDto(saved));
     }
 
@@ -230,6 +281,23 @@ public class TourService {
                 .toList();
 
         return Result.ok(tours);
+    }
+
+    private String normalizeQuery(String query) {
+        if (query == null || query.isBlank()) {
+            return null;
+        }
+
+        return query.trim();
+    }
+
+    private String normalizeStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+
+        String normalized = status.trim().toUpperCase(Locale.ROOT);
+        return ADMIN_TOUR_STATUSES.contains(normalized) ? normalized : null;
     }
 
 }

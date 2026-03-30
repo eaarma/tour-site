@@ -1,4 +1,3 @@
-// handles fetching and updating profile info
 import api from "@/lib/api/axios";
 import { UserResponseDto } from "@/types/user";
 
@@ -11,7 +10,7 @@ export const UserService = {
   },
 
   updateProfile: async (
-    data: Partial<UserResponseDto>
+    data: Partial<UserResponseDto>,
   ): Promise<UserResponseDto> => {
     const res = await api.put(`${BASE_URL}/me`, data);
     return res.data;
@@ -20,5 +19,24 @@ export const UserService = {
   getById: async (id: string): Promise<UserResponseDto> => {
     const res = await api.get(`/api/users/${id}`);
     return res.data;
+  },
+
+  getAll: async (params?: {
+    query?: string;
+    status?: "ACTIVE" | "REMOVED";
+    page?: number;
+    size?: number;
+  }) => {
+    const res = await api.get(BASE_URL, { params });
+    return res.data;
+  },
+  remove: async (id: string): Promise<void> => {
+    await api.patch(`${BASE_URL}/${id}/remove`);
+  },
+
+  updateRole: async (id: string, role: string): Promise<void> => {
+    await api.patch(`${BASE_URL}/${id}/role`, null, {
+      params: { role },
+    });
   },
 };

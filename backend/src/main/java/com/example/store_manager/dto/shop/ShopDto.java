@@ -9,8 +9,10 @@ import lombok.*;
 public class ShopDto {
     private Long id;
     private String name;
+    private String shopName;
     private String description;
-    private String createdAt; // ISO string
-    private String shopName; // Optional, for cases where we want to include it in responses
-
+    private String createdAt;
+    private String bankAccountName;
+    private String bankAccountIban;
+    private String status;
 }

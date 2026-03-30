@@ -36,4 +36,13 @@ public class Shop {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Column(name = "bank_account_name", length = 255)
+    private String bankAccountName;
+
+    @Column(name = "bank_account_iban", length = 64)
+    private String bankAccountIban;
+
+    @Enumerated(EnumType.STRING)
+    private ShopStatus status;
+
 }

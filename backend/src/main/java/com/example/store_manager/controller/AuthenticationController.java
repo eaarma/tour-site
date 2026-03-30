@@ -142,9 +142,9 @@ public class AuthenticationController {
                         long maxAgeSeconds,
                         boolean secure) {
                 return ResponseCookie.from(name, value)
-                                .httpOnly(true) // refresh token should ALWAYS be HttpOnly
-                                .secure(secure) // ✅ environment-controlled
-                                .sameSite("none") // required for cross-site cookies
+                                .httpOnly(true)
+                                .secure(secure)
+                                .sameSite("none")
                                 .path("/")
                                 .maxAge(maxAgeSeconds)
                                 .build();

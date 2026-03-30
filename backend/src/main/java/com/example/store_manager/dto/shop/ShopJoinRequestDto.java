@@ -3,7 +3,6 @@ package com.example.store_manager.dto.shop;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -11,6 +10,5 @@ import lombok.*;
 public class ShopJoinRequestDto {
     @NotNull
     private Long shopId;
-
-    private String message; // optional note
+    private String message;
 }

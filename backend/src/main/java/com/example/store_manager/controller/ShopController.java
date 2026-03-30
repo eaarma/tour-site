@@ -1,24 +1,23 @@
 package com.example.store_manager.controller;
 
-import java.util.List;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.store_manager.dto.shop.ShopCreateRequestDto;
-import com.example.store_manager.dto.shop.ShopDto;
+import com.example.store_manager.model.ShopStatus;
 import com.example.store_manager.security.CurrentUserService;
 import com.example.store_manager.service.ShopService;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import com.example.store_manager.utility.ResultResponseMapper;
 
@@ -54,8 +53,20 @@ public class ShopController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllShops() {
+    public ResponseEntity<?> getShops(
+            @RequestParam(name = "query", required = false) String query,
+            @RequestParam(name = "status", required = false) ShopStatus status,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size) {
+
         return ResultResponseMapper.toResponse(
-                shopService.getAllShops());
+                shopService.searchShops(query, status, page, size));
     }
+
+    @PatchMapping("/{shopId}/remove")
+    public ResponseEntity<?> removeShop(@PathVariable("shopId") Long shopId) {
+        return ResultResponseMapper.toResponse(
+                shopService.removeShop(shopId));
+    }
+
 }

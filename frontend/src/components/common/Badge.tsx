@@ -1,4 +1,3 @@
-// components/ui/badge.tsx
 import React from "react";
 
 type BadgeVariant = "default" | "secondary" | "destructive" | "outline";

@@ -101,7 +101,7 @@
   animation: fade-in 0.2s ease-out;
 }
 .page-container > * {
-  max-width: 1280px; /* max-w-screen-xl */
+  max-width: 1440px;
   margin-left: auto;
   margin-right: auto;
   padding-left: 1rem;
@@ -110,22 +110,22 @@
 
 @media (min-width: 640px) {
   .page-container > * {
-    padding-left: 4rem; /* px-6 */
-    padding-right: 4rem;
+    padding-left: 3rem;
+    padding-right: 3rem;
   }
 }
 
 @media (min-width: 1024px) {
   .page-container > * {
-    padding-left: 6rem; /* px-10 */
-    padding-right: 6rem;
+    padding-left: 4rem;
+    padding-right: 4rem;
   }
 }
 
 @media (min-width: 1280px) {
   .page-container > * {
-    padding-left: 7rem; /* px-12 */
-    padding-right: 7rem;
+    padding-left: 5rem;
+    padding-right: 5rem;
   }
 }
 

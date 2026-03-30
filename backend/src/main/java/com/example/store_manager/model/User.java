@@ -62,4 +62,10 @@ public class User {
     private String profileImageUrl;
 
     private boolean emailVerified;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private UserStatus status = UserStatus.ACTIVE;
+
 }

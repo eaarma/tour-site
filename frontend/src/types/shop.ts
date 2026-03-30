@@ -9,6 +9,7 @@ export interface ShopDto {
   id: number;
   name: string;
   description?: string;
+  status: "ACTIVE" | "REMOVED";
   createdAt: string; // ISO string
   shopName?: string; // Optional, for cases where we want to include it in responses
 }

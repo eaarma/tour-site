@@ -5,6 +5,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -14,6 +18,7 @@ import com.example.store_manager.dto.shop.ShopCreateRequestDto;
 import com.example.store_manager.dto.shop.ShopDto;
 import com.example.store_manager.mapper.ShopMapper;
 import com.example.store_manager.model.Shop;
+import com.example.store_manager.model.ShopStatus;
 import com.example.store_manager.model.ShopUser;
 import com.example.store_manager.model.ShopUserRole;
 import com.example.store_manager.model.ShopUserStatus;
@@ -46,6 +51,7 @@ public class ShopService {
                 Shop shop = Shop.builder()
                                 .name(dto.getName())
                                 .description(dto.getDescription())
+                                .status(ShopStatus.ACTIVE)
                                 .build();
 
                 Shop savedShop = shopRepository.save(shop);
@@ -106,5 +112,38 @@ public class ShopService {
                                 .toList();
 
                 return Result.ok(shops);
+        }
+
+        @Transactional(readOnly = true)
+        public Result<Page<ShopDto>> searchShops(
+                        String query,
+                        ShopStatus status,
+                        int page,
+                        int size) {
+
+                Pageable pageable = PageRequest.of(
+                                page,
+                                size,
+                                Sort.by("id").descending());
+
+                Page<Shop> result = shopRepository.searchShops(query, status, pageable);
+
+                return Result.ok(result.map(shopMapper::toDto));
+        }
+
+        @Transactional
+        public Result<Void> removeShop(Long shopId) {
+
+                Shop shop = shopRepository.findById(shopId)
+                                .orElse(null);
+
+                if (shop == null) {
+                        return Result.fail(ApiError.notFound("Shop not found"));
+                }
+
+                shop.setStatus(ShopStatus.REMOVED);
+                shopRepository.save(shop);
+
+                return Result.ok();
         }
 }

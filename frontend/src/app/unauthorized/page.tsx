@@ -7,9 +7,9 @@ export default function UnauthorizedPage() {
       <p className="mb-6">You do not have permission to access this page.</p>
       <button
         className="btn btn-primary bg-primary"
-        onClick={() => window.history.back()}
+        onClick={() => (window.location.href = "/")}
       >
-        Go Back
+        To homepage
       </button>
     </div>
   );

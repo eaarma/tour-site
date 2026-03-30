@@ -8,11 +8,18 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +42,7 @@ import com.example.store_manager.repository.TourScheduleRepository;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
 
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -51,6 +59,48 @@ public class PaymentService {
     private final EmailService emailService;
     private final TourScheduleRepository tourScheduleRepository;
     private final BookingAccessTokenService bookingAccessTokenService;
+
+    @Transactional(readOnly = true)
+    public Result<Page<PaymentLineResponseDto>> searchPaymentLinesForAdmin(
+            String query,
+            String status,
+            LocalDate from,
+            LocalDate to,
+            int page,
+            int size) {
+
+        if (from != null && to != null && from.isAfter(to)) {
+            return Result.fail(ApiError.badRequest("'From' date must be before or equal to 'To' date"));
+        }
+
+        String normalizedQuery = normalizeQuery(query);
+        PaymentStatus normalizedStatus = normalizeStatus(status);
+
+        if (status != null && !status.isBlank() && normalizedStatus == null) {
+            return Result.fail(ApiError.badRequest("Invalid payment status"));
+        }
+
+        Instant createdFrom = from != null
+                ? from.atStartOfDay(ZoneId.of("UTC")).toInstant()
+                : null;
+
+        Instant createdTo = to != null
+                ? to.plusDays(1).atStartOfDay(ZoneId.of("UTC")).toInstant()
+                : null;
+
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(
+                        Sort.Order.desc("createdAt"),
+                        Sort.Order.desc("id")));
+
+        Page<PaymentLine> result = paymentLineRepository.findAll(
+                buildAdminPaymentLineSpecification(normalizedQuery, normalizedStatus, createdFrom, createdTo),
+                pageable);
+
+        return Result.ok(result.map(paymentLineMapper::toDto));
+    }
 
     @Transactional
     public Payment createPendingForOrder(Order order) {
@@ -223,5 +273,60 @@ public class PaymentService {
                 .orElseThrow();
 
         return latestStart.plus(30, ChronoUnit.DAYS);
+    }
+
+    private String normalizeQuery(String query) {
+        if (query == null || query.isBlank()) {
+            return null;
+        }
+
+        return query.trim();
+    }
+
+    private PaymentStatus normalizeStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+
+        try {
+            return PaymentStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    private Specification<PaymentLine> buildAdminPaymentLineSpecification(
+            String query,
+            PaymentStatus status,
+            Instant createdFrom,
+            Instant createdTo) {
+
+        return (root, criteriaQuery, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (status != null) {
+                predicates.add(criteriaBuilder.equal(root.get("status"), status));
+            }
+
+            if (createdFrom != null) {
+                predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createdAt"), createdFrom));
+            }
+
+            if (createdTo != null) {
+                predicates.add(criteriaBuilder.lessThan(root.get("createdAt"), createdTo));
+            }
+
+            if (query != null) {
+                predicates.add(criteriaBuilder.like(
+                        criteriaBuilder.function(
+                                "to_char",
+                                String.class,
+                                root.get("shopId"),
+                                criteriaBuilder.literal("FM999999999999999999")),
+                        "%" + query + "%"));
+            }
+
+            return criteriaBuilder.and(predicates.toArray(Predicate[]::new));
+        };
     }
 }

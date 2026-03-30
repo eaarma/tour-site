@@ -16,6 +16,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -32,6 +33,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -94,8 +99,106 @@ public class OrderServiceTest {
     @Mock
     private TourSessionRepository tourSessionRepository;
 
+    @Mock
+    private PaymentService paymentService;
+
     @InjectMocks
     private OrderService service;
+
+    @Test
+    void searchOrdersForAdmin_returnsPagedResults_whenFiltersAreValid() {
+        Order order = new Order();
+        order.setId(10000001L);
+        OrderResponseDto dto = new OrderResponseDto();
+
+        when(orderRepository.findAll(
+                any(Specification.class),
+                any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(order)));
+
+        when(orderMapper.toDto(order)).thenReturn(dto);
+
+        Result<Page<OrderResponseDto>> result = service.searchOrdersForAdmin(
+                " 1000 ",
+                "confirmed",
+                LocalDate.of(2026, 3, 1),
+                LocalDate.of(2026, 3, 31),
+                0,
+                10);
+
+        assertTrue(result.isOk());
+        assertEquals(1, result.get().getContent().size());
+        assertSame(dto, result.get().getContent().get(0));
+    }
+
+    @Test
+    void searchOrdersForAdmin_usesSafeDefaultPattern_whenQueryIsMissing() {
+        when(orderRepository.findAll(
+                any(Specification.class),
+                any(Pageable.class)))
+                .thenReturn(Page.empty());
+
+        Result<Page<OrderResponseDto>> result = service.searchOrdersForAdmin(
+                null,
+                "PENDING",
+                LocalDate.of(2026, 3, 1),
+                LocalDate.of(2026, 3, 31),
+                0,
+                10);
+
+        assertTrue(result.isOk());
+        assertTrue(result.get().isEmpty());
+    }
+
+    @Test
+    void searchOrdersForAdmin_returnsEmptyPage_whenQueryHasNoMatches() {
+        when(orderRepository.findAll(
+                any(Specification.class),
+                any(Pageable.class)))
+                .thenReturn(Page.empty());
+
+        Result<Page<OrderResponseDto>> result = service.searchOrdersForAdmin(
+                "no-match",
+                "PENDING",
+                LocalDate.of(2026, 3, 1),
+                LocalDate.of(2026, 3, 31),
+                0,
+                10);
+
+        assertTrue(result.isOk());
+        assertTrue(result.get().isEmpty());
+        verify(orderRepository).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @Test
+    void searchOrdersForAdmin_returnsFail_whenStatusIsInvalid() {
+        Result<Page<OrderResponseDto>> result = service.searchOrdersForAdmin(
+                "test",
+                "not-a-real-status",
+                null,
+                null,
+                0,
+                10);
+
+        assertTrue(result.isFail());
+        assertEquals("BAD_REQUEST", result.error().code());
+        assertEquals("Invalid order status", result.error().message());
+    }
+
+    @Test
+    void searchOrdersForAdmin_returnsFail_whenFromDateIsAfterToDate() {
+        Result<Page<OrderResponseDto>> result = service.searchOrdersForAdmin(
+                null,
+                null,
+                LocalDate.of(2026, 4, 2),
+                LocalDate.of(2026, 4, 1),
+                0,
+                10);
+
+        assertTrue(result.isFail());
+        assertEquals("BAD_REQUEST", result.error().code());
+        assertEquals("'From' date must be before or equal to 'To' date", result.error().message());
+    }
 
     // getOrderById
     @Test

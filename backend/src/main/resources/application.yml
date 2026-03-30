@@ -49,8 +49,8 @@ management:
 
 app:
   admin:
-    email: ${APP_ADMIN_EMAIL}
-    password: ${APP_ADMIN_PASSWORD}
+    email: ${APP_ADMIN_EMAIL:}
+    password: ${APP_ADMIN_PASSWORD:}
   endpoint:
     prometheus:
       enabled: true

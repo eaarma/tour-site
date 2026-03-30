@@ -26,4 +26,5 @@ public class UserResponseDto {
     private String languages;
     private Instant createdAt;
     private String profileImageUrl;
+    private String status;
 }

@@ -1,0 +1,12 @@
+ALTER TABLE users
+ADD COLUMN status VARCHAR(20);
+
+UPDATE users
+SET status = 'ACTIVE'
+WHERE status IS NULL;
+
+ALTER TABLE users
+ALTER COLUMN status SET NOT NULL;
+
+ALTER TABLE users_aud
+ADD COLUMN status VARCHAR(20);

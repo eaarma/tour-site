@@ -4,8 +4,13 @@ import { ShopDto, ShopCreateRequestDto } from "@/types/shop";
 const BASE_URL = "/shops";
 
 export const ShopService = {
-  getAll: async (): Promise<ShopDto[]> => {
-    const res = await api.get(BASE_URL);
+  getAll: async (params?: {
+    query?: string;
+    status?: "ACTIVE" | "REMOVED";
+    page?: number;
+    size?: number;
+  }) => {
+    const res = await api.get(BASE_URL, { params });
     return res.data;
   },
 
@@ -21,9 +26,13 @@ export const ShopService = {
 
   update: async (
     shopId: number,
-    data: ShopCreateRequestDto
+    data: ShopCreateRequestDto,
   ): Promise<ShopDto> => {
     const res = await api.put(`${BASE_URL}/${shopId}`, data);
     return res.data;
+  },
+
+  remove: async (id: number): Promise<void> => {
+    await api.patch(`${BASE_URL}/${id}/remove`);
   },
 };

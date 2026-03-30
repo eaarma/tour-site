@@ -4,11 +4,16 @@ export type OrderStatus =
   | "EXPIRED"
   | "PENDING"
   | "FAILED"
+  | "PLANNED"
+  | "PARTIALLY_PAID"
   | "CONFIRMED"
   | "COMPLETED"
   | "FINALIZED"
   | "CANCELLED"
-  | "CANCELLED_CONFIRMED";
+  | "CANCELLED_CONFIRMED"
+  | "PARTIALLY_CANCELLED"
+  | "REFUNDED"
+  | "PARTIALLY_REFUNDED";
 
 export interface OrderItemCreateRequestDto {
   tourId: number;

@@ -11,14 +11,12 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.store_manager.config.properties.StripeProperties;
 import com.example.store_manager.infrastructure.stripe.StripeWebhookVerifier;
 import com.example.store_manager.model.StripeEvent;
 import com.example.store_manager.repository.StripeEventRepository;
 import com.example.store_manager.service.PaymentService;
 import com.stripe.model.Event;
 import com.stripe.model.PaymentIntent;
-import com.stripe.net.Webhook;
 
 import lombok.RequiredArgsConstructor;
 
@@ -122,6 +120,5 @@ public class StripeWebhookController {
 
         log.warn("Payment failed: {}", intent.getId());
 
-        // optional: mark failed in DB
     }
 }

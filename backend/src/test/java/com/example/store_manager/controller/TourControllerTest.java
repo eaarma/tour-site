@@ -19,6 +19,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import com.example.store_manager.dto.tour.TourCreateDto;
 import com.example.store_manager.dto.tour.TourResponseDto;
+import com.example.store_manager.dto.tour.TourUpdateDto;
 import com.example.store_manager.model.TourCategory;
 import com.example.store_manager.security.CustomUserDetailsService;
 import com.example.store_manager.security.JwtService;
@@ -83,6 +84,25 @@ class TourControllerTest {
                                 .build();
         }
 
+        private TourUpdateDto validUpdateDto() {
+                TourUpdateDto dto = new TourUpdateDto();
+                dto.setTitle("Updated Tour");
+                dto.setDescription("An updated guided walking tour");
+                dto.setImages(List.of("img1.jpg"));
+                dto.setPrice(BigDecimal.valueOf(59.99));
+                dto.setTimeRequired(150);
+                dto.setIntensity("MEDIUM");
+                dto.setParticipants(6);
+                dto.setCategories(Set.of(TourCategory.CULTURE));
+                dto.setLanguage(Set.of("EN"));
+                dto.setType("WALKING");
+                dto.setLocation("Rome");
+                dto.setStatus("ACTIVE");
+                dto.setMeetingPoint("Colosseum Entrance");
+                dto.setShopId(1L);
+                return dto;
+        }
+
         // ----------------------------
         // Tests
         // ----------------------------
@@ -117,7 +137,7 @@ class TourControllerTest {
 
                 mockMvc.perform(put("/tours/{id}", 1L)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(validCreateDto())))
+                                .content(objectMapper.writeValueAsString(validUpdateDto())))
                                 .andExpect(status().isOk());
         }
 
@@ -128,8 +148,33 @@ class TourControllerTest {
 
                 mockMvc.perform(put("/tours/{id}", 1L)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(validCreateDto())))
+                                .content(objectMapper.writeValueAsString(validUpdateDto())))
                                 .andExpect(status().isNotFound());
+        }
+
+        @Test
+        void getToursForAdmin_returnsOk() throws Exception {
+                Page<TourResponseDto> page = new PageImpl<>(List.of(tourResponse()));
+
+                when(tourService.searchToursForAdmin("tour", "ACTIVE", 0, 10))
+                                .thenReturn(Result.ok(page));
+
+                mockMvc.perform(get("/tours/admin")
+                                .param("query", "tour")
+                                .param("status", "ACTIVE")
+                                .param("page", "0")
+                                .param("size", "10"))
+                                .andExpect(status().isOk());
+        }
+
+        @Test
+        void updateTourStatus_returnsOk_whenSuccess() throws Exception {
+                when(tourService.updateTourStatus(1L, "CANCELLED"))
+                                .thenReturn(Result.ok(tourResponse()));
+
+                mockMvc.perform(patch("/tours/{id}/status", 1L)
+                                .param("status", "CANCELLED"))
+                                .andExpect(status().isOk());
         }
 
         @Test

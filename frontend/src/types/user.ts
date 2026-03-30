@@ -34,6 +34,7 @@ export interface UserResponseDto {
   languages?: string | null;
   createdAt?: string; // ISO date string
   profileImageUrl?: string | null;
+  status: "ACTIVE" | "REMOVED";
 }
 
 export interface LoginRequestDto {

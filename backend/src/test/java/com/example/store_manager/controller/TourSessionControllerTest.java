@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
@@ -61,6 +62,19 @@ class TourSessionControllerTest {
         // ------------------------
         // GET sessions for tour
         // ------------------------
+
+        @Test
+        void getSessionsForAdmin_returnsOk() throws Exception {
+                when(service.searchSessionsForAdmin("session", "PLANNED", null, null, 0, 10))
+                                .thenReturn(Result.ok(new PageImpl<>(List.of(sessionDto()))));
+
+                mockMvc.perform(get("/api/sessions/admin")
+                                .param("query", "session")
+                                .param("status", "PLANNED")
+                                .param("page", "0")
+                                .param("size", "10"))
+                                .andExpect(status().isOk());
+        }
 
         @Test
         void getByTour_returnsOk() throws Exception {

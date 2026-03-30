@@ -3,11 +3,20 @@ package com.example.store_manager.service;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -44,6 +53,7 @@ import com.example.store_manager.security.annotations.ShopIdSource;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
 
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -61,6 +71,52 @@ public class OrderService {
         private final CurrentUserService currentUserService;
         private final TourSessionRepository tourSessionRepository;
         private final PaymentService paymentService;
+
+        @Transactional(readOnly = true)
+        public Result<Page<OrderResponseDto>> searchOrdersForAdmin(
+                        String query,
+                        String status,
+                        LocalDate from,
+                        LocalDate to,
+                        int page,
+                        int size) {
+
+                if (from != null && to != null && from.isAfter(to)) {
+                        return Result.fail(ApiError.badRequest("'From' date must be before or equal to 'To' date"));
+                }
+
+                String normalizedQuery = normalizeQuery(query);
+                OrderStatus normalizedStatus = normalizeStatus(status);
+
+                if (status != null && !status.isBlank() && normalizedStatus == null) {
+                        return Result.fail(ApiError.badRequest("Invalid order status"));
+                }
+
+                Pageable pageable = PageRequest.of(
+                                page,
+                                size,
+                                Sort.by(
+                                                Sort.Order.desc("createdAt"),
+                                                Sort.Order.desc("id")));
+
+                Instant createdFrom = from != null
+                                ? from.atStartOfDay(ZoneOffset.UTC).toInstant()
+                                : null;
+
+                Instant createdTo = to != null
+                                ? to.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant()
+                                : null;
+
+                Page<Order> result = orderRepository.findAll(
+                                buildAdminOrderSpecification(
+                                                normalizedQuery,
+                                                normalizedStatus,
+                                                createdFrom,
+                                                createdTo),
+                                pageable);
+
+                return Result.ok(result.map(orderMapper::toDto));
+        }
 
         @Transactional
         public Result<OrderResponseDto> createOrder(
@@ -575,5 +631,64 @@ public class OrderService {
                 return orderItemRepository.findByIdWithOrderAndUser(id)
                                 .map(Result::ok)
                                 .orElse(Result.fail(ApiError.notFound("Order item not found")));
+        }
+
+        private String normalizeQuery(String query) {
+                if (query == null || query.isBlank()) {
+                        return null;
+                }
+
+                return query.trim();
+        }
+
+        private Specification<Order> buildAdminOrderSpecification(
+                        String query,
+                        OrderStatus status,
+                        Instant createdFrom,
+                        Instant createdTo) {
+
+                return (root, criteriaQuery, criteriaBuilder) -> {
+                        List<Predicate> predicates = new ArrayList<>();
+
+                        if (status != null) {
+                                predicates.add(criteriaBuilder.equal(root.get("status"), status));
+                        }
+
+                        if (createdFrom != null) {
+                                predicates.add(criteriaBuilder.greaterThanOrEqualTo(
+                                                root.get("createdAt"),
+                                                createdFrom));
+                        }
+
+                        if (createdTo != null) {
+                                predicates.add(criteriaBuilder.lessThan(
+                                                root.get("createdAt"),
+                                                createdTo));
+                        }
+
+                        if (query != null) {
+                                predicates.add(criteriaBuilder.like(
+                                                criteriaBuilder.function(
+                                                                "to_char",
+                                                                String.class,
+                                                                root.get("id"),
+                                                                criteriaBuilder.literal("FM999999999999999999")),
+                                                "%" + query + "%"));
+                        }
+
+                        return criteriaBuilder.and(predicates.toArray(Predicate[]::new));
+                };
+        }
+
+        private OrderStatus normalizeStatus(String status) {
+                if (status == null || status.isBlank()) {
+                        return null;
+                }
+
+                try {
+                        return OrderStatus.valueOf(status.trim().toUpperCase(Locale.ROOT));
+                } catch (IllegalArgumentException ex) {
+                        return null;
+                }
         }
 }

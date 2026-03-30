@@ -1,11 +1,19 @@
 import { OrderItemResponseDto, OrderStatus } from "./order";
 
 export type SessionStatus =
+  | "PENDING"
+  | "EXPIRED"
   | "PLANNED"
+  | "PAID"
+  | "PARTIALLY_PAID"
   | "CONFIRMED"
+  | "PARTIALLY_CANCELLED"
+  | "REFUNDED"
+  | "PARTIALLY_REFUNDED"
   | "COMPLETED"
   | "CANCELLED"
-  | "CANCELLED_CONFIRMED";
+  | "CANCELLED_CONFIRMED"
+  | "FAILED";
 
 export interface OrderItemParticipantDto {
   orderItemId: number;
@@ -42,12 +50,7 @@ export interface TourSessionDto {
 
   participants: OrderItemResponseDto[];
 
-  status:
-    | "PLANNED"
-    | "CONFIRMED"
-    | "COMPLETED"
-    | "CANCELLED"
-    | "CANCELLED_CONFIRMED";
+  status: SessionStatus;
   managerId: string | undefined;
   managerName: string | undefined;
   managerEmail: string;

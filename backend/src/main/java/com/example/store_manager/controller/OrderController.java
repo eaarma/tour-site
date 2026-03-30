@@ -3,8 +3,10 @@ package com.example.store_manager.controller;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,7 +46,20 @@ public class OrderController {
         private final CancellationService cancellationService;
         private final PaymentLineRepository paymentLineRepository;
 
-        // Create multi-item order
+        @GetMapping("/admin")
+        @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<?> getOrdersForAdmin(
+                        @RequestParam(name = "query", required = false) String query,
+                        @RequestParam(name = "status", required = false) String status,
+                        @RequestParam(name = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate from,
+                        @RequestParam(name = "to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) java.time.LocalDate to,
+                        @RequestParam(name = "page", defaultValue = "0") int page,
+                        @RequestParam(name = "size", defaultValue = "10") int size) {
+
+                return ResultResponseMapper.toResponse(
+                                orderService.searchOrdersForAdmin(query, status, from, to, page, size));
+        }
+
         @PostMapping
         public ResponseEntity<?> createOrder(
                         @RequestBody @Valid OrderCreateRequestDto dto) {
@@ -71,7 +86,6 @@ public class OrderController {
                                 orderService.getOrderById(id, auth, token));
         }
 
-        // Get all orders for authenticated user
         @GetMapping
         public ResponseEntity<?> getUserOrders() {
 
@@ -88,7 +102,6 @@ public class OrderController {
                                 orderService.getOrdersByUser(userId));
         }
 
-        // Get all order items for a given shop (provider)
         @GetMapping("/shop/{shopId}/items")
         public ResponseEntity<?> getOrderItemsByShop(@PathVariable("shopId") Long shopId) {
                 return ResultResponseMapper.toResponse(
@@ -124,14 +137,12 @@ public class OrderController {
 
                 UUID userId = userDetails.getId();
 
-                // Load order item with order + user
                 Result<OrderItemResponseDto> itemResult = orderService.getOrderItemById(orderItemId);
 
                 if (itemResult.isFail()) {
                         return ResultResponseMapper.toResponse(itemResult);
                 }
 
-                // We need the actual entity to validate ownership properly
                 var itemEntityResult = orderService.getOrderItemEntity(orderItemId);
 
                 if (itemEntityResult.isFail()) {
@@ -169,7 +180,6 @@ public class OrderController {
                                                 r.newStatus()));
         }
 
-        // Get order items by manager
         @GetMapping("/manager/{managerId}/items")
         public ResponseEntity<?> getOrderItemsByManager(
                         @PathVariable("managerId") UUID managerId) {
@@ -178,7 +188,6 @@ public class OrderController {
                                 orderService.getOrderItemsByManager(managerId));
         }
 
-        // ✅ Confirm order item by manager and set status to CONFIRMED
         @PatchMapping("/items/{itemId}/confirm/{managerId}")
         public ResponseEntity<?> confirmOrderItem(
                         @PathVariable("itemId") Long itemId,
@@ -223,7 +232,6 @@ public class OrderController {
         public ResponseEntity<?> createGuestOrder(
                         @RequestBody @Valid OrderCreateRequestDto dto) {
 
-                // userId = null → guest order
                 return ResultResponseMapper.toResponse(
                                 orderService.createOrder(dto, null));
         }

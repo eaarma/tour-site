@@ -59,6 +59,31 @@ public class Payout {
     @Column(name = "period_end")
     private Instant periodEnd;
 
+    @Column(name = "paid_at")
+    private Instant paidAt;
+
+    @Column(nullable = false, length = 10)
+    private String currency;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    private PayoutMethod method;
+
+    @Column(length = 255)
+    private String reference;
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
+    @Column(name = "transaction_count", nullable = false)
+    private Integer transactionCount;
+
+    @Column(name = "bank_account_name", length = 255)
+    private String bankAccountName;
+
+    @Column(name = "bank_account_iban", length = 64)
+    private String bankAccountIban;
+
     @OneToMany(mappedBy = "payout")
     private List<PaymentLine> paymentLines;
 

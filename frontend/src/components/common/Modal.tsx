@@ -19,7 +19,7 @@ export default function Modal({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center"
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-3 sm:items-center sm:p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -34,7 +34,7 @@ export default function Modal({
           <motion.div
             role="dialog"
             aria-modal="true"
-            className="relative z-10 bg-base-100 rounded-xl shadow-xl w-[min(92vw,48rem)] px-5 py-4 mx-4"
+            className="relative z-10 my-auto w-full max-w-3xl overflow-y-auto rounded-xl bg-base-100 px-4 py-4 shadow-xl max-h-[calc(100dvh-1.5rem)] sm:px-5 sm:max-h-[calc(100dvh-2rem)]"
             initial={{ y: 24, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 24, opacity: 0 }}

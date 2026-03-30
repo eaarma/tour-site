@@ -5,22 +5,20 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.store_manager.dto.order.OrderCreateRequestDto;
@@ -28,7 +26,6 @@ import com.example.store_manager.dto.order.OrderItemCreateRequestDto;
 import com.example.store_manager.dto.order.OrderItemResponseDto;
 import com.example.store_manager.dto.order.OrderResponseDto;
 import com.example.store_manager.dto.order.StatusUpdateRequestDto;
-import com.example.store_manager.model.Order;
 import com.example.store_manager.model.OrderStatus;
 import com.example.store_manager.repository.PaymentLineRepository;
 import com.example.store_manager.security.CustomUserDetailsService;
@@ -94,6 +91,21 @@ class OrderControllerTest {
         }
 
         /* ---------------- GET ORDER ---------------- */
+
+        @Test
+        void getOrdersForAdmin_returnsOk_whenServiceSucceeds() throws Exception {
+                when(orderService.searchOrdersForAdmin(
+                                nullable(String.class),
+                                nullable(String.class),
+                                nullable(LocalDate.class),
+                                nullable(LocalDate.class),
+                                eq(0),
+                                eq(10)))
+                                .thenReturn(Result.ok(new PageImpl<>(List.of(new OrderResponseDto()))));
+
+                mockMvc.perform(get("/orders/admin"))
+                                .andExpect(status().isOk());
+        }
 
         @Test
         void getOrderById_returnsOk_whenFound() throws Exception {

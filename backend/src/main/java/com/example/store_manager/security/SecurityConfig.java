@@ -68,16 +68,24 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/payments/order/**").permitAll()
                         .requestMatchers("/public/orders/**").permitAll()
 
+                        // Users
+                        .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/users/me").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/users/me").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/users/*").authenticated()
                         // Tours
+                        .requestMatchers(HttpMethod.GET, "/tours/admin").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/tours").permitAll()
                         .requestMatchers(HttpMethod.GET, "/tours/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/tours/**").hasAnyRole(STAFF)
                         .requestMatchers(HttpMethod.PUT, "/tours/**").hasAnyRole(STAFF)
+                        .requestMatchers(HttpMethod.PATCH, "/tours/*/status").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/tours/**").hasAnyRole(STAFF)
 
                         // Orders
                         .requestMatchers(HttpMethod.GET, "/orders/guest/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/orders/guest").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/orders/admin").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/orders/*/status").permitAll()
                         .requestMatchers(HttpMethod.GET, "/orders/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/orders/**").hasAnyRole(ALL_AUTH)
@@ -93,13 +101,19 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/checkout/reserve").permitAll()
                         .requestMatchers(HttpMethod.POST, "/checkout/finalize").permitAll()
 
+                        // Payments
+                        .requestMatchers(HttpMethod.GET, "/payments/admin").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/payouts/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/payouts/admin/**").hasRole("ADMIN")
+
                         // Shops & Shop Users
-                        .requestMatchers(HttpMethod.GET, "/api/shop-users/user/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/shops/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/shops/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/shops/**").authenticated()
+
                         .requestMatchers(HttpMethod.GET, "/api/shop-users/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/shop-users/**").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/shops/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/shop-users/user/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/shop-users/**").authenticated()
 
                         // Schedules
@@ -115,6 +129,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/tourimages/**").hasAnyRole(STAFF)
 
                         // Sessions
+                        .requestMatchers(HttpMethod.GET, "/api/sessions/admin").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/sessions/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/sessions/**").hasAnyRole(STAFF)
                         .requestMatchers(HttpMethod.PATCH, "/api/sessions/**").hasAnyRole(STAFF)

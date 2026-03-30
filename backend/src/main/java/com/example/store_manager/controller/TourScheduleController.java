@@ -10,10 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
 
-import java.util.List;
-
 import com.example.store_manager.dto.schedule.TourScheduleCreateDto;
-import com.example.store_manager.dto.schedule.TourScheduleResponseDto;
 import com.example.store_manager.dto.schedule.TourScheduleUpdateDto;
 
 @RestController

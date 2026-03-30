@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import java.security.Principal;
 import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import com.example.store_manager.dto.tour.TourCreateDto;
 import com.example.store_manager.dto.tour.TourResponseDto;
+import com.example.store_manager.dto.tour.TourUpdateDto;
 import com.example.store_manager.mapper.TourMapper;
 import com.example.store_manager.model.Shop;
 import com.example.store_manager.model.Tour;
@@ -83,13 +85,30 @@ class TourServiceTest {
 
     @Test
     void updateTour_returnsOk_whenValid() {
-        TourCreateDto dto = new TourCreateDto();
+        TourUpdateDto dto = new TourUpdateDto();
+        dto.setTitle("Updated Tour");
+        dto.setDescription("Updated description");
+        dto.setPrice(BigDecimal.valueOf(49.99));
+        dto.setTimeRequired(120);
+        dto.setIntensity("MEDIUM");
+        dto.setParticipants(10);
+        dto.setLanguage(Set.of("EN"));
+        dto.setMeetingPoint("Square");
+        dto.setType("WALKING");
+        dto.setLocation("Tallinn");
+        dto.setStatus("ACTIVE");
         dto.setCategories(Set.of(TourCategory.ADVENTURE));
 
         Tour tour = new Tour();
         TourResponseDto responseDto = new TourResponseDto();
 
         when(tourRepository.findById(1L)).thenReturn(Optional.of(tour));
+        doAnswer(invocation -> {
+            TourUpdateDto source = invocation.getArgument(0);
+            Tour target = invocation.getArgument(1);
+            target.setCategories(source.getCategories());
+            return null;
+        }).when(tourMapper).updateTourFromDto(dto, tour);
         when(tourRepository.save(tour)).thenReturn(tour);
         when(tourMapper.toDto(tour)).thenReturn(responseDto);
 
@@ -105,11 +124,76 @@ class TourServiceTest {
     void updateTour_returnsFail_whenTourNotFound() {
         when(tourRepository.findById(99L)).thenReturn(Optional.empty());
 
-        Result<TourResponseDto> result = tourService.updateTour(99L, new TourCreateDto());
+        Result<TourResponseDto> result = tourService.updateTour(99L, new TourUpdateDto());
 
         assertTrue(result.isFail());
         assertEquals("NOT_FOUND", result.error().code());
         assertEquals("Tour not found", result.error().message());
+    }
+
+    @Test
+    void searchToursForAdmin_returnsOkPage() {
+        Tour tour = new Tour();
+        TourResponseDto dto = new TourResponseDto();
+        Page<Tour> page = new PageImpl<>(List.of(tour));
+
+        when(tourRepository.searchAdminTours(eq("tour"), eq("ACTIVE"), any(Pageable.class)))
+                .thenReturn(page);
+        when(tourMapper.toDto(tour)).thenReturn(dto);
+
+        Result<Page<TourResponseDto>> result = tourService.searchToursForAdmin(
+                "tour",
+                "ACTIVE",
+                0,
+                10);
+
+        assertTrue(result.isOk());
+        assertEquals(1, result.get().getContent().size());
+        verify(tourRepository).searchAdminTours(eq("tour"), eq("ACTIVE"), any(Pageable.class));
+    }
+
+    @Test
+    void searchToursForAdmin_returnsFail_whenInvalidStatus() {
+        Result<Page<TourResponseDto>> result = tourService.searchToursForAdmin(
+                "tour",
+                "INVALID",
+                0,
+                10);
+
+        assertTrue(result.isFail());
+        assertEquals("BAD_REQUEST", result.error().code());
+        assertEquals("Invalid tour status", result.error().message());
+    }
+
+    @Test
+    void updateTourStatus_returnsOk_whenValid() {
+        Tour tour = new Tour();
+        tour.setStatus("ACTIVE");
+        TourResponseDto dto = new TourResponseDto();
+        dto.setStatus("CANCELLED");
+
+        when(tourRepository.findById(1L)).thenReturn(Optional.of(tour));
+        when(tourRepository.save(tour)).thenReturn(tour);
+        when(tourMapper.toDto(tour)).thenReturn(dto);
+
+        Result<TourResponseDto> result = tourService.updateTourStatus(1L, "cancelled");
+
+        assertTrue(result.isOk());
+        assertEquals("CANCELLED", tour.getStatus());
+        verify(tourRepository).save(tour);
+    }
+
+    @Test
+    void updateTourStatus_returnsFail_whenInvalidStatus() {
+        Tour tour = new Tour();
+        tour.setStatus("ACTIVE");
+
+        when(tourRepository.findById(1L)).thenReturn(Optional.of(tour));
+
+        Result<TourResponseDto> result = tourService.updateTourStatus(1L, "invalid");
+
+        assertTrue(result.isFail());
+        assertEquals("BAD_REQUEST", result.error().code());
     }
 
     @Test

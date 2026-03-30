@@ -21,6 +21,19 @@ public interface TourRepository extends JpaRepository<Tour, Long> {
     List<Tour> findByShopId(Long shopId);
 
     @Query("""
+            SELECT t FROM Tour t
+            WHERE (:status IS NULL OR t.status = :status)
+              AND (
+                :query IS NULL OR :query = '' OR
+                LOWER(t.title) LIKE LOWER(CONCAT('%', :query, '%'))
+              )
+            """)
+    Page<Tour> searchAdminTours(
+            @Param("query") String query,
+            @Param("status") String status,
+            Pageable pageable);
+
+    @Query("""
             SELECT DISTINCT t FROM Tour t
             LEFT JOIN t.language l
             WHERE EXISTS (
