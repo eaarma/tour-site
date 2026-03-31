@@ -748,6 +748,7 @@ public class PayoutService {
         return PayoutSessionSummaryDto.builder()
                 .sessionId(key.sessionId())
                 .sessionTitle(key.title())
+                .managerName(resolveManagerName(lines))
                 .scheduledAt(key.scheduledAt())
                 .currency(resolveCurrency(lines))
                 .status(payoutInfo.summaryStatus())

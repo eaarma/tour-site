@@ -88,6 +88,7 @@ export interface PayoutHistoryEntryDto {
 export interface PayoutSessionSummaryDto {
   sessionId: number | null;
   sessionTitle: string;
+  managerName: string | null;
   scheduledAt: string | null;
   currency: string;
   status: PayoutStatus | null;

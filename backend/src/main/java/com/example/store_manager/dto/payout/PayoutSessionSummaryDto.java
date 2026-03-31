@@ -20,6 +20,7 @@ import lombok.NoArgsConstructor;
 public class PayoutSessionSummaryDto {
     private Long sessionId;
     private String sessionTitle;
+    private String managerName;
     private LocalDateTime scheduledAt;
     private String currency;
     private PayoutStatus status;
