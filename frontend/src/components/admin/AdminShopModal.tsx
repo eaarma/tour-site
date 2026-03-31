@@ -33,6 +33,12 @@ export default function AdminShopModal({
               <strong>Description:</strong> {shop.description || "-"}
             </p>
             <p>
+              <strong>Bank Account Name:</strong> {shop.bankAccountName || "-"}
+            </p>
+            <p>
+              <strong>Bank Account IBAN:</strong> {shop.bankAccountIban || "-"}
+            </p>
+            <p>
               <strong>Status:</strong> {shop.status}
             </p>
           </div>

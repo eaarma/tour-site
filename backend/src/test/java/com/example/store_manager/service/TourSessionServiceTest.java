@@ -30,11 +30,13 @@ import com.example.store_manager.dto.tourSession.TourSessionDetailsDto;
 import com.example.store_manager.mapper.TourSessionMapper;
 import com.example.store_manager.model.SessionStatus;
 import com.example.store_manager.model.Tour;
+import com.example.store_manager.model.TourSchedule;
 import com.example.store_manager.model.TourSession;
 import com.example.store_manager.model.User;
 import com.example.store_manager.repository.TourRepository;
 import com.example.store_manager.repository.TourSessionRepository;
 import com.example.store_manager.repository.UserRepository;
+import com.example.store_manager.security.CurrentUserService;
 import com.example.store_manager.utility.Result;
 
 @ExtendWith(MockitoExtension.class)
@@ -51,6 +53,9 @@ class TourSessionServiceTest {
 
     @Mock
     private TourRepository tourRepository;
+
+    @Mock
+    private CurrentUserService currentUserService;
 
     @InjectMocks
     private TourSessionService service;
@@ -275,6 +280,47 @@ class TourSessionServiceTest {
         when(repo.findById(1L)).thenReturn(Optional.of(session));
         when(repo.save(session)).thenReturn(session); // ✅ REQUIRED
         when(mapper.toDto(session)).thenReturn(new TourSessionDetailsDto());
+
+        Result<TourSessionDetailsDto> result = service.updateStatus(1L, SessionStatus.COMPLETED);
+
+        assertTrue(result.isOk());
+        assertEquals(SessionStatus.COMPLETED, session.getStatus());
+        verify(repo).save(session);
+    }
+
+    @Test
+    void updateStatus_returnsFail_whenCompletingFutureSessionAsNonAdmin() {
+        TourSession session = new TourSession();
+        session.setStatus(SessionStatus.CONFIRMED);
+        session.setSchedule(TourSchedule.builder()
+                .date(LocalDate.now().plusDays(1))
+                .time(java.time.LocalTime.NOON)
+                .build());
+
+        when(repo.findById(1L)).thenReturn(Optional.of(session));
+        when(currentUserService.hasRole("ADMIN")).thenReturn(false);
+
+        Result<TourSessionDetailsDto> result = service.updateStatus(1L, SessionStatus.COMPLETED);
+
+        assertTrue(result.isFail());
+        assertEquals("BAD_REQUEST", result.error().code());
+        assertEquals("Session cannot be completed before it takes place", result.error().message());
+        verify(repo, never()).save(any());
+    }
+
+    @Test
+    void updateStatus_allowsAdminToCompleteFutureSession() {
+        TourSession session = new TourSession();
+        session.setStatus(SessionStatus.CONFIRMED);
+        session.setSchedule(TourSchedule.builder()
+                .date(LocalDate.now().plusDays(1))
+                .time(java.time.LocalTime.NOON)
+                .build());
+
+        when(repo.findById(1L)).thenReturn(Optional.of(session));
+        when(repo.save(session)).thenReturn(session);
+        when(mapper.toDto(session)).thenReturn(new TourSessionDetailsDto());
+        when(currentUserService.hasRole("ADMIN")).thenReturn(true);
 
         Result<TourSessionDetailsDto> result = service.updateStatus(1L, SessionStatus.COMPLETED);
 

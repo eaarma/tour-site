@@ -2,6 +2,8 @@ import api from "./api/axios";
 import {
   PayoutCreateRequestDto,
   PayoutResponseDto,
+  PayoutSessionDetailsDto,
+  PayoutSessionSummaryDto,
   PayoutShopDetailsDto,
   PayoutShopSummaryDto,
   PayoutStatus,
@@ -20,6 +22,20 @@ interface PayoutDetailsParams {
   status?: PayoutStatus;
   year?: number;
   month?: number;
+  from?: string;
+  to?: string;
+}
+
+interface ManagerSessionSummaryParams {
+  query?: string;
+  status?: PayoutStatus;
+  year?: number;
+  month?: number;
+}
+
+interface ManagerSessionDetailsParams {
+  sessionId: number;
+  status?: PayoutStatus;
   from?: string;
   to?: string;
 }
@@ -43,6 +59,30 @@ export const PayoutService = {
     params?: PayoutDetailsParams,
   ): Promise<PayoutShopDetailsDto> {
     const res = await api.get(`${BASE_URL}/shops/${shopId}`, {
+      params,
+      withCredentials: true,
+    });
+
+    return res.data;
+  },
+
+  async getManagerSessionSummaries(
+    shopId: number,
+    params?: ManagerSessionSummaryParams,
+  ): Promise<PayoutSessionSummaryDto[]> {
+    const res = await api.get(`/payouts/shops/${shopId}/sessions`, {
+      params,
+      withCredentials: true,
+    });
+
+    return res.data;
+  },
+
+  async getManagerSessionDetails(
+    shopId: number,
+    params: ManagerSessionDetailsParams,
+  ): Promise<PayoutSessionDetailsDto> {
+    const res = await api.get(`/payouts/shops/${shopId}/sessions/details`, {
       params,
       withCredentials: true,
     });

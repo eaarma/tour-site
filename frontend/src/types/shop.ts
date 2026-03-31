@@ -2,6 +2,8 @@
 export interface ShopCreateRequestDto {
   name: string;
   description?: string;
+  bankAccountName?: string;
+  bankAccountIban?: string;
 }
 
 // For full Shop details
@@ -9,6 +11,8 @@ export interface ShopDto {
   id: number;
   name: string;
   description?: string;
+  bankAccountName?: string;
+  bankAccountIban?: string;
   status: "ACTIVE" | "REMOVED";
   createdAt: string; // ISO string
   shopName?: string; // Optional, for cases where we want to include it in responses

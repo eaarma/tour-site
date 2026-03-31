@@ -114,9 +114,30 @@ public class UserService {
                 size,
                 Sort.by("createdAt").descending());
 
-        Page<User> result = userRepository.searchUsers(query, status, pageable);
+        String normalizedQuery = normalizeQuery(query);
+        boolean applyQuery = normalizedQuery != null;
+        String queryPattern = applyQuery ? "%" + normalizedQuery + "%" : "%";
+
+        Page<User> result = userRepository.searchUsers(
+                applyQuery,
+                queryPattern,
+                status,
+                pageable);
 
         return Result.ok(result.map(userMapper::toDto));
+    }
+
+    private String normalizeQuery(String query) {
+        if (query == null) {
+            return null;
+        }
+
+        String trimmedQuery = query.trim();
+        if (trimmedQuery.isEmpty()) {
+            return null;
+        }
+
+        return trimmedQuery.toLowerCase();
     }
 
 }

@@ -6,6 +6,8 @@ import static org.mockito.Mockito.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,6 +17,7 @@ import com.example.store_manager.dto.shop.ShopCreateRequestDto;
 import com.example.store_manager.dto.shop.ShopDto;
 import com.example.store_manager.mapper.ShopMapper;
 import com.example.store_manager.model.Shop;
+import com.example.store_manager.model.ShopStatus;
 import com.example.store_manager.model.ShopUserRole;
 import com.example.store_manager.model.ShopUserStatus;
 import com.example.store_manager.model.User;
@@ -51,6 +54,8 @@ class ShopServiceTest {
         ShopCreateRequestDto dto = new ShopCreateRequestDto();
         dto.setName("Test Shop");
         dto.setDescription("Description");
+        dto.setBankAccountName("Test Shop OU");
+        dto.setBankAccountIban("EE123456789012345678");
 
         Shop savedShop = Shop.builder().id(1L).build();
         User user = new User();
@@ -65,7 +70,10 @@ class ShopServiceTest {
         assertTrue(result.isOk());
         assertSame(shopDto, result.get());
 
-        verify(shopRepository).save(any(Shop.class));
+        verify(shopRepository).save(argThat(shop -> "Test Shop".equals(shop.getName()) &&
+                "Description".equals(shop.getDescription()) &&
+                "Test Shop OU".equals(shop.getBankAccountName()) &&
+                "EE123456789012345678".equals(shop.getBankAccountIban())));
         verify(shopUserRepository).save(argThat(shopUser -> shopUser.getShop().equals(savedShop) &&
                 shopUser.getUser().equals(user) &&
                 shopUser.getRole() == ShopUserRole.OWNER &&
@@ -168,5 +176,18 @@ class ShopServiceTest {
         assertTrue(result.isOk());
         assertEquals(1, result.get().size());
         assertSame(dto, result.get().get(0));
+    }
+
+    @Test
+    void searchShops_ignoresBlankQueryAndUsesStatusOnly() {
+        Page<Shop> page = new PageImpl<>(List.of());
+
+        when(shopRepository.searchShops(eq(false), eq("%"), eq(ShopStatus.ACTIVE), any()))
+                .thenReturn(page);
+
+        Result<Page<ShopDto>> result = shopService.searchShops("   ", ShopStatus.ACTIVE, 0, 5);
+
+        assertTrue(result.isOk());
+        verify(shopRepository).searchShops(eq(false), eq("%"), eq(ShopStatus.ACTIVE), any());
     }
 }

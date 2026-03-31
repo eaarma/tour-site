@@ -85,6 +85,44 @@ export interface PayoutHistoryEntryDto {
   periodEnd: string | null;
 }
 
+export interface PayoutSessionSummaryDto {
+  sessionId: number | null;
+  sessionTitle: string;
+  scheduledAt: string | null;
+  currency: string;
+  status: PayoutStatus | null;
+  payoutStatus: PayoutStatus | null;
+  payoutId: number | null;
+  payoutAmount: number | null;
+  paidAt: string | null;
+  payoutPeriodStart: string | null;
+  payoutPeriodEnd: string | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+  transactionCount: number;
+  totalAmount: number;
+}
+
+export interface PayoutSessionDetailsDto {
+  sessionId: number | null;
+  sessionTitle: string;
+  managerName: string | null;
+  scheduledAt: string | null;
+  currency: string;
+  status: PayoutStatus | null;
+  payoutStatus: PayoutStatus | null;
+  payoutId: number | null;
+  payoutAmount: number | null;
+  paidAt: string | null;
+  payoutPeriodStart: string | null;
+  payoutPeriodEnd: string | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+  transactionCount: number;
+  totalAmount: number;
+  rows: PayoutLineRowDto[];
+}
+
 export interface PayoutCreateRequestDto {
   shopId: number;
   periodStart: string;

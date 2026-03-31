@@ -68,6 +68,8 @@ class ShopControllerTest {
                 return ShopCreateRequestDto.builder()
                                 .name("Test Shop")
                                 .description("Optional description")
+                                .bankAccountName("Test Shop OU")
+                                .bankAccountIban("EE123456789012345678")
                                 .build();
         }
 

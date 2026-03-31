@@ -4,6 +4,15 @@ import { TourSessionDto } from "@/types/tourSession";
 import { TourSessionService } from "@/lib/tourSessionService";
 import toast from "react-hot-toast";
 
+const isFutureSession = (session?: TourSessionDto | null) => {
+  if (!session) return false;
+
+  const scheduledAt = new Date(`${session.date}T${session.time}`);
+  if (Number.isNaN(scheduledAt.getTime())) return false;
+
+  return scheduledAt.getTime() > Date.now();
+};
+
 export function useSessionManager(shopId: number) {
   const { user } = useAuth();
   const [sessionList, setSessionList] = useState<TourSessionDto[]>([]);
@@ -41,6 +50,13 @@ export function useSessionManager(shopId: number) {
   };
 
   const completeSession = async (sessionId: number) => {
+    const session = sessionList.find((entry) => entry.id === sessionId);
+
+    if (isFutureSession(session)) {
+      toast.error("Failed to COMPLETE, session in the future");
+      return;
+    }
+
     await TourSessionService.updateStatus(sessionId, "COMPLETED");
     toast.success("Session marked as completed");
     await reloadSessions();

@@ -6,6 +6,7 @@ import RequireAuth from "@/components/common/RequireAuth";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminShops from "@/components/admin/AdminShops";
 import AdminTours from "@/components/admin/AdminTours";
+import AdminDashboard from "@/components/admin/AdminDashboard";
 import AdminSessions from "@/components/admin/AdminSessions";
 import AdminOrders from "@/components/admin/AdminOrders";
 import AdminTransactions from "@/components/admin/AdminTransactions";
@@ -129,7 +130,7 @@ export default function AdminPage() {
             {active}
           </h1>
 
-          {renderContent()}
+          {active === "dashboard" ? <AdminDashboard /> : renderContent()}
         </main>
       </div>
     </RequireAuth>

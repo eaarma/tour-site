@@ -22,9 +22,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.store_manager.dto.payout.PayoutCreateRequestDto;
+import com.example.store_manager.dto.payout.PayoutSessionDetailsDto;
 import com.example.store_manager.dto.payout.PayoutHistoryEntryDto;
 import com.example.store_manager.dto.payout.PayoutLineRowDto;
 import com.example.store_manager.dto.payout.PayoutResponseDto;
+import com.example.store_manager.dto.payout.PayoutSessionSummaryDto;
 import com.example.store_manager.dto.payout.PayoutSessionGroupDto;
 import com.example.store_manager.dto.payout.PayoutShopDetailsDto;
 import com.example.store_manager.dto.payout.PayoutShopSummaryDto;
@@ -40,6 +42,9 @@ import com.example.store_manager.model.TourSession;
 import com.example.store_manager.repository.PaymentLineRepository;
 import com.example.store_manager.repository.PayoutRepository;
 import com.example.store_manager.repository.ShopRepository;
+import com.example.store_manager.security.annotations.AccessLevel;
+import com.example.store_manager.security.annotations.ShopAccess;
+import com.example.store_manager.security.annotations.ShopIdSource;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
 
@@ -166,6 +171,116 @@ public class PayoutService {
                         filterWindowResult.get().periodEnd());
 
         return Result.ok(summaries);
+    }
+
+    @Transactional(readOnly = true)
+    @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.SHOP_ID)
+    public Result<List<PayoutSessionSummaryDto>> getManagerSessionSummaries(
+            Long shopId,
+            String query,
+            String status,
+            Integer year,
+            Integer month) {
+
+        Shop shop = shopRepository.findById(shopId).orElse(null);
+        if (shop == null) {
+            return Result.fail(ApiError.notFound("Shop not found"));
+        }
+
+        Result<FilterWindow> filterWindowResult = resolveFilterWindow(year, month, null, null);
+        if (filterWindowResult.isFail()) {
+            return Result.fail(filterWindowResult.error());
+        }
+
+        PayoutStatus normalizedStatus = normalizeStatus(status);
+        if (status != null && !status.isBlank() && normalizedStatus == null) {
+            return Result.fail(ApiError.badRequest("Invalid payout status"));
+        }
+
+        List<PaymentLine> lines = paymentLineRepository.findAll(
+                buildPayoutLineSpecification(filterWindowResult.get().from(), filterWindowResult.get().to(), shopId),
+                Sort.by(
+                        Sort.Order.desc("createdAt"),
+                        Sort.Order.desc("id")));
+
+        List<PaymentLine> filteredLines = filterByPayoutStatus(lines, normalizedStatus);
+
+        List<PayoutSessionSummaryDto> summaries = shouldGroupByMonth(year, month, null, null)
+                ? buildMonthlySessionSummaries(filteredLines, query)
+                : buildSessionSummaries(
+                        filteredLines,
+                        query,
+                        filterWindowResult.get().periodStart(),
+                        filterWindowResult.get().periodEnd());
+
+        return Result.ok(summaries);
+    }
+
+    @Transactional(readOnly = true)
+    @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.SHOP_ID)
+    public Result<PayoutSessionDetailsDto> getManagerSessionDetails(
+            Long shopId,
+            Long sessionId,
+            String status,
+            LocalDate from,
+            LocalDate to) {
+
+        Shop shop = shopRepository.findById(shopId).orElse(null);
+        if (shop == null) {
+            return Result.fail(ApiError.notFound("Shop not found"));
+        }
+
+        Result<FilterWindow> filterWindowResult = resolveFilterWindow(null, null, from, to);
+        if (filterWindowResult.isFail()) {
+            return Result.fail(filterWindowResult.error());
+        }
+
+        PayoutStatus normalizedStatus = normalizeStatus(status);
+        if (status != null && !status.isBlank() && normalizedStatus == null) {
+            return Result.fail(ApiError.badRequest("Invalid payout status"));
+        }
+
+        List<PaymentLine> lines = paymentLineRepository.findAll(
+                buildPayoutLineSpecification(filterWindowResult.get().from(), filterWindowResult.get().to(), shopId),
+                Sort.by(
+                        Sort.Order.desc("createdAt"),
+                        Sort.Order.desc("id")));
+
+        List<PaymentLine> filteredLines = filterByPayoutStatus(lines, normalizedStatus)
+                .stream()
+                .filter(line -> Objects.equals(toSessionGroupKey(line).sessionId(), sessionId))
+                .toList();
+
+        if (filteredLines.isEmpty()) {
+            return Result.fail(ApiError.notFound("No payout transactions found for the selected session"));
+        }
+
+        SessionGroupKey sessionKey = toSessionGroupKey(filteredLines.get(0));
+        BigDecimal totalAmount = filteredLines.stream()
+                .map(PaymentLine::getShopAmount)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        SummaryPayoutInfo payoutInfo = resolveSummaryPayoutInfo(filteredLines);
+
+        return Result.ok(PayoutSessionDetailsDto.builder()
+                .sessionId(sessionKey.sessionId())
+                .sessionTitle(sessionKey.title())
+                .managerName(resolveManagerName(filteredLines))
+                .scheduledAt(sessionKey.scheduledAt())
+                .currency(resolveCurrency(filteredLines))
+                .status(payoutInfo.summaryStatus())
+                .payoutStatus(payoutInfo.payoutStatus())
+                .payoutId(payoutInfo.payoutId())
+                .payoutAmount(payoutInfo.payoutAmount())
+                .paidAt(payoutInfo.paidAt())
+                .payoutPeriodStart(payoutInfo.periodStart())
+                .payoutPeriodEnd(payoutInfo.periodEnd())
+                .periodStart(filterWindowResult.get().periodStart())
+                .periodEnd(filterWindowResult.get().periodEnd())
+                .transactionCount(filteredLines.size())
+                .totalAmount(totalAmount)
+                .rows(filteredLines.stream().map(this::toLineRow).toList())
+                .build());
     }
 
     @Transactional(readOnly = true)
@@ -379,6 +494,65 @@ public class PayoutService {
                 .toList();
     }
 
+    private List<PayoutSessionSummaryDto> buildMonthlySessionSummaries(
+            List<PaymentLine> lines,
+            String query) {
+
+        return lines.stream()
+                .collect(Collectors.groupingBy(
+                        line -> YearMonth.from(line.getCreatedAt().atZone(ZoneOffset.UTC).toLocalDate()),
+                        LinkedHashMap::new,
+                        Collectors.toList()))
+                .entrySet()
+                .stream()
+                .sorted(Map.Entry.<YearMonth, List<PaymentLine>>comparingByKey().reversed())
+                .flatMap(entry -> {
+                    LocalDate periodStart = entry.getKey().atDay(1);
+                    LocalDate periodEnd = entry.getKey().atEndOfMonth();
+
+                    return entry.getValue().stream()
+                            .collect(Collectors.groupingBy(this::toSessionGroupKey, LinkedHashMap::new, Collectors.toList()))
+                            .entrySet()
+                            .stream()
+                            .map(sessionEntry -> toSessionSummary(
+                                    sessionEntry.getKey(),
+                                    sessionEntry.getValue(),
+                                    periodStart,
+                                    periodEnd))
+                            .filter(summary -> matchesSessionQuery(summary, query))
+                            .sorted(Comparator
+                                    .comparing(PayoutSessionSummaryDto::getTotalAmount, Comparator.nullsLast(BigDecimal::compareTo))
+                                    .reversed()
+                                    .thenComparing(PayoutSessionSummaryDto::getSessionTitle,
+                                            Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)));
+                })
+                .toList();
+    }
+
+    private List<PayoutSessionSummaryDto> buildSessionSummaries(
+            List<PaymentLine> lines,
+            String query,
+            LocalDate periodStart,
+            LocalDate periodEnd) {
+
+        return lines.stream()
+                .collect(Collectors.groupingBy(this::toSessionGroupKey, LinkedHashMap::new, Collectors.toList()))
+                .entrySet()
+                .stream()
+                .map(entry -> toSessionSummary(
+                        entry.getKey(),
+                        entry.getValue(),
+                        periodStart,
+                        periodEnd))
+                .filter(summary -> matchesSessionQuery(summary, query))
+                .sorted(Comparator
+                        .comparing(PayoutSessionSummaryDto::getTotalAmount, Comparator.nullsLast(BigDecimal::compareTo))
+                        .reversed()
+                        .thenComparing(PayoutSessionSummaryDto::getSessionTitle,
+                                Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
+                .toList();
+    }
+
     private Specification<PaymentLine> buildPayoutLineSpecification(
             Instant from,
             Instant to,
@@ -528,6 +702,18 @@ public class PayoutService {
                 || String.valueOf(summary.getShopId()).contains(normalizedQuery);
     }
 
+    private boolean matchesSessionQuery(PayoutSessionSummaryDto summary, String query) {
+        if (query == null || query.isBlank()) {
+            return true;
+        }
+
+        String normalizedQuery = query.trim().toLowerCase(Locale.ROOT);
+        String sessionTitle = summary.getSessionTitle() != null ? summary.getSessionTitle() : "";
+
+        return sessionTitle.toLowerCase(Locale.ROOT).contains(normalizedQuery)
+                || (summary.getSessionId() != null && String.valueOf(summary.getSessionId()).contains(normalizedQuery));
+    }
+
     private PayoutSessionGroupDto toSessionGroup(SessionGroupKey key, List<PaymentLine> lines) {
         BigDecimal totalAmount = lines.stream()
                 .map(PaymentLine::getShopAmount)
@@ -545,6 +731,36 @@ public class PayoutService {
                 .transactionCount(lines.size())
                 .totalAmount(totalAmount)
                 .rows(rows)
+                .build();
+    }
+
+    private PayoutSessionSummaryDto toSessionSummary(
+            SessionGroupKey key,
+            List<PaymentLine> lines,
+            LocalDate periodStart,
+            LocalDate periodEnd) {
+        BigDecimal totalAmount = lines.stream()
+                .map(PaymentLine::getShopAmount)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        SummaryPayoutInfo payoutInfo = resolveSummaryPayoutInfo(lines);
+
+        return PayoutSessionSummaryDto.builder()
+                .sessionId(key.sessionId())
+                .sessionTitle(key.title())
+                .scheduledAt(key.scheduledAt())
+                .currency(resolveCurrency(lines))
+                .status(payoutInfo.summaryStatus())
+                .payoutStatus(payoutInfo.payoutStatus())
+                .payoutId(payoutInfo.payoutId())
+                .payoutAmount(payoutInfo.payoutAmount())
+                .paidAt(payoutInfo.paidAt())
+                .payoutPeriodStart(payoutInfo.periodStart())
+                .payoutPeriodEnd(payoutInfo.periodEnd())
+                .periodStart(periodStart)
+                .periodEnd(periodEnd)
+                .transactionCount(lines.size())
+                .totalAmount(totalAmount)
                 .build();
     }
 
@@ -649,6 +865,18 @@ public class PayoutService {
         }
 
         return "Sessionless entries";
+    }
+
+    private String resolveManagerName(List<PaymentLine> lines) {
+        return lines.stream()
+                .map(this::resolveSession)
+                .filter(Objects::nonNull)
+                .map(TourSession::getManager)
+                .filter(Objects::nonNull)
+                .map(manager -> manager.getName() != null ? manager.getName().trim() : null)
+                .filter(name -> name != null && !name.isEmpty())
+                .findFirst()
+                .orElse(null);
     }
 
     private String resolveTourTitle(PaymentLine line) {

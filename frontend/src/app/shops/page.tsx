@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ShopUserService } from "@/lib/shopUserService";
 import { ShopService } from "@/lib/shopService";
 import { ShopDto } from "@/types/shop";
@@ -30,45 +30,49 @@ export default function ShopsPage() {
     (state: RootState) => state.auth.initialized,
   );
 
+  const fetchShops = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      const shopStatuses = await ShopUserService.getShopsForCurrentUser();
+
+      const shopDetails = await Promise.all(
+        shopStatuses.map(async (membership) => {
+          const shop = await ShopService.getById(membership.shopId);
+          return { ...shop, userStatus: membership.status };
+        }),
+      );
+
+      shopDetails.sort((a, b) => {
+        if (a.userStatus === "ACTIVE" && b.userStatus !== "ACTIVE") return -1;
+        if (a.userStatus !== "ACTIVE" && b.userStatus === "ACTIVE") return 1;
+        return 0;
+      });
+
+      setShops(shopDetails);
+    } catch (err) {
+      console.error("Failed to load shops", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchShops = async () => {
-      try {
-        const shopStatuses = await ShopUserService.getShopsForCurrentUser();
+    if (!authInitialized) {
+      return;
+    }
 
-        const shopDetails = await Promise.all(
-          shopStatuses.map(async (s) => {
-            const shop = await ShopService.getById(s.shopId);
-            return { ...shop, userStatus: s.status };
-          }),
-        );
-
-        // ✅ Sort: Active first, Pending after
-        shopDetails.sort((a, b) => {
-          if (a.userStatus === "ACTIVE" && b.userStatus !== "ACTIVE") return -1;
-          if (a.userStatus !== "ACTIVE" && b.userStatus === "ACTIVE") return 1;
-          return 0;
-        });
-
-        setShops(shopDetails);
-      } catch (err) {
-        console.error("Failed to load shops", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (!authInitialized || sessionExpired) {
+    if (sessionExpired) {
       setLoading(false);
       return;
     }
-    fetchShops();
-  }, [authInitialized, sessionExpired]);
 
-  const handleRequestSent = () => {
-    toast.success("Request sent ✅");
+    fetchShops();
+  }, [authInitialized, sessionExpired, fetchShops]);
+
+  const handleActionComplete = async () => {
     setIsJoinModalOpen(false);
-    // Give user a moment to see toast before refreshing
-    setTimeout(() => window.location.reload(), 1000);
+    await fetchShops();
   };
 
   if (sessionExpired) {
@@ -111,6 +115,7 @@ export default function ShopsPage() {
                     });
                     return;
                   }
+
                   router.push(`/shops/manager?shopId=${shop.id}`);
                 }}
               >
@@ -130,7 +135,6 @@ export default function ShopsPage() {
             );
           })}
 
-          {/* "Join another shop" card */}
           <div
             onClick={() => setIsJoinModalOpen(true)}
             className="p-4 border-2 border-dashed rounded-lg flex flex-col justify-center items-center text-center text-gray-500 hover:text-primary hover:border-primary transition cursor-pointer bg-base-100"
@@ -140,11 +144,10 @@ export default function ShopsPage() {
           </div>
         </div>
 
-        {/* Join/Create Modal */}
         <JoinOrCreateShopModal
           isOpen={isJoinModalOpen}
           onClose={() => setIsJoinModalOpen(false)}
-          onActionComplete={handleRequestSent}
+          onActionComplete={handleActionComplete}
         />
       </div>
     </RequireAuth>

@@ -403,6 +403,8 @@ export default function SessionDetailsModal({
           onClose={() => setIsStatusModalOpen(false)}
           sessionId={session.id}
           currentStatus={session.status}
+          sessionDate={sessionData.date}
+          sessionTime={sessionData.time}
           onUpdated={(updated) => {
             setSessionData(updated); // local update
             onSessionUpdated(updated); // global update

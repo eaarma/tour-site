@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,6 +15,7 @@ import com.example.store_manager.dto.user.UserResponseDto;
 import com.example.store_manager.dto.user.UserUpdateDto;
 import com.example.store_manager.mapper.UserMapper;
 import com.example.store_manager.model.User;
+import com.example.store_manager.model.UserStatus;
 import com.example.store_manager.repository.UserRepository;
 import com.example.store_manager.utility.Result;
 
@@ -93,5 +96,18 @@ class UserServiceTest {
         assertTrue(result.isFail());
         assertEquals("NOT_FOUND", result.error().code());
         assertEquals("User not found", result.error().message());
+    }
+
+    @Test
+    void searchUsers_ignoresBlankQueryAndUsesStatusOnly() {
+        Page<User> page = new PageImpl<>(java.util.List.of());
+
+        when(userRepository.searchUsers(eq(false), eq("%"), eq(UserStatus.ACTIVE), any()))
+                .thenReturn(page);
+
+        Result<Page<UserResponseDto>> result = userService.searchUsers("   ", UserStatus.ACTIVE, 0, 5);
+
+        assertTrue(result.isOk());
+        verify(userRepository).searchUsers(eq(false), eq("%"), eq(UserStatus.ACTIVE), any());
     }
 }

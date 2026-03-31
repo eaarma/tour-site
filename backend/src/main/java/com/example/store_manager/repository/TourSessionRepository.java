@@ -21,6 +21,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.List;
 
+import com.example.store_manager.model.SessionStatus;
+
 public interface TourSessionRepository extends JpaRepository<TourSession, Long>, JpaSpecificationExecutor<TourSession> {
 
     @Override
@@ -35,6 +37,9 @@ public interface TourSessionRepository extends JpaRepository<TourSession, Long>,
 
     @EntityGraph(attributePaths = { "schedule", "orderItems", "manager" })
     List<TourSession> findByManagerId(UUID managerId);
+
+    @EntityGraph(attributePaths = { "schedule" })
+    List<TourSession> findByStatusIn(List<SessionStatus> statuses);
 
     @Query("""
                 SELECT COUNT(ts)

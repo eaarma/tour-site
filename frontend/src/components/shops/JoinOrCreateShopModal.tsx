@@ -11,7 +11,7 @@ import { ShopDto } from "@/types/shop";
 interface JoinOrCreateShopModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onActionComplete?: () => void; // optional refresh callback
+  onActionComplete?: () => void | Promise<void>;
 }
 
 export default function JoinOrCreateShopModal({
@@ -21,30 +21,32 @@ export default function JoinOrCreateShopModal({
 }: JoinOrCreateShopModalProps) {
   const [activeTab, setActiveTab] = useState<"join" | "create">("join");
 
-  // 🔍 Join shop state
   const [searchTerm, setSearchTerm] = useState("");
   const [searchBy, setSearchBy] = useState<"name" | "id">("name");
   const [results, setResults] = useState<ShopDto[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // 🏗 Create shop state
   const [newShopName, setNewShopName] = useState("");
   const [newShopDescription, setNewShopDescription] = useState("");
+  const [newShopBankAccountName, setNewShopBankAccountName] = useState("");
+  const [newShopBankAccountIban, setNewShopBankAccountIban] = useState("");
   const [creating, setCreating] = useState(false);
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) return;
+
     setLoading(true);
     try {
       const allShops = await ShopService.getAll();
       const filtered =
         searchBy === "name"
-          ? allShops.filter((s: ShopDto) =>
-              s.name.toLowerCase().includes(searchTerm.toLowerCase()),
+          ? allShops.filter((shop: ShopDto) =>
+              shop.name.toLowerCase().includes(searchTerm.toLowerCase()),
             )
           : allShops.filter(
-              (s: ShopDto) => s.id.toString() === searchTerm.trim(),
+              (shop: ShopDto) => shop.id.toString() === searchTerm.trim(),
             );
+
       setResults(filtered);
     } catch (err) {
       console.error("Search failed", err);
@@ -57,9 +59,9 @@ export default function JoinOrCreateShopModal({
   const handleSendJoinRequest = async (shopId: number) => {
     try {
       await ShopUserService.requestJoinShop(shopId);
-      toast.success("Join request sent successfully ✅");
+      toast.success("Join request sent successfully");
       onClose();
-      onActionComplete?.();
+      await onActionComplete?.();
     } catch (err) {
       console.error("Failed to send join request", err);
       toast.error("Failed to send join request");
@@ -71,15 +73,19 @@ export default function JoinOrCreateShopModal({
       toast.error("Shop name is required");
       return;
     }
+
     setCreating(true);
     try {
       const created = await ShopService.create({
         name: newShopName,
         description: newShopDescription || undefined,
+        bankAccountName: newShopBankAccountName.trim() || undefined,
+        bankAccountIban: newShopBankAccountIban.trim() || undefined,
       });
-      toast.success(`Shop "${created.name}" created successfully 🎉`);
+
+      toast.success(`Shop "${created.name}" created successfully`);
       onClose();
-      onActionComplete?.();
+      await onActionComplete?.();
     } catch (err) {
       console.error("Failed to create shop", err);
       toast.error("Failed to create shop");
@@ -90,12 +96,10 @@ export default function JoinOrCreateShopModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
-      {/* Header with close */}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold">Join or Create a Shop</h2>
       </div>
 
-      {/* Tabs */}
       <div className="tabs tabs-boxed mb-6">
         <button
           className={`tab ${activeTab === "join" ? "tab-active" : ""}`}
@@ -139,7 +143,6 @@ export default function JoinOrCreateShopModal({
             </button>
           </div>
 
-          {/* Results */}
           <div className="max-h-64 overflow-y-auto space-y-3 mt-2">
             {results.length === 0 ? (
               <p className="text-sm text-gray-500 italic">
@@ -180,6 +183,20 @@ export default function JoinOrCreateShopModal({
             className="textarea textarea-bordered"
             value={newShopDescription}
             onChange={(e) => setNewShopDescription(e.target.value)}
+          />
+          <input
+            type="text"
+            placeholder="Bank account name (optional)"
+            className="input input-bordered"
+            value={newShopBankAccountName}
+            onChange={(e) => setNewShopBankAccountName(e.target.value)}
+          />
+          <input
+            type="text"
+            placeholder="Bank account IBAN (optional)"
+            className="input input-bordered"
+            value={newShopBankAccountIban}
+            onChange={(e) => setNewShopBankAccountIban(e.target.value)}
           />
           <button
             className="btn btn-primary w-full flex items-center justify-center gap-2"

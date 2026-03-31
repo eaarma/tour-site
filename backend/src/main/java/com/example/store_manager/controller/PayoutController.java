@@ -58,4 +58,26 @@ public class PayoutController {
         return ResultResponseMapper.toResponse(
                 payoutService.getAdminShopDetails(shopId, status, year, month, from, to));
     }
+
+    @GetMapping("/shops/{shopId}/sessions")
+    public ResponseEntity<?> getManagerSessionSummaries(
+            @PathVariable("shopId") Long shopId,
+            @RequestParam(name = "query", required = false) String query,
+            @RequestParam(name = "status", required = false) String status,
+            @RequestParam(name = "year", required = false) Integer year,
+            @RequestParam(name = "month", required = false) Integer month) {
+        return ResultResponseMapper.toResponse(
+                payoutService.getManagerSessionSummaries(shopId, query, status, year, month));
+    }
+
+    @GetMapping("/shops/{shopId}/sessions/details")
+    public ResponseEntity<?> getManagerSessionDetails(
+            @PathVariable("shopId") Long shopId,
+            @RequestParam(name = "sessionId") Long sessionId,
+            @RequestParam(name = "status", required = false) String status,
+            @RequestParam(name = "from", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(name = "to", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+        return ResultResponseMapper.toResponse(
+                payoutService.getManagerSessionDetails(shopId, sessionId, status, from, to));
+    }
 }

@@ -7,6 +7,7 @@ import com.example.store_manager.model.TourSession;
 import com.example.store_manager.repository.TourRepository;
 import com.example.store_manager.repository.TourSessionRepository;
 import com.example.store_manager.repository.UserRepository;
+import com.example.store_manager.security.CurrentUserService;
 import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
 import com.example.store_manager.security.annotations.ShopIdSource;
@@ -23,6 +24,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Collections;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +41,7 @@ public class TourSessionService {
     private final TourSessionMapper mapper;
     private final UserRepository userRepository;
     private final TourRepository tourRepository;
+    private final CurrentUserService currentUserService;
 
     @Transactional(readOnly = true)
     public Result<Page<TourSessionDetailsDto>> searchSessionsForAdmin(
@@ -125,6 +129,12 @@ public class TourSessionService {
 
         if (session.getStatus() == SessionStatus.COMPLETED) {
             return Result.fail(ApiError.badRequest("Completed sessions cannot change status"));
+        }
+
+        if (newStatus == SessionStatus.COMPLETED
+                && isSessionInFuture(session)
+                && !currentUserService.hasRole("ADMIN")) {
+            return Result.fail(ApiError.badRequest("Session cannot be completed before it takes place"));
         }
 
         session.setStatus(newStatus);
@@ -243,5 +253,21 @@ public class TourSessionService {
 
             return criteriaBuilder.and(predicates.toArray(Predicate[]::new));
         };
+    }
+
+    private boolean isSessionInFuture(TourSession session) {
+        if (session.getSchedule() == null || session.getSchedule().getDate() == null) {
+            return false;
+        }
+
+        LocalTime scheduledTime = session.getSchedule().getTime() != null
+                ? session.getSchedule().getTime()
+                : LocalTime.MIDNIGHT;
+
+        LocalDateTime scheduledAt = LocalDateTime.of(
+                session.getSchedule().getDate(),
+                scheduledTime);
+
+        return scheduledAt.isAfter(LocalDateTime.now());
     }
 }

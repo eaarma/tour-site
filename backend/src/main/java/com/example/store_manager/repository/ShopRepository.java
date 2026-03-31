@@ -30,13 +30,14 @@ public interface ShopRepository extends JpaRepository<Shop, Long> {
                             SELECT s FROM Shop s
                             WHERE (:status IS NULL OR s.status = :status)
                             AND (
-                                :query IS NULL OR :query = '' OR
-                                LOWER(s.name) LIKE LOWER(CONCAT('%', :query, '%')) OR
-                                CAST(s.id AS string) LIKE CONCAT('%', :query, '%')
+                                :applyQuery = false OR
+                                LOWER(s.name) LIKE :queryPattern OR
+                                CAST(s.id AS string) LIKE :queryPattern
                             )
                         """)
         Page<Shop> searchShops(
-                        @Param("query") String query,
+                        @Param("applyQuery") boolean applyQuery,
+                        @Param("queryPattern") String queryPattern,
                         @Param("status") ShopStatus status,
                         Pageable pageable);
 }

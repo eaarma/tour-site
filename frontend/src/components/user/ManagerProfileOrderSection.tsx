@@ -211,7 +211,9 @@ export default function ManagerProfileSessionSection({
           <div className="flex flex-col gap-1">
             <label className="text-xs text-muted-foreground">Sort</label>
             <select
-              className="select select-sm select-bordered"
+              className="select  select-sm w-full sm:w-auto h-10
+                hover:border-border hover:outline-none hover:ring-2 hover:ring-ring/30 hover:ring-primary/20
+                focus:border-border focus:bg-background focus:outline-none focus:ring-2 focus:ring-ring/20 focus:ring-primary"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as "DATE" | "STATUS")}
             >
@@ -225,7 +227,7 @@ export default function ManagerProfileSessionSection({
             <label className="text-xs text-muted-foreground">Status</label>
 
             <button
-              className="btn btn-sm btn-outline justify-between"
+              className="btn btn-sm btn-outline w-full h-10 justify-between hover:border-primary hover:text-primary transition-colors"
               onClick={() => setStatusFilterOpen((v) => !v)}
             >
               {statusFilter.length === 0
@@ -265,7 +267,7 @@ export default function ManagerProfileSessionSection({
           {/* Clear */}
           <div className="flex items-end">
             <button
-              className="btn btn-sm btn-outline w-full"
+              className="btn btn-sm btn-outline w-full h-10 hover:border-primary hover:text-primary transition-colors"
               disabled={!hasDateFilter && statusFilter.length === 0}
               onClick={() => {
                 setFromDate(null);

@@ -19,7 +19,9 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.store_manager.dto.payout.PayoutCreateRequestDto;
+import com.example.store_manager.dto.payout.PayoutSessionDetailsDto;
 import com.example.store_manager.dto.payout.PayoutResponseDto;
+import com.example.store_manager.dto.payout.PayoutSessionSummaryDto;
 import com.example.store_manager.dto.payout.PayoutShopDetailsDto;
 import com.example.store_manager.dto.payout.PayoutShopSummaryDto;
 import com.example.store_manager.model.PayoutMethod;
@@ -140,5 +142,72 @@ class PayoutControllerTest {
                 .param("from", "2026-03-01")
                 .param("to", "2026-03-31"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void getManagerSessionSummaries_returnsOk() throws Exception {
+        PayoutSessionSummaryDto dto = PayoutSessionSummaryDto.builder()
+                .sessionId(10L)
+                .sessionTitle("Harbor Walk")
+                .currency("EUR")
+                .status(PayoutStatus.PENDING)
+                .periodStart(LocalDate.of(2026, 3, 1))
+                .periodEnd(LocalDate.of(2026, 3, 31))
+                .transactionCount(2)
+                .totalAmount(new java.math.BigDecimal("118.80"))
+                .build();
+
+        when(payoutService.getManagerSessionSummaries(
+                1L,
+                "harbor",
+                "PENDING",
+                2026,
+                3)).thenReturn(Result.ok(List.of(dto)));
+
+        mockMvc.perform(get("/payouts/shops/{shopId}/sessions", 1L)
+                .param("query", "harbor")
+                .param("status", "PENDING")
+                .param("year", "2026")
+                .param("month", "3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].sessionId").value(10))
+                .andExpect(jsonPath("$[0].sessionTitle").value("Harbor Walk"))
+                .andExpect(jsonPath("$[0].periodStart").value("2026-03-01"))
+                .andExpect(jsonPath("$[0].periodEnd").value("2026-03-31"))
+                .andExpect(jsonPath("$[0].totalAmount").value(118.80));
+    }
+
+    @Test
+    void getManagerSessionDetails_returnsOk() throws Exception {
+        PayoutSessionDetailsDto dto = PayoutSessionDetailsDto.builder()
+                .sessionId(10L)
+                .sessionTitle("Harbor Walk")
+                .managerName("Alice Manager")
+                .currency("EUR")
+                .periodStart(LocalDate.of(2026, 3, 1))
+                .periodEnd(LocalDate.of(2026, 3, 31))
+                .transactionCount(2)
+                .totalAmount(new java.math.BigDecimal("118.80"))
+                .build();
+
+        when(payoutService.getManagerSessionDetails(
+                1L,
+                10L,
+                "PENDING",
+                LocalDate.of(2026, 3, 1),
+                LocalDate.of(2026, 3, 31))).thenReturn(Result.ok(dto));
+
+        mockMvc.perform(get("/payouts/shops/{shopId}/sessions/details", 1L)
+                .param("sessionId", "10")
+                .param("status", "PENDING")
+                .param("from", "2026-03-01")
+                .param("to", "2026-03-31"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sessionId").value(10))
+                .andExpect(jsonPath("$.sessionTitle").value("Harbor Walk"))
+                .andExpect(jsonPath("$.managerName").value("Alice Manager"))
+                .andExpect(jsonPath("$.periodStart").value("2026-03-01"))
+                .andExpect(jsonPath("$.periodEnd").value("2026-03-31"))
+                .andExpect(jsonPath("$.totalAmount").value(118.80));
     }
 }

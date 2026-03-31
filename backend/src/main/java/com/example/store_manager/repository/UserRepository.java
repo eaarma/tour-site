@@ -38,13 +38,14 @@ public interface UserRepository extends JpaRepository<User, UUID> {
                 SELECT u FROM User u
                 WHERE (:status IS NULL OR u.status = :status)
                   AND (
-                    :query IS NULL OR
-                    LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%')) OR
-                    LOWER(u.name) LIKE LOWER(CONCAT('%', :query, '%'))
+                    :applyQuery = false OR
+                    LOWER(u.email) LIKE :queryPattern OR
+                    LOWER(u.name) LIKE :queryPattern
                   )
             """)
     Page<User> searchUsers(
-            @Param("query") String query,
+            @Param("applyQuery") boolean applyQuery,
+            @Param("queryPattern") String queryPattern,
             @Param("status") UserStatus status,
             Pageable pageable);
 }

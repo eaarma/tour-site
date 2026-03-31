@@ -11,6 +11,8 @@ interface Props {
   onClose: () => void;
   sessionId: number;
   currentStatus: SessionStatus;
+  sessionDate?: string;
+  sessionTime?: string;
   onUpdated?: (updated: TourSessionDto) => void;
 }
 
@@ -25,6 +27,8 @@ export default function SessionStatusModal({
   onClose,
   sessionId,
   currentStatus,
+  sessionDate,
+  sessionTime,
   onUpdated,
 }: Props) {
   const [selected, setSelected] = useState<SessionStatus>(currentStatus);
@@ -35,6 +39,18 @@ export default function SessionStatusModal({
   }, [isOpen, currentStatus]);
 
   const handleSave = async () => {
+    if (selected === "COMPLETED" && sessionDate && sessionTime) {
+      const scheduledAt = new Date(`${sessionDate}T${sessionTime}`);
+
+      if (
+        !Number.isNaN(scheduledAt.getTime()) &&
+        scheduledAt.getTime() > Date.now()
+      ) {
+        toast.error("Failed to COMPLETE, session in the future");
+        return;
+      }
+    }
+
     try {
       setSaving(true);
 

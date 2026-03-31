@@ -13,6 +13,7 @@ import {
   CalendarDays,
   ClipboardList,
   CreditCard,
+  HandCoins,
   Navigation,
   Package,
   Users,
@@ -20,6 +21,7 @@ import {
 
 import { TourSessionDto } from "@/types/tourSession";
 import ShopManagerPaymentSection from "@/components/manager/payment/ShopManagerPaymentSection";
+import ManagerPayoutSection from "@/components/manager/payout/ManagerPayoutSection";
 import ManagerSessionSection from "@/components/manager/session/ManagerSessionSection";
 import ManagerScheduleSection from "@/components/manager/schedule/ManagerScheduleSection";
 import ManagerOrderSection from "@/components/manager/order/ManagerOrderSection";
@@ -40,7 +42,13 @@ export default function ShopManagerPage() {
   const [tours, setTours] = useState<Tour[]>([]);
 
   const [activeTab, setActiveTab] = useState<
-    "sessions" | "tours" | "payments" | "orders" | "schedules" | "assignments"
+    | "sessions"
+    | "tours"
+    | "payments"
+    | "payouts"
+    | "orders"
+    | "schedules"
+    | "assignments"
   >("sessions");
 
   const [stats, setStats] = useState({
@@ -305,6 +313,31 @@ export default function ShopManagerPage() {
                 </span>
               </button>
 
+              {/* Payouts */}
+              <button
+                onClick={() => setActiveTab("payouts")}
+                className={`
+        flex items-center justify-center sm:justify-start
+        gap-2
+        py-2 px-2 sm:px-3
+        text-sm sm:text-[1.05rem]
+        font-semibold tracking-wide
+        transition-all
+        ${
+          activeTab === "payouts"
+            ? "text-primary border-b-2 border-primary"
+            : "text-gray-600 hover:text-primary/80"
+        }
+      `}
+              >
+                <HandCoins className="w-5 h-5" strokeWidth={2.25} />
+                <span
+                  className={`${activeTab === "payouts" ? "inline" : "hidden"} sm:inline`}
+                >
+                  Payouts
+                </span>
+              </button>
+
               {/* Performance */}
               <button
                 onClick={() => setActiveTab("assignments")}
@@ -355,6 +388,8 @@ export default function ShopManagerPage() {
         {activeTab === "payments" && (
           <ShopManagerPaymentSection shopId={shopId} />
         )}
+
+        {activeTab === "payouts" && <ManagerPayoutSection shopId={shopId} />}
 
         {activeTab === "assignments" && (
           <ManagerAssignmentSection shopId={shopId} />

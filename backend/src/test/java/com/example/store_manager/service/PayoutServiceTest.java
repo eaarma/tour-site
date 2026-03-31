@@ -24,7 +24,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.example.store_manager.dto.payout.PayoutCreateRequestDto;
+import com.example.store_manager.dto.payout.PayoutSessionDetailsDto;
 import com.example.store_manager.dto.payout.PayoutResponseDto;
+import com.example.store_manager.dto.payout.PayoutSessionSummaryDto;
 import com.example.store_manager.dto.payout.PayoutShopDetailsDto;
 import com.example.store_manager.dto.payout.PayoutShopSummaryDto;
 import com.example.store_manager.model.Order;
@@ -39,6 +41,7 @@ import com.example.store_manager.model.Shop;
 import com.example.store_manager.model.Tour;
 import com.example.store_manager.model.TourSchedule;
 import com.example.store_manager.model.TourSession;
+import com.example.store_manager.model.User;
 import com.example.store_manager.repository.PaymentLineRepository;
 import com.example.store_manager.repository.PayoutRepository;
 import com.example.store_manager.repository.ShopRepository;
@@ -167,6 +170,66 @@ class PayoutServiceTest {
         assertEquals(PayoutStatus.PENDING, result.get().get(0).getStatus());
         assertEquals(LocalDate.of(2026, 3, 1), result.get().get(1).getPeriodStart());
         assertEquals(LocalDate.of(2026, 3, 31), result.get().get(1).getPeriodEnd());
+    }
+
+    @Test
+    void getManagerSessionSummaries_groupsSameSessionSeparatelyPerMonth() {
+        PaymentLine marchLine = buildOrderLine(1L, 10L, PaymentLineType.SALE, new BigDecimal("100.00"));
+        PaymentLine aprilLine = buildOrderLine(1L, 10L, PaymentLineType.SALE, new BigDecimal("80.00"));
+        aprilLine.setId(3000L);
+        aprilLine.setCreatedAt(Instant.parse("2026-04-15T10:00:00Z"));
+
+        when(shopRepository.findById(1L))
+                .thenReturn(Optional.of(Shop.builder().id(1L).name("Old Town Adventures").build()));
+        when(paymentLineRepository.findAll(any(Specification.class), any(Sort.class)))
+                .thenReturn(List.of(aprilLine, marchLine));
+
+        Result<List<PayoutSessionSummaryDto>> result = payoutService.getManagerSessionSummaries(
+                1L,
+                "harbor",
+                "PENDING",
+                2026,
+                null);
+
+        assertTrue(result.isOk());
+        assertEquals(2, result.get().size());
+        assertEquals(LocalDate.of(2026, 4, 1), result.get().get(0).getPeriodStart());
+        assertEquals(LocalDate.of(2026, 4, 30), result.get().get(0).getPeriodEnd());
+        assertEquals(10L, result.get().get(0).getSessionId());
+        assertEquals(LocalDate.of(2026, 3, 1), result.get().get(1).getPeriodStart());
+        assertEquals(LocalDate.of(2026, 3, 31), result.get().get(1).getPeriodEnd());
+        assertEquals(10L, result.get().get(1).getSessionId());
+    }
+
+    @Test
+    void getManagerSessionDetails_returnsRowsForSelectedSessionAndPeriod() {
+        PaymentLine saleLine = buildOrderLine(1L, 10L, PaymentLineType.SALE, new BigDecimal("100.00"));
+        PaymentLine refundLine = buildOrderLine(1L, 10L, PaymentLineType.REFUND, new BigDecimal("-20.00"));
+
+        User manager = User.builder().name("Alice Manager").build();
+        saleLine.getOrderItem().getSession().setManager(manager);
+        refundLine.getOrderItem().getSession().setManager(manager);
+
+        when(shopRepository.findById(1L))
+                .thenReturn(Optional.of(Shop.builder().id(1L).name("Old Town Adventures").build()));
+        when(paymentLineRepository.findAll(any(Specification.class), any(Sort.class)))
+                .thenReturn(List.of(saleLine, refundLine));
+
+        Result<PayoutSessionDetailsDto> result = payoutService.getManagerSessionDetails(
+                1L,
+                10L,
+                "PENDING",
+                LocalDate.of(2026, 3, 1),
+                LocalDate.of(2026, 3, 31));
+
+        assertTrue(result.isOk());
+        assertEquals(10L, result.get().getSessionId());
+        assertEquals("Harbor Walk", result.get().getSessionTitle());
+        assertEquals("Alice Manager", result.get().getManagerName());
+        assertEquals(2, result.get().getTransactionCount());
+        assertEquals(new BigDecimal("80.00"), result.get().getTotalAmount());
+        assertEquals(2, result.get().getRows().size());
+        assertEquals("Order item income", result.get().getRows().get(0).getLabel());
     }
 
     @Test

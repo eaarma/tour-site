@@ -14,11 +14,19 @@ export default function RequireAuth({
   children,
   requiredRole,
 }: RequireAuthProps) {
-  const { user, isAuthenticated, role } = useAuth();
+  const { user, isAuthenticated, role, initialized } = useAuth();
   const router = useRouter();
 
   // Reuse guard hook for internal role consistency
   useRoleGuard(requiredRole);
+
+  if (!initialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6 text-center">
+        <p className="text-sm opacity-70">Loading...</p>
+      </div>
+    );
+  }
 
   // Not logged in
   if (!isAuthenticated || !user) {

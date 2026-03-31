@@ -51,6 +51,8 @@ public class ShopService {
                 Shop shop = Shop.builder()
                                 .name(dto.getName())
                                 .description(dto.getDescription())
+                                .bankAccountName(dto.getBankAccountName())
+                                .bankAccountIban(dto.getBankAccountIban())
                                 .status(ShopStatus.ACTIVE)
                                 .build();
 
@@ -126,7 +128,15 @@ public class ShopService {
                                 size,
                                 Sort.by("id").descending());
 
-                Page<Shop> result = shopRepository.searchShops(query, status, pageable);
+                String normalizedQuery = normalizeQuery(query);
+                boolean applyQuery = normalizedQuery != null;
+                String queryPattern = applyQuery ? "%" + normalizedQuery + "%" : "%";
+
+                Page<Shop> result = shopRepository.searchShops(
+                                applyQuery,
+                                queryPattern,
+                                status,
+                                pageable);
 
                 return Result.ok(result.map(shopMapper::toDto));
         }
@@ -145,5 +155,18 @@ public class ShopService {
                 shopRepository.save(shop);
 
                 return Result.ok();
+        }
+
+        private String normalizeQuery(String query) {
+                if (query == null) {
+                        return null;
+                }
+
+                String trimmedQuery = query.trim();
+                if (trimmedQuery.isEmpty()) {
+                        return null;
+                }
+
+                return trimmedQuery.toLowerCase();
         }
 }
