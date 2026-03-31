@@ -16,8 +16,8 @@ const WelcomeImage: React.FC<WelcomeImageProps> = ({ imageUrl, children }) => {
           src={imageUrl}
           className="
     w-full h-full object-cover shadow-md sm:rounded-xl
-    scale-120
-    object-[50%_80%] sm:object-[50%_62%]
+    scale-110
+    object-[50%_60%] sm:object-[50%_54%] sm:-translate-x-[1.5%]
   "
         />
       </div>

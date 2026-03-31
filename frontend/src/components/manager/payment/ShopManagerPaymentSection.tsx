@@ -41,9 +41,7 @@ export default function ShopManagerPaymentSection({ shopId }: Props) {
   const [selectedYear, setSelectedYear] = useState<number>(
     new Date().getFullYear(),
   );
-  const [selectedMonth, setSelectedMonth] = useState<number | null>(
-    new Date().getMonth(),
-  );
+  const [selectedMonth, setSelectedMonth] = useState<number | null>(null);
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
 
@@ -127,9 +125,23 @@ export default function ShopManagerPaymentSection({ shopId }: Props) {
   const totalPlatform = filtered.reduce((s, p) => s + p.platformFee, 0);
   const totalShop = filtered.reduce((s, p) => s + p.shopAmount, 0);
 
-  const availableYears = Array.from(
-    new Set(payments.map((p) => new Date(p.createdAt).getFullYear())),
-  ).sort((a, b) => b - a);
+  const availableYears = useMemo(() => {
+    const years = payments
+      .map((p) => new Date(p.createdAt))
+      .filter((date) => !Number.isNaN(date.getTime()))
+      .map((date) => date.getFullYear());
+
+    const uniqueYears = Array.from(new Set(years)).sort((a, b) => b - a);
+    return uniqueYears.length > 0
+      ? uniqueYears
+      : [new Date().getFullYear()];
+  }, [payments]);
+
+  useEffect(() => {
+    if (!availableYears.includes(selectedYear)) {
+      setSelectedYear(availableYears[0]);
+    }
+  }, [availableYears, selectedYear]);
 
   const handleMonthSelect = (month: number | null) => {
     setSelectedMonth(month);
@@ -231,7 +243,7 @@ export default function ShopManagerPaymentSection({ shopId }: Props) {
             <button
               className="btn btn-sm btn-outline w-full"
               onClick={() => {
-                setSelectedMonth(new Date().getMonth());
+                setSelectedMonth(null);
                 setFromDate(null);
                 setToDate(null);
               }}

@@ -24,6 +24,7 @@ import com.example.store_manager.mapper.PaymentLineMapper;
 import com.example.store_manager.mapper.PaymentMapper;
 import com.example.store_manager.model.Payment;
 import com.example.store_manager.model.PaymentLine;
+import com.example.store_manager.model.PaymentStatus;
 import com.example.store_manager.repository.PaymentLineRepository;
 import com.example.store_manager.repository.PaymentRepository;
 import com.example.store_manager.repository.TourScheduleRepository;
@@ -90,5 +91,21 @@ class PaymentServiceTest {
 
         assertTrue(result.isFail());
         assertEquals("BAD_REQUEST", result.error().code());
+    }
+
+    @Test
+    void getShopPaymentLines_returnsSucceededLinesEvenWhenAlreadyPaidOut() {
+        PaymentLine line = new PaymentLine();
+        PaymentLineResponseDto dto = new PaymentLineResponseDto();
+
+        when(paymentLineRepository.findSuccessfulByShopId(12L, PaymentStatus.SUCCEEDED))
+                .thenReturn(List.of(line));
+        when(paymentLineMapper.toDtoList(List.of(line))).thenReturn(List.of(dto));
+
+        Result<List<PaymentLineResponseDto>> result = paymentService.getShopPaymentLines(12L);
+
+        assertTrue(result.isOk());
+        assertEquals(1, result.get().size());
+        assertSame(dto, result.get().get(0));
     }
 }

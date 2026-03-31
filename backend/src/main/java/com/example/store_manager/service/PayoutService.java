@@ -745,24 +745,24 @@ public class PayoutService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         SummaryPayoutInfo payoutInfo = resolveSummaryPayoutInfo(lines);
 
-        return PayoutSessionSummaryDto.builder()
-                .sessionId(key.sessionId())
-                .sessionTitle(key.title())
-                .managerName(resolveManagerName(lines))
-                .scheduledAt(key.scheduledAt())
-                .currency(resolveCurrency(lines))
-                .status(payoutInfo.summaryStatus())
-                .payoutStatus(payoutInfo.payoutStatus())
-                .payoutId(payoutInfo.payoutId())
-                .payoutAmount(payoutInfo.payoutAmount())
-                .paidAt(payoutInfo.paidAt())
-                .payoutPeriodStart(payoutInfo.periodStart())
-                .payoutPeriodEnd(payoutInfo.periodEnd())
-                .periodStart(periodStart)
-                .periodEnd(periodEnd)
-                .transactionCount(lines.size())
-                .totalAmount(totalAmount)
-                .build();
+        PayoutSessionSummaryDto summary = new PayoutSessionSummaryDto();
+        summary.setSessionId(key.sessionId());
+        summary.setSessionTitle(key.title());
+        summary.setManagerName(resolveManagerName(lines));
+        summary.setScheduledAt(key.scheduledAt());
+        summary.setCurrency(resolveCurrency(lines));
+        summary.setStatus(payoutInfo.summaryStatus());
+        summary.setPayoutStatus(payoutInfo.payoutStatus());
+        summary.setPayoutId(payoutInfo.payoutId());
+        summary.setPayoutAmount(payoutInfo.payoutAmount());
+        summary.setPaidAt(payoutInfo.paidAt());
+        summary.setPayoutPeriodStart(payoutInfo.periodStart());
+        summary.setPayoutPeriodEnd(payoutInfo.periodEnd());
+        summary.setPeriodStart(periodStart);
+        summary.setPeriodEnd(periodEnd);
+        summary.setTransactionCount(lines.size());
+        summary.setTotalAmount(totalAmount);
+        return summary;
     }
 
     private boolean matchesPayoutWindow(Payout payout, LocalDate viewStart, LocalDate viewEnd) {

@@ -51,12 +51,28 @@ public interface PaymentLineRepository extends JpaRepository<PaymentLine, Long>,
           LEFT JOIN FETCH pl.payment p
           LEFT JOIN FETCH pl.orderItem oi
           LEFT JOIN FETCH oi.order o
+          LEFT JOIN FETCH pl.session s
           WHERE pl.shopId = :shopId
             AND pl.status = :status
             AND pl.payout IS NULL
           ORDER BY pl.createdAt DESC
       """)
   List<PaymentLine> findUnpaidByShopId(
+      @Param("shopId") Long shopId,
+      @Param("status") PaymentStatus status);
+
+  @Query("""
+          SELECT pl
+          FROM PaymentLine pl
+          LEFT JOIN FETCH pl.payment p
+          LEFT JOIN FETCH pl.orderItem oi
+          LEFT JOIN FETCH oi.order o
+          LEFT JOIN FETCH pl.session s
+          WHERE pl.shopId = :shopId
+            AND pl.status = :status
+          ORDER BY pl.createdAt DESC
+      """)
+  List<PaymentLine> findSuccessfulByShopId(
       @Param("shopId") Long shopId,
       @Param("status") PaymentStatus status);
 
