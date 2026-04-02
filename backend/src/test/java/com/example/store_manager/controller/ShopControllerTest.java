@@ -139,6 +139,24 @@ class ShopControllerTest {
         }
 
         @Test
+        void removeShop_returnsOk_whenSuccess() throws Exception {
+                when(shopService.removeShop(1L))
+                                .thenReturn(Result.ok());
+
+                mockMvc.perform(patch("/shops/{id}/remove", 1L))
+                                .andExpect(status().isOk());
+        }
+
+        @Test
+        void removeShop_returnsForbidden_whenServiceRejects() throws Exception {
+                when(shopService.removeShop(1L))
+                                .thenReturn(Result.fail(ApiError.forbidden("Only admins or shop owners can remove shops")));
+
+                mockMvc.perform(patch("/shops/{id}/remove", 1L))
+                                .andExpect(status().isForbidden());
+        }
+
+        @Test
         void getAllShops_returnsOk() throws Exception {
 
                 Page<ShopDto> page = new PageImpl<>(List.of(new ShopDto()));

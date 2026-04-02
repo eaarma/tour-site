@@ -20,6 +20,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +41,10 @@ import com.example.store_manager.model.TourSchedule;
 import com.example.store_manager.repository.PaymentLineRepository;
 import com.example.store_manager.repository.PaymentRepository;
 import com.example.store_manager.repository.TourScheduleRepository;
+import com.example.store_manager.security.CustomUserDetails;
+import com.example.store_manager.security.annotations.AccessLevel;
+import com.example.store_manager.security.annotations.ShopAccess;
+import com.example.store_manager.security.annotations.ShopIdSource;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
 
@@ -223,7 +229,7 @@ public class PaymentService {
     }
 
     @Transactional(readOnly = true)
-    public Result<PaymentResponseDto> getById(Long id) {
+    public Result<PaymentResponseDto> getById(Long id, Authentication auth) {
 
         Payment payment = paymentRepository.findById(id).orElse(null);
 
@@ -231,11 +237,17 @@ public class PaymentService {
             return Result.fail(ApiError.notFound("Payment not found"));
         }
 
+        try {
+            assertCanAccessPayment(payment, auth);
+        } catch (AccessDeniedException ex) {
+            return Result.fail(ApiError.forbidden(ex.getMessage()));
+        }
+
         return Result.ok(paymentMapper.toDto(payment));
     }
 
     @Transactional(readOnly = true)
-    public Result<PaymentResponseDto> getByOrderId(Long orderId) {
+    public Result<PaymentResponseDto> getByOrderId(Long orderId, Authentication auth) {
 
         Payment payment = paymentRepository.findByOrderId(orderId).orElse(null);
 
@@ -243,10 +255,33 @@ public class PaymentService {
             return Result.fail(ApiError.notFound("Payment not found"));
         }
 
+        try {
+            assertCanAccessPayment(payment, auth);
+        } catch (AccessDeniedException ex) {
+            return Result.fail(ApiError.forbidden(ex.getMessage()));
+        }
+
         return Result.ok(paymentMapper.toDto(payment));
     }
 
     @Transactional(readOnly = true)
+    public Result<PaymentResponseDto> getPublicByOrderId(Long orderId, String token) {
+
+        Payment payment = paymentRepository.findByOrderId(orderId).orElse(null);
+
+        if (payment == null) {
+            return Result.fail(ApiError.notFound("Payment not found"));
+        }
+
+        if (!hasValidReservationToken(payment.getOrder(), token)) {
+            return Result.fail(ApiError.notFound("Payment not found"));
+        }
+
+        return Result.ok(paymentMapper.toDto(payment));
+    }
+
+    @Transactional(readOnly = true)
+    @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.SHOP_ID)
     public Result<List<PaymentLineResponseDto>> getShopPaymentLines(Long shopId) {
 
         List<PaymentLine> lines = paymentLineRepository.findSuccessfulByShopId(shopId, PaymentStatus.SUCCEEDED);
@@ -281,6 +316,38 @@ public class PaymentService {
         }
 
         return query.trim();
+    }
+
+    private void assertCanAccessPayment(Payment payment, Authentication auth) {
+        if (payment.getOrder() == null) {
+            throw new AccessDeniedException("Not allowed to view this payment");
+        }
+
+        if (auth != null
+                && auth.isAuthenticated()
+                && auth.getPrincipal() instanceof CustomUserDetails user) {
+
+            boolean isAdmin = user.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+            if (isAdmin) {
+                return;
+            }
+
+            if (payment.getOrder().getUser() != null
+                    && payment.getOrder().getUser().getId().equals(user.getId())) {
+                return;
+            }
+        }
+
+        throw new AccessDeniedException("Not allowed to view this payment");
+    }
+
+    private boolean hasValidReservationToken(Order order, String token) {
+        return order != null
+                && token != null
+                && order.getReservationToken() != null
+                && token.equals(order.getReservationToken().toString());
     }
 
     private PaymentStatus normalizeStatus(String status) {

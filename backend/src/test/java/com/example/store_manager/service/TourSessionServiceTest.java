@@ -33,7 +33,6 @@ import com.example.store_manager.model.Tour;
 import com.example.store_manager.model.TourSchedule;
 import com.example.store_manager.model.TourSession;
 import com.example.store_manager.model.User;
-import com.example.store_manager.repository.TourRepository;
 import com.example.store_manager.repository.TourSessionRepository;
 import com.example.store_manager.repository.UserRepository;
 import com.example.store_manager.security.CurrentUserService;
@@ -50,9 +49,6 @@ class TourSessionServiceTest {
 
     @Mock
     private UserRepository userRepository;
-
-    @Mock
-    private TourRepository tourRepository;
 
     @Mock
     private CurrentUserService currentUserService;
@@ -251,6 +247,7 @@ class TourSessionServiceTest {
         TourSessionDetailsDto dto = new TourSessionDetailsDto();
 
         when(userRepository.existsById(managerId)).thenReturn(true);
+        when(currentUserService.getCurrentUserId()).thenReturn(managerId);
         when(repo.findByManagerId(managerId)).thenReturn(List.of(session));
         when(mapper.toDto(session)).thenReturn(dto);
 
@@ -258,6 +255,42 @@ class TourSessionServiceTest {
 
         assertTrue(result.isOk());
         assertEquals(1, result.get().size());
+    }
+
+    @Test
+    void getSessionsForManager_returnsSessions_whenAdminRequestsAnotherManager() {
+        UUID managerId = UUID.randomUUID();
+        UUID adminId = UUID.randomUUID();
+
+        TourSession session = new TourSession();
+        TourSessionDetailsDto dto = new TourSessionDetailsDto();
+
+        when(userRepository.existsById(managerId)).thenReturn(true);
+        when(currentUserService.getCurrentUserId()).thenReturn(adminId);
+        when(currentUserService.hasRole("ADMIN")).thenReturn(true);
+        when(repo.findByManagerId(managerId)).thenReturn(List.of(session));
+        when(mapper.toDto(session)).thenReturn(dto);
+
+        Result<List<TourSessionDetailsDto>> result = service.getSessionsForManager(managerId);
+
+        assertTrue(result.isOk());
+        assertEquals(1, result.get().size());
+    }
+
+    @Test
+    void getSessionsForManager_returnsForbidden_whenNonAdminRequestsAnotherManager() {
+        UUID managerId = UUID.randomUUID();
+        UUID otherUserId = UUID.randomUUID();
+
+        when(userRepository.existsById(managerId)).thenReturn(true);
+        when(currentUserService.getCurrentUserId()).thenReturn(otherUserId);
+        when(currentUserService.hasRole("ADMIN")).thenReturn(false);
+
+        Result<List<TourSessionDetailsDto>> result = service.getSessionsForManager(managerId);
+
+        assertTrue(result.isFail());
+        assertEquals("FORBIDDEN", result.error().code());
+        verify(repo, never()).findByManagerId(any());
     }
 
     @Test

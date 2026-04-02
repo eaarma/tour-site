@@ -14,6 +14,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -51,6 +53,86 @@ class SecurityIntegrationTest {
         @Test
         void postWithoutAuth_returns401() throws Exception {
                 mockMvc.perform(post("/orders"))
+                                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void getSessionWithoutAuth_returns401() throws Exception {
+                mockMvc.perform(get("/api/sessions/{id}", 1L))
+                                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void getSessionsByTourWithoutAuth_returns401() throws Exception {
+                mockMvc.perform(get("/api/sessions/tour/{tourId}", 1L))
+                                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void getSessionsByManagerWithoutAuth_returns401() throws Exception {
+                mockMvc.perform(get("/api/sessions/manager/{managerId}", UUID.randomUUID()))
+                                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void getOrderItemWithoutAuth_returns401() throws Exception {
+                mockMvc.perform(get("/orders/items/{id}", 1L))
+                                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void getPaymentByOrderWithoutAuth_returns401() throws Exception {
+                mockMvc.perform(get("/payments/order/{orderId}", 1L))
+                                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void getOrdersWithAuth_returns200() throws Exception {
+                UUID userId = UUID.randomUUID();
+
+                when(jwtService.validateAccessToken("good-token")).thenReturn(true);
+                when(jwtService.getUserId("good-token")).thenReturn(userId);
+                when(userDetailsService.loadUserById(userId))
+                                .thenReturn(TestUserFactory.userWithRole("USER"));
+
+                mockMvc.perform(get("/orders")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer good-token"))
+                                .andExpect(status().isOk());
+        }
+
+        @Test
+        void getShopPaymentsWithoutAuth_returns401() throws Exception {
+                mockMvc.perform(get("/payments/shop/{shopId}", 1L))
+                                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void getShopUsersWithoutAuth_returns401() throws Exception {
+                mockMvc.perform(get("/api/shop-users/shop/{shopId}", 1L))
+                                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void getActiveShopUsersWithoutAuth_returns401() throws Exception {
+                mockMvc.perform(get("/api/shop-users/shop/{shopId}/active", 1L))
+                                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void getPublicSessionStatsWithoutAuth_returns200() throws Exception {
+                mockMvc.perform(get("/api/sessions/shops/{shopId}/stats/tours-given", 1L))
+                                .andExpect(status().isOk());
+        }
+
+        @Test
+        void getPublicActiveShopUsersWithoutAuth_returns200() throws Exception {
+                mockMvc.perform(get("/api/shop-users/shop/{shopId}/active/public", 1L))
+                                .andExpect(status().isOk());
+        }
+
+        @Test
+        void removeShopWithoutAuth_returns401() throws Exception {
+                mockMvc.perform(patch("/shops/{shopId}/remove", 1L))
                                 .andExpect(status().isUnauthorized());
         }
 

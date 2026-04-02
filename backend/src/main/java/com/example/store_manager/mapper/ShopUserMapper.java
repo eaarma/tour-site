@@ -1,5 +1,6 @@
 package com.example.store_manager.mapper;
 
+import com.example.store_manager.dto.shop.PublicShopUserDto;
 import com.example.store_manager.dto.shop.ShopUserDto;
 import com.example.store_manager.dto.shop.ShopUserStatusDto;
 import com.example.store_manager.model.ShopUser;
@@ -22,6 +23,15 @@ public class ShopUserMapper {
                 .role(shopUser.getRole().name())
                 .status(shopUser.getStatus().name())
                 .joinedAt(shopUser.getCreatedAt().toString())
+                .build();
+    }
+
+    public PublicShopUserDto toPublicDto(ShopUser shopUser) {
+        User user = shopUser.getUser();
+
+        return PublicShopUserDto.builder()
+                .userName(user.getName())
+                .role(shopUser.getRole().name())
                 .build();
     }
 

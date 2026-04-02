@@ -29,7 +29,6 @@ public class TourSessionMapper {
 
                 return TourSessionDetailsDto.builder()
                                 .id(session.getId())
-                                // 📅 from schedule (single source of truth)
                                 .date(schedule.getDate())
                                 .time(schedule.getTime())
                                 .scheduleId(schedule.getId())
@@ -50,11 +49,10 @@ public class TourSessionMapper {
                                                 : null)
                                 .managerEmail(session.getManager() != null ? session.getManager().getEmail() : null)
                                 .managerRole(session.getManager() != null ? session.getManager().getRole() : null)
-                                .participants(
-                                                session.getOrderItems()
-                                                                .stream()
-                                                                .map(orderItemMapper::toDto)
-                                                                .toList())
+                                .participants(session.getOrderItems()
+                                                .stream()
+                                                .map(orderItemMapper::toDto)
+                                                .toList())
                                 .build();
         }
 

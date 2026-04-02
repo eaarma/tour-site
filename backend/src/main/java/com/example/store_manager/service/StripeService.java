@@ -3,6 +3,8 @@ package com.example.store_manager.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.stripe.model.PaymentIntent;
@@ -14,6 +16,7 @@ import com.example.store_manager.model.Order;
 import com.example.store_manager.model.OrderStatus;
 import com.example.store_manager.model.Payment;
 import com.example.store_manager.model.PaymentStatus;
+import com.example.store_manager.security.CustomUserDetails;
 import com.example.store_manager.utility.Result;
 import com.example.store_manager.utility.ApiError;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +33,7 @@ public class StripeService {
         private final PaymentRepository paymentRepository;
 
         @Transactional
-        public Result<String> createPaymentIntent(Long orderId) {
+        public Result<String> createPaymentIntent(Long orderId, Authentication auth, String token) {
 
                 Order order = orderRepository.findById(orderId)
                                 .orElse(null);
@@ -38,6 +41,12 @@ public class StripeService {
                 if (order == null) {
                         return Result.fail(
                                         ApiError.notFound("Order not found"));
+                }
+
+                try {
+                        assertCanAccessOrder(order, auth, token);
+                } catch (AccessDeniedException ex) {
+                        return Result.fail(ApiError.forbidden(ex.getMessage()));
                 }
 
                 Payment payment = paymentRepository
@@ -109,5 +118,31 @@ public class StripeService {
                                         ApiError.internal(
                                                         "Stripe payment creation failed"));
                 }
+        }
+
+        private void assertCanAccessOrder(Order order, Authentication auth, String token) {
+                if (auth != null
+                                && auth.isAuthenticated()
+                                && auth.getPrincipal() instanceof CustomUserDetails user) {
+
+                        boolean isAdmin = user.getAuthorities().stream()
+                                        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+                        if (isAdmin) {
+                                return;
+                        }
+
+                        if (order.getUser() != null && order.getUser().getId().equals(user.getId())) {
+                                return;
+                        }
+                }
+
+                if (token != null
+                                && order.getReservationToken() != null
+                                && token.equals(order.getReservationToken().toString())) {
+                        return;
+                }
+
+                throw new AccessDeniedException("Not allowed to create a payment intent for this order");
         }
 }

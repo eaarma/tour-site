@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { ShopDto } from "@/types/shop";
-import { ShopUserDto, Tour } from "@/types";
+import { PublicShopUserDto, Tour } from "@/types";
 import { ShopUserService } from "@/lib/shopUserService";
 import { ShopService } from "@/lib/shopService";
 import ShopHeaderSection from "@/components/publicShops/ShopHeaderSection";
@@ -17,7 +17,7 @@ export default function PublicShopPage() {
   const shopId = Number(params.id);
 
   const [shop, setShop] = useState<ShopDto | null>(null);
-  const [guides, setGuides] = useState<ShopUserDto[]>([]);
+  const [guides, setGuides] = useState<PublicShopUserDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [tours, setTours] = useState<Tour[]>([]);
   const [toursGiven, setToursGiven] = useState<number>(0);
@@ -29,7 +29,8 @@ export default function PublicShopPage() {
         const shopData = await ShopService.getById(shopId);
         setShop(shopData);
 
-        const activeUsers = await ShopUserService.getActiveUsersForShop(shopId);
+        const activeUsers =
+          await ShopUserService.getPublicActiveUsersForShop(shopId);
         setGuides(activeUsers);
 
         const shopTours = await TourService.getByShopId(shopId);

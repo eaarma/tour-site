@@ -103,7 +103,7 @@ export default function ShopsPage() {
             return (
               <div
                 key={shop.id}
-                className={`p-4 border rounded-lg shadow bg-base-100 transition ${
+                className={`p-4 border rounded-xl shadow bg-base-100 transition ${
                   isPending
                     ? "opacity-60 cursor-not-allowed hover:shadow"
                     : "cursor-pointer hover:shadow-lg"
@@ -137,7 +137,7 @@ export default function ShopsPage() {
 
           <div
             onClick={() => setIsJoinModalOpen(true)}
-            className="p-4 border-2 border-dashed rounded-lg flex flex-col justify-center items-center text-center text-gray-500 hover:text-primary hover:border-primary transition cursor-pointer bg-base-100"
+            className="p-4 border-2 border-dashed rounded-xl flex flex-col justify-center items-center text-center text-gray-500 hover:text-primary hover:border-primary transition cursor-pointer bg-base-100"
           >
             <PlusCircle className="w-10 h-10 mb-2" />
             <p className="font-medium">Add shop</p>

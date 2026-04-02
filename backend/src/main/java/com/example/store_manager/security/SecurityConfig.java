@@ -65,7 +65,7 @@ public class SecurityConfig {
                         // Stripe / Checkout
                         .requestMatchers("/checkout/stripe/**").permitAll()
                         .requestMatchers("/stripe/webhook").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/payments/order/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/public/payments/order/**").permitAll()
                         .requestMatchers("/public/orders/**").permitAll()
 
                         // Users
@@ -87,7 +87,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/orders/guest").permitAll()
                         .requestMatchers(HttpMethod.GET, "/orders/admin").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/orders/*/status").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/orders/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/orders/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/orders").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/orders/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/orders").hasAnyRole(ALL_AUTH)
                         .requestMatchers(HttpMethod.POST, "/orders/**").hasAnyRole(ALL_AUTH)
                         .requestMatchers(HttpMethod.PUT, "/orders/**").hasAnyRole(MANAGEMENT)
                         .requestMatchers(HttpMethod.PATCH, "/orders/**").hasAnyRole(MANAGEMENT)
@@ -103,6 +106,7 @@ public class SecurityConfig {
 
                         // Payments
                         .requestMatchers(HttpMethod.GET, "/payments/admin").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/payments/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/payouts/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/payouts/admin/**").hasRole("ADMIN")
 
@@ -110,10 +114,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/shops/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/shops/**").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/shops/**").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/shops/**").authenticated()
 
-                        .requestMatchers(HttpMethod.GET, "/api/shop-users/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/shop-users/shop/*/active/public").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/shop-users/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/shop-users/user/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/shop-users/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/shop-users/**").authenticated()
 
                         // Schedules
@@ -130,11 +135,11 @@ public class SecurityConfig {
 
                         // Sessions
                         .requestMatchers(HttpMethod.GET, "/api/sessions/admin").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/sessions/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/sessions/shops/*/stats/tours-given").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/sessions/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/sessions/**").hasAnyRole(STAFF)
                         .requestMatchers(HttpMethod.PATCH, "/api/sessions/**").hasAnyRole(STAFF)
                         .requestMatchers(HttpMethod.DELETE, "/api/sessions/**").hasAnyRole(STAFF)
-                        .requestMatchers(HttpMethod.GET, "/api/sessions/shops/*/stats/tours-given").permitAll()
 
                         // Actuator
                         .requestMatchers("/actuator/**").permitAll()

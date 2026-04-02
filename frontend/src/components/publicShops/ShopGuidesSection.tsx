@@ -1,12 +1,11 @@
 "use client";
 
-import { ShopUserDto } from "@/types";
-//import { User, Mail, Phone } from "lucide-react";
+import { PublicShopUserDto } from "@/types";
 import Badge from "@/components/common/Badge";
 import { FaUserCircle } from "react-icons/fa";
 
 interface Props {
-  guides: ShopUserDto[];
+  guides: PublicShopUserDto[];
 }
 
 function formatRole(role: string) {
@@ -27,12 +26,11 @@ export default function ShopGuidesSection({ guides }: Props) {
         </div>
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {guides.map((guide) => (
+          {guides.map((guide, index) => (
             <div
-              key={guide.userId}
+              key={`${guide.userName}-${guide.role}-${index}`}
               className="group relative flex flex-col gap-4 rounded-xl border border-base-300 bg-card p-5 shadow-sm hover:shadow-md transition-shadow duration-200"
             >
-              {/* Avatar */}
               <div className="flex items-center gap-4">
                 <div className="flex items-center justify-center size-12 rounded-full bg-muted shrink-0">
                   <FaUserCircle className="size-10 text-muted-foreground text-primary" />
@@ -40,7 +38,7 @@ export default function ShopGuidesSection({ guides }: Props) {
 
                 <div className="min-w-0">
                   <p className="font-semibold text-card-foreground truncate">
-                    {guide.userName}
+                    {guide.userName || "Team member"}
                   </p>
 
                   <Badge
@@ -51,23 +49,6 @@ export default function ShopGuidesSection({ guides }: Props) {
                   </Badge>
                 </div>
               </div>
-
-              {/* Contact (optional display – can remove later) */}
-              {/*  <div className="flex flex-col gap-2 text-sm text-muted-foreground ml-2">
-                {guide.userEmail && (
-                  <div className="flex items-center gap-2 truncate">
-                    <Mail className="size-3.5 shrink-0" />
-                    <span className="truncate">{guide.userEmail}</span>
-                  </div>
-                )}
-
-                {guide.phone && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="size-3.5 shrink-0" />
-                    <span>{guide.phone}</span>
-                  </div>
-                )}
-              </div> */}
             </div>
           ))}
         </div>

@@ -116,9 +116,11 @@ public class CheckoutController {
 
     @PostMapping("/{orderId}/pay")
     public ResponseEntity<?> createPayment(
-            @PathVariable Long orderId) {
+            @PathVariable Long orderId,
+            @RequestParam(value = "token", required = false) String token,
+            Authentication authentication) {
 
-        Result<String> result = stripeService.createPaymentIntent(orderId);
+        Result<String> result = stripeService.createPaymentIntent(orderId, authentication, token);
 
         if (result.isFail()) {
             ApiError error = result.error();

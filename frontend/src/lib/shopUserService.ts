@@ -1,4 +1,4 @@
-import { ShopUserDto, ShopUserStatusDto } from "@/types";
+import { PublicShopUserDto, ShopUserDto, ShopUserStatusDto } from "@/types";
 import api from "./api/axios";
 
 const BASE_URL = "/api/shop-users";
@@ -11,6 +11,13 @@ export const ShopUserService = {
 
   getActiveUsersForShop: async (shopId: number): Promise<ShopUserDto[]> => {
     const res = await api.get(`${BASE_URL}/shop/${shopId}/active`);
+    return res.data;
+  },
+
+  getPublicActiveUsersForShop: async (
+    shopId: number,
+  ): Promise<PublicShopUserDto[]> => {
+    const res = await api.get(`${BASE_URL}/shop/${shopId}/active/public`);
     return res.data;
   },
 

@@ -1,11 +1,11 @@
 package com.example.store_manager.controller;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,9 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 
-import com.example.store_manager.dto.payment.PaymentLineResponseDto;
 import com.example.store_manager.service.PaymentService;
-import com.example.store_manager.utility.Result;
 import com.example.store_manager.utility.ResultResponseMapper;
 
 @RestController
@@ -40,26 +38,25 @@ public class PaymentController {
         }
 
         @GetMapping("/{id}")
-        public ResponseEntity<?> getById(@PathVariable("id") Long id) {
+        public ResponseEntity<?> getById(
+                        @PathVariable("id") Long id,
+                        Authentication auth) {
                 return ResultResponseMapper.toResponse(
-                                paymentService.getById(id));
+                                paymentService.getById(id, auth));
         }
 
         @GetMapping("/order/{orderId}")
-        public ResponseEntity<?> getByOrderId(@PathVariable("orderId") Long orderId) {
+        public ResponseEntity<?> getByOrderId(
+                        @PathVariable("orderId") Long orderId,
+                        Authentication auth) {
                 return ResultResponseMapper.toResponse(
-                                paymentService.getByOrderId(orderId));
+                                paymentService.getByOrderId(orderId, auth));
         }
 
         @GetMapping("/shop/{shopId}")
         public ResponseEntity<?> getShopPaymentLines(@PathVariable("shopId") Long shopId) {
-                Result<List<PaymentLineResponseDto>> result = paymentService.getShopPaymentLines(shopId);
-
-                if (result.isFail()) {
-                        return ResponseEntity.badRequest().body(result.error());
-                }
-
-                return ResponseEntity.ok(result.get());
+                return ResultResponseMapper.toResponse(
+                                paymentService.getShopPaymentLines(shopId));
         }
 
 }

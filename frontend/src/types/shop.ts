@@ -35,6 +35,11 @@ export interface ShopUserDto {
   joinedAt: string; // ISO string
 }
 
+export interface PublicShopUserDto {
+  userName: string;
+  role: string;
+}
+
 // For user-shop membership status
 export interface ShopUserStatusDto {
   shopId: number;

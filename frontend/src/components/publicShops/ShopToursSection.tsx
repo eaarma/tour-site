@@ -20,7 +20,7 @@ export default function ShopToursSection({ tours }: Props) {
       ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {tours.map((tour) => (
-            <ItemCard key={tour.id} item={tour} href={`/tours/${tour.id}`} />
+            <ItemCard key={tour.id} item={tour} href={`/items/${tour.id}`} />
           ))}
         </div>
       )}

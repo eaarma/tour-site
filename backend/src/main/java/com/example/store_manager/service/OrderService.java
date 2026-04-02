@@ -7,9 +7,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.data.jpa.domain.Specification;
@@ -35,12 +37,14 @@ import com.example.store_manager.model.Order;
 import com.example.store_manager.model.OrderItem;
 import com.example.store_manager.model.OrderStatus;
 import com.example.store_manager.model.SessionStatus;
+import com.example.store_manager.model.ShopUserStatus;
 import com.example.store_manager.model.Tour;
 import com.example.store_manager.model.TourSchedule;
 import com.example.store_manager.model.TourSession;
 import com.example.store_manager.model.User;
 import com.example.store_manager.repository.OrderItemRepository;
 import com.example.store_manager.repository.OrderRepository;
+import com.example.store_manager.repository.ShopUserRepository;
 import com.example.store_manager.repository.TourRepository;
 import com.example.store_manager.repository.TourScheduleRepository;
 import com.example.store_manager.repository.TourSessionRepository;
@@ -67,6 +71,7 @@ public class OrderService {
         private final OrderMapper orderMapper;
         private final OrderItemMapper orderItemMapper;
         private final OrderItemRepository orderItemRepository;
+        private final ShopUserRepository shopUserRepository;
         private final TourScheduleRepository tourScheduleRepository;
         private final CurrentUserService currentUserService;
         private final TourSessionRepository tourSessionRepository;
@@ -165,15 +170,22 @@ public class OrderService {
                         }
 
                         // 🔒 Lock schedule
-                        TourSchedule schedule = tourScheduleRepository
-                                        .findByIdForUpdate(itemDto.getScheduleId())
-                                        .orElse(null);
+                TourSchedule schedule = tourScheduleRepository
+                                .findByIdForUpdate(itemDto.getScheduleId())
+                                .orElse(null);
 
-                        if (schedule == null) {
-                                return Result.fail(ApiError.notFound("Schedule not found"));
-                        }
+                if (schedule == null) {
+                        return Result.fail(ApiError.notFound("Schedule not found"));
+                }
 
-                        int available = schedule.getAvailableParticipants();
+                if (schedule.getTour() == null
+                                || schedule.getTour().getId() == null
+                                || !schedule.getTour().getId().equals(tour.getId())) {
+                        return Result.fail(ApiError.badRequest(
+                                        "Selected schedule does not belong to the requested tour"));
+                }
+
+                int available = schedule.getAvailableParticipants();
 
                         if (itemDto.getParticipants() > available) {
                                 return Result.fail(
@@ -357,17 +369,22 @@ public class OrderService {
                 if (auth != null && auth.isAuthenticated()
                                 && auth.getPrincipal() instanceof CustomUserDetails user) {
 
-                        boolean isManager = user.getAuthorities().stream()
-                                        .anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER")
-                                                        || a.getAuthority().equals("ROLE_ADMIN")
-                                                        || a.getAuthority().equals("ROLE_OWNER"));
+                        boolean isAdmin = user.getAuthorities().stream()
+                                        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-                        if (isManager) {
+                        if (isAdmin) {
                                 return Result.ok(orderMapper.toDto(order));
                         }
 
                         // ----------------------------
-                        // 2️⃣ Logged-in user access
+                        // 2️⃣ Staff access limited to shops on this order
+                        // ----------------------------
+                        if (hasGuideOrAboveAccessToAllOrderShops(order, user.getId())) {
+                                return Result.ok(orderMapper.toDto(order));
+                        }
+
+                        // ----------------------------
+                        // 3️⃣ Logged-in user access
                         // ----------------------------
                         if (order.getUser() != null &&
                                         order.getUser().getId().equals(user.getId())) {
@@ -377,7 +394,7 @@ public class OrderService {
                 }
 
                 // ----------------------------
-                // 3️⃣ Guest access via token
+                // 4️⃣ Guest access via token
                 // ----------------------------
                 if (token != null
                                 && order.getReservationToken() != null
@@ -389,18 +406,55 @@ public class OrderService {
                 return Result.fail(ApiError.forbidden("Not allowed to view this order"));
         }
 
+        private boolean hasGuideOrAboveAccessToAllOrderShops(Order order, UUID userId) {
+
+                if (userId == null || order.getOrderItems() == null || order.getOrderItems().isEmpty()) {
+                        return false;
+                }
+
+                Set<Long> shopIds = new HashSet<>();
+
+                for (OrderItem item : order.getOrderItems()) {
+                        Long shopId = item.getShopId();
+
+                        if (shopId == null && item.getTour() != null && item.getTour().getShop() != null) {
+                                shopId = item.getTour().getShop().getId();
+                        }
+
+                        if (shopId == null) {
+                                return false;
+                        }
+
+                        shopIds.add(shopId);
+                }
+
+                return shopIds.stream().allMatch(shopId -> shopUserRepository.findByShopIdAndUserId(shopId, userId)
+                                .filter(membership -> membership.getStatus() == ShopUserStatus.ACTIVE)
+                                .filter(membership -> membership.getRole().getLevel() >= AccessLevel.GUIDE.getLevel())
+                                .isPresent());
+        }
+
         @Transactional(readOnly = true)
         public Result<OrderItemResponseDto> getOrderItemById(Long itemId) {
 
-                return orderItemRepository.findById(itemId)
-                                .map(orderItemMapper::toDto)
-                                .map(Result::ok)
-                                .orElseGet(() -> Result.fail(ApiError.notFound("OrderItem not found")));
+                OrderItem item = orderItemRepository.findByIdWithOrderAndUser(itemId)
+                                .orElse(null);
+
+                if (item == null) {
+                        return Result.fail(ApiError.notFound("OrderItem not found"));
+                }
+
+                try {
+                        assertCanAccessOrderItem(item);
+                } catch (AccessDeniedException ex) {
+                        return Result.fail(ApiError.forbidden(ex.getMessage()));
+                }
+
+                return Result.ok(orderItemMapper.toDto(item));
         }
 
         /* List all orders for a specific user. */
         @Transactional(readOnly = true)
-        @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.DTO_TOUR_ID)
         public Result<List<OrderResponseDto>> getOrdersByUser(UUID userId) {
 
                 if (userId == null) {
@@ -625,6 +679,41 @@ public class OrderService {
                 if (!isAdmin && !currentUserId.equals(userId)) {
                         throw new AccessDeniedException("You are not allowed to access these items");
                 }
+        }
+
+        private void assertCanAccessOrderItem(OrderItem item) {
+                UUID currentUserId = currentUserService.getCurrentUserId();
+
+                if (currentUserId == null) {
+                        throw new AccessDeniedException("Unauthorized");
+                }
+
+                if (currentUserService.hasRole("ADMIN")) {
+                        return;
+                }
+
+                if (item.getOrder() != null
+                                && item.getOrder().getUser() != null
+                                && currentUserId.equals(item.getOrder().getUser().getId())) {
+                        return;
+                }
+
+                Long shopId = item.getShopId();
+                if (shopId == null && item.getTour() != null && item.getTour().getShop() != null) {
+                        shopId = item.getTour().getShop().getId();
+                }
+
+                if (shopId != null) {
+                        var membership = shopUserRepository.findByShopIdAndUserId(shopId, currentUserId).orElse(null);
+
+                        if (membership != null
+                                        && membership.getStatus() == ShopUserStatus.ACTIVE
+                                        && membership.getRole().getLevel() >= AccessLevel.GUIDE.getLevel()) {
+                                return;
+                        }
+                }
+
+                throw new AccessDeniedException("You are not allowed to access this order item");
         }
 
         public Result<OrderItem> getOrderItemEntity(Long id) {

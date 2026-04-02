@@ -19,6 +19,21 @@ import { OrderService } from "@/lib/orderService";
 import { OrderResponseDto } from "@/types";
 import { ReservationService } from "@/lib/reservationService";
 
+type TourSnapshot = {
+  price?: number;
+  type?: string;
+};
+
+function parseTourSnapshot(snapshot?: string): TourSnapshot | null {
+  if (!snapshot) return null;
+
+  try {
+    return JSON.parse(snapshot) as TourSnapshot;
+  } catch {
+    return null;
+  }
+}
+
 export default function PaymentPage() {
   const params = useParams();
   const orderId = Number(params.orderId);
@@ -58,25 +73,36 @@ export default function PaymentPage() {
 
       return sum + itemTotal;
     }, 0);
-  }, [order, cartItems]);
+  }, [order?.totalPrice, cartItems]);
 
   const summaryItems = useMemo(() => {
-    // Prefer backend order items if available; else fall back to cart items
-    /*  if (order?.items?.length) {
-      return order.items.map((it: OrderItemResponseDto) => ({
-        id: it.id ?? it.tourId ?? "item",
-        title: it.tourTitle ?? "Tour",
-        date: it.scheduledAt ? String(it.scheduledAt).split("T")[0] : "",
-        time: it.scheduledAt
-          ? String(it.scheduledAt).split("T")[1]?.slice(0, 5)
-          : "",
-        quantity: it.participants ?? 1,
-        price: Number(it.pricePaid ?? 0),
-      }));
-    } */
+    if (order?.items?.length) {
+      return order.items.map((item) => {
+        const snapshot = parseTourSnapshot(item.tourSnapshot);
+        const billingType = snapshot?.type?.toUpperCase() ?? "PUBLIC";
+        const lineTotal = Number(item.pricePaid ?? 0);
+        const quantity = item.participants ?? 1;
+        const unitPrice =
+          billingType === "PUBLIC" && quantity > 0
+            ? lineTotal / quantity
+            : lineTotal;
+
+        return {
+          id: String(item.id ?? item.tourId ?? "item"),
+          title: item.tourTitle ?? "Tour",
+          date: item.scheduledAt ? String(item.scheduledAt).split("T")[0] : "",
+          time: item.scheduledAt
+            ? String(item.scheduledAt).split("T")[1]?.slice(0, 5) ?? ""
+            : "",
+          quantity,
+          price: Number.isFinite(unitPrice) ? unitPrice : 0,
+          type: billingType,
+        };
+      });
+    }
 
     return cartItems.map((item) => ({
-      id: item.cartItemId,
+      id: String(item.cartItemId),
       title: item.title,
       date: item.selectedDate,
       time: item.selectedTime,
@@ -84,7 +110,22 @@ export default function PaymentPage() {
       price: item.price,
       type: item.type,
     }));
-  }, [order, cartItems]);
+  }, [order?.items, cartItems]);
+
+  const summaryContact = useMemo(() => {
+    const firstOrderItem = order?.items?.[0];
+
+    if (firstOrderItem) {
+      return {
+        name: firstOrderItem.name ?? "",
+        email: firstOrderItem.email ?? "",
+        phone: firstOrderItem.phone ?? "",
+        nationality: firstOrderItem.nationality ?? "",
+      };
+    }
+
+    return checkoutInfo;
+  }, [order?.items, checkoutInfo]);
 
   useEffect(() => {
     if (!reservationToken) {
@@ -92,7 +133,7 @@ export default function PaymentPage() {
       router.replace("/cart");
       return;
     }
-  }, []);
+  }, [reservationToken, router]);
   // -------- Load order on mount / refresh --------
 
   useEffect(() => {
@@ -107,8 +148,6 @@ export default function PaymentPage() {
     const load = async () => {
       try {
         const data = await OrderService.getOrderById(orderId, reservationToken);
-
-        console.log("Order status:", data.status);
 
         if (cancelled) return;
 
@@ -149,7 +188,7 @@ export default function PaymentPage() {
     return () => {
       cancelled = true;
     };
-  }, [orderId, router]);
+  }, [orderId, reservationToken, router]);
 
   // -------- Countdown timer --------
 
@@ -209,7 +248,10 @@ export default function PaymentPage() {
       }
 
       // 🔹 Now Payment exists
-      const secret = await StripeService.createIntent(effectiveOrderId);
+      const secret = await StripeService.createIntent(
+        effectiveOrderId,
+        reservationToken,
+      );
       setClientSecret(secret);
     } catch {
       toast.error("Failed to start payment");
@@ -259,7 +301,10 @@ export default function PaymentPage() {
 
     for (let i = 0; i < maxAttempts; i++) {
       try {
-        const payment = await StripeService.getPaymentStatus(orderId);
+        const payment = await StripeService.getPaymentStatus(
+          orderId,
+          reservationToken,
+        );
 
         if (payment.status === "SUCCEEDED") return "SUCCEEDED";
         if (payment.status === "FAILED") return "FAILED";
@@ -280,7 +325,7 @@ export default function PaymentPage() {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-6">
         {/* Left Column */}
         <div className="flex-1 space-y-6">
-          <PaymentSummarySection items={summaryItems} contact={checkoutInfo} />
+          <PaymentSummarySection items={summaryItems} contact={summaryContact} />
           <PaymentMethodSection selected={"stripe"} onSelect={() => {}} />
         </div>
 

@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint src eslint.config.mjs next.config.ts tailwind.config.mjs --max-warnings=0"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

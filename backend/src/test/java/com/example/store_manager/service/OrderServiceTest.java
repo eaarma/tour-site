@@ -54,12 +54,16 @@ import com.example.store_manager.model.OrderItem;
 import com.example.store_manager.model.OrderStatus;
 import com.example.store_manager.model.SessionStatus;
 import com.example.store_manager.model.Shop;
+import com.example.store_manager.model.ShopUser;
+import com.example.store_manager.model.ShopUserRole;
+import com.example.store_manager.model.ShopUserStatus;
 import com.example.store_manager.model.Tour;
 import com.example.store_manager.model.TourSchedule;
 import com.example.store_manager.model.TourSession;
 import com.example.store_manager.model.User;
 import com.example.store_manager.repository.OrderItemRepository;
 import com.example.store_manager.repository.OrderRepository;
+import com.example.store_manager.repository.ShopUserRepository;
 import com.example.store_manager.repository.TourRepository;
 import com.example.store_manager.repository.TourScheduleRepository;
 import com.example.store_manager.repository.TourSessionRepository;
@@ -89,6 +93,9 @@ public class OrderServiceTest {
 
     @Mock
     private OrderItemRepository orderItemRepository;
+
+    @Mock
+    private ShopUserRepository shopUserRepository;
 
     @Mock
     private TourScheduleRepository tourScheduleRepository;
@@ -202,12 +209,45 @@ public class OrderServiceTest {
 
     // getOrderById
     @Test
-    void getOrderById_returnsOk_whenManagerAccess() {
+    void getOrderById_returnsOk_whenAdminAccess() {
 
         Order order = new Order();
         OrderResponseDto dto = new OrderResponseDto();
 
+        CustomUserDetails admin = mock(CustomUserDetails.class);
+
+        Collection<GrantedAuthority> authorities = Collections
+                .singletonList(new SimpleGrantedAuthority("ROLE_ADMIN"));
+
+        doReturn(authorities).when(admin).getAuthorities();
+
+        Authentication auth = mock(Authentication.class);
+        when(auth.isAuthenticated()).thenReturn(true);
+        when(auth.getPrincipal()).thenReturn(admin);
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(orderMapper.toDto(order)).thenReturn(dto);
+
+        Result<OrderResponseDto> result = service.getOrderById(1L, auth, null);
+
+        assertTrue(result.isOk());
+        assertSame(dto, result.get());
+    }
+
+    @Test
+    void getOrderById_returnsOk_whenManagerHasAccessToAllOrderShops() {
+
+        UUID managerId = UUID.randomUUID();
+
+        Order order = new Order();
+        order.setOrderItems(List.of(
+                createOrderItem(order, 1L),
+                createOrderItem(order, 2L)));
+
+        OrderResponseDto dto = new OrderResponseDto();
+
         CustomUserDetails manager = mock(CustomUserDetails.class);
+        when(manager.getId()).thenReturn(managerId);
 
         Collection<GrantedAuthority> authorities = Collections
                 .singletonList(new SimpleGrantedAuthority("ROLE_MANAGER"));
@@ -218,7 +258,19 @@ public class OrderServiceTest {
         when(auth.isAuthenticated()).thenReturn(true);
         when(auth.getPrincipal()).thenReturn(manager);
 
+        ShopUser firstMembership = ShopUser.builder()
+                .role(ShopUserRole.MANAGER)
+                .status(ShopUserStatus.ACTIVE)
+                .build();
+
+        ShopUser secondMembership = ShopUser.builder()
+                .role(ShopUserRole.GUIDE)
+                .status(ShopUserStatus.ACTIVE)
+                .build();
+
         when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(shopUserRepository.findByShopIdAndUserId(1L, managerId)).thenReturn(Optional.of(firstMembership));
+        when(shopUserRepository.findByShopIdAndUserId(2L, managerId)).thenReturn(Optional.of(secondMembership));
         when(orderMapper.toDto(order)).thenReturn(dto);
 
         Result<OrderResponseDto> result = service.getOrderById(1L, auth, null);
@@ -304,15 +356,61 @@ public class OrderServiceTest {
         assertEquals("FORBIDDEN", result.error().code());
     }
 
+    @Test
+    void getOrderById_returnsFail_whenManagerLacksAccessToOneOrderShop() {
+
+        UUID managerId = UUID.randomUUID();
+
+        Order order = new Order();
+        order.setOrderItems(List.of(
+                createOrderItem(order, 1L),
+                createOrderItem(order, 2L)));
+
+        CustomUserDetails manager = mock(CustomUserDetails.class);
+        when(manager.getId()).thenReturn(managerId);
+
+        Collection<GrantedAuthority> authorities = Collections
+                .singletonList(new SimpleGrantedAuthority("ROLE_MANAGER"));
+
+        doReturn(authorities).when(manager).getAuthorities();
+
+        Authentication auth = mock(Authentication.class);
+        when(auth.isAuthenticated()).thenReturn(true);
+        when(auth.getPrincipal()).thenReturn(manager);
+
+        ShopUser membership = ShopUser.builder()
+                .role(ShopUserRole.MANAGER)
+                .status(ShopUserStatus.ACTIVE)
+                .build();
+
+        when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(shopUserRepository.findByShopIdAndUserId(1L, managerId)).thenReturn(Optional.of(membership));
+        when(shopUserRepository.findByShopIdAndUserId(2L, managerId)).thenReturn(Optional.empty());
+
+        Result<OrderResponseDto> result = service.getOrderById(1L, auth, null);
+
+        assertTrue(result.isFail());
+        assertEquals("FORBIDDEN", result.error().code());
+    }
+
     // getOrderItemById
     @Test
-    void getOrderItemById_returnsOk_whenItemExists() {
-        OrderItem item = new OrderItem();
-        item.setId(1L);
+    void getOrderItemById_returnsOk_whenUserOwnsItem() {
+        UUID userId = UUID.randomUUID();
+
+        User user = new User();
+        user.setId(userId);
+
+        Order order = new Order();
+        order.setUser(user);
+
+        OrderItem item = createOrderItem(order, 1L);
 
         OrderItemResponseDto dto = new OrderItemResponseDto();
 
-        when(orderItemRepository.findById(1L)).thenReturn(Optional.of(item));
+        when(orderItemRepository.findByIdWithOrderAndUser(1L)).thenReturn(Optional.of(item));
+        when(currentUserService.getCurrentUserId()).thenReturn(userId);
+        when(currentUserService.hasRole("ADMIN")).thenReturn(false);
         when(orderItemMapper.toDto(item)).thenReturn(dto);
 
         Result<OrderItemResponseDto> result = service.getOrderItemById(1L);
@@ -322,8 +420,49 @@ public class OrderServiceTest {
     }
 
     @Test
+    void getOrderItemById_returnsOk_whenActiveGuideBelongsToShop() {
+        UUID userId = UUID.randomUUID();
+
+        OrderItem item = createOrderItem(new Order(), 1L);
+        OrderItemResponseDto dto = new OrderItemResponseDto();
+
+        ShopUser membership = ShopUser.builder()
+                .role(ShopUserRole.GUIDE)
+                .status(ShopUserStatus.ACTIVE)
+                .build();
+
+        when(orderItemRepository.findByIdWithOrderAndUser(1L)).thenReturn(Optional.of(item));
+        when(currentUserService.getCurrentUserId()).thenReturn(userId);
+        when(currentUserService.hasRole("ADMIN")).thenReturn(false);
+        when(shopUserRepository.findByShopIdAndUserId(1L, userId)).thenReturn(Optional.of(membership));
+        when(orderItemMapper.toDto(item)).thenReturn(dto);
+
+        Result<OrderItemResponseDto> result = service.getOrderItemById(1L);
+
+        assertTrue(result.isOk());
+        assertSame(dto, result.get());
+    }
+
+    @Test
+    void getOrderItemById_returnsFail_whenUserHasNoAccess() {
+        UUID userId = UUID.randomUUID();
+        OrderItem item = createOrderItem(new Order(), 1L);
+
+        when(orderItemRepository.findByIdWithOrderAndUser(1L)).thenReturn(Optional.of(item));
+        when(currentUserService.getCurrentUserId()).thenReturn(userId);
+        when(currentUserService.hasRole("ADMIN")).thenReturn(false);
+        when(shopUserRepository.findByShopIdAndUserId(1L, userId)).thenReturn(Optional.empty());
+
+        Result<OrderItemResponseDto> result = service.getOrderItemById(1L);
+
+        assertTrue(result.isFail());
+        assertEquals("FORBIDDEN", result.error().code());
+        verify(orderItemMapper, never()).toDto(any());
+    }
+
+    @Test
     void getOrderItemById_returnsFail_whenItemNotFound() {
-        when(orderItemRepository.findById(99L)).thenReturn(Optional.empty());
+        when(orderItemRepository.findByIdWithOrderAndUser(99L)).thenReturn(Optional.empty());
 
         Result<OrderItemResponseDto> result = service.getOrderItemById(99L);
 
@@ -924,6 +1063,47 @@ public class OrderServiceTest {
     }
 
     @Test
+    void createOrder_returnsFail_whenScheduleDoesNotBelongToTour() {
+
+        OrderCreateRequestDto dto = validCreateOrderDto();
+
+        Tour requestedTour = new Tour();
+        requestedTour.setId(1L);
+        requestedTour.setType("PUBLIC");
+        requestedTour.setPrice(BigDecimal.TEN);
+
+        Shop requestedShop = new Shop();
+        requestedShop.setId(1L);
+        requestedTour.setShop(requestedShop);
+
+        Tour differentTour = new Tour();
+        differentTour.setId(2L);
+
+        TourSchedule schedule = new TourSchedule();
+        schedule.setId(1L);
+        schedule.setTour(differentTour);
+        schedule.setBookedParticipants(1);
+        schedule.setReservedParticipants(2);
+        schedule.setMaxParticipants(10);
+
+        when(tourRepository.findById(1L))
+                .thenReturn(Optional.of(requestedTour));
+
+        when(tourScheduleRepository.findByIdForUpdate(1L))
+                .thenReturn(Optional.of(schedule));
+
+        Result<OrderResponseDto> result = service.createOrder(dto, null);
+
+        assertTrue(result.isFail());
+        assertEquals("BAD_REQUEST", result.error().code());
+        assertEquals("Selected schedule does not belong to the requested tour", result.error().message());
+        assertEquals(1, schedule.getBookedParticipants());
+        assertEquals(2, schedule.getReservedParticipants());
+
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
     void createOrder_returnsFail_whenUserNotFound() {
         UUID userId = UUID.randomUUID();
 
@@ -952,6 +1132,26 @@ public class OrderServiceTest {
         dto.setItems(List.of(item));
 
         return dto;
+    }
+
+    private OrderItem createOrderItem(Order order, Long shopId) {
+        Shop shop = new Shop();
+        shop.setId(shopId);
+
+        Tour tour = new Tour();
+        tour.setId(10L);
+        tour.setLocation("Tallinn");
+        tour.setMeetingPoint("Old Town");
+        tour.setImages(List.of());
+        tour.setShop(shop);
+
+        OrderItem item = new OrderItem();
+        item.setId(1L);
+        item.setOrder(order);
+        item.setTour(tour);
+        item.setShopId(shopId);
+
+        return item;
     }
 
 }

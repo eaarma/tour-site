@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.example.store_manager.dto.shop.ShopMembershipStatusDto;
+import com.example.store_manager.dto.shop.PublicShopUserDto;
 import com.example.store_manager.dto.shop.ShopUserDto;
 import com.example.store_manager.dto.shop.ShopUserStatusDto;
 import com.example.store_manager.mapper.ShopUserMapper;
@@ -71,6 +72,22 @@ class ShopUserServiceTest {
 
         assertTrue(result.isOk());
         assertEquals(1, result.get().size());
+    }
+
+    @Test
+    void getPublicActiveMembersForShop_returnsOkResult() {
+        ShopUser shopUser = new ShopUser();
+        PublicShopUserDto dto = new PublicShopUserDto();
+
+        when(shopUserRepository.findByShopIdAndStatus(1L, ShopUserStatus.ACTIVE))
+                .thenReturn(List.of(shopUser));
+        when(shopUserMapper.toPublicDto(shopUser)).thenReturn(dto);
+
+        Result<List<PublicShopUserDto>> result = service.getPublicActiveMembersForShop(1L);
+
+        assertTrue(result.isOk());
+        assertEquals(1, result.get().size());
+        assertSame(dto, result.get().get(0));
     }
 
     @Test

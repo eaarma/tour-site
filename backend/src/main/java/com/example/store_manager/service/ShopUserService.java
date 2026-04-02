@@ -1,17 +1,13 @@
 package com.example.store_manager.service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import com.example.store_manager.dto.shop.ShopMembershipStatusDto;
+import com.example.store_manager.dto.shop.PublicShopUserDto;
 import com.example.store_manager.dto.shop.ShopUserDto;
 import com.example.store_manager.dto.shop.ShopUserStatusDto;
 import com.example.store_manager.mapper.ShopUserMapper;
@@ -28,7 +24,6 @@ import com.example.store_manager.security.annotations.ShopAccess;
 import com.example.store_manager.security.annotations.ShopIdSource;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
-import com.example.store_manager.security.annotations.ShopIdSource;
 
 import lombok.RequiredArgsConstructor;
 
@@ -42,6 +37,7 @@ public class ShopUserService {
         private final ShopUserMapper shopUserMapper;
 
         @Transactional(readOnly = true)
+        @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.SHOP_ID)
         public Result<List<ShopUserDto>> getUsersByShopId(Long shopId) {
                 List<ShopUserDto> users = shopUserRepository.findByShopId(shopId)
                                 .stream()
@@ -52,10 +48,21 @@ public class ShopUserService {
         }
 
         @Transactional(readOnly = true)
+        @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.SHOP_ID)
         public Result<List<ShopUserDto>> getActiveMembersForShop(Long shopId) {
                 List<ShopUserDto> users = shopUserRepository.findByShopIdAndStatus(shopId, ShopUserStatus.ACTIVE)
                                 .stream()
                                 .map(shopUserMapper::toDto)
+                                .toList();
+
+                return Result.ok(users);
+        }
+
+        @Transactional(readOnly = true)
+        public Result<List<PublicShopUserDto>> getPublicActiveMembersForShop(Long shopId) {
+                List<PublicShopUserDto> users = shopUserRepository.findByShopIdAndStatus(shopId, ShopUserStatus.ACTIVE)
+                                .stream()
+                                .map(shopUserMapper::toPublicDto)
                                 .toList();
 
                 return Result.ok(users);

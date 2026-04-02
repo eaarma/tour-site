@@ -18,12 +18,14 @@ import com.example.store_manager.dto.shop.ShopDto;
 import com.example.store_manager.mapper.ShopMapper;
 import com.example.store_manager.model.Shop;
 import com.example.store_manager.model.ShopStatus;
+import com.example.store_manager.model.ShopUser;
 import com.example.store_manager.model.ShopUserRole;
 import com.example.store_manager.model.ShopUserStatus;
 import com.example.store_manager.model.User;
 import com.example.store_manager.repository.ShopRepository;
 import com.example.store_manager.repository.ShopUserRepository;
 import com.example.store_manager.repository.UserRepository;
+import com.example.store_manager.security.CurrentUserService;
 import com.example.store_manager.utility.Result;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,13 +38,13 @@ class ShopServiceTest {
     private ShopMapper shopMapper;
 
     @Mock
-    private ShopUserService shopUserService;
-
-    @Mock
     private ShopUserRepository shopUserRepository;
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private CurrentUserService currentUserService;
 
     @InjectMocks
     private ShopService shopService;
@@ -189,5 +191,96 @@ class ShopServiceTest {
 
         assertTrue(result.isOk());
         verify(shopRepository).searchShops(eq(false), eq("%"), eq(ShopStatus.ACTIVE), any());
+    }
+
+    @Test
+    void removeShop_returnsOk_whenAdminRemovesShop() {
+        UUID adminId = UUID.randomUUID();
+        Shop shop = Shop.builder().id(1L).status(ShopStatus.ACTIVE).build();
+
+        when(shopRepository.findById(1L)).thenReturn(Optional.of(shop));
+        when(currentUserService.getCurrentUserId()).thenReturn(adminId);
+        when(currentUserService.hasRole("ADMIN")).thenReturn(true);
+
+        Result<Void> result = shopService.removeShop(1L);
+
+        assertTrue(result.isOk());
+        assertEquals(ShopStatus.REMOVED, shop.getStatus());
+        verify(shopRepository).save(shop);
+        verify(shopUserRepository, never()).findByShopIdAndUserId(anyLong(), any());
+    }
+
+    @Test
+    void removeShop_returnsOk_whenActiveOwnerRemovesShop() {
+        UUID ownerId = UUID.randomUUID();
+        Shop shop = Shop.builder().id(1L).status(ShopStatus.ACTIVE).build();
+        ShopUser membership = ShopUser.builder()
+                .role(ShopUserRole.OWNER)
+                .status(ShopUserStatus.ACTIVE)
+                .build();
+
+        when(shopRepository.findById(1L)).thenReturn(Optional.of(shop));
+        when(currentUserService.getCurrentUserId()).thenReturn(ownerId);
+        when(currentUserService.hasRole("ADMIN")).thenReturn(false);
+        when(shopUserRepository.findByShopIdAndUserId(1L, ownerId)).thenReturn(Optional.of(membership));
+
+        Result<Void> result = shopService.removeShop(1L);
+
+        assertTrue(result.isOk());
+        assertEquals(ShopStatus.REMOVED, shop.getStatus());
+        verify(shopRepository).save(shop);
+    }
+
+    @Test
+    void removeShop_returnsForbidden_whenUserIsNotOwnerOrAdmin() {
+        UUID managerId = UUID.randomUUID();
+        Shop shop = Shop.builder().id(1L).status(ShopStatus.ACTIVE).build();
+        ShopUser membership = ShopUser.builder()
+                .role(ShopUserRole.MANAGER)
+                .status(ShopUserStatus.ACTIVE)
+                .build();
+
+        when(shopRepository.findById(1L)).thenReturn(Optional.of(shop));
+        when(currentUserService.getCurrentUserId()).thenReturn(managerId);
+        when(currentUserService.hasRole("ADMIN")).thenReturn(false);
+        when(shopUserRepository.findByShopIdAndUserId(1L, managerId)).thenReturn(Optional.of(membership));
+
+        Result<Void> result = shopService.removeShop(1L);
+
+        assertTrue(result.isFail());
+        assertEquals("FORBIDDEN", result.error().code());
+        verify(shopRepository, never()).save(any());
+    }
+
+    @Test
+    void removeShop_returnsForbidden_whenOwnerMembershipIsInactive() {
+        UUID ownerId = UUID.randomUUID();
+        Shop shop = Shop.builder().id(1L).status(ShopStatus.ACTIVE).build();
+        ShopUser membership = ShopUser.builder()
+                .role(ShopUserRole.OWNER)
+                .status(ShopUserStatus.PENDING)
+                .build();
+
+        when(shopRepository.findById(1L)).thenReturn(Optional.of(shop));
+        when(currentUserService.getCurrentUserId()).thenReturn(ownerId);
+        when(currentUserService.hasRole("ADMIN")).thenReturn(false);
+        when(shopUserRepository.findByShopIdAndUserId(1L, ownerId)).thenReturn(Optional.of(membership));
+
+        Result<Void> result = shopService.removeShop(1L);
+
+        assertTrue(result.isFail());
+        assertEquals("FORBIDDEN", result.error().code());
+        verify(shopRepository, never()).save(any());
+    }
+
+    @Test
+    void removeShop_returnsFail_whenShopNotFound() {
+        when(shopRepository.findById(99L)).thenReturn(Optional.empty());
+
+        Result<Void> result = shopService.removeShop(99L);
+
+        assertTrue(result.isFail());
+        assertEquals("NOT_FOUND", result.error().code());
+        verify(shopRepository, never()).save(any());
     }
 }

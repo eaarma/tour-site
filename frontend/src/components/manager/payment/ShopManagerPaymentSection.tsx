@@ -34,6 +34,7 @@ const MONTHS = [
 export default function ShopManagerPaymentSection({ shopId }: Props) {
   const [payments, setPayments] = useState<PaymentLineResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [accessError, setAccessError] = useState<string | null>(null);
 
   const [selectedOrder, setSelectedOrder] =
     useState<OrderDetailsModalDto | null>(null);
@@ -57,10 +58,19 @@ export default function ShopManagerPaymentSection({ shopId }: Props) {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const data = await PaymentLineService.getByShopId(shopId);
-      setPayments(data);
-      setLoading(false);
+      setAccessError(null);
+
+      try {
+        const data = await PaymentLineService.getByShopId(shopId);
+        setPayments(data);
+      } catch {
+        setPayments([]);
+        setAccessError("You do not have access to this shop's payment data.");
+      } finally {
+        setLoading(false);
+      }
     };
+
     load();
   }, [shopId]);
 
@@ -150,6 +160,15 @@ export default function ShopManagerPaymentSection({ shopId }: Props) {
   };
 
   if (loading) return <div className="p-6">Loading payments...</div>;
+
+  if (accessError) {
+    return (
+      <div className="rounded-xl border border-base-300 bg-base-100 p-6 shadow-sm">
+        <h2 className="text-xl font-semibold">Payments</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{accessError}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

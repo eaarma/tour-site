@@ -1,10 +1,12 @@
 package com.example.store_manager.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import lombok.RequiredArgsConstructor;
 import com.example.store_manager.service.StripeService;
 import com.example.store_manager.utility.ResultResponseMapper;
@@ -18,9 +20,11 @@ public class StripeController {
 
     @PostMapping("/intent/{orderId}")
     public ResponseEntity<?> createIntent(
-            @PathVariable("orderId") Long orderId) {
+            @PathVariable("orderId") Long orderId,
+            @RequestParam(value = "token", required = false) String token,
+            Authentication auth) {
 
         return ResultResponseMapper.toResponse(
-                stripeService.createPaymentIntent(orderId));
+                stripeService.createPaymentIntent(orderId, auth, token));
     }
 }

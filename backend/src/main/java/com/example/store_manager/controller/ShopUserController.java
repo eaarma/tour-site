@@ -34,6 +34,12 @@ public class ShopUserController {
                                 shopUserService.getActiveMembersForShop(shopId));
         }
 
+        @GetMapping("/shop/{shopId}/active/public")
+        public ResponseEntity<?> getPublicActiveMembers(@PathVariable("shopId") Long shopId) {
+                return ResultResponseMapper.toResponse(
+                                shopUserService.getPublicActiveMembersForShop(shopId));
+        }
+
         @GetMapping("/user/me")
         public ResponseEntity<?> getShopsForCurrentUser() {
                 UUID currentUserId = currentUserService.getCurrentUserId();

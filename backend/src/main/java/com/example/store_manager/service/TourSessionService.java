@@ -4,7 +4,6 @@ import com.example.store_manager.dto.tourSession.TourSessionDetailsDto;
 import com.example.store_manager.mapper.TourSessionMapper;
 import com.example.store_manager.model.SessionStatus;
 import com.example.store_manager.model.TourSession;
-import com.example.store_manager.repository.TourRepository;
 import com.example.store_manager.repository.TourSessionRepository;
 import com.example.store_manager.repository.UserRepository;
 import com.example.store_manager.security.CurrentUserService;
@@ -20,13 +19,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Collections;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -40,7 +39,6 @@ public class TourSessionService {
     private final TourSessionRepository tourSessionRepository;
     private final TourSessionMapper mapper;
     private final UserRepository userRepository;
-    private final TourRepository tourRepository;
     private final CurrentUserService currentUserService;
 
     @Transactional(readOnly = true)
@@ -73,6 +71,7 @@ public class TourSessionService {
     }
 
     @Transactional(readOnly = true)
+    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.TOUR_ID)
     public Result<List<TourSessionDetailsDto>> getSessions(Long tourId) {
         return Result.ok(
                 tourSessionRepository.findBySchedule_Tour_Id(tourId)
@@ -82,6 +81,7 @@ public class TourSessionService {
     }
 
     @Transactional(readOnly = true)
+    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.SESSION_ID)
     public Result<TourSessionDetailsDto> getSession(Long sessionId) {
         return tourSessionRepository.findById(sessionId)
                 .map(mapper::toDto)
@@ -157,8 +157,18 @@ public class TourSessionService {
     @Transactional(readOnly = true)
     public Result<List<TourSessionDetailsDto>> getSessionsForManager(UUID managerId) {
 
+        if (managerId == null) {
+            return Result.fail(ApiError.badRequest("Manager ID is required"));
+        }
+
         if (!userRepository.existsById(managerId)) {
             return Result.fail(ApiError.notFound("Manager not found"));
+        }
+
+        try {
+            assertSelfOrAdmin(managerId);
+        } catch (AccessDeniedException ex) {
+            return Result.fail(ApiError.forbidden(ex.getMessage()));
         }
 
         return Result.ok(
@@ -173,6 +183,8 @@ public class TourSessionService {
         return tourSessionRepository.countCompletedSessionsByShop(shopId);
     }
 
+    @Transactional(readOnly = true)
+    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.SHOP_ID)
     public List<TourSessionDetailsDto> getByShopId(Long shopId) {
 
         List<TourSession> sessions = tourSessionRepository.findByShopIdWithParticipants(shopId);
@@ -180,6 +192,20 @@ public class TourSessionService {
         return sessions.stream()
                 .map(mapper::toDto)
                 .toList();
+    }
+
+    private void assertSelfOrAdmin(UUID managerId) {
+        UUID currentUserId = currentUserService.getCurrentUserId();
+
+        if (currentUserId == null) {
+            throw new AccessDeniedException("Unauthorized");
+        }
+
+        boolean isAdmin = currentUserService.hasRole("ADMIN");
+
+        if (!isAdmin && !currentUserId.equals(managerId)) {
+            throw new AccessDeniedException("You are not allowed to access these sessions");
+        }
     }
 
     private String normalizeQuery(String query) {

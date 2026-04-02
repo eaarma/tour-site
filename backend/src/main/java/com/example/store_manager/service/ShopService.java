@@ -1,16 +1,13 @@
 package com.example.store_manager.service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,11 +23,12 @@ import com.example.store_manager.model.User;
 import com.example.store_manager.repository.ShopRepository;
 import com.example.store_manager.repository.ShopUserRepository;
 import com.example.store_manager.repository.UserRepository;
+import com.example.store_manager.security.CurrentUserService;
 import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
+import com.example.store_manager.security.annotations.ShopIdSource;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
-import com.example.store_manager.security.annotations.ShopIdSource;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,9 +38,9 @@ public class ShopService {
 
         private final ShopRepository shopRepository;
         private final ShopMapper shopMapper;
-        private final ShopUserService shopUserService;
         private final ShopUserRepository shopUserRepository;
         private final UserRepository userRepository;
+        private final CurrentUserService currentUserService;
 
         @Transactional
         public Result<ShopDto> createShop(ShopCreateRequestDto dto, UUID currentUserId) {
@@ -151,10 +149,35 @@ public class ShopService {
                         return Result.fail(ApiError.notFound("Shop not found"));
                 }
 
+                try {
+                        assertCanRemoveShop(shopId);
+                } catch (AccessDeniedException ex) {
+                        return Result.fail(ApiError.forbidden(ex.getMessage()));
+                }
+
                 shop.setStatus(ShopStatus.REMOVED);
                 shopRepository.save(shop);
 
                 return Result.ok();
+        }
+
+        private void assertCanRemoveShop(Long shopId) {
+                UUID currentUserId = currentUserService.getCurrentUserId();
+
+                if (currentUserId == null) {
+                        throw new AccessDeniedException("Unauthorized");
+                }
+
+                if (currentUserService.hasRole("ADMIN")) {
+                        return;
+                }
+
+                ShopUser membership = shopUserRepository.findByShopIdAndUserId(shopId, currentUserId)
+                                .orElseThrow(() -> new AccessDeniedException("Only admins or shop owners can remove shops"));
+
+                if (membership.getStatus() != ShopUserStatus.ACTIVE || membership.getRole() != ShopUserRole.OWNER) {
+                        throw new AccessDeniedException("Only admins or shop owners can remove shops");
+                }
         }
 
         private String normalizeQuery(String query) {

@@ -75,6 +75,15 @@ class ShopUserControllerTest {
         }
 
         @Test
+        void getPublicActiveMembers_returnsOk() throws Exception {
+                when(shopUserService.getPublicActiveMembersForShop(1L))
+                                .thenReturn(Result.ok(List.of()));
+
+                mockMvc.perform(get("/api/shop-users/shop/{shopId}/active/public", 1L))
+                                .andExpect(status().isOk());
+        }
+
+        @Test
         void getShopsForCurrentUser_returnsOk() throws Exception {
                 UUID userId = UUID.randomUUID();
 
