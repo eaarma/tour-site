@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { UserService } from "@/lib/userService";
 import { Role, UserResponseDto } from "@/types/user";
 import toast from "react-hot-toast";
@@ -15,6 +15,7 @@ export default function AdminUsers() {
   const [status, setStatus] = useState<"ACTIVE" | "REMOVED">("ACTIVE");
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const hasLoadedOnce = useRef(false);
 
   const [selectedUser, setSelectedUser] = useState<UserResponseDto | null>(
     null,
@@ -27,40 +28,43 @@ export default function AdminUsers() {
     setEditedRole(user.role);
   };
 
-  const fetchUsers = async (initial = false) => {
-    try {
-      if (initial) setLoading(true);
-      else setRefreshing(true);
-
-      const data = await UserService.getAll({
-        query,
-        status,
-        page,
-        size: 10,
-      });
-
-      setUsers(data.content);
-      setTotalPages(data.totalPages);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load users");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
   useEffect(() => {
-    fetchUsers(true);
-  }, []);
+    let isActive = true;
+    const isInitialLoad = !hasLoadedOnce.current;
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      fetchUsers(false);
-    }, 300);
+    const timeout = setTimeout(async () => {
+      try {
+        if (isInitialLoad) setLoading(true);
+        else setRefreshing(true);
 
-    return () => clearTimeout(timeout);
-  }, [query, status, page]);
+        const data = await UserService.getAll({
+          query,
+          status,
+          page,
+          size: 10,
+        });
+
+        if (!isActive) return;
+
+        setUsers(data.content);
+        setTotalPages(data.totalPages);
+      } catch (err) {
+        if (!isActive) return;
+        console.error(err);
+        toast.error("Failed to load users");
+      } finally {
+        if (!isActive) return;
+        hasLoadedOnce.current = true;
+        setLoading(false);
+        setRefreshing(false);
+      }
+    }, isInitialLoad ? 0 : 300);
+
+    return () => {
+      isActive = false;
+      clearTimeout(timeout);
+    };
+  }, [page, query, status]);
 
   const handleSaveRole = async () => {
     if (!selectedUser) return;

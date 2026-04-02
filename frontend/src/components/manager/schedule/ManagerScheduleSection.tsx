@@ -2,7 +2,7 @@
 
 import { TourScheduleService } from "@/lib/tourScheduleService";
 import { TourScheduleResponseDto } from "@/types/tourSchedule";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import ScheduleDateView from "./ScheduleDateView";
 import ScheduleTourView from "./ScheduleTourView";
@@ -42,7 +42,7 @@ export default function ManagerScheduleSection({
     updateLocalSession,
   } = useSessionManager(shopId);
 
-  const loadSchedules = async () => {
+  const loadSchedules = useCallback(async () => {
     if (!shopId) return;
 
     try {
@@ -55,11 +55,11 @@ export default function ManagerScheduleSection({
     } finally {
       setLoading(false);
     }
-  };
+  }, [shopId]);
 
   useEffect(() => {
-    loadSchedules();
-  }, [shopId]);
+    void loadSchedules();
+  }, [loadSchedules]);
 
   //Default “From” date = today (first navigation)
   useEffect(() => {

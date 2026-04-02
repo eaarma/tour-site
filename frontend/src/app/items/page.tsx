@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import SearchBar from "@/components/common/SearchBar";
 import FilterMenu from "@/components/items/FilterMenu";
@@ -21,7 +21,6 @@ export default function ItemsPage() {
   const [loading, setLoading] = useState(true);
   const [pageData, setPageData] = useState<PageResponse<Tour> | null>(null);
   const [suggestedTours, setSuggestedTours] = useState<Tour[]>([]);
-  const currentPage = Number(params.get("page") || 0);
   // read query params
   const keyword = params.get("keyword") || "";
   const date = params.get("date") || "";
@@ -38,16 +37,24 @@ export default function ItemsPage() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      const currentParams = new URLSearchParams(searchKey);
+      const currentPage = Number(currentParams.get("page") || 0);
+      const currentSort = currentParams.get("sort") || "title,asc";
+      const currentKeyword = currentParams.get("keyword") || "";
+      const currentDate = currentParams.get("date") || "";
+      const categories = currentParams.getAll("category");
+      const languages = currentParams.getAll("language");
+      const types = currentParams.getAll("type");
 
       const query = {
         page: currentPage,
         size: PAGE_SIZE,
-        sort,
-        keyword: keyword || undefined,
-        date: date || undefined,
-        categories: selectedCategories.length ? selectedCategories : undefined,
-        language: selectedLanguages.length ? selectedLanguages : undefined,
-        type: selectedTypes.length ? selectedTypes : undefined,
+        sort: currentSort,
+        keyword: currentKeyword || undefined,
+        date: currentDate || undefined,
+        categories: categories.length ? categories : undefined,
+        language: languages.length ? languages : undefined,
+        type: types.length ? types : undefined,
       };
 
       try {
@@ -66,11 +73,11 @@ export default function ItemsPage() {
     };
 
     load();
-  }, [sort, searchKey]);
+  }, [searchKey]);
 
-  const handleSearch = (kw: string, dt: string) => {
+  const handleSearch = useCallback((kw: string, dt: string) => {
     if (kw === keyword && dt === date) return;
-    const search = new URLSearchParams(params);
+    const search = new URLSearchParams(searchKey);
 
     if (kw) {
       search.set("keyword", kw);
@@ -86,7 +93,7 @@ export default function ItemsPage() {
 
     search.set("page", "0");
     router.replace(`/items?${search.toString()}`);
-  };
+  }, [date, keyword, router, searchKey]);
 
   const handleFilterChange = (selection: Record<string, string[]>) => {
     const search = new URLSearchParams();

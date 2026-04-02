@@ -56,7 +56,7 @@ export default function SessionOwnershipModal({
     };
 
     fetchMembers();
-  }, [isOpen, shopId]);
+  }, [currentManagerId, isOpen, shopId]);
 
   const handleSave = async () => {
     try {

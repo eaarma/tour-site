@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -15,6 +15,8 @@ interface SearchBarProps {
   initialDate?: string;
 }
 
+const formatDate = (date: Date) => format(date, "yyyy-MM-dd");
+
 const SearchBar: React.FC<SearchBarProps> = ({
   onSearch,
   redirectOnSearch = false,
@@ -28,10 +30,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const [initialized, setInitialized] = useState(false);
   const hasSkippedInitial = useRef(false);
   const router = useRouter();
+  const hasInitialFilters = Boolean(initialKeywords || initialDate);
+  const canAutoSearch = !redirectOnSearch && typeof onSearch === "function";
 
-  const formatDate = (d: Date) => format(d, "yyyy-MM-dd");
-
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     const trimmed = keywords.trim();
 
     if (redirectOnSearch) {
@@ -42,35 +44,48 @@ const SearchBar: React.FC<SearchBarProps> = ({
     } else {
       onSearch?.(trimmed, date ? formatDate(date) : "");
     }
-  };
+  }, [date, keywords, onSearch, redirectOnSearch, router]);
+
+  const clearInlineSearch = useCallback(() => {
+    onSearch?.("", "");
+  }, [onSearch]);
 
   useEffect(() => {
     setKeywords(initialKeywords);
     setDate(initialDate ? new Date(initialDate) : null);
+    hasSkippedInitial.current = false;
     setInitialized(true);
   }, [initialKeywords, initialDate]);
 
   useEffect(() => {
-    if (!redirectOnSearch && onSearch && initialized) {
-      const trimmed = keywords.trim();
+    if (!canAutoSearch || !initialized) return;
 
-      if ((initialKeywords || initialDate) && !hasSkippedInitial.current) {
-        hasSkippedInitial.current = true;
-        return;
-      }
+    const trimmed = keywords.trim();
 
-      if (trimmed.length >= 3 || date) {
-        const timeout = setTimeout(() => {
-          handleSearch();
-        }, 300);
-        return () => clearTimeout(timeout);
-      }
-
-      if (!trimmed && !date) {
-        onSearch("", "");
-      }
+    if (hasInitialFilters && !hasSkippedInitial.current) {
+      hasSkippedInitial.current = true;
+      return;
     }
-  }, [keywords, date, initialized]);
+
+    if (trimmed.length >= 3 || date) {
+      const timeout = setTimeout(() => {
+        handleSearch();
+      }, 300);
+      return () => clearTimeout(timeout);
+    }
+
+    if (!trimmed && !date) {
+      clearInlineSearch();
+    }
+  }, [
+    canAutoSearch,
+    clearInlineSearch,
+    date,
+    handleSearch,
+    hasInitialFilters,
+    initialized,
+    keywords,
+  ]);
 
   const handleClearAll = () => {
     setKeywords("");

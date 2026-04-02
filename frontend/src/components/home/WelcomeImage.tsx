@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { ReactNode } from "react";
 
 interface WelcomeImageProps {
@@ -11,11 +12,15 @@ const WelcomeImage: React.FC<WelcomeImageProps> = ({ imageUrl, children }) => {
   return (
     <div className="relative w-full z-30">
       {/* Hero image */}
-      <div className="w-full h-50 sm:h-60 md:h-70 lg:h-80 sm:rounded-xl overflow-hidden">
-        <img
+      <div className="relative w-full h-50 sm:h-60 md:h-70 lg:h-80 sm:rounded-xl overflow-hidden">
+        <Image
           src={imageUrl}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
           className="
-    w-full h-full object-cover shadow-md sm:rounded-xl
+    object-cover shadow-md sm:rounded-xl
     scale-110
     object-[50%_60%] sm:object-[50%_54%] sm:-translate-x-[1.5%]
   "

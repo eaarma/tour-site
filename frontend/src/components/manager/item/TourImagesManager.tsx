@@ -151,6 +151,7 @@ export default function TourImagesManager({
       >
         <img
           src={displaySrc}
+          alt={failed ? "Fallback tour image" : `Tour image ${index + 1}`}
           onError={() => setFailed(true)}
           className={`h-40 w-full object-cover rounded-lg transition-all ${
             failed ? "opacity-70 grayscale blur-[1px]" : ""
@@ -207,6 +208,7 @@ export default function TourImagesManager({
           <div className="rounded-lg overflow-hidden">
             <img
               src={PLACEHOLDER}
+              alt="No tour image uploaded yet"
               className="h-40 w-full object-cover opacity-70 grayscale blur-[1px] rounded-lg"
             />
           </div>

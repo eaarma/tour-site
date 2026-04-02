@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ShopService } from "@/lib/shopService";
 import { ShopDto } from "@/types/shop";
 import toast from "react-hot-toast";
@@ -17,44 +17,48 @@ export default function AdminShops() {
 
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const hasLoadedOnce = useRef(false);
 
   const [selectedShop, setSelectedShop] = useState<ShopDto | null>(null);
   const [removing, setRemoving] = useState(false);
 
-  const fetchShops = async (initial = false) => {
-    try {
-      if (initial) setLoading(true);
-      else setRefreshing(true);
-
-      const data = await ShopService.getAll({
-        query,
-        status,
-        page,
-        size: 10,
-      });
-
-      setShops(data.content);
-      setTotalPages(data.totalPages);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to load shops");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
   useEffect(() => {
-    fetchShops(true);
-  }, []);
+    let isActive = true;
+    const isInitialLoad = !hasLoadedOnce.current;
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      fetchShops(false);
-    }, 300);
+    const timeout = setTimeout(async () => {
+      try {
+        if (isInitialLoad) setLoading(true);
+        else setRefreshing(true);
 
-    return () => clearTimeout(timeout);
-  }, [query, status, page]);
+        const data = await ShopService.getAll({
+          query,
+          status,
+          page,
+          size: 10,
+        });
+
+        if (!isActive) return;
+
+        setShops(data.content);
+        setTotalPages(data.totalPages);
+      } catch (err) {
+        if (!isActive) return;
+        console.error(err);
+        toast.error("Failed to load shops");
+      } finally {
+        if (!isActive) return;
+        hasLoadedOnce.current = true;
+        setLoading(false);
+        setRefreshing(false);
+      }
+    }, isInitialLoad ? 0 : 300);
+
+    return () => {
+      isActive = false;
+      clearTimeout(timeout);
+    };
+  }, [page, query, status]);
 
   const handleRemove = async () => {
     if (!selectedShop) return;

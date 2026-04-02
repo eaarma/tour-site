@@ -60,7 +60,7 @@ export default function SchedulePicker({
     ) {
       setSelectedDate(dateKeys[0]);
     }
-  }, [dateKeys, selectedDate]);
+  }, [dateKeys, selectedDate, selectedScheduleId]);
 
   useEffect(() => {
     if (!selectedScheduleId) return;

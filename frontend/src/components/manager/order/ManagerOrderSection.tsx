@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import CustomDateInput from "@/components/common/CustomDateInput";
@@ -77,7 +77,7 @@ export default function ManagerOrderSection({ shopId }: Props) {
   };
 
   // 🔹 Fetch orders
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     if (!shopId) return;
     try {
       setLoading(true);
@@ -90,11 +90,11 @@ export default function ManagerOrderSection({ shopId }: Props) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [shopId]);
 
   useEffect(() => {
-    loadOrders();
-  }, [shopId]);
+    void loadOrders();
+  }, [loadOrders]);
 
   // Close dropdown on outside click
   useEffect(() => {
