@@ -21,7 +21,7 @@
     "@tailwindcss/postcss": "^4.1.10",
     "axios": "^1.9.0",
     "date-fns": "^4.1.0",
-    "firebase": "^12.4.0",
+    "firebase": "^12.10.0",
     "framer-motion": "^12.23.12",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.516.0",
