@@ -67,6 +67,7 @@ public class SecurityConfig {
                         .requestMatchers("/stripe/webhook").permitAll()
                         .requestMatchers(HttpMethod.GET, "/public/payments/order/**").permitAll()
                         .requestMatchers("/public/orders/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/public/users/managers/*").permitAll()
 
                         // Users
                         .requestMatchers(HttpMethod.GET, "/api/users").hasRole("ADMIN")
@@ -112,12 +113,13 @@ public class SecurityConfig {
 
                         // Shops & Shop Users
                         .requestMatchers(HttpMethod.GET, "/shops/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/shops/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/shops/**").hasAnyRole(STAFF)
                         .requestMatchers(HttpMethod.PUT, "/shops/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/shops/**").authenticated()
 
                         .requestMatchers(HttpMethod.GET, "/api/shop-users/shop/*/active/public").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/shop-users/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/shop-users/shop/*/request").hasAnyRole(STAFF)
+                        .requestMatchers(HttpMethod.POST, "/api/shop-users/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/shop-users/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/shop-users/**").authenticated()
 
@@ -142,7 +144,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/sessions/**").hasAnyRole(STAFF)
 
                         // Actuator
-                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                        .requestMatchers("/actuator/prometheus").permitAll()
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
 
                         // Everything else
                         .anyRequest().authenticated())

@@ -3,6 +3,7 @@ package com.example.store_manager.security;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -20,9 +21,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.store_manager.dto.shop.ShopDto;
+import com.example.store_manager.dto.user.PublicManagerProfileDto;
 import com.example.store_manager.security.testutil.TestUserFactory;
 import com.example.store_manager.service.EmailService;
 import com.example.store_manager.service.ShopService;
+import com.example.store_manager.service.UserService;
 import com.example.store_manager.utility.Result;
 
 import jakarta.servlet.http.Cookie;
@@ -49,6 +52,9 @@ class SecurityIntegrationTest {
 
         @MockitoBean
         private EmailService emailService;
+
+        @MockitoBean
+        private UserService userService;
 
         @Test
         void postWithoutAuth_returns401() throws Exception {
@@ -113,6 +119,48 @@ class SecurityIntegrationTest {
         }
 
         @Test
+        void createShopWithoutAuth_returns401() throws Exception {
+                mockMvc.perform(post("/shops")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                                {
+                                                  "name": "Test Shop"
+                                                }
+                                                """))
+                                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void requestJoinShopWithoutAuth_returns401() throws Exception {
+                mockMvc.perform(post("/api/shop-users/shop/{shopId}/request", 1L))
+                                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void addShopUserWithoutAuth_returns401() throws Exception {
+                mockMvc.perform(post("/api/shop-users/{shopId}/{userId}", 1L, UUID.randomUUID())
+                                .param("role", "GUIDE"))
+                                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void getUserByIdWithoutAuth_returns401() throws Exception {
+                mockMvc.perform(get("/api/users/{id}", UUID.randomUUID()))
+                                .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        void getPublicManagerProfileWithoutAuth_returns200() throws Exception {
+                UUID userId = UUID.randomUUID();
+
+                when(userService.getPublicManagerProfile(userId))
+                                .thenReturn(Result.ok(new PublicManagerProfileDto()));
+
+                mockMvc.perform(get("/public/users/managers/{id}", userId))
+                                .andExpect(status().isOk());
+        }
+
+        @Test
         void getActiveShopUsersWithoutAuth_returns401() throws Exception {
                 mockMvc.perform(get("/api/shop-users/shop/{shopId}/active", 1L))
                                 .andExpect(status().isUnauthorized());
@@ -128,6 +176,32 @@ class SecurityIntegrationTest {
         void getPublicActiveShopUsersWithoutAuth_returns200() throws Exception {
                 mockMvc.perform(get("/api/shop-users/shop/{shopId}/active/public", 1L))
                                 .andExpect(status().isOk());
+        }
+
+        @Test
+        void getActuatorHealthWithoutAuth_isNotBlockedBySecurity() throws Exception {
+                mockMvc.perform(get("/actuator/health"))
+                                .andExpect(result -> {
+                                        int responseStatus = result.getResponse().getStatus();
+                                        assertNotEquals(401, responseStatus);
+                                        assertNotEquals(403, responseStatus);
+                                });
+        }
+
+        @Test
+        void getActuatorPrometheusWithoutAuth_isNotBlockedBySecurity() throws Exception {
+                mockMvc.perform(get("/actuator/prometheus"))
+                                .andExpect(result -> {
+                                        int responseStatus = result.getResponse().getStatus();
+                                        assertNotEquals(401, responseStatus);
+                                        assertNotEquals(403, responseStatus);
+                                });
+        }
+
+        @Test
+        void getActuatorMetricsWithoutAuth_returns401() throws Exception {
+                mockMvc.perform(get("/actuator/metrics"))
+                                .andExpect(status().isUnauthorized());
         }
 
         @Test
@@ -156,6 +230,40 @@ class SecurityIntegrationTest {
                                 .thenReturn(TestUserFactory.userWithRole("USER"));
 
                 mockMvc.perform(post("/tours")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer good"))
+                                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        void userRoleBlockedFromCreateShopEndpoint_returns403() throws Exception {
+                UUID userId = UUID.randomUUID();
+
+                when(jwtService.validateAccessToken("good")).thenReturn(true);
+                when(jwtService.getUserId("good")).thenReturn(userId);
+                when(userDetailsService.loadUserById(userId))
+                                .thenReturn(TestUserFactory.userWithRole("USER"));
+
+                mockMvc.perform(post("/shops")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer good")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                                {
+                                                  "name": "Test Shop"
+                                                }
+                                                """))
+                                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        void userRoleBlockedFromJoinShopRequestEndpoint_returns403() throws Exception {
+                UUID userId = UUID.randomUUID();
+
+                when(jwtService.validateAccessToken("good")).thenReturn(true);
+                when(jwtService.getUserId("good")).thenReturn(userId);
+                when(userDetailsService.loadUserById(userId))
+                                .thenReturn(TestUserFactory.userWithRole("USER"));
+
+                mockMvc.perform(post("/api/shop-users/shop/{shopId}/request", 1L)
                                 .header(HttpHeaders.AUTHORIZATION, "Bearer good"))
                                 .andExpect(status().isForbidden());
         }

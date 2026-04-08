@@ -4,19 +4,19 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import { UserService } from "@/lib/userService";
-import { UserResponseDto } from "@/types/user";
+import { PublicManagerProfileDto } from "@/types/user";
 import CardFrame from "@/components/common/CardFrame";
 import BackButton from "@/components/common/BackButton";
 
 export default function PublicManagerProfilePage() {
   const { id } = useParams<{ id: string }>();
-  const [manager, setManager] = useState<UserResponseDto | null>(null);
+  const [manager, setManager] = useState<PublicManagerProfileDto | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchManager = async () => {
       try {
-        const data = await UserService.getById(id);
+        const data = await UserService.getPublicManagerProfile(id);
         setManager(data);
       } catch (err) {
         console.error("Failed to fetch manager profile", err);
@@ -98,18 +98,6 @@ export default function PublicManagerProfilePage() {
                   <p>{manager.languages}</p>
                 </div>
               )}
-
-              {manager.phone && (
-                <div>
-                  <p className="font-semibold text-sm text-gray-600">Phone</p>
-                  <p>{manager.phone}</p>
-                </div>
-              )}
-
-              <div>
-                <p className="font-semibold text-sm text-gray-600">Email</p>
-                <p>{manager.email}</p>
-              </div>
             </div>
           </div>
         </CardFrame>

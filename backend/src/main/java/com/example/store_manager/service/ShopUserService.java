@@ -3,6 +3,7 @@ package com.example.store_manager.service;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import com.example.store_manager.model.User;
 import com.example.store_manager.repository.ShopRepository;
 import com.example.store_manager.repository.ShopUserRepository;
 import com.example.store_manager.repository.UserRepository;
+import com.example.store_manager.security.CurrentUserService;
 import com.example.store_manager.security.annotations.AccessLevel;
 import com.example.store_manager.security.annotations.ShopAccess;
 import com.example.store_manager.security.annotations.ShopIdSource;
@@ -35,6 +37,7 @@ public class ShopUserService {
         private final UserRepository userRepository;
         private final ShopRepository shopRepository;
         private final ShopUserMapper shopUserMapper;
+        private final CurrentUserService currentUserService;
 
         @Transactional(readOnly = true)
         @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.SHOP_ID)
@@ -79,7 +82,6 @@ public class ShopUserService {
         }
 
         @Transactional
-        @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.SHOP_ID)
         public Result<Boolean> addUserToShop(Long shopId, UUID userIdToAdd, String role) {
 
                 Shop shop = shopRepository.findById(shopId).orElse(null);
@@ -92,11 +94,19 @@ public class ShopUserService {
                         return Result.fail(ApiError.notFound("User not found"));
                 }
 
-                ShopUserRole shopUserRole;
+                ShopUserRole shopUserRole = parseAssignableRole(role);
+                if (shopUserRole == null) {
+                        return Result.fail(ApiError.badRequest("Only GUIDE or MANAGER roles can be assigned"));
+                }
+
+                if (shopUserRepository.findByShopIdAndUserId(shopId, userIdToAdd).isPresent()) {
+                        return Result.fail(ApiError.badRequest("User is already associated with this shop"));
+                }
+
                 try {
-                        shopUserRole = ShopUserRole.valueOf(role.toUpperCase());
-                } catch (IllegalArgumentException ex) {
-                        return Result.fail(ApiError.badRequest("Invalid role"));
+                        assertCanManageRoles(shopId);
+                } catch (AccessDeniedException ex) {
+                        return Result.fail(ApiError.forbidden(ex.getMessage()));
                 }
 
                 ShopUser shopUser = ShopUser.builder()
@@ -111,7 +121,6 @@ public class ShopUserService {
         }
 
         @Transactional
-        @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.SHOP_ID)
         public Result<Boolean> updateUserStatus(Long shopId, UUID userId, String status) {
 
                 ShopUser shopUser = shopUserRepository.findByShopIdAndUserId(shopId, userId).orElse(null);
@@ -120,18 +129,27 @@ public class ShopUserService {
                         return Result.fail(ApiError.notFound("Shop user not found"));
                 }
 
-                try {
-                        shopUser.setStatus(ShopUserStatus.valueOf(status.toUpperCase()));
-                } catch (IllegalArgumentException ex) {
+                ShopUserStatus newStatus = parseStatus(status);
+                if (newStatus == null) {
                         return Result.fail(ApiError.badRequest("Invalid status"));
                 }
 
+                if (!isAllowedStatusTransition(shopUser.getStatus(), newStatus)) {
+                        return Result.fail(ApiError.badRequest("Invalid status transition"));
+                }
+
+                try {
+                        assertCanManageStatus(shopId, shopUser, newStatus);
+                } catch (AccessDeniedException ex) {
+                        return Result.fail(ApiError.forbidden(ex.getMessage()));
+                }
+
+                shopUser.setStatus(newStatus);
                 shopUserRepository.save(shopUser);
                 return Result.ok(true);
         }
 
         @Transactional
-        @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.SHOP_ID)
         public Result<Boolean> updateUserRole(Long shopId, UUID userId, String role) {
 
                 ShopUser shopUser = shopUserRepository.findByShopIdAndUserId(shopId, userId).orElse(null);
@@ -140,18 +158,31 @@ public class ShopUserService {
                         return Result.fail(ApiError.notFound("Shop user not found"));
                 }
 
-                try {
-                        shopUser.setRole(ShopUserRole.valueOf(role.toUpperCase()));
-                } catch (IllegalArgumentException ex) {
-                        return Result.fail(ApiError.badRequest("Invalid role"));
+                ShopUserRole newRole = parseAssignableRole(role);
+                if (newRole == null) {
+                        return Result.fail(ApiError.badRequest("Only GUIDE or MANAGER roles can be assigned"));
                 }
 
+                try {
+                        assertCanManageRoles(shopId);
+                        assertRoleCanBeChanged(shopUser);
+                } catch (AccessDeniedException ex) {
+                        return Result.fail(ApiError.forbidden(ex.getMessage()));
+                }
+
+                shopUser.setRole(newRole);
                 shopUserRepository.save(shopUser);
                 return Result.ok(true);
         }
 
         @Transactional
         public Result<Boolean> requestJoinShop(Long shopId, UUID userId) {
+
+                try {
+                        assertCanUseShopsWorkspace();
+                } catch (AccessDeniedException ex) {
+                        return Result.fail(ApiError.forbidden(ex.getMessage()));
+                }
 
                 Shop shop = shopRepository.findById(shopId).orElse(null);
                 if (shop == null) {
@@ -200,5 +231,118 @@ public class ShopUserService {
                 return shopUserRepository.findByShopIdAndUserId(shopId, userId)
                                 .map(shopUser -> shopUser.getRole().equals(role))
                                 .orElse(false);
+        }
+
+        private ShopUserRole parseAssignableRole(String role) {
+                if (role == null || role.isBlank()) {
+                        return null;
+                }
+
+                try {
+                        ShopUserRole parsedRole = ShopUserRole.valueOf(role.trim().toUpperCase());
+                        return switch (parsedRole) {
+                                case GUIDE, MANAGER -> parsedRole;
+                                default -> null;
+                        };
+                } catch (IllegalArgumentException ex) {
+                        return null;
+                }
+        }
+
+        private ShopUserStatus parseStatus(String status) {
+                if (status == null || status.isBlank()) {
+                        return null;
+                }
+
+                try {
+                        return ShopUserStatus.valueOf(status.trim().toUpperCase());
+                } catch (IllegalArgumentException ex) {
+                        return null;
+                }
+        }
+
+        private void assertCanManageRoles(Long shopId) {
+                if (currentUserService.hasRole("ADMIN")) {
+                        return;
+                }
+
+                ShopUser actingMembership = getActiveMembershipForCurrentUser(shopId);
+
+                if (actingMembership.getRole() != ShopUserRole.OWNER) {
+                        throw new AccessDeniedException("Only shop owners or admins can change member roles");
+                }
+        }
+
+        private void assertCanManageStatus(Long shopId, ShopUser targetMembership, ShopUserStatus newStatus) {
+                assertRoleCanBeChanged(targetMembership);
+
+                if (isPendingApprovalDecision(targetMembership.getStatus(), newStatus)) {
+                        if (currentUserService.hasRole("ADMIN")) {
+                                return;
+                        }
+
+                        ShopUser actingMembership = getActiveMembershipForCurrentUser(shopId);
+                        if (actingMembership.getRole().getLevel() < ShopUserRole.MANAGER.getLevel()) {
+                                throw new AccessDeniedException(
+                                                "Only managers, owners, or admins can approve pending members");
+                        }
+                        return;
+                }
+
+                if (currentUserService.hasRole("ADMIN")) {
+                        return;
+                }
+
+                ShopUser actingMembership = getActiveMembershipForCurrentUser(shopId);
+                if (actingMembership.getRole() != ShopUserRole.OWNER) {
+                        throw new AccessDeniedException(
+                                        "Only shop owners or admins can disable or reactivate members");
+                }
+        }
+
+        private void assertRoleCanBeChanged(ShopUser targetMembership) {
+                if (targetMembership.getRole() == ShopUserRole.OWNER) {
+                        throw new AccessDeniedException("Owner memberships cannot be changed");
+                }
+
+                if (targetMembership.getRole() == ShopUserRole.ADMIN && !currentUserService.hasRole("ADMIN")) {
+                        throw new AccessDeniedException("Only admins can modify admin memberships");
+                }
+        }
+
+        private ShopUser getActiveMembershipForCurrentUser(Long shopId) {
+                UUID currentUserId = currentUserService.getCurrentUserId();
+
+                ShopUser actingMembership = shopUserRepository.findByShopIdAndUserId(shopId, currentUserId)
+                                .orElseThrow(() -> new AccessDeniedException("You are not a member of this shop"));
+
+                if (actingMembership.getStatus() != ShopUserStatus.ACTIVE) {
+                        throw new AccessDeniedException("Membership not approved");
+                }
+
+                return actingMembership;
+        }
+
+        private boolean isPendingApprovalDecision(ShopUserStatus currentStatus, ShopUserStatus newStatus) {
+                return currentStatus == ShopUserStatus.PENDING
+                                && (newStatus == ShopUserStatus.ACTIVE || newStatus == ShopUserStatus.REJECTED);
+        }
+
+        private boolean isAllowedStatusTransition(ShopUserStatus currentStatus, ShopUserStatus newStatus) {
+                if (currentStatus == newStatus) {
+                        return true;
+                }
+
+                return isPendingApprovalDecision(currentStatus, newStatus)
+                                || (currentStatus == ShopUserStatus.ACTIVE && newStatus == ShopUserStatus.DISABLED)
+                                || (currentStatus == ShopUserStatus.DISABLED && newStatus == ShopUserStatus.ACTIVE);
+        }
+
+        private void assertCanUseShopsWorkspace() {
+                if (currentUserService.hasRole("ADMIN") || currentUserService.hasRole("MANAGER")) {
+                        return;
+                }
+
+                throw new AccessDeniedException("Only managers or admins can join shops");
         }
 }

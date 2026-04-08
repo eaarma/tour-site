@@ -5,6 +5,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
+import com.example.store_manager.dto.user.PublicManagerProfileDto;
 import com.example.store_manager.dto.user.UserResponseDto;
 import com.example.store_manager.dto.user.UserUpdateDto;
 import com.example.store_manager.model.User;
@@ -13,6 +14,8 @@ import com.example.store_manager.model.User;
 public interface UserMapper {
 
     UserResponseDto toDto(User user);
+
+    PublicManagerProfileDto toPublicManagerProfileDto(User user);
 
     User toEntity(UserResponseDto dto);
 

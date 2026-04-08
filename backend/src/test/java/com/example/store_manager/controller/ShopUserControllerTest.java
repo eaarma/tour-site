@@ -122,6 +122,18 @@ class ShopUserControllerTest {
         }
 
         @Test
+        void rejectPendingRequest_returnsOk() throws Exception {
+                UUID userId = UUID.randomUUID();
+
+                when(shopUserService.updateUserStatus(1L, userId, "REJECTED"))
+                                .thenReturn(Result.ok(true));
+
+                mockMvc.perform(patch("/api/shop-users/{shopId}/{userId}/status", 1L, userId)
+                                .param("status", "REJECTED"))
+                                .andExpect(status().isOk());
+        }
+
+        @Test
         void updateRole_returnsOk() throws Exception {
                 UUID userId = UUID.randomUUID();
 

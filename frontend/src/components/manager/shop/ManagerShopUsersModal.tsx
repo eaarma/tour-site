@@ -27,7 +27,8 @@ export default function ManagerShopUsersModal({
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  const canEdit = currentUserRole === "MANAGER";
+  const canEdit =
+    currentUserRole === "OWNER" || currentUserRole === "ADMIN";
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -80,7 +81,7 @@ export default function ManagerShopUsersModal({
                         View
                       </button>
 
-                      {canEdit && (
+                      {canEdit && m.role !== "OWNER" && m.role !== "ADMIN" && (
                         <button
                           className="btn btn-xs btn-outline btn-warning"
                           onClick={() => {
@@ -107,6 +108,7 @@ export default function ManagerShopUsersModal({
           onClose={() => setIsViewModalOpen(false)}
           user={selectedUser}
           shopId={shopId}
+          canEdit={canEdit}
           onUserUpdated={(updatedUser) => {
             setSelectedUser(updatedUser);
             onUserUpdated(updatedUser);

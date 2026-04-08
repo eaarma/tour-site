@@ -9,7 +9,7 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   pendingRequests: ShopUserDto[];
-  shopId: number; // ✅ Added shopId
+  shopId: number;
   onStatusChange: (userId: string, newStatus: string) => void;
 }
 
@@ -22,18 +22,14 @@ export default function ManagerPendingRequestsModal({
 }: Props) {
   const handleAction = async (
     userId: string,
-    status: "ACTIVE" | "DECLINED"
+    status: "ACTIVE" | "REJECTED",
   ) => {
     try {
-      // ✅ Pass shopId as the first argument
       await ShopUserService.updateStatus(shopId, userId, status);
-
       onStatusChange(userId, status);
 
       toast.success(
-        status === "ACTIVE"
-          ? "User confirmed and activated ✅"
-          : "Request declined ❌"
+        status === "ACTIVE" ? "User confirmed and activated" : "Request declined",
       );
     } catch (err) {
       console.error("Failed to update status", err);
@@ -79,7 +75,7 @@ export default function ManagerPendingRequestsModal({
                     </button>
                     <button
                       className="btn btn-xs btn-error"
-                      onClick={() => handleAction(req.userId, "DECLINED")}
+                      onClick={() => handleAction(req.userId, "REJECTED")}
                     >
                       Decline
                     </button>

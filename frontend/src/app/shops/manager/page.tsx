@@ -27,6 +27,10 @@ import ManagerScheduleSection from "@/components/manager/schedule/ManagerSchedul
 import ManagerOrderSection from "@/components/manager/order/ManagerOrderSection";
 import ManagerAssignmentSection from "@/components/manager/assignment/ManagerAssignmentSection";
 import { useSessionManager } from "@/hooks/useSessionManager";
+import { ShopUserService } from "@/lib/shopUserService";
+
+const MANAGER_LEVEL_ROLES = new Set(["MANAGER", "OWNER", "ADMIN"]);
+const TOUR_EDITOR_ROLES = new Set(["GUIDE", "MANAGER", "OWNER", "ADMIN"]);
 
 export default function ShopManagerPage() {
   const router = useRouter();
@@ -40,6 +44,7 @@ export default function ShopManagerPage() {
   const access = useShopAccess(shopId ?? 0); // null | true | false
 
   const [tours, setTours] = useState<Tour[]>([]);
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<
     | "sessions"
@@ -133,6 +138,38 @@ export default function ShopManagerPage() {
 
     load();
   }, [shopId, access, sessionList]);
+
+  useEffect(() => {
+    if (!shopId || access !== true) {
+      setCurrentUserRole(null);
+      return;
+    }
+
+    const loadMembership = async () => {
+      try {
+        const membership = await ShopUserService.getMembership(shopId);
+        setCurrentUserRole(membership.role ?? null);
+      } catch (err) {
+        console.error("Error loading shop membership", err);
+        setCurrentUserRole(null);
+      }
+    };
+
+    loadMembership();
+  }, [shopId, access]);
+
+  const canAccessManagerFinancials =
+    currentUserRole !== null && MANAGER_LEVEL_ROLES.has(currentUserRole);
+  const canManageTours =
+    currentUserRole !== null && TOUR_EDITOR_ROLES.has(currentUserRole);
+
+  useEffect(() => {
+    if (!canAccessManagerFinancials) {
+      setActiveTab((prev) =>
+        prev === "payments" || prev === "payouts" ? "sessions" : prev,
+      );
+    }
+  }, [canAccessManagerFinancials]);
 
   // ============================
   // 🌀 Loading state (auth + access)
@@ -289,9 +326,10 @@ export default function ShopManagerPage() {
               </button>
 
               {/* Payments */}
-              <button
-                onClick={() => setActiveTab("payments")}
-                className={`
+              {canAccessManagerFinancials && (
+                <button
+                  onClick={() => setActiveTab("payments")}
+                  className={`
         flex items-center justify-center sm:justify-start
         gap-2
         py-2 px-2 sm:px-3
@@ -304,19 +342,21 @@ export default function ShopManagerPage() {
             : "text-gray-600 hover:text-primary/80"
         }
       `}
-              >
-                <CreditCard className="w-5 h-5" strokeWidth={2.25} />
-                <span
-                  className={`${activeTab === "payments" ? "inline" : "hidden"} sm:inline`}
                 >
-                  Payments
-                </span>
-              </button>
+                  <CreditCard className="w-5 h-5" strokeWidth={2.25} />
+                  <span
+                    className={`${activeTab === "payments" ? "inline" : "hidden"} sm:inline`}
+                  >
+                    Payments
+                  </span>
+                </button>
+              )}
 
               {/* Payouts */}
-              <button
-                onClick={() => setActiveTab("payouts")}
-                className={`
+              {canAccessManagerFinancials && (
+                <button
+                  onClick={() => setActiveTab("payouts")}
+                  className={`
         flex items-center justify-center sm:justify-start
         gap-2
         py-2 px-2 sm:px-3
@@ -329,14 +369,15 @@ export default function ShopManagerPage() {
             : "text-gray-600 hover:text-primary/80"
         }
       `}
-              >
-                <HandCoins className="w-5 h-5" strokeWidth={2.25} />
-                <span
-                  className={`${activeTab === "payouts" ? "inline" : "hidden"} sm:inline`}
                 >
-                  Payouts
-                </span>
-              </button>
+                  <HandCoins className="w-5 h-5" strokeWidth={2.25} />
+                  <span
+                    className={`${activeTab === "payouts" ? "inline" : "hidden"} sm:inline`}
+                  >
+                    Payouts
+                  </span>
+                </button>
+              )}
 
               {/* Performance */}
               <button
@@ -376,7 +417,11 @@ export default function ShopManagerPage() {
         )}
 
         {activeTab === "tours" && (
-          <ManagerItemList items={tours} shopId={shopId} />
+          <ManagerItemList
+            items={tours}
+            shopId={shopId}
+            canManageTours={canManageTours}
+          />
         )}
 
         {activeTab === "schedules" && (
@@ -385,11 +430,13 @@ export default function ShopManagerPage() {
 
         {activeTab === "orders" && <ManagerOrderSection shopId={shopId} />}
 
-        {activeTab === "payments" && (
+        {activeTab === "payments" && canAccessManagerFinancials && (
           <ShopManagerPaymentSection shopId={shopId} />
         )}
 
-        {activeTab === "payouts" && <ManagerPayoutSection shopId={shopId} />}
+        {activeTab === "payouts" && canAccessManagerFinancials && (
+          <ManagerPayoutSection shopId={shopId} />
+        )}
 
         {activeTab === "assignments" && (
           <ManagerAssignmentSection shopId={shopId} />

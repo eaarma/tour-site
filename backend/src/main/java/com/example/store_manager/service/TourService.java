@@ -44,7 +44,7 @@ public class TourService {
     private final ShopRepository shopRepository;
 
     @Transactional
-    @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.SHOP_ID)
+    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.SHOP_ID)
     public Result<TourResponseDto> createTour(
             Long shopId,
             TourCreateDto dto,
@@ -66,7 +66,7 @@ public class TourService {
     }
 
     @Transactional
-    @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.TOUR_ID)
+    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.TOUR_ID)
     public Result<TourResponseDto> updateTour(Long tourId, TourUpdateDto dto) {
 
         Tour tour = tourRepository.findById(tourId)

@@ -1,5 +1,5 @@
 import api from "@/lib/api/axios";
-import { UserResponseDto } from "@/types/user";
+import { PublicManagerProfileDto, UserResponseDto } from "@/types/user";
 
 const BASE_URL = "/api/users";
 
@@ -18,6 +18,13 @@ export const UserService = {
 
   getById: async (id: string): Promise<UserResponseDto> => {
     const res = await api.get(`/api/users/${id}`);
+    return res.data;
+  },
+
+  getPublicManagerProfile: async (
+    id: string,
+  ): Promise<PublicManagerProfileDto> => {
+    const res = await api.get(`/public/users/managers/${id}`);
     return res.data;
   },
 

@@ -45,6 +45,8 @@ const ItemCard: React.FC<ItemCardProps> = ({
   onClick,
   showStatus = false,
 }) => {
+  const isInteractive = Boolean(href || onClick);
+
   const handleClick = () => {
     if (onClick) {
       onClick();
@@ -55,7 +57,11 @@ const ItemCard: React.FC<ItemCardProps> = ({
   const imageUrl = item.images?.length ? item.images[0] : null;
 
   const CardContent = (
-    <div className="group relative flex flex-col h-full overflow-hidden rounded-xl border border-base-300 bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow duration-300 cursor-pointer">
+    <div
+      className={`group relative flex flex-col h-full overflow-hidden rounded-xl border border-base-300 bg-card text-card-foreground shadow-sm transition-shadow duration-300 ${
+        isInteractive ? "cursor-pointer hover:shadow-md" : "cursor-default"
+      }`}
+    >
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden bg-muted shrink-0">
         {imageUrl ? (

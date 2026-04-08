@@ -3,13 +3,23 @@ import { ShopDto, ShopCreateRequestDto } from "@/types/shop";
 
 const BASE_URL = "/shops";
 
+export interface PageResponse<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  number: number;
+  size: number;
+  first?: boolean;
+  last?: boolean;
+}
+
 export const ShopService = {
   getAll: async (params?: {
     query?: string;
     status?: "ACTIVE" | "REMOVED";
     page?: number;
     size?: number;
-  }) => {
+  }): Promise<PageResponse<ShopDto>> => {
     const res = await api.get(BASE_URL, { params });
     return res.data;
   },

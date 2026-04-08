@@ -45,7 +45,19 @@ public class ShopService {
         @Transactional
         public Result<ShopDto> createShop(ShopCreateRequestDto dto, UUID currentUserId) {
 
-                // 1️⃣ Create and save shop
+                try {
+                        assertCanCreateShop();
+                } catch (AccessDeniedException ex) {
+                        return Result.fail(ApiError.forbidden(ex.getMessage()));
+                }
+
+                User user = userRepository.findById(currentUserId)
+                                .orElse(null);
+
+                if (user == null) {
+                        return Result.fail(ApiError.notFound("User not found"));
+                }
+
                 Shop shop = Shop.builder()
                                 .name(dto.getName())
                                 .description(dto.getDescription())
@@ -56,15 +68,6 @@ public class ShopService {
 
                 Shop savedShop = shopRepository.save(shop);
 
-                // 2️⃣ Load current user
-                User user = userRepository.findById(currentUserId)
-                                .orElse(null);
-
-                if (user == null) {
-                        return Result.fail(ApiError.notFound("User not found"));
-                }
-
-                // 3️⃣ Create OWNER ShopUser
                 ShopUser shopUser = ShopUser.builder()
                                 .shop(savedShop)
                                 .user(user)
@@ -74,7 +77,6 @@ public class ShopService {
 
                 shopUserRepository.save(shopUser);
 
-                // 4️⃣ Return DTO
                 return Result.ok(shopMapper.toDto(savedShop));
         }
 
@@ -178,6 +180,14 @@ public class ShopService {
                 if (membership.getStatus() != ShopUserStatus.ACTIVE || membership.getRole() != ShopUserRole.OWNER) {
                         throw new AccessDeniedException("Only admins or shop owners can remove shops");
                 }
+        }
+
+        private void assertCanCreateShop() {
+                if (currentUserService.hasRole("ADMIN") || currentUserService.hasRole("MANAGER")) {
+                        return;
+                }
+
+                throw new AccessDeniedException("Only managers or admins can create shops");
         }
 
         private String normalizeQuery(String query) {

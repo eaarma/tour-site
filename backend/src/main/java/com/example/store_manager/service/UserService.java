@@ -7,9 +7,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.store_manager.dto.user.PublicManagerProfileDto;
 import com.example.store_manager.dto.user.UserResponseDto;
 import com.example.store_manager.dto.user.UserUpdateDto;
 import com.example.store_manager.mapper.UserMapper;
@@ -17,6 +19,7 @@ import com.example.store_manager.model.Role;
 import com.example.store_manager.model.User;
 import com.example.store_manager.model.UserStatus;
 import com.example.store_manager.repository.UserRepository;
+import com.example.store_manager.security.CurrentUserService;
 import com.example.store_manager.utility.ApiError;
 import com.example.store_manager.utility.Result;
 
@@ -28,6 +31,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final CurrentUserService currentUserService;
 
     @Transactional(readOnly = true)
     public Result<UserResponseDto> getUserProfile(UUID userId) {
@@ -36,6 +40,33 @@ public class UserService {
                 .map(userMapper::toDto)
                 .map(Result::ok)
                 .orElseGet(() -> Result.fail(ApiError.notFound("User not found")));
+    }
+
+    @Transactional(readOnly = true)
+    public Result<UserResponseDto> getUserProfileForCurrentUserOrAdmin(UUID userId) {
+
+        try {
+            assertSelfOrAdmin(userId);
+        } catch (AccessDeniedException ex) {
+            return Result.fail(ApiError.forbidden(ex.getMessage()));
+        }
+
+        return getUserProfile(userId);
+    }
+
+    @Transactional(readOnly = true)
+    public Result<PublicManagerProfileDto> getPublicManagerProfile(UUID userId) {
+
+        User user = userRepository.findById(userId)
+                .orElse(null);
+
+        if (user == null
+                || user.getRole() != Role.MANAGER
+                || user.getStatus() != UserStatus.ACTIVE) {
+            return Result.fail(ApiError.notFound("Manager not found"));
+        }
+
+        return Result.ok(userMapper.toPublicManagerProfileDto(user));
     }
 
     @Transactional
@@ -138,6 +169,22 @@ public class UserService {
         }
 
         return trimmedQuery.toLowerCase();
+    }
+
+    private void assertSelfOrAdmin(UUID userId) {
+        UUID currentUserId = currentUserService.getCurrentUserId();
+
+        if (currentUserId == null) {
+            throw new AccessDeniedException("Unauthorized");
+        }
+
+        if (currentUserService.hasRole("ADMIN")) {
+            return;
+        }
+
+        if (!currentUserId.equals(userId)) {
+            throw new AccessDeniedException("You are not allowed to access this user profile");
+        }
     }
 
 }

@@ -10,6 +10,10 @@ import ManagerShopSettingsModal from "./ManagerShopSettingsModal";
 import { Settings } from "lucide-react";
 import ManagerPendingRequestsModal from "./ManagerPendingRequestsModal";
 import { useRouter } from "next/navigation";
+
+const REVIEW_PENDING_ROLES = new Set(["MANAGER", "OWNER", "ADMIN"]);
+const EDIT_SHOP_ROLES = new Set(["OWNER", "ADMIN"]);
+
 interface Props {
   shopId: number;
 }
@@ -17,6 +21,7 @@ interface Props {
 export default function ManagerShopSection({ shopId }: Props) {
   const [shop, setShop] = useState<ShopDto | null>(null);
   const [members, setMembers] = useState<ShopUserDto[]>([]);
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
   const [isUsersModalOpen, setIsUsersModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isPendingModalOpen, setIsPendingModalOpen] = useState(false);
@@ -25,14 +30,27 @@ export default function ManagerShopSection({ shopId }: Props) {
 
   const pendingRequests = members.filter((m) => m.status === "PENDING");
   const activeMembers = members.filter((m) => m.status === "ACTIVE");
+  const canReviewPending =
+    currentUserRole !== null && REVIEW_PENDING_ROLES.has(currentUserRole);
+  const canEditShop =
+    currentUserRole !== null && EDIT_SHOP_ROLES.has(currentUserRole);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const s = await ShopService.getById(shopId);
-        setShop(s);
+        const [s, membership] = await Promise.all([
+          ShopService.getById(shopId),
+          ShopUserService.getMembership(shopId),
+        ]);
 
-        const users = await ShopUserService.getUsersForShop(shopId);
+        setShop(s);
+        setCurrentUserRole(membership.role ?? null);
+
+        const users =
+          membership.role === "GUIDE"
+            ? await ShopUserService.getActiveUsersForShop(shopId)
+            : await ShopUserService.getUsersForShop(shopId);
+
         setMembers(users);
       } catch (err) {
         console.error("Failed to load shop data", err);
@@ -50,7 +68,7 @@ export default function ManagerShopSection({ shopId }: Props) {
   if (!shop) return null;
 
   return (
-    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-6 bg-base-100 p-4 rounded-lg shadow relative">
+    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-6 p-4 shadow relative rounded-xl border border-base-300 bg-base-100 shadow-sm">
       {/* Left side: shop info */}
       <div>
         <h2 className="text-2xl font-bold whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
@@ -63,20 +81,22 @@ export default function ManagerShopSection({ shopId }: Props) {
       {/* Right side: actions */}
       <div className="flex justify-end items-center gap-4">
         {/* Pending Requests button */}
-        <button
-          className={`btn btn-sm ${
-            pendingRequests.length > 0
-              ? "btn-outline btn-warning"
-              : "btn-disabled"
-          }`}
-          onClick={() =>
-            pendingRequests.length > 0 && setIsPendingModalOpen(true)
-          }
-        >
-          {pendingRequests.length === 0
-            ? "0 pending"
-            : `${pendingRequests.length} pending `}
-        </button>
+        {canReviewPending && (
+          <button
+            className={`btn btn-sm ${
+              pendingRequests.length > 0
+                ? "btn-outline btn-warning"
+                : "btn-disabled"
+            }`}
+            onClick={() =>
+              pendingRequests.length > 0 && setIsPendingModalOpen(true)
+            }
+          >
+            {pendingRequests.length === 0
+              ? "0 pending"
+              : `${pendingRequests.length} pending `}
+          </button>
+        )}
 
         {/* Members button */}
         <button
@@ -100,15 +120,17 @@ export default function ManagerShopSection({ shopId }: Props) {
               className="absolute right-0 mt-2 w-40 bg-base-100 border border-gray-200 rounded-lg shadow-lg z-10"
               onMouseLeave={() => setDropdownOpen(false)}
             >
-              <button
-                className="w-full text-left px-4 py-2 hover:bg-base-200"
-                onClick={() => {
-                  setIsSettingsModalOpen(true);
-                  setDropdownOpen(false);
-                }}
-              >
-                Edit shop
-              </button>
+              {canEditShop && (
+                <button
+                  className="w-full text-left px-4 py-2 hover:bg-base-200"
+                  onClick={() => {
+                    setIsSettingsModalOpen(true);
+                    setDropdownOpen(false);
+                  }}
+                >
+                  Edit shop
+                </button>
+              )}
               <button
                 className="w-full text-left px-4 py-2 hover:bg-base-200"
                 onClick={() => {
@@ -129,32 +151,36 @@ export default function ManagerShopSection({ shopId }: Props) {
         onClose={() => setIsUsersModalOpen(false)}
         members={members.filter((m) => m.status === "ACTIVE")}
         shopId={shopId}
-        currentUserRole="MANAGER"
+        currentUserRole={currentUserRole ?? undefined}
         onUserUpdated={handleUserUpdated}
       />
 
       {/* Pending Requests modal */}
-      <ManagerPendingRequestsModal
-        isOpen={isPendingModalOpen}
-        onClose={() => setIsPendingModalOpen(false)}
-        pendingRequests={pendingRequests}
-        shopId={shopId}
-        onStatusChange={(updatedUserId, newStatus) => {
-          setMembers((prev) =>
-            prev.map((m) =>
-              m.userId === updatedUserId ? { ...m, status: newStatus } : m,
-            ),
-          );
-        }}
-      />
+      {canReviewPending && (
+        <ManagerPendingRequestsModal
+          isOpen={isPendingModalOpen}
+          onClose={() => setIsPendingModalOpen(false)}
+          pendingRequests={pendingRequests}
+          shopId={shopId}
+          onStatusChange={(updatedUserId, newStatus) => {
+            setMembers((prev) =>
+              prev.map((m) =>
+                m.userId === updatedUserId ? { ...m, status: newStatus } : m,
+              ),
+            );
+          }}
+        />
+      )}
 
       {/* Settings modal */}
-      <ManagerShopSettingsModal
-        isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
-        shop={shop}
-        onShopUpdated={(updated) => setShop(updated)}
-      />
+      {canEditShop && (
+        <ManagerShopSettingsModal
+          isOpen={isSettingsModalOpen}
+          onClose={() => setIsSettingsModalOpen(false)}
+          shop={shop}
+          onShopUpdated={(updated) => setShop(updated)}
+        />
+      )}
     </div>
   );
 }

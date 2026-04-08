@@ -36,7 +36,7 @@ public class TourImageService {
     }
 
     @Transactional
-    @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.TOUR_ID)
+    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.TOUR_ID)
     public Result<TourImage> addImageToTour(Long tourId, String imageUrl) {
 
         Tour tour = tourRepository.findById(tourId).orElse(null);
@@ -56,7 +56,7 @@ public class TourImageService {
     }
 
     @Transactional
-    @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.TOUR_ID)
+    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.TOUR_ID)
     public Result<Boolean> deleteImage(Long tourId, Long imageId) {
 
         if (!tourImageRepository.existsById(imageId)) {
@@ -68,7 +68,7 @@ public class TourImageService {
     }
 
     @Transactional
-    @ShopAccess(value = AccessLevel.MANAGER, source = ShopIdSource.TOUR_ID)
+    @ShopAccess(value = AccessLevel.GUIDE, source = ShopIdSource.TOUR_ID)
     public Result<Boolean> updateImageOrder(Long tourId, List<Long> orderedImageIds) {
 
         List<TourImage> images = tourImageRepository.findByTourIdOrderByPositionAsc(tourId);

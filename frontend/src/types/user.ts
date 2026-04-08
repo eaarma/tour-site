@@ -37,6 +37,17 @@ export interface UserResponseDto {
   status: "ACTIVE" | "REMOVED";
 }
 
+export interface PublicManagerProfileDto {
+  id: string;
+  name: string;
+  nationality?: string | null;
+  bio?: string | null;
+  experience?: string | null;
+  languages?: string | null;
+  createdAt?: string;
+  profileImageUrl?: string | null;
+}
+
 export interface LoginRequestDto {
   email: string;
   password: string;

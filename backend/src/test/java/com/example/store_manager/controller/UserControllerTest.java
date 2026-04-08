@@ -149,7 +149,7 @@ class UserControllerTest {
         void getUserById_returnsOk_whenFound() throws Exception {
                 UUID userId = UUID.randomUUID();
 
-                when(userService.getUserProfile(userId))
+                when(userService.getUserProfileForCurrentUserOrAdmin(userId))
                                 .thenReturn(Result.ok(userDto(userId)));
 
                 mockMvc.perform(get("/api/users/{id}", userId))
@@ -160,7 +160,7 @@ class UserControllerTest {
         void getUserById_returnsNotFound_whenMissing() throws Exception {
                 UUID userId = UUID.randomUUID();
 
-                when(userService.getUserProfile(userId))
+                when(userService.getUserProfileForCurrentUserOrAdmin(userId))
                                 .thenReturn(Result.fail(ApiError.notFound("User not found")));
 
                 mockMvc.perform(get("/api/users/{id}", userId))

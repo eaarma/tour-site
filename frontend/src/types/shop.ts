@@ -48,3 +48,9 @@ export interface ShopUserStatusDto {
   status: string;
   joinedAt: string; // ISO string (convert from LocalDateTime)
 }
+
+export interface ShopMembershipDto {
+  member: boolean;
+  role: string;
+  status: string;
+}

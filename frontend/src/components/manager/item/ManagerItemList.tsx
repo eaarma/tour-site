@@ -7,11 +7,13 @@ import ItemCard from "@/components/items/ItemCard";
 interface ManagerItemListProps {
   items: Tour[];
   shopId: number;
+  canManageTours?: boolean;
 }
 
 export default function ManagerItemList({
   items,
   shopId,
+  canManageTours = true,
 }: ManagerItemListProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"active" | "inactive" | "all">(
@@ -32,7 +34,9 @@ export default function ManagerItemList({
 
   return (
     <div className="sm:p-4">
-      <h2 className="text-2xl font-bold mb-4">Manage Tours</h2>
+      <h2 className="text-2xl font-bold mb-4">
+        {canManageTours ? "Manage Tours" : "Tours"}
+      </h2>
 
       {/* Tabs + Add Tour Button */}
       <div className="flex justify-between items-center mb-4">
@@ -73,12 +77,16 @@ export default function ManagerItemList({
           </div>
         </div>
 
-        <button
-          className="btn btn-outline btn-primary flex items-center gap-2"
-          onClick={() => router.push(`/shops/manager/shop/${shopId}/items/new`)}
-        >
-          <span className="text-xl">+</span> Add a Tour
-        </button>
+        {canManageTours && (
+          <button
+            className="btn btn-outline btn-primary flex items-center gap-2"
+            onClick={() =>
+              router.push(`/shops/manager/shop/${shopId}/items/new`)
+            }
+          >
+            <span className="text-xl">+</span> Add a Tour
+          </button>
+        )}
       </div>
 
       {/* ✅ Scrollable grid container */}
@@ -94,8 +102,13 @@ export default function ManagerItemList({
                 key={item.id}
                 item={item}
                 showStatus={true}
-                onClick={() =>
-                  router.push(`/shops/manager/shop/${shopId}/items/${item.id}`)
+                onClick={
+                  canManageTours
+                    ? () =>
+                        router.push(
+                          `/shops/manager/shop/${shopId}/items/${item.id}`,
+                        )
+                    : undefined
                 }
               />
             ))}

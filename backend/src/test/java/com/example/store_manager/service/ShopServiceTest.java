@@ -63,6 +63,8 @@ class ShopServiceTest {
         User user = new User();
         ShopDto shopDto = new ShopDto();
 
+        when(currentUserService.hasRole("ADMIN")).thenReturn(false);
+        when(currentUserService.hasRole("MANAGER")).thenReturn(true);
         when(shopRepository.save(any(Shop.class))).thenReturn(savedShop);
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(shopMapper.toDto(savedShop)).thenReturn(shopDto);
@@ -87,7 +89,8 @@ class ShopServiceTest {
         UUID userId = UUID.randomUUID();
         ShopCreateRequestDto dto = new ShopCreateRequestDto();
 
-        when(shopRepository.save(any())).thenReturn(new Shop());
+        when(currentUserService.hasRole("ADMIN")).thenReturn(false);
+        when(currentUserService.hasRole("MANAGER")).thenReturn(true);
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         Result<ShopDto> result = shopService.createShop(dto, userId);
@@ -96,6 +99,24 @@ class ShopServiceTest {
         assertEquals("NOT_FOUND", result.error().code());
         assertEquals("User not found", result.error().message());
 
+        verify(shopRepository, never()).save(any());
+        verify(shopUserRepository, never()).save(any());
+    }
+
+    @Test
+    void createShop_returnsForbidden_whenUserLacksManagerOrAdminRole() {
+        UUID userId = UUID.randomUUID();
+        ShopCreateRequestDto dto = new ShopCreateRequestDto();
+
+        when(currentUserService.hasRole("ADMIN")).thenReturn(false);
+        when(currentUserService.hasRole("MANAGER")).thenReturn(false);
+
+        Result<ShopDto> result = shopService.createShop(dto, userId);
+
+        assertTrue(result.isFail());
+        assertEquals("FORBIDDEN", result.error().code());
+        verify(userRepository, never()).findById(any());
+        verify(shopRepository, never()).save(any());
         verify(shopUserRepository, never()).save(any());
     }
 

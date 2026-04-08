@@ -33,19 +33,27 @@ export default function JoinOrCreateShopModal({
   const [creating, setCreating] = useState(false);
 
   const handleSearch = async () => {
-    if (!searchTerm.trim()) return;
+    const trimmedSearch = searchTerm.trim();
+    if (!trimmedSearch) {
+      setResults([]);
+      return;
+    }
 
     setLoading(true);
     try {
-      const allShops = await ShopService.getAll();
+      const page = await ShopService.getAll({
+        query: trimmedSearch,
+        status: "ACTIVE",
+        page: 0,
+        size: 20,
+      });
+
       const filtered =
-        searchBy === "name"
-          ? allShops.filter((shop: ShopDto) =>
-              shop.name.toLowerCase().includes(searchTerm.toLowerCase()),
+        searchBy === "id"
+          ? page.content.filter(
+              (shop: ShopDto) => shop.id.toString() === trimmedSearch,
             )
-          : allShops.filter(
-              (shop: ShopDto) => shop.id.toString() === searchTerm.trim(),
-            );
+          : page.content;
 
       setResults(filtered);
     } catch (err) {

@@ -12,6 +12,7 @@ interface Props {
   user: ShopUserDto;
   onUserUpdated?: (updatedUser: ShopUserDto) => void;
   shopId: number;
+  canEdit?: boolean;
 }
 
 export default function ManagerShopUserViewModal({
@@ -20,28 +21,31 @@ export default function ManagerShopUserViewModal({
   user,
   onUserUpdated,
   shopId,
+  canEdit = false,
 }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [role, setRole] = useState(user.role);
   const [status, setStatus] = useState(user.status);
   const [loading, setLoading] = useState(false);
 
+  const canEditUser =
+    canEdit && user.role !== "OWNER" && user.role !== "ADMIN";
+
   const handleSave = async () => {
     try {
       setLoading(true);
 
-      // Update user status
-      await ShopUserService.updateStatus(shopId, user.userId, status);
+      if (status !== user.status) {
+        await ShopUserService.updateStatus(shopId, user.userId, status);
+      }
 
-      // Optionally update role (if you add the backend endpoint)
-      if (role !== user.role && ShopUserService.updateRole) {
+      if (role !== user.role) {
         await ShopUserService.updateRole(shopId, user.userId, role);
       }
 
       const updatedUser = { ...user, role, status };
       onUserUpdated?.(updatedUser);
-      toast.success("User updated successfully!");
-
+      toast.success("User updated successfully");
       setIsEditing(false);
     } catch (err) {
       console.error("Failed to update user", err);
@@ -52,7 +56,6 @@ export default function ManagerShopUserViewModal({
   };
 
   const handleCancel = () => {
-    // Reset edits
     setRole(user.role);
     setStatus(user.status);
     setIsEditing(false);
@@ -74,7 +77,6 @@ export default function ManagerShopUserViewModal({
             <strong>Phone:</strong> {user.phone ?? "-"}
           </p>
 
-          {/* Role (editable) */}
           <div>
             <strong>Role:</strong>{" "}
             {isEditing ? (
@@ -91,7 +93,6 @@ export default function ManagerShopUserViewModal({
             )}
           </div>
 
-          {/* Status (editable) */}
           <div>
             <strong>Status:</strong>{" "}
             {isEditing ? (
@@ -116,7 +117,6 @@ export default function ManagerShopUserViewModal({
           </p>
         </div>
 
-        {/* Footer buttons */}
         <div className="flex justify-end gap-2 pt-4">
           {isEditing ? (
             <>
@@ -144,12 +144,14 @@ export default function ManagerShopUserViewModal({
               >
                 Close
               </button>
-              <button
-                className="btn btn-warning btn-sm"
-                onClick={() => setIsEditing(true)}
-              >
-                Edit
-              </button>
+              {canEditUser && (
+                <button
+                  className="btn btn-warning btn-sm"
+                  onClick={() => setIsEditing(true)}
+                >
+                  Edit
+                </button>
+              )}
             </>
           )}
         </div>
