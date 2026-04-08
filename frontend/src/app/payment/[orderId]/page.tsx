@@ -154,7 +154,7 @@ export default function PaymentPage() {
         setOrder(data);
         setOrderLoaded(true);
 
-        // ✅ Redirect logic
+        // Handle redirect logic.
         if (data.status === "PAID") {
           router.replace(`/confirmation/${orderId}?token=${reservationToken}`);
           return;
@@ -167,7 +167,7 @@ export default function PaymentPage() {
           return;
         }
 
-        // ✅ countdown from expiresAt (backend source of truth)
+        // Start the countdown from expiresAt, which is the backend source of truth.
         if (data.expiresAt) {
           const expiryMs = new Date(data.expiresAt).getTime();
           const seconds = Math.floor((expiryMs - Date.now()) / 1000);
@@ -231,7 +231,7 @@ export default function PaymentPage() {
     try {
       let effectiveOrderId = orderId;
 
-      // 🔹 If still RESERVED → finalize first
+      // If the order is still reserved, finalize it first.
       if (order.status === "RESERVED") {
         const finalized = await ReservationService.finalize(
           orderId,
@@ -247,7 +247,7 @@ export default function PaymentPage() {
         setOrder(updated);
       }
 
-      // 🔹 Now Payment exists
+      // Payment exists at this point.
       const secret = await StripeService.createIntent(
         effectiveOrderId,
         reservationToken,
@@ -271,7 +271,7 @@ export default function PaymentPage() {
     setLoading(false);
 
     if (result === "FAILED") {
-      toast.error("Payment failed ❌");
+      toast.error("Payment failed.");
       return;
     }
 
@@ -287,7 +287,7 @@ export default function PaymentPage() {
       dispatch(removeItemFromCart(item.cartItemId));
     });
 
-    toast.success("Payment successful ✅");
+    toast.success("Payment successful.");
     router.push(`/confirmation/${orderId}?token=${reservationToken}`);
   };
 

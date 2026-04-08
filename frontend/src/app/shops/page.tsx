@@ -110,9 +110,7 @@ export default function ShopsPage() {
                 }`}
                 onClick={() => {
                   if (isPending) {
-                    toast("Pending request to join this shop ⏳", {
-                      icon: "⏳",
-                    });
+                    toast("Pending request to join this shop.");
                     return;
                   }
 

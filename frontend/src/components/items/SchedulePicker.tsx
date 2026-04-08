@@ -18,7 +18,7 @@ type Props = {
 };
 
 export default function SchedulePicker({
-  schedules = [], // ✅ fallback to empty array
+  schedules = [], // Fallback to an empty array.
   selectedScheduleId,
   onSelect,
   className = "",

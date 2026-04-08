@@ -131,7 +131,7 @@ export default function UserProfileOrdersSection({
         )}
       </div>
 
-      {/* ✅ Order details modal */}
+      {/* Order details modal */}
       {selectedItem && (
         <UserOrderDetailsModal
           orderItem={selectedItem}

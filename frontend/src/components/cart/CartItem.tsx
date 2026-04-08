@@ -19,7 +19,7 @@ const CartItem: React.FC<CartItemProps> = ({
 }) => {
   const isPublic = item.type === "PUBLIC";
   const totalPrice = isPublic ? item.price * item.participants : item.price;
-  // ✅ Thumbnail logic (support new images array or fallback to single image field)
+  // Support the images array first and fall back to the single image field.
   type ItemWithImages = {
     images?: string[];
     image?: string;
@@ -42,7 +42,7 @@ const CartItem: React.FC<CartItemProps> = ({
       <div className="flex flex-col w-full md:flex-row justify-between items-start md:items-center border rounded-xl p-4 shadow-sm bg-base-100 hover:shadow-md transition-shadow">
         {/* Tour Details */}
 
-        {/* ✅ Thumbnail Image */}
+        {/* Thumbnail image */}
         <img
           src={
             itemData.images?.length

@@ -23,7 +23,7 @@ public class TourImage {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tour_id")
-    @JsonBackReference // ✅ Prevents infinite Tour → Image → Tour loop
+    @JsonBackReference // Prevent an infinite Tour -> Image -> Tour loop.
     private Tour tour;
 
     private String imageUrl;

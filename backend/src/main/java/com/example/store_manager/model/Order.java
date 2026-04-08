@@ -55,6 +55,7 @@ public class Order {
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @Column(name = "total_price", nullable = false, precision = 10, scale = 2)
+    @Builder.Default
     private BigDecimal totalPrice = BigDecimal.ZERO;
 
     @Column(name = "payment_method", nullable = false)

@@ -43,7 +43,7 @@ public class CancellationService {
                         CancellationReasonType reasonType,
                         String reason) {
 
-                // 1️⃣ Idempotency guard
+                // Guard against repeated cancellation requests.
                 if (item.getStatus() == OrderStatus.CANCELLED ||
                                 item.getStatus() == OrderStatus.CANCELLED_CONFIRMED) {
 
@@ -57,13 +57,13 @@ public class CancellationService {
                                         item.getStatus()));
                 }
 
-                // 2️⃣ Refund eligibility
+                // Check whether the order item is refundable.
                 boolean refundable = isRefundable(item);
                 BigDecimal refundAmount = refundable
                                 ? item.getPricePaid()
                                 : BigDecimal.ZERO;
 
-                // 3️⃣ Stripe refund (if refundable)
+                // Process the Stripe refund when the item is refundable.
                 if (refundable) {
                         PaymentLine saleLine = paymentLineRepository
                                         .findSaleLineForUpdate(item.getId())

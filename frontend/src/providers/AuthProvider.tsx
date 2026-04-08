@@ -13,7 +13,7 @@ export default function AuthProvider({
 }) {
   const dispatch = useDispatch();
 
-  // 1️⃣ Initial user load (NO accessToken here)
+  // Initial user load. No access token is available here.
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -37,7 +37,7 @@ export default function AuthProvider({
   return <>{children}</>;
 }
 
-/*   // 2️⃣ Background session checker (optional but valid) Currently disabled
+/*   // Background session checker. Currently disabled.
   useEffect(() => {
     const interval = setInterval(async () => {
       try {

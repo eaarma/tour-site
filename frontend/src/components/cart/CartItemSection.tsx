@@ -22,13 +22,13 @@ const CartItemSection: React.FC<Props> = ({ cart, onView }) => {
     dispatch(toggleItemSelection(cartItemId));
   };
 
-  // ✅ Count selected items
+  // Count selected items.
   const selectedCount = cart.filter((item) => item.selected).length;
 
-  // ✅ Check if all are selected
+  // Check whether all items are selected.
   const allSelected = cart.length > 0 && selectedCount === cart.length;
 
-  // ✅ Toggle all
+  // Toggle all items.
   const handleToggleAll = () => {
     cart.forEach((item) => {
       if (item.selected !== !allSelected) {
@@ -53,8 +53,7 @@ const CartItemSection: React.FC<Props> = ({ cart, onView }) => {
         <p className="text-gray-500 text-lg">Your cart is empty.</p>
       ) : (
         <>
-          {/* ✅ Select All Checkbox */}
-          {/* ✅ Select All + Remove Selected */}
+          {/* Select-all controls */}
           <div className="flex items-center justify-between border-b pb-2 mb-4 mt-2 ml-1">
             <label
               htmlFor="cart-toggle-all"
@@ -81,10 +80,10 @@ const CartItemSection: React.FC<Props> = ({ cart, onView }) => {
             </button>
           </div>
 
-          {/* ✅ Cart Items */}
+          {/* Cart items */}
           {cart.map((entry, index) => (
             <CartItem
-              key={entry.cartItemId || `${entry.id}-${index}`} // ✅ fallback if missing
+              key={entry.cartItemId || `${entry.id}-${index}`} // Fallback if missing.
               item={entry}
               onRemove={handleRemove}
               onView={onView ? onView : () => {}}

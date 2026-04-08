@@ -47,7 +47,7 @@ export const ShopUserService = {
     await api.patch(`${BASE_URL}/${shopId}/${userId}/status?status=${status}`);
   },
 
-  // ✅ New: update user role
+  // Update a user role.
   updateRole: async (
     shopId: number,
     userId: string,

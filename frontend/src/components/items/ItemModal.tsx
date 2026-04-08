@@ -141,7 +141,7 @@ export default function ItemModal({
       }),
     );
 
-    toast.success("Cart item updated ✅");
+    toast.success("Cart item updated.");
     onClose();
   };
 
@@ -199,7 +199,7 @@ export default function ItemModal({
           )}
         </select>
       </div>
-      {/* 🔹 Preferred Language */}
+      {/* Preferred language */}
       {item.language && item.language.length > 0 && (
         <div className="mb-4">
           <label className="block font-semibold mb-2">
@@ -225,7 +225,7 @@ export default function ItemModal({
         </div>
       )}
 
-      {/* 🔹 Comment */}
+      {/* Comment */}
       <div className="mb-4">
         <label className="block font-semibold mb-2 ">Comment (optional)</label>
         <textarea

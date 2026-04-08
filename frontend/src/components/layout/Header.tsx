@@ -49,7 +49,7 @@ const Header: React.FC = () => {
     }
   };
 
-  // 🔹 Close dropdown on outside click
+  // Close the dropdown on an outside click.
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (

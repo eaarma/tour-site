@@ -37,7 +37,7 @@ export default function SessionOwnershipModal({
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // 🔹 Fetch shop members when modal opens
+  // Fetch shop members when the modal opens.
   useEffect(() => {
     if (!isOpen) return;
 

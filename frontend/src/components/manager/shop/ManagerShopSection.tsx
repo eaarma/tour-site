@@ -135,7 +135,7 @@ export default function ManagerShopSection({ shopId }: Props) {
                 className="w-full text-left px-4 py-2 hover:bg-base-200"
                 onClick={() => {
                   setDropdownOpen(false);
-                  router.push("/shops"); // ✅ Navigate to shops page
+                  router.push("/shops"); // Navigate to the shops page.
                 }}
               >
                 Switch shop

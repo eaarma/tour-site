@@ -36,6 +36,7 @@ public class TourSession {
     private TourSchedule schedule;
 
     @OneToMany(mappedBy = "session")
+    @Builder.Default
     private List<OrderItem> orderItems = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)

@@ -42,14 +42,14 @@ export const TourSessionService = {
       null,
       { params: { status } },
     );
-    return res.data; // ⬅️ important
+    return res.data; // Required for the service contract.
   },
 
   assignManager: async (
     sessionId: number,
     managerId: string | null,
   ): Promise<TourSessionDto> => {
-    // ✅ unassign: don't send the param at all
+    // Unassign by omitting the parameter entirely.
     if (!managerId) {
       const res = await api.patch<TourSessionDto>(
         `/api/sessions/${sessionId}/assign-manager`,
@@ -58,7 +58,7 @@ export const TourSessionService = {
       return res.data;
     }
 
-    // ✅ assign: send managerId
+    // Assign by sending managerId.
     const res = await api.patch<TourSessionDto>(
       `/api/sessions/${sessionId}/assign-manager`,
       null,

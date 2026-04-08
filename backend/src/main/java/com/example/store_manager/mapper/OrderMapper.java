@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class OrderMapper {
 
     private final OrderItemMapper orderItemMapper;
-    private final ObjectMapper objectMapper; // ✅ inject directly
+    private final ObjectMapper objectMapper; // Inject directly.
 
     public Order toEntity(OrderCreateRequestDto dto, User user) {
         return Order.builder()
@@ -44,7 +44,7 @@ public class OrderMapper {
                 .build();
     }
 
-    // ✅ fixed: use injected ObjectMapper
+    // Use the injected ObjectMapper.
     public String toJsonSnapshot(Object tourSnapshot) {
         try {
             return objectMapper.writeValueAsString(tourSnapshot);

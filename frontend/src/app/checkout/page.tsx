@@ -19,7 +19,7 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState("");
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  // ✅ 1. Pre-fill checkout info from logged-in user
+  // Pre-fill checkout info from the logged-in user.
   useEffect(() => {
     const loadUserProfile = async () => {
       try {
@@ -40,7 +40,7 @@ export default function CheckoutPage() {
       } catch (err: unknown) {
         console.warn("User not logged in or failed to fetch profile:", err);
 
-        // ✅ Reset checkout state for logged-out users
+        // Reset checkout state for logged-out users.
         dispatch(
           setCheckoutInfo({
             name: "",

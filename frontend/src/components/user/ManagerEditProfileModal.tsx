@@ -89,7 +89,7 @@ export default function EditProfileModal({
       setSaving(true);
       const updated = await UserService.updateProfile(formData);
 
-      onProfileUpdated(updated); // ✅ live update on parent
+      onProfileUpdated(updated); // Keep the parent state in sync.
       toast.success("Profile updated successfully!");
       onClose();
     } catch (err) {
@@ -175,7 +175,7 @@ export default function EditProfileModal({
             />
           </label>
 
-          {/* ✅ Full width Bio */}
+          {/* Full-width bio */}
           <label className="form-control sm:col-span-2">
             <span className="label-text font-medium">Bio</span>
             <textarea
@@ -187,7 +187,7 @@ export default function EditProfileModal({
             />
           </label>
 
-          {/* ✅ Experience dropdown */}
+          {/* Experience dropdown */}
           <label className="form-control sm:col-span-2">
             <span className="label-text font-medium">Experience</span>
             <select
@@ -208,7 +208,7 @@ export default function EditProfileModal({
             </select>
           </label>
 
-          {/* ✅ Languages dropdown + bubbles */}
+          {/* Languages dropdown and tags */}
           <label className="form-control sm:col-span-2">
             <span className="label-text font-medium">Languages</span>
             <EditableLanguages

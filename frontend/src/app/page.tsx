@@ -24,19 +24,39 @@ export default function Home() {
     const fetchData = async () => {
       try {
         const [randomTours, highlightedTour, hiking, walking] =
-          await Promise.all([
+          await Promise.allSettled([
             TourService.getRandom(8),
             TourService.getHighlighted(),
             TourService.getRandomByCategory("HIKING", 4),
             TourService.getRandomByCategory("WALKING", 4),
           ]);
 
-        setItems(randomTours);
-        setHighlighted(highlightedTour);
+        if (randomTours.status === "fulfilled") {
+          setItems(randomTours.value);
+        } else {
+          console.error("Failed to fetch random tours:", randomTours.reason);
+          setItems([]);
+        }
+
+        if (highlightedTour.status === "fulfilled") {
+          setHighlighted(highlightedTour.value);
+        } else {
+          console.warn(
+            "No highlighted tour available for homepage:",
+            highlightedTour.reason,
+          );
+          setHighlighted(null);
+        }
 
         setCategories([
-          { title: "Hiking Tours", items: hiking },
-          { title: "Walking Tours", items: walking },
+          {
+            title: "Hiking Tours",
+            items: hiking.status === "fulfilled" ? hiking.value : [],
+          },
+          {
+            title: "Walking Tours",
+            items: walking.status === "fulfilled" ? walking.value : [],
+          },
         ]);
       } catch (err) {
         console.error("Failed to fetch home page tours:", err);

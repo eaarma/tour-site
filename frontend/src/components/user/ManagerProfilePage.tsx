@@ -58,7 +58,7 @@ export default function ManagerProfilePage({
     fetchShops();
   }, []);
 
-  // ✅ Fetch sessions assigned to current manager
+  // Fetch sessions assigned to the current manager.
   useEffect(() => {
     const fetchManagerSessions = async () => {
       if (!profile?.id) return;
@@ -130,7 +130,7 @@ export default function ManagerProfilePage({
           totalParticipants={totalParticipants}
         />
 
-        {/* ✅ Sessions section (replaces orderitems section) */}
+        {/* Sessions section */}
         <ManagerProfileSessionSection
           sessions={managerSessions}
           tours={tours}

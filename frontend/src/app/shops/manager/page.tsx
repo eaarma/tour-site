@@ -179,7 +179,7 @@ export default function ShopManagerPage() {
   }
 
   // ============================
-  // ❌ No shopId provided
+  // No shopId was provided.
   // ============================
   if (!shopId) {
     return (
@@ -196,14 +196,14 @@ export default function ShopManagerPage() {
   }
 
   // ============================
-  // 🚫 User is not a member → show Unauthorized component
+  // The user is not a member, so show the Unauthorized component.
   // ============================
   if (access === false) {
     return <Unauthorized />;
   }
 
   // ============================
-  // ✅ Authorized → show manager page
+  // The user is authorized, so show the manager page.
   // ============================
   return (
     <div className="p-6 space-y-8">

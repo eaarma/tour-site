@@ -28,7 +28,7 @@ export default function CartPage() {
         </div>
       )}
 
-      {/* 🔹 Render the modal if user clicked "View" */}
+      {/* Render the modal when the user clicks "View". */}
       {viewItem && (
         <ItemModal
           isOpen={true}

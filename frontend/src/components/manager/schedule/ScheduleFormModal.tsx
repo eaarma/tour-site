@@ -46,7 +46,7 @@ export default function ScheduleFormModal({
     );
   }, [scheduleToEdit]);
 
-  // 🔹 Load tours for dropdown
+  // Load tours for the dropdown.
   useEffect(() => {
     if (!isOpen || !shopId) return;
 
@@ -76,7 +76,7 @@ export default function ScheduleFormModal({
     }
   }, [selectedTourId, tours]);
 
-  // 🔹 Reset state when closing
+  // Reset state when closing.
   useEffect(() => {
     if (!isOpen) {
       setSelectedTourId(null);

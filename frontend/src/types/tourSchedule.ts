@@ -21,6 +21,6 @@ export interface TourScheduleUpdateDto {
   date?: string;
   time?: string;
   maxParticipants?: number;
-  bookedParticipants?: number; // ✅
-  status?: string; // ✅
+  bookedParticipants?: number;
+  status?: string;
 }

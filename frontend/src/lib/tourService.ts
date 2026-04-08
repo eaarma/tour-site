@@ -3,7 +3,7 @@ import api from "./api/axios";
 
 const BASE_URL = "/tours";
 
-// 🔹 Generic page response type from backend
+// Generic page response type from the backend.
 export interface PageResponse<T> {
   content: T[];
   totalPages: number;
@@ -78,7 +78,7 @@ export const TourService = {
     return res.data;
   },
 
-  // 🔹 New: get tours with pagination, filtering, sorting
+  // Get tours with pagination, filtering, and sorting.
   getAllByQuery: async (params: QueryParams): Promise<PageResponse<Tour>> => {
     const res = await api.get(`${BASE_URL}/query`, {
       params,
@@ -87,7 +87,7 @@ export const TourService = {
     return res.data;
   },
 
-  // ✅ fetch random tours for horizontal list
+  // Fetch random tours for the horizontal list.
   async getRandom(count: number = 8): Promise<Tour[]> {
     const res = await api.get(`${BASE_URL}/random`, {
       params: { count },
@@ -96,7 +96,7 @@ export const TourService = {
     return res.data;
   },
 
-  // ✅ fetch random tours by category
+  // Fetch random tours by category.
   async getRandomByCategory(
     category: string,
     count: number = 4,
@@ -108,7 +108,7 @@ export const TourService = {
     return res.data;
   },
 
-  // ✅ fetch a single highlighted tour
+  // Fetch a single highlighted tour.
   async getHighlighted(): Promise<Tour> {
     const res = await api.get(`${BASE_URL}/highlighted`, {
       withCredentials: false,

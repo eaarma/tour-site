@@ -36,7 +36,7 @@ export default function OrderItemCard({ item, onClick }: Props) {
           {item.name}
         </h3>
 
-        {/* 🔹 Scheduled At (Primary Date) */}
+        {/* Scheduled at */}
         <div className="flex items-center gap-2 text-sm text-primary font-medium mt-1">
           <Calendar className="w-4 h-4" />
           {scheduled.toLocaleDateString("en-GB")}{" "}

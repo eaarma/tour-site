@@ -21,7 +21,7 @@ export async function validateSchedulesAgainstCapacity(
 
   const grouped = new Map<number, CartItem[]>();
 
-  // 🔹 Group by schedule
+  // Group items by schedule.
   for (const item of items) {
     if (!grouped.has(item.scheduleId)) {
       grouped.set(item.scheduleId, []);
@@ -33,7 +33,7 @@ export async function validateSchedulesAgainstCapacity(
     try {
       const schedule = await TourScheduleService.getById(scheduleId);
 
-      // ❌ Schedule missing or inactive
+      // Skip schedules that are missing or inactive.
       if (!schedule || schedule.status !== "ACTIVE") {
         issues.push({
           scheduleId,
@@ -44,7 +44,7 @@ export async function validateSchedulesAgainstCapacity(
         continue;
       }
 
-      // ✅ CORRECT availability calculation
+      // Use the available capacity after subtracting existing demand.
       const available =
         (schedule.maxParticipants ?? 0) -
         (schedule.bookedParticipants ?? 0) -

@@ -76,13 +76,12 @@ export default function ManagerOrderSection({ shopId }: Props) {
     setSelectedSessionId(sessionId);
   };
 
-  // 🔹 Fetch orders
+  // Fetch orders.
   const loadOrders = useCallback(async () => {
     if (!shopId) return;
     try {
       setLoading(true);
       const data = await OrderService.getItemsByShopId(shopId);
-      console.log(data.map((o) => o.status));
       setOrderItems(data);
     } catch (err) {
       console.error(err);

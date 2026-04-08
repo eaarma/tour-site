@@ -10,6 +10,9 @@ import com.example.store_manager.model.Payment;
 public interface PaymentMapper {
 
     @Mapping(target = "orderId", source = "order.id")
+    @Mapping(
+            target = "shopAmount",
+            expression = "java(payment.getAmountTotal() != null && payment.getPlatformFee() != null ? payment.getAmountTotal().subtract(payment.getPlatformFee()) : null)")
     PaymentResponseDto toDto(Payment payment);
 
     List<PaymentResponseDto> toDtoList(List<Payment> payments);

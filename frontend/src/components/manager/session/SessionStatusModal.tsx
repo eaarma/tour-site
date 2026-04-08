@@ -61,7 +61,7 @@ export default function SessionStatusModal({
 
       toast.success("Session status updated");
 
-      onUpdated?.(updated); // ⬅️ now correctly typed
+      onUpdated?.(updated); // Keep the callback payload correctly typed.
 
       onClose();
     } catch (err) {

@@ -192,7 +192,7 @@ public class OrderService {
                                                 ApiError.badRequest("Not enough spots available for this schedule"));
                         }
 
-                        // ✅ Inventory mutation
+                        // Update inventory-related schedule counts.
                         if (reserveOnly) {
                                 schedule.setReservedParticipants(
                                                 schedule.getReservedParticipants() + itemDto.getParticipants());
@@ -364,7 +364,7 @@ public class OrderService {
                 }
 
                 // ----------------------------
-                // 1️⃣ Manager / Admin access
+                // Allow manager or admin access.
                 // ----------------------------
                 if (auth != null && auth.isAuthenticated()
                                 && auth.getPrincipal() instanceof CustomUserDetails user) {
@@ -377,14 +377,14 @@ public class OrderService {
                         }
 
                         // ----------------------------
-                        // 2️⃣ Staff access limited to shops on this order
+                        // Limit staff access to shops on this order.
                         // ----------------------------
                         if (hasGuideOrAboveAccessToAllOrderShops(order, user.getId())) {
                                 return Result.ok(orderMapper.toDto(order));
                         }
 
                         // ----------------------------
-                        // 3️⃣ Logged-in user access
+                        // Allow access for the logged-in owner.
                         // ----------------------------
                         if (order.getUser() != null &&
                                         order.getUser().getId().equals(user.getId())) {
@@ -536,14 +536,14 @@ public class OrderService {
                         UUID newManagerId,
                         UUID actingUserId,
                         String actingUserRole) {
-                // 1️⃣ Load order item
+                // Load the order item.
                 OrderItem item = orderItemRepository.findById(itemId).orElse(null);
 
                 if (item == null) {
                         return Result.fail(ApiError.notFound("Order item not found"));
                 }
 
-                // 2️⃣ Authorization check
+                // Check authorization.
                 boolean isAssignedManager = item.getManager() != null &&
                                 item.getManager().getId().equals(actingUserId);
 
@@ -556,7 +556,7 @@ public class OrderService {
                                         "You are not authorized to reassign this order item."));
                 }
 
-                // 3️⃣ Handle unassign
+                // Handle unassign requests.
                 if (newManagerId == null) {
                         item.setManager(null);
                         item.setStatus(OrderStatus.PENDING);
@@ -587,13 +587,13 @@ public class OrderService {
 
                 UUID currentUserId = userDetails.getId();
 
-                // 1️⃣ Manager ID check
+                // Validate managerId.
                 if (!currentUserId.equals(managerId)) {
                         return Result.fail(ApiError.forbidden(
                                         "You cannot confirm on behalf of another manager"));
                 }
 
-                // 2️⃣ Role check
+                // Verify the target user's role.
                 boolean isManager = userDetails.getAuthorities().stream()
                                 .anyMatch(a -> a.getAuthority().equals("ROLE_MANAGER"));
 
@@ -602,7 +602,7 @@ public class OrderService {
                                         "Only managers can confirm orders"));
                 }
 
-                // 3️⃣ ONLY NOW hit the database
+                // Query the database only after validation passes.
                 OrderItem item = orderItemRepository.findById(itemId)
                                 .orElse(null);
 

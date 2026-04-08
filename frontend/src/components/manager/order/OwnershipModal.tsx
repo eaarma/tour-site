@@ -29,7 +29,7 @@ export default function OwnershipModal({
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // 🔹 Fetch members when modal opens
+  // Fetch members when the modal opens.
   useEffect(() => {
     if (!isOpen) return;
     const fetchMembers = async () => {

@@ -54,7 +54,7 @@ export default function ManagerShopSettingsModal({
         bankAccountName: bankAccountName.trim(),
         bankAccountIban: bankAccountIban.trim(),
       });
-      toast.success("Shop updated ✅");
+      toast.success("Shop updated.");
       onShopUpdated(updated);
       onClose();
     } catch (err) {

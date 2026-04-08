@@ -12,7 +12,7 @@ export default function SessionExpiredModal() {
 
   const pathname = usePathname();
 
-  // 🚫 Never show on auth pages
+  // Never show this modal on auth pages.
   if (pathname.startsWith("/auth")) {
     return null;
   }

@@ -161,7 +161,7 @@ export default function BookingModal({
       </h2>
       <p className="mb-4">Price: {item.price} €</p>
 
-      {/* ✅ Reused SchedulePicker */}
+      {/* Reused SchedulePicker */}
       <SchedulePicker
         schedules={localSchedules}
         selectedScheduleId={chosenSchedule?.id}
@@ -195,7 +195,7 @@ export default function BookingModal({
           )}
         </select>
       </div>
-      {/* 🔹 Preferred Language */}
+      {/* Preferred language */}
       {item.language && item.language.length > 0 && (
         <div className="mb-4">
           <label className="block font-semibold mb-2">Language</label>
@@ -221,7 +221,7 @@ export default function BookingModal({
         </div>
       )}
 
-      {/* 🔹 Comment */}
+      {/* Comment */}
       <div className="mb-4">
         <label className="block font-semibold mb-2">Comment (optional)</label>
         <textarea

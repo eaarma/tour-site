@@ -84,7 +84,7 @@ public class AuthService {
             return Result.fail(ApiError.forbidden("Invalid refresh token"));
         }
 
-        // ✅ MUST resolve from DB even if revoked (reuse detection)
+        // Always resolve from the database, even if the token is revoked.
         Result<RefreshToken> tokenResult = refreshTokenService.resolve(refreshToken);
         if (tokenResult.isFail()) {
             return Result.fail(tokenResult.error());
@@ -93,7 +93,7 @@ public class AuthService {
         RefreshToken rt = tokenResult.get();
         User user = rt.getUser();
 
-        // ✅ REUSE DETECTION
+        // Detect refresh token reuse.
         if (rt.isRevoked()) {
             refreshTokenService.revokeAllForUser(user);
             return Result.fail(ApiError.forbidden("Refresh token reuse detected"));
@@ -104,7 +104,7 @@ public class AuthService {
             return Result.fail(ApiError.forbidden("Refresh token expired"));
         }
 
-        // ✅ ROTATE: revoke old, create new
+        // Rotate the token by revoking the old one and creating a new one.
         refreshTokenService.revoke(refreshToken);
 
         String newAccess = jwtService.generateAccessToken(user);

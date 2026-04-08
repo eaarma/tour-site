@@ -37,7 +37,7 @@ public class ReservationService {
                 Instant expiresAt = Instant.now().plus(15, ChronoUnit.MINUTES);
                 UUID token = UUID.randomUUID();
 
-                // ✅ reuse central builder
+                // Reuse the central builder.
                 Result<Order> built = orderService.buildOrder(
                                 dto,
                                 user,

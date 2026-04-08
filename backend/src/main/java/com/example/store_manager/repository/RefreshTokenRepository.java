@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
 
-    // ✅ Used during refresh
+    // Used during token refresh.
     Optional<RefreshToken> findByTokenHashAndRevokedFalse(String tokenHash);
 
     Optional<RefreshToken> findByTokenHash(String tokenHash);

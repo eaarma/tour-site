@@ -82,7 +82,7 @@ public class TourImageService {
                     "Image count mismatch: expected " + images.size()));
         }
 
-        // 🔑 Map imageId → entity
+        // Map imageId to the corresponding entity.
         Map<Long, TourImage> imageMap = images.stream()
                 .collect(Collectors.toMap(TourImage::getId, Function.identity()));
 

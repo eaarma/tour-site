@@ -101,7 +101,7 @@ public class TourScheduleService {
         if (dto.getMaxParticipants() != null)
             schedule.setMaxParticipants(dto.getMaxParticipants());
 
-        // ✅ status derived, never manually set bookedParticipants
+        // Derive the status instead of setting bookedParticipants manually.
         if (schedule.getDate().isBefore(LocalDate.now())) {
             schedule.setStatus("EXPIRED");
         } else if (schedule.getBookedParticipants() >= schedule.getMaxParticipants()) {

@@ -13,9 +13,6 @@ public final class ResultResponseMapper {
             return ResponseEntity.ok(result.get());
         }
 
-        System.out.println("Result isOk: " + result.isOk());
-        System.out.println("Result error: " + result.error());
-
         ApiError error = result.error();
 
         HttpStatus status = switch (error.code()) {

@@ -74,6 +74,7 @@ public class Payment {
     private Long version;
 
     @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<PaymentLine> paymentLines = new ArrayList<>();
 
 }

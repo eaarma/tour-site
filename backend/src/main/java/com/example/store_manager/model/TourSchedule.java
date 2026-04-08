@@ -45,12 +45,14 @@ public class TourSchedule {
     private int maxParticipants;
 
     @Column(nullable = false)
+    @Builder.Default
     private Integer bookedParticipants = 0;
 
     @Column(nullable = false)
     private String status; // ACTIVE, EXPIRED, BOOKED
 
     @Column(name = "reserved_participants", nullable = false)
+    @Builder.Default
     private Integer reservedParticipants = 0;
 
     public int getAvailableParticipants() {

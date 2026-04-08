@@ -53,13 +53,13 @@ public class Tour {
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "tour_categories", joinColumns = @JoinColumn(name = "tour_id"))
-    @Enumerated(EnumType.STRING) // ✅ Store enum as text instead of number
+    @Enumerated(EnumType.STRING) // Store the enum as text instead of a number.
     @Column(name = "category")
     private Set<TourCategory> categories;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "tour_languages", joinColumns = @JoinColumn(name = "tour_id"))
-    @Enumerated(EnumType.STRING) // ✅ Store enum as text instead of number
+    @Enumerated(EnumType.STRING) // Store the enum as text instead of a number.
     @Column(name = "language")
     private Set<String> language;
 
@@ -70,6 +70,7 @@ public class Tour {
     private String meetingPoint;
 
     @OneToMany(mappedBy = "tour", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<TourImage> images = new ArrayList<>();
 
     @ManyToOne

@@ -82,7 +82,7 @@ const FilterMenu: React.FC<FilterMenuProps> = ({
     onChange(emptySelection);
   };
 
-  // ✅ Check if any filter is applied
+  // Check whether any filter is applied.
   const hasFiltersApplied = useMemo(() => {
     return Object.values(selectedFilters).some((set) => set.size > 0);
   }, [selectedFilters]);

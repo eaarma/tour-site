@@ -81,7 +81,7 @@ public class UserService {
             return Result.fail(ApiError.notFound("User not found"));
         }
 
-        // ✅ Apply only provided fields
+        // Apply only the fields provided in the request.
         userMapper.updateUserFromDto(dto, user);
         userRepository.save(user);
 

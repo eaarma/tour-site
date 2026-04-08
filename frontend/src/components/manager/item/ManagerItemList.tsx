@@ -20,7 +20,7 @@ export default function ManagerItemList({
     "active",
   );
 
-  // ✅ Filtering logic
+  // Filtering logic.
   let filteredItems: Tour[] = [];
   if (activeTab === "active") {
     filteredItems = items.filter((i) => i.status === "ACTIVE");
@@ -89,7 +89,7 @@ export default function ManagerItemList({
         )}
       </div>
 
-      {/* ✅ Scrollable grid container */}
+      {/* Scrollable grid container */}
       {filteredItems.length === 0 ? (
         <div className="text-center text-gray-500 m-14">
           No items found for this tab.

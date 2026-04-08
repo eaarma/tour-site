@@ -98,7 +98,7 @@ api.interceptors.response.use(
 
       originalRequest._retry = true;
 
-      // ⏳ If refresh already running, wait
+      // If a refresh is already running, wait for it to finish.
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           addRefreshSubscriber((token: string) => {

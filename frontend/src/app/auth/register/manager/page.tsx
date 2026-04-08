@@ -50,7 +50,7 @@ export default function ManagerRegisterPage() {
     }
   }, [selectedLanguages]);
 
-  // 🔹 Inline validation
+  // Validate the form before submitting.
   const validate = () => {
     const newErrors: Record<string, string> = {};
 
@@ -111,10 +111,9 @@ export default function ManagerRegisterPage() {
     };
 
     try {
-      const user = await AuthService.registerManager(registerData);
-      console.log("Manager registered:", user);
+      await AuthService.registerManager(registerData);
 
-      toast.success("Manager registered successfully ✅");
+      toast.success("Manager registered successfully.");
       router.push("/auth/login");
     } catch (err) {
       console.error(err);
@@ -198,12 +197,12 @@ export default function ManagerRegisterPage() {
               />
 
               {passwordsMatch && (
-                <p className="text-green-600 text-sm mt-1">✓ Passwords match</p>
+                <p className="text-green-600 text-sm mt-1">Passwords match.</p>
               )}
 
               {passwordsMismatch && (
                 <p className="text-red-500 text-sm mt-1">
-                  ✗ Passwords do not match
+                  Passwords do not match.
                 </p>
               )}
 

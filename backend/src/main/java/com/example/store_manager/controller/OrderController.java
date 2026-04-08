@@ -227,7 +227,7 @@ public class OrderController {
                                 orderService.getOrderItemsByUser(userId));
         }
 
-        // 🔹 Guest checkout (no authentication)
+        // Guest checkout does not require authentication.
         @PostMapping("/guest")
         public ResponseEntity<?> createGuestOrder(
                         @RequestBody @Valid OrderCreateRequestDto dto) {

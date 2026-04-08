@@ -47,7 +47,7 @@ export default function UserEditProfileModal({
         nationality,
       });
       setProfile(updated);
-      toast.success("Profile updated successfully ✅");
+      toast.success("Profile updated successfully.");
       onClose();
     } catch (err) {
       console.error(err);

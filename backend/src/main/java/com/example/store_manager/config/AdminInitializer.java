@@ -9,7 +9,6 @@ import com.example.store_manager.model.Role;
 import com.example.store_manager.model.User;
 import com.example.store_manager.repository.UserRepository;
 
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 
 @Component
@@ -28,7 +27,7 @@ public class AdminInitializer {
     @EventListener(ApplicationReadyEvent.class)
     public void initAdmin() {
 
-        // ✅ Skip if not configured
+        // Skip initialization if admin credentials are not configured.
         if (adminEmail.isBlank() || adminPassword.isBlank()) {
             return;
         }
@@ -41,7 +40,6 @@ public class AdminInitializer {
                     .build();
 
             userRepository.save(admin);
-            System.out.println("✅ Admin user created");
         }
     }
 }

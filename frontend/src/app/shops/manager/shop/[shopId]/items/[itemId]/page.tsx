@@ -58,7 +58,7 @@ export default function ManagerItemPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // ✅ Load item only if editing existing
+  // Load the item only when editing an existing tour.
   useEffect(() => {
     if (isNew) return;
 
@@ -136,7 +136,7 @@ export default function ManagerItemPage() {
 
     try {
       if (isNew) {
-        // ✅ CREATE NEW TOUR
+        // Create a new tour.
         const dto: TourCreateDto = {
           shopId: form.shopId!,
           title: form.title!,
@@ -166,7 +166,7 @@ export default function ManagerItemPage() {
         // The page stays on the same route (itemId is still "new")
         router.replace(`/shops/manager/shop/${shopId}/items/${created.id}`);
       } else if (item) {
-        // ✅ UPDATE EXISTING TOUR
+        // Update the existing tour.
         const dto: TourUpdateDto = {
           shopId: item.shopId,
           title: form.title!,
@@ -216,7 +216,7 @@ export default function ManagerItemPage() {
         </h1>
 
         <div className="flex gap-2">
-          {/* ✅ Back Button */}
+          {/* Back button */}
           <button
             onClick={() => router.push(`/shops/manager?shopId=${shopId}`)}
             className="btn btn-md btn-outline flex items-center gap-1"
@@ -247,7 +247,7 @@ export default function ManagerItemPage() {
       {/* Main card */}
       <div className="max-w-5xl mx-auto card bg-base-100 shadow-lg p-6">
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* ✅ TOUR IMAGES SECTION */}
+          {/* Tour images section */}
           <div className="lg:w-1/2 flex flex-col gap-4">
             {isNew ? (
               <div className="border border-base-300 rounded-xl p-6 text-sm text-muted-foreground bg-base-200">

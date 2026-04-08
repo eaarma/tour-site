@@ -4,8 +4,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentExpirationService {
 
     private final PaymentRepository paymentRepository;
-    private final Logger log = LoggerFactory.getLogger(PaymentExpirationService.class);
 
     @Transactional
     public void expirePendingPayments() {

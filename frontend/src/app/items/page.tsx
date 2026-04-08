@@ -31,7 +31,7 @@ export default function ItemsPage() {
 
   const sort = params.get("sort") || "title,asc";
 
-  // 🔑 stable key for all search params
+  // Keep a stable key for all search params.
   const searchKey = params.toString();
 
   useEffect(() => {

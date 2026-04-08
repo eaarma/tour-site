@@ -105,7 +105,7 @@ export default function ManagerSessionSection({ tours, shopId }: Props) {
     return participants.some((p) => isActiveOrder(p.status));
   });
 
-  // 🔹 Tab logic
+  // Tab logic.
   if (activeTab === "today") {
     const start = new Date();
     start.setHours(0, 0, 0, 0);

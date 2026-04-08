@@ -29,7 +29,7 @@ interface AdminOrderParams {
 }
 
 export const OrderService = {
-  // 🔹 Fetch a specific order, filtered by guest or user
+  // Fetch a specific order, filtered by guest or user.
   getById: async (id: string, token?: string): Promise<OrderResponseDto> => {
     const url = token ? `/orders/${id}?token=${token}` : `/orders/${id}`;
 
@@ -52,7 +52,7 @@ export const OrderService = {
     return res.data;
   },
 
-  // 🔹 Create new order (auto-selects endpoint)
+  // Create a new order. The service chooses the correct endpoint.
   create: async (
     data: OrderCreateRequestDto,
     isGuest: boolean = false,
@@ -64,7 +64,7 @@ export const OrderService = {
     return res.data;
   },
 
-  // 🔹 Update entire order (rare)
+  // Update an entire order.
   update: async (
     id: string,
     data: OrderCreateRequestDto,
@@ -75,7 +75,7 @@ export const OrderService = {
     return res.data;
   },
 
-  // 🔹 Fetch a specific order item by ID
+  // Fetch a specific order item by ID.
   getShopOrderItemById: async (
     itemId: number,
   ): Promise<OrderItemResponseDto> => {
@@ -85,7 +85,7 @@ export const OrderService = {
     return res.data;
   },
 
-  // 🔹 Fetch all order items for a specific shop
+  // Fetch all order items for a specific shop.
   getItemsByShopId: async (shopId: number): Promise<OrderItemResponseDto[]> => {
     const res = await api.get(`${BASE_URL}/shop/${shopId}/items`, {
       withCredentials: true,
@@ -93,7 +93,7 @@ export const OrderService = {
     return res.data;
   },
 
-  // 🔹 Fetch order items assigned to a specific manager
+  // Fetch order items assigned to a specific manager.
   getItemsByManagerId: async (
     managerId: string,
   ): Promise<OrderItemResponseDto[]> => {
@@ -103,7 +103,7 @@ export const OrderService = {
     return res.data;
   },
 
-  // 🔹 Update item status
+  // Update an item status.
   updateItemStatus: async (
     itemId: number,
     status:
@@ -121,7 +121,7 @@ export const OrderService = {
     return res.data;
   },
 
-  // 🔹 Assign/reassign to manager
+  // Assign or reassign an item to a manager.
   reassignManager: async (
     itemId: number,
     managerId: string | null,
@@ -134,7 +134,7 @@ export const OrderService = {
     return res.data;
   },
 
-  // 🔹 Confirm & assign in one step
+  // Confirm and assign in one step.
   confirmOrderItem: async (
     itemId: number,
     managerId: string,
@@ -147,7 +147,7 @@ export const OrderService = {
     return res.data;
   },
 
-  // 🔹 Fetch items for a user
+  // Fetch items for a user.
   getOrderItemsByUserId: async (userId: string) => {
     const res = await api.get(`${BASE_URL}/user/${userId}/items`, {
       withCredentials: true,

@@ -47,7 +47,7 @@ export default function TourImageGallery({
 
   return (
     <div className="flex flex-col gap-3 min-w-0">
-      {/* ✅ Main Image */}
+      {/* Main image */}
       <div className="w-full">
         <img
           src={mainImage}
@@ -63,7 +63,7 @@ export default function TourImageGallery({
         />
       </div>
 
-      {/* ✅ Thumbnails */}
+      {/* Thumbnails */}
       {images.length > 1 && (
         <div
           ref={scrollRef}

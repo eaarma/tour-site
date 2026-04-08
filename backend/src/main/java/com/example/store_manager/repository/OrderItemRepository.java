@@ -35,7 +35,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
             """)
     List<OrderItem> findByUserId(@Param("userId") UUID userId);
 
-    // ✅ Correct path + ✅ named param
+    // Use the correct path and named parameter.
     @Query("""
                 SELECT oi.tour.shop.id
                 FROM OrderItem oi
