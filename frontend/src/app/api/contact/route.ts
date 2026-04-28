@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
 
 export async function POST(req: Request) {
   try {
@@ -12,30 +11,41 @@ export async function POST(req: Request) {
       );
     }
 
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT),
-      secure: false, // TLS (587)
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "");
+
+    if (!apiBaseUrl) {
+      console.error(
+        "Contact Form Error: NEXT_PUBLIC_API_BASE_URL is not configured",
+      );
+
+      return NextResponse.json(
+        { error: "Contact service is not configured." },
+        { status: 500 },
+      );
+    }
+
+    const response = await fetch(`${apiBaseUrl}/contact`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        email,
+        subject,
+        message,
+      }),
     });
 
-    await transporter.sendMail({
-      from: `"${name}" <${email}>`,
-      to: process.env.CONTACT_RECEIVER,
-      subject: subject || "New Contact Message",
-      html: `
-        <h2>New Message from Contact Form</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Subject:</strong> ${subject || "No subject"}</p>
-        <p><strong>Message:</strong><br/>${message.replace(/\n/g, "<br/>")}</p>
-      `,
-    });
+    const data = (await response.json().catch(() => null)) as
+      | { error?: string; success?: boolean }
+      | null;
 
-    return NextResponse.json({ success: true }, { status: 200 });
+    return NextResponse.json(
+      data ??
+        (response.ok
+          ? { success: true }
+          : { error: "Failed to send message." }),
+      { status: response.status },
+    );
   } catch (error) {
     console.error("Contact Form Error: ", error);
     return NextResponse.json(

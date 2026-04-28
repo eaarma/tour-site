@@ -23,7 +23,7 @@ export default function ContactPage() {
     }
 
     try {
-      await fetch("/api/contact", {
+      const response = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -34,6 +34,14 @@ export default function ContactPage() {
         }),
       });
 
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+
+        throw new Error(data?.error || "Failed to send message");
+      }
+
       toast.success("Message sent successfully!");
       setName("");
       setEmail("");
@@ -42,6 +50,7 @@ export default function ContactPage() {
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : "Failed to send message";
+      setErrorMessage(message);
       toast.error(message);
     } finally {
       setIsSubmitting(false);

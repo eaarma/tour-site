@@ -36,3 +36,4 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD:-store_manager}
 
       JWT_SECRET: ${JWT_SECRET:-dev-secret-do-not-use-in-prod}
+      CONTACT_RECEIVER: ${CONTACT_RECEIVER:-sprtcontactline@gmail.com}

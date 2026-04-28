@@ -173,10 +173,6 @@ public class PaymentService {
 
         Order order = payment.getOrder();
 
-        // =============================
-        // EXISTING SCHEDULE LOGIC
-        // =============================
-
         for (OrderItem item : order.getOrderItems()) {
             TourSchedule schedule = tourScheduleRepository
                     .findByIdForUpdate(item.getSchedule().getId())

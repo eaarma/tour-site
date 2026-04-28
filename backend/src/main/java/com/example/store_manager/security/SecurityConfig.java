@@ -61,6 +61,7 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/auth/me").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/contact").permitAll()
 
                         // Stripe / Checkout
                         .requestMatchers("/checkout/stripe/**").permitAll()

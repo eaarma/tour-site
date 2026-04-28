@@ -1,9 +1,5 @@
 {
-  "folders": [
-    { "path": "." }, // 👈 parent (git root)
-    { "path": "backend" },
-    { "path": "frontend" },
-  ],
+  "folders": [{ "path": "." }, { "path": "backend" }, { "path": "frontend" }],
   "settings": {
     "java.configuration.updateBuildConfiguration": "interactive",
   },

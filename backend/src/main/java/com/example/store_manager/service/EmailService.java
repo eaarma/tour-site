@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.web.util.HtmlUtils;
 
 import com.example.store_manager.model.Order;
 import com.example.store_manager.model.OrderItem;
@@ -22,6 +23,8 @@ public class EmailService {
     private final ResendClient resendClient;
     @Value("${app.frontend-base-url:http://localhost:3000}")
     private String frontendBaseUrl;
+    @Value("${app.contact.receiver-email:}")
+    private String contactReceiver;
 
     public void sendOrderConfirmation(Order order, String manageToken) {
         OrderItem firstItem = order.getOrderItems().stream()
@@ -267,6 +270,7 @@ public class EmailService {
                                                 %s
                                             </h3>
                                             <p style="margin:6px 0; font-size:14px; color:#374151;">
+                                                <strong>Order Number:</strong> #%d<br/>
                                                 <strong>Date:</strong> %s<br/>
                                                 <strong>Participants:</strong> %d
                                             </p>
@@ -291,6 +295,7 @@ public class EmailService {
                 """.formatted(
                 item.getName(),
                 item.getTourTitle(),
+                item.getOrder().getId(),
                 formattedDate,
                 item.getParticipants(),
                 refundSection);
@@ -519,5 +524,63 @@ public class EmailService {
                 formattedDate,
                 item.getParticipants(),
                 refundAmount);
+    }
+
+    public void sendContactMessage(String name, String email, String subject, String message) {
+        if (contactReceiver == null || contactReceiver.isBlank()) {
+            throw new IllegalStateException("Contact receiver email is not configured.");
+        }
+
+        String normalizedName = name.trim();
+        String normalizedEmail = email.trim();
+        String normalizedSubject = subject != null && !subject.isBlank()
+                ? subject.trim()
+                : "New Contact Message";
+
+        String escapedName = HtmlUtils.htmlEscape(normalizedName);
+        String escapedEmail = HtmlUtils.htmlEscape(normalizedEmail);
+        String escapedSubject = HtmlUtils.htmlEscape(normalizedSubject);
+        String escapedMessage = HtmlUtils.htmlEscape(message.trim()).replace("\n", "<br/>");
+
+        String html = """
+                <html>
+                <body style="margin:0; padding:0; background-color:#ffffff; font-family:Arial, sans-serif;">
+                    <table width="100%%" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td align="center">
+                                <table width="600" cellpadding="0" cellspacing="0"
+                                       style="background:#ffffff; padding:30px; border-radius:8px;">
+                                    <tr>
+                                        <td align="center" style="padding-bottom:20px;">
+                                            <h2 style="margin:0; color:#111827;">New Contact Message</h2>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-size:14px; color:#374151; line-height:1.6;">
+                                            <p><strong>Name:</strong> %s</p>
+                                            <p><strong>Email:</strong> %s</p>
+                                            <p><strong>Subject:</strong> %s</p>
+                                            <p><strong>Message:</strong><br/>%s</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+                """.formatted(
+                escapedName,
+                escapedEmail,
+                escapedSubject,
+                escapedMessage);
+
+        resendClient.sendEmail(
+                contactReceiver.trim(),
+                "Contact Form: " + normalizedSubject,
+                html,
+                normalizedEmail);
+
+        log.info("Contact form email forwarded from {}", normalizedEmail);
     }
 }

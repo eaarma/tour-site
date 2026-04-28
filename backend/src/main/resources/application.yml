@@ -51,6 +51,8 @@ app:
   admin:
     email: ${APP_ADMIN_EMAIL:}
     password: ${APP_ADMIN_PASSWORD:}
+  contact:
+    receiver-email: ${CONTACT_RECEIVER:}
   endpoint:
     prometheus:
       enabled: true
