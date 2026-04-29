@@ -72,7 +72,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen sm:py-4 mb-6">
       <div className="w-full mt-0 space-y-6 sm:mt-4 px-2 sm:px-4 md:px-0">
         <div className="full-bleed sm:page-container mt-0 sm:mt-6 mb-40 sm:mb-12">
-          <WelcomeImage imageUrl="/images/background.jpg">
+          <WelcomeImage imageUrl="/images/welcome_image.png">
             <SearchBar redirectOnSearch />
           </WelcomeImage>
         </div>
