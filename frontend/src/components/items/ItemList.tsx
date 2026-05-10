@@ -4,7 +4,7 @@ import React from "react";
 import ItemCard from "./ItemCard";
 import ItemCardSkeleton from "./ItemCardSkeleton";
 import { Tour } from "@/types";
-import { PageResponse } from "@/lib/tourService";
+import { PageResponse } from "@/lib/tours/tourService";
 
 interface ItemListProps {
   pageData?: PageResponse<Tour>;
@@ -79,3 +79,4 @@ const ItemList: React.FC<ItemListProps> = ({
 };
 
 export default ItemList;
+

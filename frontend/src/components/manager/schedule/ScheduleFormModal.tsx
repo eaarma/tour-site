@@ -5,8 +5,8 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import CustomDateInput from "@/components/common/CustomDateInput";
 import { useEffect, useState } from "react";
-import { TourScheduleService } from "@/lib/tourScheduleService";
-import { TourService } from "@/lib/tourService";
+import { TourScheduleService } from "@/lib/tours/tourScheduleService";
+import { TourService } from "@/lib/tours/tourService";
 import { Tour } from "@/types";
 import toast from "react-hot-toast";
 import { TourScheduleResponseDto } from "@/types/tourSchedule";
@@ -228,3 +228,4 @@ export default function ScheduleFormModal({
     </Modal>
   );
 }
+

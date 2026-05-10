@@ -8,7 +8,7 @@ import SchedulePicker from "./SchedulePicker";
 import { useDispatch } from "react-redux";
 import { updateItemSchedule } from "@/store/cartSlice";
 import toast from "react-hot-toast";
-import { TourScheduleService } from "@/lib/tourScheduleService";
+import { TourScheduleService } from "@/lib/tours/tourScheduleService";
 import { useRouter } from "next/navigation";
 
 interface Props {
@@ -256,3 +256,4 @@ export default function ItemModal({
     </Modal>
   );
 }
+

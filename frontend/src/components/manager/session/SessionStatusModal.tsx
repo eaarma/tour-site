@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Modal from "@/components/common/Modal";
 import { SessionStatus, TourSessionDto } from "@/types/tourSession";
 import toast from "react-hot-toast";
-import { TourSessionService } from "@/lib/tourSessionService";
+import { TourSessionService } from "@/lib/tours/tourSessionService";
 
 interface Props {
   isOpen: boolean;
@@ -114,3 +114,4 @@ export default function SessionStatusModal({
     </Modal>
   );
 }
+

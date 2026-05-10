@@ -3,8 +3,8 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Tour } from "@/types";
-import { TourService } from "@/lib/tourService";
-import { TourScheduleService } from "@/lib/tourScheduleService";
+import { TourService } from "@/lib/tours/tourService";
+import { TourScheduleService } from "@/lib/tours/tourScheduleService";
 import { TourScheduleResponseDto } from "@/types/tourSchedule";
 import BookingModal from "@/components/items/BookingModal";
 import { formatDuration } from "@/utils/formatDuration";
@@ -351,3 +351,4 @@ export default function ItemPage() {
     </div>
   );
 }
+

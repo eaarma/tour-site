@@ -5,3 +5,6 @@ export * from "./tour";
 export * from "./order";
 export * from "./checkout";
 export * from "./cart";
+export * from "./homepage";
+export * from "./storePage";
+export * from "./storePageEditor";

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { UserResponseDto } from "@/types";
-import { UserService } from "@/lib/userService";
-import ManagerProfilePage from "./ManagerProfilePage";
-import UserProfilePage from "./UserProfilePage";
+import { UserService } from "@/lib/users/userService";
+import ManagerProfilePage from "./managerProfile/ManagerProfilePage";
+import UserProfilePage from "./userProfile/UserProfilePage";
 
 export function UserPageContent() {
   const [profile, setProfile] = useState<UserResponseDto | null>(null);
@@ -16,16 +16,43 @@ export function UserPageContent() {
       setProfile(data);
       setLoading(false);
     };
+
     fetchProfile();
   }, []);
 
   if (loading) {
-    return <div className="p-6">Loading profile...</div>;
+    return (
+      <main className="min-h-screen px-4 py-8">
+        <div className="mx-auto max-w-3xl">
+          <div className="rounded-[28px] border border-base-300 bg-base-100 px-6 py-16 text-center shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:px-8">
+            <span className="loading loading-spinner loading-lg text-primary" />
+            <p className="mt-5 text-lg font-semibold text-base-content">
+              Loading profile
+            </p>
+            <p className="mt-2 text-sm text-base-content/60">
+              We&apos;re preparing your account details.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
   }
 
-  // At this point, user IS authenticated by RequireAuth
   if (!profile) {
-    return <div className="p-6">Failed to load profile.</div>;
+    return (
+      <main className="min-h-screen px-4 py-8">
+        <div className="mx-auto max-w-3xl">
+          <div className="rounded-[28px] border border-base-300 bg-base-100 px-6 py-16 text-center shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:px-8">
+            <p className="text-lg font-semibold text-base-content">
+              Failed to load profile
+            </p>
+            <p className="mt-2 text-sm text-base-content/60">
+              Please refresh the page and try again.
+            </p>
+          </div>
+        </div>
+      </main>
+    );
   }
 
   return profile.role === "MANAGER" ? (
@@ -34,3 +61,4 @@ export function UserPageContent() {
     <UserProfilePage profile={profile} setProfile={setProfile} />
   );
 }
+

@@ -1,7 +1,7 @@
 "use client";
 
 import { ShopUserDto } from "@/types";
-import { ShopUserService } from "@/lib/shopUserService";
+import { ShopUserService } from "@/lib/shops/shopUserService";
 import toast from "react-hot-toast";
 import Modal from "@/components/common/Modal";
 
@@ -89,3 +89,4 @@ export default function ManagerPendingRequestsModal({
     </Modal>
   );
 }
+

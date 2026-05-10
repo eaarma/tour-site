@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import type { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
-import { BookingService } from "@/lib/bookingService";
+import { BookingService } from "@/lib/orders/bookingService";
 import { OrderItemResponseDto, OrderStatus } from "@/types/order";
 import { CancellationReasonType } from "@/types/cancellation";
 import toast from "react-hot-toast";
@@ -202,3 +202,4 @@ export default function ManageOrderItemCard({
     </>
   );
 }
+

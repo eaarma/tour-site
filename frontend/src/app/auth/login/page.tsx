@@ -1,22 +1,24 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { AuthService } from "@/lib/authService";
-import { useDispatch, useSelector } from "react-redux";
-import { clearUser, setAuth } from "@/store/authSlice";
 import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+
+import AuthPageShell from "@/components/auth/AuthPageShell";
+import { AuthService } from "@/lib/auth/authService";
 import api from "@/lib/api/axios";
-import { RootState } from "@/store/store";
-import { clearExpired } from "@/store/sessionSlice";
 import { ApiError } from "@/lib/api/ApiError";
+import { clearUser, setAuth } from "@/store/authSlice";
+import { clearExpired } from "@/store/sessionSlice";
+import { RootState } from "@/store/store";
 
 export default function LoginPage() {
   const router = useRouter();
   const dispatch = useDispatch();
   const searchParams = useSearchParams();
-
-  const user = useSelector((state: RootState) => state.auth.user); // <-- logged-in check
+  const pathname = usePathname();
+  const user = useSelector((state: RootState) => state.auth.user);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,9 +26,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [needsVerification, setNeedsVerification] = useState(false);
   const toastShown = useRef(false);
-  const pathname = usePathname();
 
-  // Redirect toast
   useEffect(() => {
     if (toastShown.current) return;
 
@@ -37,6 +37,13 @@ export default function LoginPage() {
       router.replace("/auth/login");
     }
   }, [searchParams, router]);
+
+  const loggedInRedirect = useMemo(() => {
+    if (!user) return "/";
+    if (user.role === "ADMIN") return "/admin";
+    if (user.role === "MANAGER") return "/shops";
+    return "/user";
+  }, [user]);
 
   const handleLogout = async () => {
     dispatch(clearUser());
@@ -73,51 +80,26 @@ export default function LoginPage() {
     }
   };
 
-  if (user) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="card bg-base-100 shadow-lg p-8 max-w-md w-full text-center space-y-4">
-          <h2 className="text-2xl font-bold">You are already logged in</h2>
-          <p className="opacity-80">
-            Log out or navigate back to the home page.
-          </p>
-          <div className="flex flex-col gap-3 mt-4">
-            <button className="btn btn-error" onClick={() => handleLogout()}>
-              Log Out
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={() => router.push("/")}
-            >
-              Go to Home
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
     setLoading(true);
     setError(null);
     setNeedsVerification(false);
 
     try {
-      const { accessToken, user } = await AuthService.login({
+      const { accessToken, user: authenticatedUser } = await AuthService.login({
         email,
         password,
       });
 
-      dispatch(setAuth({ user, accessToken }));
+      dispatch(setAuth({ user: authenticatedUser, accessToken }));
       dispatch(clearExpired());
 
       let redirect = "/user";
 
-      if (user.role === "ADMIN") {
+      if (authenticatedUser.role === "ADMIN") {
         redirect = "/admin";
-      } else if (user.role === "MANAGER") {
+      } else if (authenticatedUser.role === "MANAGER") {
         redirect = "/shops";
       }
 
@@ -139,83 +121,137 @@ export default function LoginPage() {
     }
   };
 
-  return (
-    <div className="flex flex-col items-center justify-start min-h-screen pt-24 px-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="card bg-base-100 p-8 rounded-xl border border-base-300 shadow-lg">
-          <h2 className="text-2xl font-bold mb-4">User Login</h2>
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
-            <input
-              type="email"
-              placeholder="Email"
-              className="input input-bordered w-full"
-              required
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setNeedsVerification(false); // reset verification hint
-              }}
-            />
+  if (user) {
+    return (
+      <AuthPageShell
+        formEyebrow="Signed In"
+        formTitle="You are already logged in"
+        formDescription="You already have an active session. You can continue to your dashboard, return home, or log out from here."
+      >
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm leading-6 text-base-content/70">
+            Signed in as{" "}
+            <span className="font-semibold text-base-content">
+              {user.email}
+            </span>
+            .
+          </div>
 
-            <div className="flex flex-col gap-1">
-              <input
-                type="password"
-                placeholder="Password"
-                className="input input-bordered w-full"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-
-              <button
-                type="button"
-                onClick={() => router.push("/auth/forgot-password")}
-                className="text-xs text-primary hover:underline text-left mt-2 mb-1"
-              >
-                Forgot your password?
-              </button>
-            </div>
-
+          <div className="flex flex-col gap-3">
             <button
-              className={`btn btn-primary w-full ${loading ? "loading" : ""}`}
-              type="submit"
-              disabled={loading}
+              className="btn btn-primary h-12 w-full"
+              onClick={() => router.push(loggedInRedirect)}
             >
-              {loading ? "Logging in..." : "Login"}
+              Continue to Dashboard
             </button>
-          </form>
-
-          {error && <p className="text-error text-sm mt-2">{error}</p>}
-
-          {needsVerification && (
-            <div className="text-sm text-muted-foreground mt-2 flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={handleResendVerification}
-                className="text-primary hover:underline text-left text-xs"
-              >
-                Resend verification email
-              </button>
-            </div>
-          )}
-
-          <div className="mt-10 flex flex-col gap-3">
             <button
-              className="btn btn-outline w-full"
-              onClick={() => router.push("/auth/register/user")}
+              className="btn btn-outline h-12 w-full"
+              onClick={handleLogout}
             >
-              Register
+              Log Out
             </button>
-
             <button
-              className="btn btn-outline w-full"
-              onClick={() => router.push("/auth/register/manager")}
+              className="btn btn-ghost h-12 w-full"
+              onClick={() => router.push("/")}
             >
-              Become a tour guide
+              Go to Home
             </button>
           </div>
         </div>
+      </AuthPageShell>
+    );
+  }
+
+  return (
+    <AuthPageShell
+      formEyebrow="Welcome Back"
+      formTitle="Sign in to your account"
+      formDescription="Access your bookings, profile tools, and role-based dashboard from one secure sign-in."
+    >
+      <form onSubmit={handleLogin} className="space-y-5">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-base-content/80">
+            Email
+          </label>
+          <input
+            type="email"
+            placeholder="you@example.com"
+            className="input input-bordered h-12 w-full bg-base-100"
+            required
+            value={email}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              setNeedsVerification(false);
+            }}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <label className="text-sm font-medium text-base-content/80">
+              Password
+            </label>
+          </div>
+          <input
+            type="password"
+            placeholder="Enter your password"
+            className="input input-bordered h-12 w-full bg-base-100"
+            required
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />{" "}
+          <button
+            type="button"
+            onClick={() => router.push("/auth/forgot-password")}
+            className="text-sm text-primary hover:underline"
+          >
+            Forgot password?
+          </button>
+        </div>
+
+        {error && (
+          <div className="rounded-2xl border border-error/20 bg-error/5 p-4 text-sm leading-6 text-error">
+            {error}
+          </div>
+        )}
+
+        {needsVerification && (
+          <div className="rounded-2xl border border-warning/20 bg-warning/10 p-4 text-sm leading-6 text-base-content/70">
+            Your account still needs verification before login.
+            <button
+              type="button"
+              onClick={handleResendVerification}
+              className="mt-3 block font-medium text-primary hover:underline"
+            >
+              Resend verification email
+            </button>
+          </div>
+        )}
+
+        <button
+          className="btn btn-primary h-12 w-full text-base"
+          type="submit"
+          disabled={loading}
+        >
+          {loading ? "Signing in..." : "Sign In"}
+        </button>
+      </form>
+
+      <div className="mt-8 grid gap-3 sm:grid-cols-2">
+        <button
+          className="btn btn-outline h-12 w-full"
+          onClick={() => router.push("/auth/register/user")}
+        >
+          Create User Account
+        </button>
+        <button
+          className="btn btn-outline h-12 w-full"
+          onClick={() => router.push("/auth/register/manager")}
+        >
+          Become a Tour Guide
+        </button>
       </div>
-    </div>
+    </AuthPageShell>
   );
 }
+

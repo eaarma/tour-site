@@ -1,213 +1,238 @@
 "use client";
 
-import { FilterCategory } from "@/types/types";
-import { useState, useMemo, useEffect } from "react";
-import { Listbox } from "@headlessui/react";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, ChevronDown, SlidersHorizontal, X } from "lucide-react";
+
+import { FilterCategory, FilterOption } from "@/types/types";
 
 interface FilterMenuProps {
   filters: FilterCategory[];
-  selected: Record<string, string[]>; // from URL (parent)
-  onChange: (selection: Record<string, string[]>) => void; // tell parent to update URL
+  selected: Record<string, string[]>;
+  onChange: (selection: Record<string, string[]>) => void;
 }
 
-const FilterMenu: React.FC<FilterMenuProps> = ({
+type NormalizedFilter = {
+  key: string;
+  label: string;
+  options: FilterOption[];
+};
+
+export default function FilterMenu({
   filters,
-  onChange,
   selected,
-}) => {
-  const [selectedFilters, setSelectedFilters] = useState<
-    Record<string, Set<string>>
-  >(() => {
-    const initial: Record<string, Set<string>> = {};
-    filters.forEach((f) => {
-      initial[f.key] = new Set();
-    });
-    return initial;
-  });
+  onChange,
+}: FilterMenuProps) {
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const normalizedFilters = useMemo<NormalizedFilter[]>(
+    () =>
+      filters.map((filter) => ({
+        key: filter.key,
+        label: filter.label,
+        options: filter.options.map((option) =>
+          typeof option === "string"
+            ? { label: option, value: option }
+            : option,
+        ),
+      })),
+    [filters],
+  );
 
   useEffect(() => {
-    const next: Record<string, Set<string>> = {};
-
-    filters.forEach((f) => {
-      next[f.key] = new Set(selected[f.key] || []);
-    });
-
-    setSelectedFilters(next);
-  }, [selected, filters]);
-
-  const emitChange = (next: Record<string, Set<string>>) => {
-    const plain: Record<string, string[]> = {};
-    Object.entries(next).forEach(([k, v]) => {
-      plain[k] = Array.from(v);
-    });
-    onChange(plain);
-  };
-
-  const toggleFilter = (key: string, value: string) => {
-    setSelectedFilters((prev) => {
-      const updated = new Set(prev[key]);
-
-      if (updated.has(value)) {
-        updated.delete(value);
-      } else {
-        updated.add(value);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setOpenKey(null);
       }
+    };
 
-      const next = {
-        ...prev,
-        [key]: updated,
-      };
+    document.addEventListener("mousedown", handleClickOutside);
 
-      emitChange(next);
-      return next;
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const toggleValue = (key: string, value: string) => {
+    const currentValues = new Set(selected[key] ?? []);
+
+    if (currentValues.has(value)) {
+      currentValues.delete(value);
+    } else {
+      currentValues.add(value);
+    }
+
+    onChange({
+      ...selected,
+      [key]: Array.from(currentValues),
     });
   };
 
-  const isSelected = (key: string, option: string) =>
-    selectedFilters[key]?.has(option) ?? false;
+  const clearFilterGroup = (key: string) => {
+    onChange({
+      ...selected,
+      [key]: [],
+    });
+  };
 
   const clearAllFilters = () => {
-    const cleared: Record<string, Set<string>> = {};
-    filters.forEach((f) => {
-      cleared[f.key] = new Set();
-    });
-    setSelectedFilters(cleared);
-
-    // also notify parent that all filters are cleared
     const emptySelection: Record<string, string[]> = {};
-    filters.forEach((f) => {
-      emptySelection[f.key] = [];
+
+    normalizedFilters.forEach((filter) => {
+      emptySelection[filter.key] = [];
     });
+
     onChange(emptySelection);
   };
 
-  // Check whether any filter is applied.
-  const hasFiltersApplied = useMemo(() => {
-    return Object.values(selectedFilters).some((set) => set.size > 0);
-  }, [selectedFilters]);
+  const activeSelections = normalizedFilters.flatMap((filter) =>
+    (selected[filter.key] ?? []).map((value) => {
+      const option = filter.options.find((item) => item.value === value);
+
+      return {
+        filterKey: filter.key,
+        filterLabel: filter.label,
+        label: option?.label ?? value,
+        value,
+      };
+    }),
+  );
+
+  const hasFiltersApplied = activeSelections.length > 0;
 
   return (
-    <div className="w-full px-2 sm:px-4 mt-4">
-      <h2 className="text-lg font-semibold mb-4">Filter</h2>
+    <section className="space-y-4" ref={containerRef}>
+      <div className="flex items-center justify-between gap-4">
+        <div className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-base-content/60">
+          <SlidersHorizontal className="h-4 w-4 text-primary" />
+          Filters
+        </div>
 
-      {/* Dropdown filters */}
-      <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-row sm:flex-nowrap">
-        {filters.map((filter) => (
-          <div key={filter.key} className="w-full sm:w-48">
-            <Listbox
-              value={Array.from(selectedFilters[filter.key] || [])}
-              onChange={(values: string[]) => {
-                setSelectedFilters((prev) => {
-                  const next = {
-                    ...prev,
-                    [filter.key]: new Set(values),
-                  };
-                  emitChange(next);
-                  return next;
-                });
-              }}
-              multiple
-            >
-              {({ open }) => (
-                <div className="relative">
-                  <Listbox.Button
-                    className={`
-          w-full rounded px-3 py-2 text-left text-sm shadow
-          flex justify-between items-center
-          bg-base-100
-          border transition-colors
-          rounded-xl
-          hover:border-border hover:outline-none hover:ring-2 hover:ring-ring/20 hover:ring-primary/30
-
-          ${open ? "border-primary ring-2 ring-primary" : "border-base-300"}
-
-          hover:border-primary
-        `}
-                  >
-                    <span className="truncate font-semibold">
-                      {filter.label}
-                    </span>
-                    <ChevronUpDownIcon
-                      className={`h-4 w-4 ml-2 transition-colors ${
-                        open ? "text-primary" : "text-neutral"
-                      }`}
-                    />
-                  </Listbox.Button>
-
-                  <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-xl bg-base-100 text-neutral shadow-lg border text-sm">
-                    {filter.options.map((opt) => {
-                      const label = typeof opt === "string" ? opt : opt.label;
-                      const value = typeof opt === "string" ? opt : opt.value;
-
-                      return (
-                        <Listbox.Option
-                          key={value}
-                          value={value}
-                          className={({ active }) =>
-                            `cursor-pointer select-none relative px-4 py-2 flex items-center gap-2 ${
-                              active ? "bg-blue-400" : ""
-                            }`
-                          }
-                        >
-                          <div className="w-4 h-4 flex items-center justify-center">
-                            {isSelected(filter.key, value) && (
-                              <CheckIcon className="h-4 w-4 text-blue-600" />
-                            )}
-                          </div>
-                          <span>{label}</span>
-                        </Listbox.Option>
-                      );
-                    })}
-                  </Listbox.Options>
-                </div>
-              )}
-            </Listbox>
-          </div>
-        ))}
+        {hasFiltersApplied ? (
+          <button
+            type="button"
+            onClick={clearAllFilters}
+            className="text-sm font-medium text-primary transition hover:text-primary/80"
+          >
+            Clear all
+          </button>
+        ) : null}
       </div>
 
-      {/* Selected filters + Clear button */}
-      {hasFiltersApplied && (
-        <div className="mt-6 flex flex-wrap items-center gap-4">
-          {Object.entries(selectedFilters).map(([key, values]) => {
-            if (!values || values.size === 0) return null;
-            const filterLabel = filters.find((f) => f.key === key)?.label;
-            return (
-              <div key={key} className="flex flex-col">
-                <h4 className="font-semibold text-gray-700">{filterLabel}</h4>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  {Array.from(values).map((val) => (
-                    <span
-                      key={val}
-                      className="inline-flex items-center bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full"
-                    >
-                      {val}
+      <div className="flex flex-wrap gap-3">
+        {normalizedFilters.map((filter) => {
+          const selectedValues = selected[filter.key] ?? [];
+          const isOpen = openKey === filter.key;
+
+          return (
+            <div key={filter.key} className="relative">
+              <button
+                type="button"
+                onClick={() =>
+                  setOpenKey((currentKey) =>
+                    currentKey === filter.key ? null : filter.key,
+                  )
+                }
+                aria-expanded={isOpen}
+                className={`inline-flex items-center gap-3 rounded-full border px-4 py-2.5 text-sm font-medium shadow-sm transition ${
+                  selectedValues.length > 0
+                    ? "border-primary/35 bg-primary/8 text-primary"
+                    : "border-base-300 text-base-content hover:border-primary/35 hover:text-primary"
+                }`}
+              >
+                <span>{filter.label}</span>
+
+                {selectedValues.length > 0 ? (
+                  <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-white">
+                    {selectedValues.length}
+                  </span>
+                ) : null}
+
+                <ChevronDown
+                  className={`h-4 w-4 transition ${isOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {isOpen ? (
+                <div className="absolute left-0 top-[calc(100%+0.75rem)] z-30 w-[min(22rem,calc(100vw-3rem))] rounded-[24px] border border-base-300 bg-white p-4 shadow-[0_20px_55px_rgba(15,23,42,0.12)]">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold text-base-content">
+                        {filter.label}
+                      </p>
+                      <p className="text-xs text-base-content/55">
+                        Choose one or more options
+                      </p>
+                    </div>
+
+                    {selectedValues.length > 0 ? (
                       <button
-                        onClick={() => toggleFilter(key, val)}
-                        className="ml-2 text-blue-600 hover:text-blue-900 focus:outline-none"
-                        aria-label={`Remove filter ${val}`}
                         type="button"
+                        onClick={() => clearFilterGroup(filter.key)}
+                        className="text-xs font-semibold uppercase tracking-[0.18em] text-primary transition hover:text-primary/80"
                       >
-                        &#x2715;
+                        Clear
                       </button>
-                    </span>
-                  ))}
+                    ) : null}
+                  </div>
+
+                  <div className="mt-4 space-y-2">
+                    {filter.options.map((option) => {
+                      const isSelected = selectedValues.includes(option.value);
+
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => toggleValue(filter.key, option.value)}
+                          className={`flex w-full items-center gap-3 rounded-[18px] border px-3 py-3 text-left transition ${
+                            isSelected
+                              ? "border-primary/30 bg-primary/8 text-primary"
+                              : "border-base-300 bg-base-100 text-base-content hover:border-primary/25 hover:bg-base-100"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-5 w-5 items-center justify-center rounded-md border ${
+                              isSelected
+                                ? "border-primary bg-primary text-white"
+                                : "border-base-300 bg-white text-transparent"
+                            }`}
+                          >
+                            <Check className="h-3.5 w-3.5" />
+                          </span>
+                          <span className="text-sm font-medium">
+                            {option.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
 
-          <button
-            onClick={clearAllFilters}
-            className="ml-2 mt-7 text-sm bg-red-100 text-red-700 px-3 py-1 rounded-full hover:bg-red-200"
-          >
-            Clear All
-          </button>
+      {hasFiltersApplied ? (
+        <div className="flex flex-wrap gap-2">
+          {activeSelections.map((selection) => (
+            <button
+              key={`${selection.filterKey}-${selection.value}`}
+              type="button"
+              onClick={() => toggleValue(selection.filterKey, selection.value)}
+              className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary transition hover:bg-primary/16"
+            >
+              <span>{selection.filterLabel}:</span>
+              <span>{selection.label}</span>
+              <X className="h-3.5 w-3.5" />
+            </button>
+          ))}
         </div>
-      )}
-    </div>
+      ) : null}
+    </section>
   );
-};
-
-export default FilterMenu;
+}

@@ -1,4 +1,4 @@
-import { ShopUserService } from "@/lib/shopUserService";
+import { ShopUserService } from "@/lib/shops/shopUserService";
 import { useAppSelector } from "@/store/hooks";
 import { useEffect, useState } from "react";
 
@@ -37,3 +37,4 @@ export function useShopAccess(shopId: number) {
 
   return allowed; // null = loading
 }
+

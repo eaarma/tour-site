@@ -1,6 +1,6 @@
 "use client";
 
-import { TourScheduleService } from "@/lib/tourScheduleService";
+import { TourScheduleService } from "@/lib/tours/tourScheduleService";
 import { TourScheduleResponseDto } from "@/types/tourSchedule";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -324,3 +324,4 @@ export default function ManagerScheduleSection({
     </div>
   );
 }
+

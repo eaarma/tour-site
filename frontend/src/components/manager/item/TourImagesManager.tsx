@@ -17,14 +17,14 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { TourImage } from "@/types";
-import { TourImageService } from "@/lib/tourImageService";
+import { TourImageService } from "@/lib/tours/tourImageService";
 import {
   ref,
   uploadBytesResumable,
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
-import { storage } from "@/lib/firebase";
+import { storage } from "@/lib/integrations/firebase";
 import toast from "react-hot-toast";
 
 interface Props {
@@ -247,3 +247,4 @@ export default function TourImagesManager({
     </div>
   );
 }
+

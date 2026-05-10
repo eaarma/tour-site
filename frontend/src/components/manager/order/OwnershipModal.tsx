@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Modal from "@/components/common/Modal";
 import { ShopUserDto } from "@/types";
-import { OrderService } from "@/lib/orderService";
-import { ShopUserService } from "@/lib/shopUserService";
+import { OrderService } from "@/lib/orders/orderService";
+import { ShopUserService } from "@/lib/shops/shopUserService";
 import toast from "react-hot-toast";
 
 interface OwnershipModalProps {
@@ -120,3 +120,4 @@ export default function OwnershipModal({
     </Modal>
   );
 }
+

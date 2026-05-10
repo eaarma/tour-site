@@ -10,8 +10,13 @@ import TitleText from "../common/TitleText";
 import HorizontalMenu from "../common/HorizontalMenu";
 import { useState, useEffect, useRef } from "react";
 import api from "@/lib/api/axios";
+import type { StorefrontSettingsDto } from "@/types/storefront";
 
-const Header: React.FC = () => {
+type HeaderProps = {
+  storefront: StorefrontSettingsDto;
+};
+
+const Header: React.FC<HeaderProps> = ({ storefront }) => {
   const menuItems = [
     { label: "Home", path: "/" },
     { label: "Items", path: "/items" },
@@ -30,6 +35,8 @@ const Header: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const storefrontName = storefront.siteName?.trim() || "TourHub";
+  const brandImage = storefront.logoUrl?.trim() || null;
 
   const handleLogout = async () => {
     dispatch(clearUser());
@@ -90,7 +97,7 @@ const Header: React.FC = () => {
 
         {/* Left: Title */}
         <div className="flex-shrink-0">
-          <TitleText title="TourHub" image="/tree.png" />
+          <TitleText title={storefrontName} image={brandImage} />
         </div>
 
         {/* Center: Navigation Menu */}

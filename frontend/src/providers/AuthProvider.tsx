@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { clearUser, setAuth, setInitialized } from "@/store/authSlice";
-import { AuthService } from "@/lib/authService";
+import { AuthService } from "@/lib/auth/authService";
 import { UserResponseDto } from "@/types";
 
 export default function AuthProvider({
@@ -56,3 +56,4 @@ export default function AuthProvider({
 
     return () => clearInterval(interval);
   }, [dispatch, router]); */
+

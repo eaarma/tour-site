@@ -6,7 +6,7 @@ import SearchBar from "@/components/common/SearchBar";
 import FilterMenu from "@/components/items/FilterMenu";
 import SortMenu from "@/components/items/SortMenu";
 import ItemList from "@/components/items/ItemList";
-import { PageResponse, TourService } from "@/lib/tourService";
+import { PageResponse, TourService } from "@/lib/tours/tourService";
 import { ItemListSkeleton } from "@/components/items/ItemListSkeleton";
 import { FILTER_CATEGORIES } from "@/types/filterCategories";
 import { Tour } from "@/types";
@@ -120,14 +120,14 @@ export default function ItemsPage() {
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4 max-w-7xl mx-auto">
-      <div className="w-full space-y-6 mt-5 sm:mt-7">
+      <div className="w-full space-y-8 mt-5 sm:mt-7">
         <SearchBar
           onSearch={handleSearch}
           initialKeywords={keyword}
           initialDate={date}
         />
 
-        <div className="w-full grid grid-cols-2 gap-4 sm:flex sm:justify-between items-start">
+        <section className="grid gap-5 rounded-[28px] border border-base-300 bg-base-100 p-5 shadow-sm lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
           <FilterMenu
             filters={FILTER_CATEGORIES}
             selected={{
@@ -148,7 +148,7 @@ export default function ItemsPage() {
               router.replace(`/items?${search.toString()}`);
             }}
           />
-        </div>
+        </section>
 
         {loading || !pageData ? (
           <ItemListSkeleton />
@@ -180,3 +180,4 @@ title={
     </div>
   );
 }
+

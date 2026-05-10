@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "./useAuth";
 import { TourSessionDto } from "@/types/tourSession";
-import { TourSessionService } from "@/lib/tourSessionService";
+import { TourSessionService } from "@/lib/tours/tourSessionService";
 import toast from "react-hot-toast";
 
 const isFutureSession = (session?: TourSessionDto | null) => {
@@ -82,3 +82,4 @@ export function useSessionManager(shopId: number) {
     updateLocalSession,
   };
 }
+

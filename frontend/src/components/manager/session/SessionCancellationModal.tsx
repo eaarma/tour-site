@@ -2,7 +2,7 @@
 
 import toast from "react-hot-toast";
 import { useState } from "react";
-import { SessionCancellationService } from "@/lib/SessionCancellationService";
+import { SessionCancellationService } from "@/lib/tours/SessionCancellationService";
 import Modal from "@/components/common/Modal";
 
 interface Props {
@@ -70,3 +70,4 @@ export default function SessionCancellationModal({
     </Modal>
   );
 }
+

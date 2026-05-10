@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
-import { UserService } from "@/lib/userService";
+import { UserService } from "@/lib/users/userService";
 import { PublicManagerProfileDto } from "@/types/user";
 import CardFrame from "@/components/common/CardFrame";
 import BackButton from "@/components/common/BackButton";
@@ -105,3 +105,4 @@ export default function PublicManagerProfilePage() {
     </div>
   );
 }
+

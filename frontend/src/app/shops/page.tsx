@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ShopUserService } from "@/lib/shopUserService";
-import { ShopService } from "@/lib/shopService";
+import { ShopUserService } from "@/lib/shops/shopUserService";
+import { ShopService } from "@/lib/shops/shopService";
 import { ShopDto } from "@/types/shop";
 import { useRouter } from "next/navigation";
 import { PlusCircle } from "lucide-react";
@@ -151,3 +151,4 @@ export default function ShopsPage() {
     </RequireAuth>
   );
 }
+

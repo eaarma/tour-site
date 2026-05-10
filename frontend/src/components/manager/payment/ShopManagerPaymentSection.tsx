@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { PaymentLineResponseDto } from "@/types/paymentLine";
-import { PaymentLineService } from "@/lib/paymentLineService";
+import { PaymentLineService } from "@/lib/payments/paymentLineService";
 import PaymentSectionRow from "./PaymentSectionRow";
 import DatePicker from "react-datepicker";
 import CustomDateInput from "@/components/common/CustomDateInput";
-import { OrderService } from "@/lib/orderService";
+import { OrderService } from "@/lib/orders/orderService";
 import OrderDetailsModal from "../order/OrderDetailsModal";
 import { OrderDetailsModalDto } from "@/types";
 import { useSessionManager } from "@/hooks/useSessionManager";
@@ -336,3 +336,4 @@ export default function ShopManagerPaymentSection({ shopId }: Props) {
     </div>
   );
 }
+

@@ -1,0 +1,150 @@
+package com.tourhub.payment.service;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.stripe.model.PaymentIntent;
+import com.stripe.net.RequestOptions;
+import com.stripe.param.PaymentIntentCreateParams;
+import com.tourhub.order.repository.OrderRepository;
+import com.tourhub.payment.repository.PaymentRepository;
+import com.tourhub.order.model.Order;
+import com.tourhub.order.model.OrderStatus;
+import com.tourhub.payment.model.Payment;
+import com.tourhub.payment.model.PaymentStatus;
+import com.tourhub.security.CustomUserDetails;
+import com.tourhub.common.result.Result;
+import com.tourhub.common.result.ApiError;
+import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+@Service
+@RequiredArgsConstructor
+public class StripeService {
+
+        private static final Logger log = LoggerFactory.getLogger(StripeService.class);
+
+        private final OrderRepository orderRepository;
+        private final PaymentRepository paymentRepository;
+
+        @Transactional
+        public Result<String> createPaymentIntent(Long orderId, Authentication auth, String token) {
+
+                Order order = orderRepository.findById(orderId)
+                                .orElse(null);
+
+                if (order == null) {
+                        return Result.fail(
+                                        ApiError.notFound("Order not found"));
+                }
+
+                try {
+                        assertCanAccessOrder(order, auth, token);
+                } catch (AccessDeniedException ex) {
+                        return Result.fail(ApiError.forbidden(ex.getMessage()));
+                }
+
+                Payment payment = paymentRepository
+                                .findByOrderId(orderId)
+                                .orElse(null);
+
+                if (payment == null) {
+                        return Result.fail(
+                                        ApiError.badRequest(
+                                                        "Payment record missing for order"));
+                }
+
+                try {
+
+                        if (order.getStatus() != OrderStatus.FINALIZED) {
+                                return Result.fail(
+                                                ApiError.badRequest(
+                                                                "Order is not finalized for payment"));
+                        }
+
+                        // Stripe expects amount in cents
+                        long amountCents = payment.getAmountTotal()
+                                        .multiply(BigDecimal.valueOf(100))
+                                        .setScale(0, RoundingMode.HALF_UP)
+                                        .longValue();
+
+                        if (payment.getProviderPaymentId() != null) {
+                                try {
+                                        PaymentIntent existing = PaymentIntent.retrieve(payment.getProviderPaymentId());
+
+                                        return Result.ok(existing.getClientSecret());
+
+                                } catch (Exception e) {
+                                        log.warn("Failed to retrieve existing intent, creating new", e);
+                                }
+                        }
+
+                        PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
+                                        .setAmount(amountCents)
+                                        .setCurrency(payment.getCurrency().toLowerCase())
+                                        .putMetadata("orderId",
+                                                        orderId.toString())
+                                        .putMetadata("paymentId",
+                                                        payment.getId().toString())
+
+                                        .build();
+
+                        RequestOptions options = RequestOptions.builder()
+                                        .setIdempotencyKey("order-" + orderId)
+                                        .build();
+
+                        PaymentIntent intent = PaymentIntent.create(params, options);
+
+                        payment.setProviderPaymentId(intent.getId());
+                        payment.setStatus(PaymentStatus.PENDING);
+
+                        paymentRepository.save(payment);
+
+                        log.info("Created Stripe PaymentIntent {} for order {}",
+                                        intent.getId(), orderId);
+
+                        return Result.ok(intent.getClientSecret());
+
+                } catch (Exception e) {
+
+                        log.error("Stripe error creating payment intent", e);
+
+                        return Result.fail(
+                                        ApiError.internal(
+                                                        "Stripe payment creation failed"));
+                }
+        }
+
+        private void assertCanAccessOrder(Order order, Authentication auth, String token) {
+                if (auth != null
+                                && auth.isAuthenticated()
+                                && auth.getPrincipal() instanceof CustomUserDetails user) {
+
+                        boolean isAdmin = user.getAuthorities().stream()
+                                        .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+                        if (isAdmin) {
+                                return;
+                        }
+
+                        if (order.getUser() != null && order.getUser().getId().equals(user.getId())) {
+                                return;
+                        }
+                }
+
+                if (token != null
+                                && order.getReservationToken() != null
+                                && token.equals(order.getReservationToken().toString())) {
+                        return;
+                }
+
+                throw new AccessDeniedException("Not allowed to create a payment intent for this order");
+        }
+}
+
+

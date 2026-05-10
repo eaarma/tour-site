@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
 import { countryDialCodes } from "@/utils/countryDialCodes";
 
 interface Props {
@@ -8,47 +9,83 @@ interface Props {
   onChange: (phone: string) => void;
 }
 
+function splitPhoneValue(value?: string) {
+  if (!value) {
+    return { countryCode: "", phoneNumber: "" };
+  }
+
+  const match = countryDialCodes.find((country) =>
+    value.startsWith(country.dial_code),
+  );
+
+  if (!match) {
+    return {
+      countryCode: "",
+      phoneNumber: value.replace(/^\+/, ""),
+    };
+  }
+
+  return {
+    countryCode: match.dial_code.replace("+", ""),
+    phoneNumber: value.replace(match.dial_code, ""),
+  };
+}
+
 export default function PhoneInput({ value, onChange }: Props) {
   const [countryCode, setCountryCode] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
 
   useEffect(() => {
-    if (!value) return;
+    const next = splitPhoneValue(value);
 
-    const match = countryDialCodes.find((c) => value.startsWith(c.dial_code));
-
-    if (match) {
-      setCountryCode(match.dial_code.replace("+", ""));
-      setPhoneNumber(value.replace(match.dial_code, ""));
-    }
+    setCountryCode((current) =>
+      current === next.countryCode ? current : next.countryCode,
+    );
+    setPhoneNumber((current) =>
+      current === next.phoneNumber ? current : next.phoneNumber,
+    );
   }, [value]);
 
-  useEffect(() => {
-    if (!countryCode && !phoneNumber) return;
+  const emitChange = (nextCountryCode: string, nextPhoneNumber: string) => {
+    const normalizedPhoneNumber = nextPhoneNumber.trim();
 
-    const phone = `+${countryCode}${phoneNumber}`;
-    onChange(phone);
-  }, [countryCode, phoneNumber, onChange]);
+    if (!nextCountryCode && !normalizedPhoneNumber) {
+      onChange("");
+      return;
+    }
+
+    const prefix = nextCountryCode ? `+${nextCountryCode}` : "+";
+    onChange(`${prefix}${normalizedPhoneNumber}`);
+  };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-col gap-2 sm:flex-row">
       <select
-        className="select select-bordered w-40"
+        className="select select-bordered h-12 w-full bg-base-100 sm:w-40"
         value={countryCode}
-        onChange={(e) => setCountryCode(e.target.value)}
+        onChange={(event) => {
+          const nextCountryCode = event.target.value;
+          setCountryCode(nextCountryCode);
+          emitChange(nextCountryCode, phoneNumber);
+        }}
       >
-        {countryDialCodes.map((c) => (
-          <option key={c.code} value={c.dial_code.replace("+", "")}>
-            {c.name} ({c.dial_code})
+        <option value="">Code</option>
+        {countryDialCodes.map((country) => (
+          <option key={country.code} value={country.dial_code.replace("+", "")}>
+            {country.name} ({country.dial_code})
           </option>
         ))}
       </select>
 
       <input
         type="tel"
-        className="input input-bordered flex-1"
+        className="input input-bordered h-12 flex-1 bg-base-100"
         value={phoneNumber}
-        onChange={(e) => setPhoneNumber(e.target.value)}
+        onChange={(event) => {
+          const nextPhoneNumber = event.target.value;
+          setPhoneNumber(nextPhoneNumber);
+          emitChange(countryCode, nextPhoneNumber);
+        }}
         placeholder="Phone number"
       />
     </div>

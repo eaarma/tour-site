@@ -1,8 +1,8 @@
 "use client";
 
-import React from "react";
-import { X } from "lucide-react";
-import { CartItem as CartItemType } from "@/types";
+import { CalendarDays, Eye, Trash2, Users } from "lucide-react";
+
+import type { CartItem as CartItemType } from "@/types";
 
 interface CartItemProps {
   item: CartItemType;
@@ -11,105 +11,164 @@ interface CartItemProps {
   onToggle: (id: string) => void;
 }
 
-const CartItem: React.FC<CartItemProps> = ({
+const currencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "EUR",
+});
+
+const formatPrice = (price: number) => currencyFormatter.format(price);
+
+export default function CartItem({
   item,
   onRemove,
   onView,
   onToggle,
-}) => {
+}: CartItemProps) {
   const isPublic = item.type === "PUBLIC";
   const totalPrice = isPublic ? item.price * item.participants : item.price;
-  // Support the images array first and fall back to the single image field.
-  type ItemWithImages = {
-    images?: string[];
-    image?: string;
-  };
-
-  const itemData = item as ItemWithImages;
+  const imageUrl = item.images?.[0] || "/images/item_placeholder.jpg";
+  const usesPlaceholder = !item.images?.length;
 
   return (
-    <div className="w-full flex items-center gap-3 py-1">
-      {/* Selection Checkbox */}
-      <input
-        id={`cart-toggle-${item.cartItemId}`}
-        type="checkbox"
-        checked={item.selected}
-        onChange={() => onToggle(item.cartItemId)}
-        className="checkbox ml-1"
-      />
+    <article
+      className={`rounded-[24px] border bg-base-100 p-4 shadow-sm transition sm:p-5 ${
+        item.selected
+          ? "border-primary/25 shadow-[0_14px_40px_rgba(2,132,199,0.08)]"
+          : "border-base-300"
+      }`}
+    >
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex gap-4">
+          <label
+            htmlFor={`cart-item-${item.cartItemId}`}
+            className="flex cursor-pointer items-start pt-1"
+          >
+            <input
+              id={`cart-item-${item.cartItemId}`}
+              type="checkbox"
+              checked={item.selected}
+              onChange={() => onToggle(item.cartItemId)}
+              className="checkbox checkbox-primary"
+              aria-label={`Select ${item.title}`}
+            />
+          </label>
 
-      {/* Main Card Content */}
-      <div className="flex flex-col w-full md:flex-row justify-between items-start md:items-center border rounded-xl p-4 shadow-sm bg-base-100 hover:shadow-md transition-shadow">
-        {/* Tour Details */}
+          <button
+            type="button"
+            onClick={() => onView(item)}
+            className="shrink-0"
+            aria-label={`View ${item.title}`}
+          >
+            <img
+              src={imageUrl}
+              alt={item.title}
+              className={`aspect-[4/3] w-24 rounded-2xl object-cover sm:w-32 ${
+                usesPlaceholder ? "opacity-70 grayscale blur-[1px]" : ""
+              }`}
+              onError={(event) => {
+                event.currentTarget.src = "/images/item_placeholder.jpg";
+                event.currentTarget.classList.add(
+                  "opacity-70",
+                  "grayscale",
+                  "blur-[1px]",
+                );
+              }}
+            />
+          </button>
 
-        {/* Thumbnail image */}
-        <img
-          src={
-            itemData.images?.length
-              ? itemData.images[0]
-              : itemData.image || "/images/item_placeholder.jpg"
-          }
-          alt={item.title}
-          className={`w-16 h-16 mr-3 object-cover rounded-lg cursor-pointer ${
-            itemData.images?.length || itemData.image
-              ? ""
-              : "opacity-70 grayscale blur-[1px]"
-          }`}
-          onClick={() => onView(item)}
-          onError={(e) => {
-            e.currentTarget.src = "/images/item_placeholder.jpg";
-            e.currentTarget.classList.add(
-              "opacity-70",
-              "grayscale",
-              "blur-[1px]",
-            );
-          }}
-        />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <button
+                  type="button"
+                  onClick={() => onView(item)}
+                  className="block text-left text-lg font-semibold text-base-content transition hover:text-primary"
+                >
+                  {item.title}
+                </button>
+                <p className="mt-1 text-sm text-base-content/65">
+                  {formatPrice(item.price)}{" "}
+                  {isPublic ? "per participant" : "per tour"}
+                </p>
 
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold">{item.title}</h3>
-          <div className="flex flex-wrap gap-2 mt-2 text-sm text-gray-600">
-            <span className="bg-gray-100 rounded-full px-2 py-1">
-              {item.participants} participant{item.participants > 1 ? "s" : ""}
-            </span>
-            <span className="bg-gray-100 rounded-full px-2 py-1">
-              €{item.price} {isPublic ? "per person" : "per tour"}
-            </span>
-            <span className="bg-blue-100 text-blue-800 rounded-full px-2 py-1">
-              {item.selectedDate} @ {item.selectedTime}
-            </span>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <span
+                    className={`badge border px-3 py-3 ${
+                      item.selected
+                        ? "border-primary/20 bg-primary/10 text-primary"
+                        : "border-base-300 bg-base-100 text-base-content/65"
+                    }`}
+                  >
+                    {item.selected ? "Selected" : "Not selected"}
+                  </span>
+                  <span className="badge border border-base-300 bg-base-100 px-3 py-3 text-base-content/70">
+                    {item.type}
+                  </span>
+                  {item.preferredLanguage ? (
+                    <span className="badge border border-base-300 bg-base-100 px-3 py-3 text-base-content/70">
+                      {item.preferredLanguage}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 flex flex-wrap gap-3 text-sm text-base-content/75">
+              <div className="inline-flex items-center gap-2 rounded-2xl border border-base-300 bg-base-200/45 px-3 py-2">
+                <CalendarDays className="h-4 w-4 text-primary" />
+                <span>
+                  {item.selectedDate} at {item.selectedTime}
+                </span>
+              </div>
+
+              <div className="inline-flex items-center gap-2 rounded-2xl border border-base-300 bg-base-200/45 px-3 py-2">
+                <Users className="h-4 w-4 text-primary" />
+                <span>
+                  {item.participants} participant
+                  {item.participants === 1 ? "" : "s"}
+                </span>
+              </div>
+            </div>
+
+            {item.comment ? (
+              <div className="mt-4 rounded-2xl border border-base-300 bg-base-200/35 px-4 py-3 text-sm leading-6 text-base-content/70">
+                {item.comment}
+              </div>
+            ) : null}
           </div>
         </div>
 
-        {/* Actions + Price */}
-        <div className="flex items-center gap-2 mt-4 md:mt-0 w-full md:w-auto">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-4 lg:w-60 lg:items-end">
+          <div className="flex flex-wrap items-center justify-between gap-3 lg:w-full">
             <button
-              className="btn btn-sm bg-base-100 hover:shadow-md hover:bg-sky-300 rounded-lg"
+              type="button"
+              className="btn btn-outline btn-sm"
               onClick={() => onView(item)}
-              aria-label={`View ${item.title}`}
             >
+              <Eye className="h-4 w-4" />
               View
             </button>
 
             <button
+              type="button"
+              className="btn btn-ghost btn-sm text-error"
               onClick={() => onRemove(item.cartItemId)}
-              className="btn btn-sm btn-error btn-outline rounded-lg"
-              aria-label={`Delete ${item.title}`}
+              aria-label={`Remove ${item.title} from cart`}
             >
-              <X className="w-4 h-4" />
+              <Trash2 className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="ml-auto text-right font-semibold text-primary sm:ml-2">
-            <span className="bg-gray-100 rounded-full px-2 py-1">
-              €{totalPrice}
-            </span>
+          <div className="rounded-2xl border border-base-300 bg-base-200/50 px-4 py-3 text-right lg:w-full">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-base-content/50">
+              Line Total
+            </p>
+            <p className="mt-1 text-lg font-semibold text-base-content">
+              {formatPrice(totalPrice)}
+            </p>
           </div>
         </div>
       </div>
-    </div>
+    </article>
   );
-};
-
-export default CartItem;
+}

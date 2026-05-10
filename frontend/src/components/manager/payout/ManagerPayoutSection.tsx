@@ -5,7 +5,7 @@ import { ChevronRight } from "lucide-react";
 import toast from "react-hot-toast";
 import ManagerPayoutSessionModal from "./ManagerPayoutSessionModal";
 import ManagerPayoutSessionRow from "./ManagerPayoutSessionRow";
-import { PayoutService } from "@/lib/payoutService";
+import { PayoutService } from "@/lib/payments/payoutService";
 import {
   PayoutSessionDetailsDto,
   PayoutSessionSummaryDto,
@@ -429,3 +429,4 @@ export default function ManagerPayoutSection({ shopId }: Props) {
     </div>
   );
 }
+

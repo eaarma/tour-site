@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { TourService } from "@/lib/tourService";
+import { TourService } from "@/lib/tours/tourService";
 import { Tour, TourCreateDto } from "@/types";
 import EditableSchedules from "@/components/manager/item/EditableSchedules";
 import EditableLanguages from "@/components/manager/item/EditableLanguages";
@@ -10,7 +10,7 @@ import { DURATION_OPTIONS } from "@/utils/duration";
 import { formatDuration } from "@/utils/formatDuration";
 import { ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
-import { TourImageService } from "@/lib/tourImageService";
+import { TourImageService } from "@/lib/tours/tourImageService";
 import {
   TourCategory,
   TourFormDto,
@@ -597,3 +597,4 @@ export default function ManagerItemPage() {
     </div>
   );
 }
+

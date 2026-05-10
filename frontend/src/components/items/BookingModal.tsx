@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { Tour } from "@/types";
 import { TourScheduleResponseDto } from "@/types/tourSchedule";
 import toast from "react-hot-toast";
-import { TourScheduleService } from "@/lib/tourScheduleService";
+import { TourScheduleService } from "@/lib/tours/tourScheduleService";
 import SchedulePicker from "./SchedulePicker";
 
 interface BookingModalProps {
@@ -253,3 +253,4 @@ export default function BookingModal({
     </Modal>
   );
 }
+

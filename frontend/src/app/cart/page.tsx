@@ -1,16 +1,16 @@
 "use client";
 
+import { useCallback, useState } from "react";
+import { useSelector } from "react-redux";
+
 import CartItemSection from "@/components/cart/CartItemSection";
 import CartTotalSection from "@/components/cart/CartTotalSection";
-import { useSelector } from "react-redux";
+import ItemModal from "@/components/items/ItemModal";
+import type { CartItem as CartItemType } from "@/types/cart";
 import { RootState } from "@/store/store";
-import { useCallback, useState } from "react";
-import ItemModal from "@/components/items/ItemModal"; // import the new modal
-import { CartItem as CartItemType } from "@/types/cart";
 
 export default function CartPage() {
   const cart = useSelector((state: RootState) => state.cart.items);
-
   const [viewItem, setViewItem] = useState<CartItemType | null>(null);
 
   const handleView = useCallback((cartItem: CartItemType) => {
@@ -18,20 +18,32 @@ export default function CartPage() {
   }, []);
 
   return (
-    <div className="max-w-7xl mx-auto p-4 min-h-screen mt-5">
-      {cart.length === 0 ? (
-        <p className="text-gray-500">Your cart is empty 🛒</p>
-      ) : (
-        <div className="flex flex-col md:flex-row md:items-start sm:gap-6 gap-6">
-          <CartItemSection cart={cart} onView={handleView} />
-          <CartTotalSection />
-        </div>
-      )}
+    <main className="min-h-screen px-4 py-8">
+      <div className="mx-auto max-w-6xl">
+        <div className="overflow-hidden rounded-[28px] border border-base-300 bg-base-100 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+          <div className="border-b border-base-300 px-6 py-8 sm:px-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary/70">
+              Cart
+            </p>
+            <h1 className="mt-3 text-3xl font-bold text-base-content">
+              Review Your Booking
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-base-content/60">
+              Check your selected tours, review the schedule details, and
+              continue when everything looks right.
+            </p>
+          </div>
 
-      {/* Render the modal when the user clicks "View". */}
-      {viewItem && (
+          <div className="grid gap-8 px-6 py-8 sm:px-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <CartItemSection cart={cart} onView={handleView} />
+            <CartTotalSection />
+          </div>
+        </div>
+      </div>
+
+      {viewItem ? (
         <ItemModal
-          isOpen={true}
+          isOpen
           onClose={() => setViewItem(null)}
           item={{
             id: Number(viewItem.id),
@@ -50,7 +62,7 @@ export default function CartPage() {
           initialPreferredLanguage={viewItem.preferredLanguage}
           initialComment={viewItem.comment}
         />
-      )}
-    </div>
+      ) : null}
+    </main>
   );
 }

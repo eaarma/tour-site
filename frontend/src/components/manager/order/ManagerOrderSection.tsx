@@ -9,7 +9,7 @@ import {
   OrderItemResponseDto,
   OrderStatus,
 } from "@/types/order";
-import { OrderService } from "@/lib/orderService";
+import { OrderService } from "@/lib/orders/orderService";
 import toast from "react-hot-toast";
 import OrderDetailsModal from "./OrderDetailsModal";
 import OrderItemCard from "./OrderItemCard";
@@ -330,3 +330,4 @@ export default function ManagerOrderSection({ shopId }: Props) {
     </div>
   );
 }
+

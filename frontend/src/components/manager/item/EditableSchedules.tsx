@@ -1,6 +1,6 @@
 "use client";
 
-import { TourScheduleService } from "@/lib/tourScheduleService";
+import { TourScheduleService } from "@/lib/tours/tourScheduleService";
 import { TourScheduleResponseDto } from "@/types/tourSchedule";
 import { useEffect, useMemo, useState } from "react";
 import DatePicker from "react-datepicker";
@@ -209,3 +209,4 @@ export default function EditableSchedules({
     </div>
   );
 }
+

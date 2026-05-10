@@ -1,11 +1,12 @@
 "use client";
 
-import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
-import { useState } from "react";
+import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
+import { useMemo, useRef, useState } from "react";
 
 interface Props {
   clientSecret: string;
   amount: number;
+  currency?: string;
   onSuccess: () => void;
   onError: (msg: string) => void;
 }
@@ -13,6 +14,7 @@ interface Props {
 export default function StripePaymentForm({
   clientSecret,
   amount,
+  currency = "EUR",
   onSuccess,
   onError,
 }: Props) {
@@ -20,53 +22,95 @@ export default function StripePaymentForm({
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const submitLockRef = useRef(false);
+
+  const formattedAmount = useMemo(
+    () =>
+      new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency,
+      }).format(amount),
+    [amount, currency],
+  );
 
   const handlePay = async () => {
-    if (!stripe || !elements) return;
+    if (!stripe || !elements || submitLockRef.current) return;
 
+    submitLockRef.current = true;
     setLoading(true);
     setErrorMsg(null);
 
     const card = elements.getElement(CardElement);
     if (!card) {
-      setErrorMsg("Card input missing");
+      const message = "Card input missing";
+      setErrorMsg(message);
+      onError(message);
+      submitLockRef.current = false;
       setLoading(false);
       return;
     }
 
-    const result = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: { card },
-    });
+    try {
+      const result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: { card },
+      });
 
-    setLoading(false);
+      if (result.error) {
+        const message = result.error.message || "Payment failed";
+        setErrorMsg(message);
+        onError(message);
+        return;
+      }
 
-    if (result.error) {
-      setErrorMsg(result.error.message || "Payment failed");
-      onError(result.error.message || "Payment failed");
-    } else if (result.paymentIntent?.status === "succeeded") {
-      onSuccess();
+      if (result.paymentIntent?.status === "succeeded") {
+        onSuccess();
+        return;
+      }
+
+      const message = "Payment is not complete yet";
+      setErrorMsg(message);
+      onError(message);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Payment failed";
+      setErrorMsg(message);
+      onError(message);
+    } finally {
+      submitLockRef.current = false;
+      setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-3">
-      {/* Header */}
+    <div className="space-y-5">
       <div className="text-center">
-        <h2 className="text-xl font-semibold">Secure Payment</h2>
-        <p className="text-sm opacity-70">Complete your booking</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary/70">
+          Secure Payment
+        </p>
+        <h2 className="mt-2 text-2xl font-semibold text-base-content">
+          Complete payment
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-base-content/65">
+          Your card details stay with Stripe and are processed through their
+          secure payment flow.
+        </p>
       </div>
 
-      {/* Amount */}
-      <div className="bg-base-200 rounded-lg p-4 text-center">
-        <p className="text-sm opacity-60">Total</p>
-        <p className="text-2xl font-bold">€{amount.toFixed(2)}</p>
+      <div className="rounded-2xl border border-primary/15 p-5 text-center">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-base-content/55">
+          Total
+        </p>
+        <p className="mt-2 text-3xl font-bold text-base-content">
+          {formattedAmount}
+        </p>
       </div>
 
-      {/* Card Input */}
-      <div>
-        <label className="text-sm font-medium block mb-2">Card Details</label>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-base-content/80">
+          Card Details
+        </label>
 
-        <div className="border border-base-300 rounded-lg p-4 bg-white focus-within:ring-2 focus-within:ring-primary transition">
+        <div className="rounded-2xl border border-base-300 bg-white p-4 shadow-sm transition focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/20">
           <CardElement
             options={{
               hidePostalCode: true,
@@ -87,25 +131,23 @@ export default function StripePaymentForm({
         </div>
       </div>
 
-      {/* Error */}
       {errorMsg && (
-        <div className="text-sm text-red-500 bg-red-50 border border-red-200 p-3 rounded-lg">
+        <div className="rounded-2xl border border-error/20 bg-error/5 p-4 text-sm leading-6 text-error">
           {errorMsg}
         </div>
       )}
 
-      {/* Pay Button */}
       <button
+        type="button"
         onClick={handlePay}
         disabled={loading || !stripe}
-        className="btn btn-primary w-full rounded-lg"
+        className="btn btn-primary h-12 w-full text-base"
       >
-        {loading ? "Processing…" : `Pay €${amount.toFixed(2)}`}
+        {loading ? "Processing..." : `Pay ${formattedAmount}`}
       </button>
 
-      {/* Trust footer */}
-      <div className="text-xs text-center opacity-60">
-        🔒 Securely processed by Stripe
+      <div className="text-center text-xs leading-5 text-base-content/55">
+        Securely processed by Stripe
       </div>
     </div>
   );

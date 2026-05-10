@@ -7,6 +7,15 @@ import AuthProvider from "@/providers/AuthProvider";
 import { Toaster } from "react-hot-toast";
 import GlobalLoader from "@/components/common/GlobalLoader";
 import SessionExpiredModal from "@/components/common/SessionExpiredModal";
+import { getPublicStorefrontOrFallback } from "@/lib/storefront/publicStorefront";
+import {
+  buildStoreMetadata,
+  buildStoreStructuredData,
+} from "@/lib/storefront/storeSeo";
+import {
+  STOREFRONT_THEME_NAME,
+  buildStorefrontThemeStyle,
+} from "@/lib/storefront/storefrontTheme";
 
 import localFont from "next/font/local";
 import StripeProvider from "@/providers/StripeProvider";
@@ -17,22 +26,38 @@ const geistSans = localFont({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "TourHub",
-  description: "Explore and Book Amazing Tours",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const storefront = await getPublicStorefrontOrFallback();
+  const metadata = buildStoreMetadata({
+    storefront,
+  });
+
+  return {
+    ...metadata,
+    icons: storefront.faviconUrl?.trim()
+      ? {
+          icon: storefront.faviconUrl.trim(),
+        }
+      : undefined,
+  };
+}
 
 export const dynamic = "force-dynamic";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const storefront = await getPublicStorefrontOrFallback();
+  const storefrontThemeStyle = buildStorefrontThemeStyle(storefront);
+  const structuredData = buildStoreStructuredData(storefront);
+
   return (
     <html
       lang="en"
-      data-theme="light_custom"
+      data-theme={STOREFRONT_THEME_NAME}
+      style={storefrontThemeStyle}
       className={`${geistSans.variable} `}
     >
       <body className="flex flex-col min-h-screen bg-base-100 overflow-x-hidden">
@@ -41,7 +66,13 @@ export default function RootLayout({
             <StripeProvider>
               <GlobalLoader />
               <SessionExpiredModal />
-              <Header />
+              <Header storefront={storefront} />
+              <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                  __html: JSON.stringify(structuredData),
+                }}
+              />
               <main className="flex-grow">
                 <div className="page-container">{children}</div>
               </main>
@@ -51,7 +82,7 @@ export default function RootLayout({
                   top: "5rem",
                 }}
               />
-              <Footer />
+              <Footer storefront={storefront} />
             </StripeProvider>
           </AuthProvider>
         </ReduxProvider>
@@ -59,3 +90,4 @@ export default function RootLayout({
     </html>
   );
 }
+

@@ -1,0 +1,55 @@
+package com.tourhub.order.mapper;
+
+import com.tourhub.order.dto.OrderCreateRequestDto;
+import com.tourhub.order.dto.OrderResponseDto;
+import com.tourhub.order.model.Order;
+
+import lombok.RequiredArgsConstructor;
+
+import org.springframework.stereotype.Component;
+
+import java.util.stream.Collectors;
+
+import com.tourhub.order.model.OrderStatus;
+import com.tourhub.user.model.User;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+@Component
+@RequiredArgsConstructor
+public class OrderMapper {
+
+    private final OrderItemMapper orderItemMapper;
+    private final ObjectMapper objectMapper; // Inject directly.
+
+    public Order toEntity(OrderCreateRequestDto dto, User user) {
+        return Order.builder()
+                .user(user)
+                .paymentMethod(dto.getPaymentMethod())
+                .status(OrderStatus.PENDING)
+                .build(); // items are populated later in service
+    }
+
+    public OrderResponseDto toDto(Order order) {
+        return OrderResponseDto.builder()
+                .id(order.getId())
+                .totalPrice(order.getTotalPrice())
+                .paymentMethod(order.getPaymentMethod())
+                .status(order.getStatus())
+                .createdAt(order.getCreatedAt())
+                .updatedAt(order.getUpdatedAt())
+                .expiresAt(order.getExpiresAt())
+                .items(order.getOrderItems().stream()
+                        .map(orderItemMapper::toDto)
+                        .collect(Collectors.toList()))
+                .build();
+    }
+
+    // Use the injected ObjectMapper.
+    public String toJsonSnapshot(Object tourSnapshot) {
+        try {
+            return objectMapper.writeValueAsString(tourSnapshot);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to serialize tour snapshot", e);
+        }
+    }
+}

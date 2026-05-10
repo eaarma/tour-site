@@ -1,6 +1,6 @@
 "use client";
 
-import { BookingService } from "@/lib/bookingService";
+import { BookingService } from "@/lib/orders/bookingService";
 import { OrderResponseDto } from "@/types/order";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -103,3 +103,4 @@ export default function ManageBookingPage() {
     </div>
   );
 }
+

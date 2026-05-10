@@ -1,32 +1,39 @@
 "use client";
 
 import { useState } from "react";
-import RequireAuth from "@/components/common/RequireAuth";
-
-import AdminUsers from "@/components/admin/AdminUsers";
-import AdminShops from "@/components/admin/AdminShops";
-import AdminTours from "@/components/admin/AdminTours";
-import AdminDashboard from "@/components/admin/AdminDashboard";
-import AdminSessions from "@/components/admin/AdminSessions";
-import AdminOrders from "@/components/admin/AdminOrders";
-import AdminTransactions from "@/components/admin/AdminTransactions";
-import AdminPayouts from "@/components/admin/AdminPayouts";
-
 import { Menu } from "lucide-react";
 
-type AdminSection =
-  | "dashboard"
-  | "users"
-  | "shops"
-  | "tours"
-  | "sessions"
-  | "orders"
-  | "transactions"
-  | "payouts";
+import AdminDashboard from "@/components/admin/dashboard/AdminDashboard";
+import AdminOrders from "@/components/admin/orders/AdminOrders";
+import AdminPayouts from "@/components/admin/payouts/AdminPayouts";
+import AdminSessions from "@/components/admin/sessions/AdminSessions";
+import AdminShops from "@/components/admin/shops/AdminShops";
+import StoreCustomizationSection from "@/components/admin/storeCustomization/StoreCustomizationSection";
+import AdminTours from "@/components/admin/tours/AdminTours";
+import AdminTransactions from "@/components/admin/transactions/AdminTransactions";
+import AdminUsers from "@/components/admin/users/AdminUsers";
+import RequireAuth from "@/components/common/RequireAuth";
+
+const ADMIN_SECTIONS = [
+  { id: "dashboard", label: "Dashboard" },
+  { id: "users", label: "Users" },
+  { id: "shops", label: "Shops" },
+  { id: "storeCustomization", label: "Store Customization" },
+  { id: "tours", label: "Tours" },
+  { id: "sessions", label: "Sessions" },
+  { id: "orders", label: "Orders" },
+  { id: "transactions", label: "Transactions" },
+  { id: "payouts", label: "Payouts" },
+] as const;
+
+type AdminSection = (typeof ADMIN_SECTIONS)[number]["id"];
 
 export default function AdminPage() {
   const [active, setActive] = useState<AdminSection>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const activeSectionLabel =
+    ADMIN_SECTIONS.find((section) => section.id === active)?.label ??
+    "Dashboard";
 
   const renderContent = () => {
     switch (active) {
@@ -34,6 +41,8 @@ export default function AdminPage() {
         return <AdminUsers />;
       case "shops":
         return <AdminShops />;
+      case "storeCustomization":
+        return <StoreCustomizationSection />;
       case "tours":
         return <AdminTours />;
       case "sessions":
@@ -45,14 +54,7 @@ export default function AdminPage() {
       case "payouts":
         return <AdminPayouts />;
       default:
-        return (
-          <div className="card bg-base-200 p-6 mt-4 ml-4 mb-4">
-            <h2 className="text-xl font-semibold">Welcome Admin 👋</h2>
-            <p className="opacity-70">
-              Select a section from the sidebar to manage the platform.
-            </p>
-          </div>
-        );
+        return <AdminDashboard />;
     }
   };
 
@@ -61,42 +63,32 @@ export default function AdminPage() {
       key={key}
       onClick={() => {
         setActive(key);
-        setSidebarOpen(false); // close on mobile click
+        setSidebarOpen(false);
       }}
-      className={`w-full text-left px-4 py-2 rounded-lg transition ${
+      className={`w-full rounded-lg px-4 py-2 text-left transition ${
         active === key
           ? "bg-primary text-white"
-          : "hover:bg-base-200 text-base-content"
+          : "text-base-content hover:bg-base-200"
       }`}
     >
       {label}
     </button>
   );
 
-  const Sidebar = (
-    <div className="w-64 p-4 space-y-2">
-      <h2 className="text-lg font-bold mb-4">Admin</h2>
-
-      {navItem("dashboard", "Dashboard")}
-      {navItem("users", "Users")}
-      {navItem("shops", "Shops")}
-      {navItem("tours", "Tours")}
-      {navItem("sessions", "Sessions")}
-      {navItem("orders", "Orders")}
-      {navItem("transactions", "Transactions")}
-      {navItem("payouts", "Payouts")}
+  const sidebar = (
+    <div className="w-64 space-y-2 p-4">
+      <h2 className="mb-4 text-lg font-bold">Admin</h2>
+      {ADMIN_SECTIONS.map((section) => navItem(section.id, section.label))}
     </div>
   );
 
   return (
     <RequireAuth requiredRole="ADMIN">
       <div className="flex min-h-screen">
-        {/* Desktop Sidebar */}
         <aside className="hidden shrink-0 border-r bg-base-100 sm:block">
-          {Sidebar}
+          {sidebar}
         </aside>
 
-        {/* Mobile Sidebar Overlay */}
         {sidebarOpen && (
           <div
             className="fixed inset-0 z-40 bg-black/40 sm:hidden"
@@ -104,33 +96,30 @@ export default function AdminPage() {
           >
             <div
               className="absolute left-0 top-0 z-50 h-full border-r bg-base-100"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
             >
-              {Sidebar}
+              {sidebar}
             </div>
           </div>
         )}
 
-        {/* Content */}
-        <main className="flex-1 min-w-0 w-full space-y-4 overflow-x-hidden">
-          {/* Mobile top bar */}
-          <div className="flex items-center justify-between sm:hidden mt-4">
+        <main className="min-w-0 flex-1 space-y-4 overflow-x-hidden">
+          <div className="mt-4 flex items-center justify-between sm:hidden">
             <button
               className="btn btn-ghost btn-sm"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu className="size-5" />
             </button>
-            <h1 className="text-lg font-semibold capitalize">{active}</h1>
-            <div className="w-6" /> {/* spacer */}
+            <h1 className="text-lg font-semibold">{activeSectionLabel}</h1>
+            <div className="w-6" />
           </div>
 
-          {/* Desktop title */}
-          <h1 className="hidden sm:block text-2xl font-bold capitalize ml-4 mt-4">
-            {active}
+          <h1 className="ml-4 mt-4 hidden text-2xl font-bold sm:block">
+            {activeSectionLabel}
           </h1>
 
-          {active === "dashboard" ? <AdminDashboard /> : renderContent()}
+          {renderContent()}
         </main>
       </div>
     </RequireAuth>

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import { useEffect, useState } from "react";
 
 import { Tour } from "@/types";
 import { formatDuration } from "@/utils/formatDuration";
@@ -17,6 +17,13 @@ interface ItemCardProps {
 
 function formatCategory(cat: string) {
   return cat
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatTypeLabel(type: string) {
+  return type
     .toLowerCase()
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -39,22 +46,57 @@ function getIntensityColor(intensity: string) {
   return "bg-muted text-muted-foreground";
 }
 
-const ItemCard: React.FC<ItemCardProps> = ({
+function getTypeBadgeClassName(type: string) {
+  switch (type?.toUpperCase()) {
+    case "PUBLIC":
+      return "border-white/10 bg-slate-950/38 text-white/90";
+    case "PRIVATE":
+      return "border-white/10 bg-slate-950/30 text-white/88";
+    default:
+      return "border-white/10 bg-slate-950/34 text-white/88";
+  }
+}
+
+const priceFormatter = new Intl.NumberFormat("en-IE", {
+  style: "currency",
+  currency: "EUR",
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+});
+
+function formatPrice(value: number) {
+  if (!Number.isFinite(value)) {
+    return priceFormatter.format(0);
+  }
+
+  const hasWholeNumberPrice = Number.isInteger(value);
+
+  return new Intl.NumberFormat("en-IE", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: hasWholeNumberPrice ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+export default function ItemCard({
   item,
   href,
   onClick,
   showStatus = false,
-}) => {
+}: ItemCardProps) {
   const isInteractive = Boolean(href || onClick);
-
-  const handleClick = () => {
-    if (onClick) {
-      onClick();
-      return;
-    }
-  };
-
   const imageUrl = item.images?.length ? item.images[0] : null;
+  const [hasImageError, setHasImageError] = useState(false);
+
+  useEffect(() => {
+    setHasImageError(false);
+  }, [imageUrl]);
+
+  const displayImageUrl =
+    imageUrl && !hasImageError ? imageUrl : "/images/item_placeholder.jpg";
+  const isUsingPlaceholderImage = !imageUrl || hasImageError;
+  const priceLabel = formatPrice(item.price);
 
   const CardContent = (
     <div
@@ -64,30 +106,16 @@ const ItemCard: React.FC<ItemCardProps> = ({
     >
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden bg-muted shrink-0">
-        {imageUrl ? (
-          <img
-            src={imageUrl || "/placeholder.svg"}
-            alt={item.title}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            onError={(e) => {
-              e.currentTarget.src = "/images/item_placeholder.jpg";
-              e.currentTarget.classList.add(
-                "opacity-70",
-                "grayscale",
-                "blur-[1px]",
-              );
-              e.currentTarget.classList.remove("group-hover:scale-105");
-            }}
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <img
-              src="/images/item_placeholder.jpg"
-              alt="placeholder"
-              className="w-full h-full object-cover opacity-70 grayscale blur-[1px]"
-            />
-          </div>
-        )}
+        <img
+          src={displayImageUrl}
+          alt={item.title}
+          className={`h-full w-full object-cover ${
+            isUsingPlaceholderImage
+              ? "opacity-70 grayscale blur-[1px]"
+              : "transition-transform duration-500 group-hover:scale-105"
+          }`}
+          onError={() => setHasImageError(true)}
+        />
 
         {/* Status indicator */}
         {showStatus && item.status && (
@@ -105,35 +133,39 @@ const ItemCard: React.FC<ItemCardProps> = ({
 
         {/* Type badge */}
         {item.type && (
-          <Badge className="absolute top-3 left-3 bg-card/90 text-white backdrop-blur-sm text-card-foreground border-0 shadow-sm">
-            {item.type}
+          <Badge
+            className={`absolute top-3 left-3 rounded-full border px-2.5 py-1 text-[11px] font-medium backdrop-blur-md shadow-sm ${getTypeBadgeClassName(
+              item.type,
+            )}`}
+          >
+            {formatTypeLabel(item.type)}
           </Badge>
         )}
 
         {/* Price overlay */}
-        <div className="absolute bottom-3 right-3 rounded-xl px-3 py-1.5 shadow-md backdrop-blur-md bg-white/80 border border-white/40">
-          <span className="text-lg font-bold text-gray-900">
-            {"\u20AC"}
-            {item.price}
+        <div className="absolute bottom-3 right-3 flex items-baseline gap-1.5 rounded-lg border border-white/10 bg-slate-800/75 px-2.5 py-2 shadow-sm backdrop-blur-md">
+          <span className="text-sm font-semibold leading-none text-white">
+            {priceLabel}
           </span>
-          <span className="ml-1 text-xs text-gray-700">
-            {" "}
-            {item.type === "PUBLIC" ? "/person" : "/tour"}
+          <span className="text-xs font-medium leading-none text-white/75">
+            / {item.type === "PUBLIC" ? "person" : "tour"}
           </span>
         </div>
       </div>
 
       {/* Content */}
       <div className="flex flex-col flex-1 p-4 gap-3">
-        {/* Title */}
-        <h3 className="font-semibold text-base leading-snug line-clamp-2 text-balance text-card-foreground">
-          {item.title}
-        </h3>
+        <div className="space-y-1.5 pb-1">
+          {/* Title */}
+          <h3 className="font-semibold text-base leading-snug line-clamp-2 text-balance text-card-foreground">
+            {item.title}
+          </h3>
 
-        {/* Location */}
-        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <MapPin className="size-3.5 shrink-0" />
-          <span className="truncate">{item.location}</span>
+          {/* Location */}
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <MapPin className="size-3.5 shrink-0" />
+            <span className="truncate capitalize">{item.location}</span>
+          </div>
         </div>
 
         {/* Stats grid */}
@@ -143,7 +175,7 @@ const ItemCard: React.FC<ItemCardProps> = ({
               <Clock className="size-4 text-muted-foreground" />
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              <p className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground/75">
                 Duration
               </p>
               <p className="font-medium text-sm text-card-foreground truncate">
@@ -157,7 +189,7 @@ const ItemCard: React.FC<ItemCardProps> = ({
               <Users className="size-4 text-muted-foreground" />
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              <p className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground/75">
                 Group
               </p>
               <p className="font-medium text-sm text-card-foreground truncate">
@@ -171,7 +203,7 @@ const ItemCard: React.FC<ItemCardProps> = ({
               <Flame className="size-4 text-muted-foreground" />
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              <p className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground/75">
                 Intensity
               </p>
               <Badge
@@ -190,7 +222,7 @@ const ItemCard: React.FC<ItemCardProps> = ({
               <Globe className="size-4 text-muted-foreground" />
             </div>
             <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+              <p className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground/75">
                 Language
               </p>
               <p className="font-medium text-sm text-card-foreground truncate">
@@ -212,15 +244,15 @@ const ItemCard: React.FC<ItemCardProps> = ({
             {item.categories.slice(0, 3).map((cat) => (
               <Badge
                 key={cat}
-                variant="secondary"
-                className="text-[10px] px-1.5 py-0 text-white"
+                variant="outline"
+                className="border-accent/20 bg-accent/12 px-1.5 py-0 text-[10px] font-medium text-accent shadow-none"
               >
                 {formatCategory(cat)}
               </Badge>
             ))}
 
             {item.categories.length > 3 && (
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-[10px] text-accent/65">
                 +{item.categories.length - 3} more
               </span>
             )}
@@ -238,11 +270,17 @@ const ItemCard: React.FC<ItemCardProps> = ({
     );
   }
 
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className="block h-full w-full text-left">
+        {CardContent}
+      </button>
+    );
+  }
+
   return (
-    <div onClick={handleClick} className="h-full">
+    <div className="h-full">
       {CardContent}
     </div>
   );
-};
-
-export default ItemCard;
+}

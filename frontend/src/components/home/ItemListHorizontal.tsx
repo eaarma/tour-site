@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { Tour } from "@/types";
 import ItemCard from "../items/ItemCard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import HomeSectionHeading from "./HomeSectionHeading";
 
 interface ItemListHorizontalProps {
   title: string;
@@ -66,8 +67,8 @@ const ItemListHorizontal: React.FC<ItemListHorizontalProps> = ({
   };
 
   return (
-    <div className="relative space-y-4 my-6">
-      <h2 className=" text-l sm:text-2xl font-bold mt-15">{title}</h2>
+    <section className="relative my-6 space-y-6">
+      <HomeSectionHeading title={title} />
 
       {/* Wrapper for scrollable area and overlay buttons */}
       <div className="relative">
@@ -97,29 +98,33 @@ const ItemListHorizontal: React.FC<ItemListHorizontalProps> = ({
 
         {/* Left arrow overlay */}
         <button
+          type="button"
+          aria-label="Scroll tours left"
           onClick={() => scrollByOne("left")}
-          className={`hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 -ml-4 bg-white rounded-full p-2 shadow transition ${
+          className={`absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 -ml-4 items-center justify-center rounded-full border border-base-300 bg-base-100/95 p-2 text-base-content shadow-sm backdrop-blur transition hover:bg-base-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 sm:flex ${
             canScrollLeft
               ? "opacity-100"
               : "opacity-0 pointer-events-none invisible"
-          } z-10`}
+          }`}
         >
           <ChevronLeft />
         </button>
 
         {/* Right arrow overlay */}
         <button
+          type="button"
+          aria-label="Scroll tours right"
           onClick={() => scrollByOne("right")}
-          className={`hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 -mr-4 bg-white rounded-full p-2 shadow transition ${
+          className={`absolute right-0 top-1/2 z-10 hidden -translate-y-1/2 -mr-4 items-center justify-center rounded-full border border-base-300 bg-base-100/95 p-2 text-base-content shadow-sm backdrop-blur transition hover:bg-base-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 sm:flex ${
             canScrollRight
               ? "opacity-100"
               : "opacity-0 pointer-events-none invisible"
-          } z-10`}
+          }`}
         >
           <ChevronRight />
         </button>
       </div>
-    </div>
+    </section>
   );
 };
 

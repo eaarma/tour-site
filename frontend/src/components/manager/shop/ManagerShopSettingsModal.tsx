@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ShopDto } from "@/types/shop";
-import { ShopService } from "@/lib/shopService";
+import { ShopService } from "@/lib/shops/shopService";
 import toast from "react-hot-toast";
 import Modal from "@/components/common/Modal";
 
@@ -131,3 +131,4 @@ export default function ManagerShopSettingsModal({
     </Modal>
   );
 }
+

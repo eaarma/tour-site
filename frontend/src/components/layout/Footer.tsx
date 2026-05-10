@@ -2,12 +2,21 @@
 
 import Link from "next/link";
 import TitleText from "../common/TitleText";
+import type { StorefrontSettingsDto } from "@/types/storefront";
 
-const Footer: React.FC = () => {
+type FooterProps = {
+  storefront: StorefrontSettingsDto;
+};
+
+const Footer: React.FC<FooterProps> = ({ storefront }) => {
+  const storefrontName = storefront.siteName?.trim() || "TourHub";
+  const brandImage = storefront.logoUrl?.trim() || null;
+  const contactEmail = storefront.contactEmail?.trim() || null;
+
   return (
     <footer className="bg-base-100 border-t">
       <div className="page-container py-6">
-        <div className="flex flex-col justify-center items-center text-center h-40">
+        <div className="flex min-h-40 flex-col items-center justify-center text-center">
           {/* Links section */}
           <div className="flex flex-wrap justify-center gap-6 mb-4 text-sm">
             <Link href="/legal/faq" className="link link-hover">
@@ -25,7 +34,15 @@ const Footer: React.FC = () => {
           </div>
 
           {/* TitleText centered */}
-          <TitleText title="TourHub" image="/tree.png" />
+          <TitleText title={storefrontName} image={brandImage} />
+
+          {contactEmail ? (
+            <p className="mt-3 text-sm text-base-content/65">
+              <a className="link link-hover" href={`mailto:${contactEmail}`}>
+                {contactEmail}
+              </a>
+            </p>
+          ) : null}
         </div>
       </div>
     </footer>

@@ -1,0 +1,391 @@
+package com.tourhub.session.service;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+
+import com.tourhub.session.dto.TourSessionDetailsDto;
+import com.tourhub.session.mapper.TourSessionMapper;
+import com.tourhub.session.model.SessionStatus;
+import com.tourhub.tour.model.Tour;
+import com.tourhub.tour.model.TourSchedule;
+import com.tourhub.session.model.TourSession;
+import com.tourhub.user.model.User;
+import com.tourhub.session.repository.TourSessionRepository;
+import com.tourhub.user.repository.UserRepository;
+import com.tourhub.security.CurrentUserService;
+import com.tourhub.common.result.Result;
+
+@ExtendWith(MockitoExtension.class)
+class TourSessionServiceTest {
+
+    @Mock
+    private TourSessionRepository repo;
+
+    @Mock
+    private TourSessionMapper mapper;
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private CurrentUserService currentUserService;
+
+    @InjectMocks
+    private TourSessionService service;
+
+    @Test
+    void searchSessionsForAdmin_returnsMappedPage_whenFiltersValid() {
+        TourSession session = new TourSession();
+        TourSessionDetailsDto dto = new TourSessionDetailsDto();
+        Page<TourSession> page = new PageImpl<>(List.of(session));
+
+        when(repo.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
+        when(mapper.toDto(session)).thenReturn(dto);
+
+        Result<Page<TourSessionDetailsDto>> result = service.searchSessionsForAdmin(
+                "session 1",
+                "PLANNED",
+                LocalDate.of(2026, 3, 1),
+                LocalDate.of(2026, 3, 31),
+                0,
+                10);
+
+        assertTrue(result.isOk());
+        assertEquals(1, result.get().getContent().size());
+        assertSame(dto, result.get().getContent().get(0));
+    }
+
+    @Test
+    void searchSessionsForAdmin_returnsFail_whenDateRangeInvalid() {
+        Result<Page<TourSessionDetailsDto>> result = service.searchSessionsForAdmin(
+                null,
+                null,
+                LocalDate.of(2026, 3, 31),
+                LocalDate.of(2026, 3, 1),
+                0,
+                10);
+
+        assertTrue(result.isFail());
+        assertEquals("BAD_REQUEST", result.error().code());
+    }
+
+    @Test
+    void getSession_returnsOk_whenSessionExists() {
+        TourSession session = new TourSession();
+        session.setId(1L);
+
+        TourSessionDetailsDto dto = new TourSessionDetailsDto();
+
+        when(repo.findById(1L)).thenReturn(Optional.of(session));
+        when(mapper.toDto(session)).thenReturn(dto);
+
+        Result<TourSessionDetailsDto> result = service.getSession(1L);
+
+        assertTrue(result.isOk());
+        assertNotNull(result.get());
+        verify(repo).findById(1L);
+        verify(mapper).toDto(session);
+    }
+
+    @Test
+    void assignManager_returnsFail_whenSessionNotFound() {
+        when(repo.findById(99L)).thenReturn(Optional.empty());
+
+        Result<TourSessionDetailsDto> result = service.assignManager(99L, UUID.randomUUID());
+
+        assertTrue(result.isFail());
+        assertEquals("Session not found", result.error().message());
+    }
+
+    @Test
+    void assignManager_assignsManager_whenValid() {
+        UUID managerId = UUID.randomUUID();
+
+        TourSession session = new TourSession();
+        User manager = new User();
+
+        when(repo.findById(1L)).thenReturn(Optional.of(session));
+        when(userRepository.findById(managerId)).thenReturn(Optional.of(manager));
+        when(repo.save(session)).thenReturn(session);
+        when(mapper.toDto(session)).thenReturn(new TourSessionDetailsDto());
+
+        Result<TourSessionDetailsDto> result = service.assignManager(1L, managerId);
+
+        assertTrue(result.isOk());
+        assertEquals(manager, session.getManager());
+    }
+
+    @Test
+    void assignManager_clearsManager_whenManagerIdIsNull() {
+        TourSession session = new TourSession();
+        session.setManager(new User());
+
+        when(repo.findById(1L)).thenReturn(Optional.of(session));
+        when(repo.save(session)).thenReturn(session);
+        when(mapper.toDto(session)).thenReturn(new TourSessionDetailsDto());
+
+        service.assignManager(1L, null);
+
+        assertNull(session.getManager());
+    }
+
+    @Test
+    void getSessionsForShop_returnsEmptyOkResult_whenNoTours() {
+
+        when(repo.findByShopIdWithParticipants(1L)).thenReturn(List.of());
+        Result<List<TourSessionDetailsDto>> result = service.getSessionsForShop(1L);
+
+        assertTrue(result.isOk());
+        assertNotNull(result.get());
+        assertTrue(result.get().isEmpty());
+
+        verify(repo, never()).findBySchedule_Tour_IdIn(any());
+        verify(mapper, never()).toDto(any());
+    }
+
+    @Test
+    void getSessionsForShop_returnsSessionsForAllTours() {
+
+        TourSession session = new TourSession();
+        TourSessionDetailsDto dto = new TourSessionDetailsDto();
+
+        when(repo.findByShopIdWithParticipants(1L))
+                .thenReturn(List.of(session));
+
+        when(mapper.toDto(session))
+                .thenReturn(dto);
+
+        Result<List<TourSessionDetailsDto>> result = service.getSessionsForShop(1L);
+
+        assertTrue(result.isOk());
+        assertEquals(1, result.get().size());
+        assertSame(dto, result.get().get(0));
+
+        verify(repo).findByShopIdWithParticipants(1L);
+        verify(mapper).toDto(session);
+    }
+
+    @Test
+    void updateStatus_updatesSessionStatus() {
+        TourSession session = new TourSession();
+        session.setStatus(SessionStatus.PLANNED);
+
+        when(repo.findById(1L)).thenReturn(Optional.of(session));
+        when(repo.save(session)).thenReturn(session);
+        when(mapper.toDto(session)).thenReturn(new TourSessionDetailsDto());
+
+        service.updateStatus(1L, SessionStatus.COMPLETED);
+
+        Result<TourSessionDetailsDto> result = service.updateStatus(99L, SessionStatus.CONFIRMED);
+
+        assertTrue(result.isFail());
+        assertEquals("NOT_FOUND", result.error().code());
+    }
+
+    @Test
+    void getSessions_returnsEmptyOkResult_whenNoSessionsExist() {
+
+        when(repo.findBySchedule_Tour_Id(1L))
+                .thenReturn(List.of());
+
+        Result<List<TourSessionDetailsDto>> result = service.getSessions(1L);
+
+        assertTrue(result.isOk());
+        assertTrue(result.get().isEmpty());
+        verify(mapper, never()).toDto(any());
+    }
+
+    @Test
+    void getSessions_returnsMappedSessions_whenSessionsExist() {
+
+        TourSession session = new TourSession();
+        TourSessionDetailsDto dto = new TourSessionDetailsDto();
+
+        when(repo.findBySchedule_Tour_Id(1L))
+                .thenReturn(List.of(session));
+
+        when(mapper.toDto(session))
+                .thenReturn(dto);
+
+        Result<List<TourSessionDetailsDto>> result = service.getSessions(1L);
+
+        assertTrue(result.isOk());
+        assertEquals(1, result.get().size());
+        assertSame(dto, result.get().get(0));
+
+        verify(mapper).toDto(session);
+    }
+
+    @Test
+    void getSessionsForManager_returnsSessions_whenManagerExists() {
+        UUID managerId = UUID.randomUUID();
+
+        TourSession session = new TourSession();
+        TourSessionDetailsDto dto = new TourSessionDetailsDto();
+
+        when(userRepository.existsById(managerId)).thenReturn(true);
+        when(currentUserService.getCurrentUserId()).thenReturn(managerId);
+        when(repo.findByManagerId(managerId)).thenReturn(List.of(session));
+        when(mapper.toDto(session)).thenReturn(dto);
+
+        Result<List<TourSessionDetailsDto>> result = service.getSessionsForManager(managerId);
+
+        assertTrue(result.isOk());
+        assertEquals(1, result.get().size());
+    }
+
+    @Test
+    void getSessionsForManager_returnsSessions_whenAdminRequestsAnotherManager() {
+        UUID managerId = UUID.randomUUID();
+        UUID adminId = UUID.randomUUID();
+
+        TourSession session = new TourSession();
+        TourSessionDetailsDto dto = new TourSessionDetailsDto();
+
+        when(userRepository.existsById(managerId)).thenReturn(true);
+        when(currentUserService.getCurrentUserId()).thenReturn(adminId);
+        when(currentUserService.hasRole("ADMIN")).thenReturn(true);
+        when(repo.findByManagerId(managerId)).thenReturn(List.of(session));
+        when(mapper.toDto(session)).thenReturn(dto);
+
+        Result<List<TourSessionDetailsDto>> result = service.getSessionsForManager(managerId);
+
+        assertTrue(result.isOk());
+        assertEquals(1, result.get().size());
+    }
+
+    @Test
+    void getSessionsForManager_returnsForbidden_whenNonAdminRequestsAnotherManager() {
+        UUID managerId = UUID.randomUUID();
+        UUID otherUserId = UUID.randomUUID();
+
+        when(userRepository.existsById(managerId)).thenReturn(true);
+        when(currentUserService.getCurrentUserId()).thenReturn(otherUserId);
+        when(currentUserService.hasRole("ADMIN")).thenReturn(false);
+
+        Result<List<TourSessionDetailsDto>> result = service.getSessionsForManager(managerId);
+
+        assertTrue(result.isFail());
+        assertEquals("FORBIDDEN", result.error().code());
+        verify(repo, never()).findByManagerId(any());
+    }
+
+    @Test
+    void getSessionsForManager_returnsFail_whenManagerNotFound() {
+        UUID managerId = UUID.randomUUID();
+
+        when(userRepository.existsById(managerId)).thenReturn(false);
+
+        Result<List<TourSessionDetailsDto>> result = service.getSessionsForManager(managerId);
+
+        assertTrue(result.isFail());
+        assertEquals("NOT_FOUND", result.error().code());
+    }
+
+    @Test
+    void updateStatus_updatesSessionStatus_whenValid() {
+        TourSession session = new TourSession();
+        session.setStatus(SessionStatus.CONFIRMED);
+
+        when(repo.findById(1L)).thenReturn(Optional.of(session));
+        when(repo.save(session)).thenReturn(session); // ✅ REQUIRED
+        when(mapper.toDto(session)).thenReturn(new TourSessionDetailsDto());
+
+        Result<TourSessionDetailsDto> result = service.updateStatus(1L, SessionStatus.COMPLETED);
+
+        assertTrue(result.isOk());
+        assertEquals(SessionStatus.COMPLETED, session.getStatus());
+        verify(repo).save(session);
+    }
+
+    @Test
+    void updateStatus_returnsFail_whenCompletingFutureSessionAsNonAdmin() {
+        TourSession session = new TourSession();
+        session.setStatus(SessionStatus.CONFIRMED);
+        session.setSchedule(TourSchedule.builder()
+                .date(LocalDate.now().plusDays(1))
+                .time(java.time.LocalTime.NOON)
+                .build());
+
+        when(repo.findById(1L)).thenReturn(Optional.of(session));
+        when(currentUserService.hasRole("ADMIN")).thenReturn(false);
+
+        Result<TourSessionDetailsDto> result = service.updateStatus(1L, SessionStatus.COMPLETED);
+
+        assertTrue(result.isFail());
+        assertEquals("BAD_REQUEST", result.error().code());
+        assertEquals("Session cannot be completed before it takes place", result.error().message());
+        verify(repo, never()).save(any());
+    }
+
+    @Test
+    void updateStatus_allowsAdminToCompleteFutureSession() {
+        TourSession session = new TourSession();
+        session.setStatus(SessionStatus.CONFIRMED);
+        session.setSchedule(TourSchedule.builder()
+                .date(LocalDate.now().plusDays(1))
+                .time(java.time.LocalTime.NOON)
+                .build());
+
+        when(repo.findById(1L)).thenReturn(Optional.of(session));
+        when(repo.save(session)).thenReturn(session);
+        when(mapper.toDto(session)).thenReturn(new TourSessionDetailsDto());
+        when(currentUserService.hasRole("ADMIN")).thenReturn(true);
+
+        Result<TourSessionDetailsDto> result = service.updateStatus(1L, SessionStatus.COMPLETED);
+
+        assertTrue(result.isOk());
+        assertEquals(SessionStatus.COMPLETED, session.getStatus());
+        verify(repo).save(session);
+    }
+
+    @Test
+    void updateStatus_returnsFail_whenSessionNotFound() {
+        when(repo.findById(99L)).thenReturn(Optional.empty());
+
+        Result<TourSessionDetailsDto> result = service.updateStatus(99L, SessionStatus.CONFIRMED);
+
+        assertTrue(result.isFail());
+        assertEquals("NOT_FOUND", result.error().code());
+    }
+
+    @Test
+    void updateStatus_returnsFail_whenSessionAlreadyCompleted() {
+        TourSession session = new TourSession();
+        session.setStatus(SessionStatus.COMPLETED);
+
+        when(repo.findById(1L)).thenReturn(Optional.of(session));
+
+        Result<TourSessionDetailsDto> result = service.updateStatus(1L, SessionStatus.CONFIRMED);
+
+        assertTrue(result.isFail());
+        assertEquals("BAD_REQUEST", result.error().code());
+
+        verify(repo, never()).save(any());
+    }
+
+}
+

@@ -14,6 +14,7 @@ import {
 import { formatDuration } from "@/utils/formatDuration";
 import { Tour } from "@/types";
 import Badge from "../common/Badge";
+import HomeSectionHeading from "./HomeSectionHeading";
 
 interface HighlightedItemProps {
   title: string;
@@ -22,6 +23,13 @@ interface HighlightedItemProps {
 
 function formatCategory(cat: string) {
   return cat
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function formatTypeLabel(type: string) {
+  return type
     .toLowerCase()
     .replace(/_/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
@@ -38,6 +46,17 @@ function getIntensityColor(intensity: string) {
   return "bg-muted text-muted-foreground";
 }
 
+function getTypeBadgeClassName(type: string) {
+  switch (type?.toUpperCase()) {
+    case "PUBLIC":
+      return "border-white/10 bg-slate-950/38 text-white/90";
+    case "PRIVATE":
+      return "border-white/10 bg-slate-950/30 text-white/88";
+    default:
+      return "border-white/10 bg-slate-950/34 text-white/88";
+  }
+}
+
 const HighlightedItem: React.FC<HighlightedItemProps> = ({ title, item }) => {
   const router = useRouter();
   if (!item) return null;
@@ -52,9 +71,9 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ title, item }) => {
 
   return (
     <section>
-      <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-4">
-        {title}
-      </h2>
+      <div className="mb-6">
+        <HomeSectionHeading title={title} />
+      </div>
 
       <div
         className="group cursor-pointer"
@@ -66,9 +85,9 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ title, item }) => {
           if (e.key === "Enter" || e.key === " ") handleNavigate();
         }}
       >
-        <div className="relative overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col lg:flex-row lg:h-[340px]">
+        <div className="relative flex flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm transition-shadow duration-300 hover:shadow-lg">
           {/* Image section */}
-          <div className="relative w-full h-52 sm:h-60 lg:w-[50%] lg:h-full shrink-0 overflow-hidden bg-muted">
+          <div className="relative h-56 w-full shrink-0 overflow-hidden bg-muted sm:h-64 lg:h-[24.375rem]">
             <img
               src={mainImage}
               alt={item.title || "Tour image"}
@@ -89,18 +108,22 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ title, item }) => {
             />
 
             {/* Gradient overlay on image bottom */}
-            <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 to-transparent pointer-events-none lg:hidden" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/45 to-transparent" />
 
             {/* Type badge */}
             {item.type && (
-              <Badge className="absolute top-3 left-3 bg-card/90 backdrop-blur-sm text-white text-card-foreground border-0 shadow-sm">
-                {item.type}
+              <Badge
+                className={`absolute top-3 left-3 rounded-full border px-2.5 py-1 text-[11px] font-medium shadow-sm backdrop-blur-md ${getTypeBadgeClassName(
+                  item.type,
+                )}`}
+              >
+                {formatTypeLabel(item.type)}
               </Badge>
             )}
           </div>
 
           {/* Content section */}
-          <div className="flex flex-col flex-1 p-5 sm:p-6 lg:p-8 gap-4 min-w-0">
+          <div className="flex min-w-0 flex-1 flex-col gap-4 p-5 sm:p-6 lg:p-7">
             {/* Header */}
             <div className="flex flex-col gap-1.5">
               <h3 className="text-lg sm:text-2xl font-bold leading-tight text-card-foreground line-clamp-2 text-balance">
@@ -116,18 +139,18 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ title, item }) => {
 
             {/* Description */}
             {item.description && (
-              <p className="text-sm leading-relaxed text-muted-foreground line-clamp-2 lg:line-clamp-3">
+              <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
                 {item.description}
               </p>
             )}
 
             {/* Stats row */}
-            <div className="flex flex-wrap items-center gap-3 lg:gap-4">
-              <div className="flex items-center gap-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="flex min-w-0 items-center gap-2">
                 <div className="flex items-center justify-center size-8 rounded-lg bg-muted shrink-0">
                   <Clock className="size-4 text-muted-foreground" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none mb-0.5">
                     Duration
                   </p>
@@ -137,11 +160,11 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ title, item }) => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 items-center gap-2">
                 <div className="flex items-center justify-center size-8 rounded-lg bg-muted shrink-0">
                   <Users className="size-4 text-muted-foreground" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none mb-0.5">
                     Group
                   </p>
@@ -151,11 +174,11 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ title, item }) => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 items-center gap-2">
                 <div className="flex items-center justify-center size-8 rounded-lg bg-muted shrink-0">
                   <Flame className="size-4 text-muted-foreground" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none mb-0.5">
                     Intensity
                   </p>
@@ -168,24 +191,25 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ title, item }) => {
                 </div>
               </div>
 
-              {item.language && item.language.length > 0 && (
-                <div className="hidden sm:flex items-center gap-2">
-                  <div className="flex items-center justify-center size-8 rounded-lg bg-muted shrink-0">
-                    <Globe className="size-4 text-muted-foreground" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none mb-0.5">
-                      Language
-                    </p>
-                    <p className="font-medium text-sm text-card-foreground">
-                      {item.language.length > 2
-                        ? `${item.language[0]}, ${item.language[1]} +${item.language.length - 2}`
-                        : item.language.join(", ")}
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
+
+            {item.language && item.language.length > 0 && (
+              <div className="hidden sm:flex items-center gap-2">
+                <div className="flex items-center justify-center size-8 rounded-lg bg-muted shrink-0">
+                  <Globe className="size-4 text-muted-foreground" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none mb-0.5">
+                    Language
+                  </p>
+                  <p className="font-medium text-sm text-card-foreground">
+                    {item.language.length > 2
+                      ? `${item.language[0]}, ${item.language[1]} +${item.language.length - 2}`
+                      : item.language.join(", ")}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Categories */}
             {item.categories && item.categories.length > 0 && (

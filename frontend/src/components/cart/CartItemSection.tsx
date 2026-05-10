@@ -1,17 +1,19 @@
 "use client";
 
-import React from "react";
-import CartItem from "./CartItem";
+import Link from "next/link";
+import { ShoppingBag } from "lucide-react";
 import { useDispatch } from "react-redux";
+
+import CartItem from "./CartItem";
 import { removeItemFromCart, toggleItemSelection } from "@/store/cartSlice";
-import { CartItem as CartItemType } from "@/types";
+import type { CartItem as CartItemType } from "@/types";
 
 interface Props {
   cart: CartItemType[];
   onView?: (item: CartItemType) => void;
 }
 
-const CartItemSection: React.FC<Props> = ({ cart, onView }) => {
+export default function CartItemSection({ cart, onView }: Props) {
   const dispatch = useDispatch();
 
   const handleRemove = (cartItemId: string) => {
@@ -22,13 +24,9 @@ const CartItemSection: React.FC<Props> = ({ cart, onView }) => {
     dispatch(toggleItemSelection(cartItemId));
   };
 
-  // Count selected items.
   const selectedCount = cart.filter((item) => item.selected).length;
-
-  // Check whether all items are selected.
   const allSelected = cart.length > 0 && selectedCount === cart.length;
 
-  // Toggle all items.
   const handleToggleAll = () => {
     cart.forEach((item) => {
       if (item.selected !== !allSelected) {
@@ -46,54 +44,89 @@ const CartItemSection: React.FC<Props> = ({ cart, onView }) => {
   };
 
   return (
-    <div className="w-full md:w-2/3 lg:w-2/3 space-y-4">
-      <h2 className="text-2xl font-bold mb-5">Your Cart</h2>
+    <section className="space-y-5">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-content">
+          1
+        </span>
+        <div>
+          <h2 className="text-lg font-semibold text-base-content">
+            Cart Items
+          </h2>
+          <p className="text-sm text-base-content/60">
+            Review the tours you want to keep in this checkout flow.
+          </p>
+        </div>
+      </div>
 
       {cart.length === 0 ? (
-        <p className="text-gray-500 text-lg">Your cart is empty.</p>
+        <div className="rounded-[24px] border border-dashed border-base-300 bg-base-100 px-6 py-12 text-center shadow-sm">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-base-200 text-base-content/70">
+            <ShoppingBag className="h-6 w-6" />
+          </div>
+          <h3 className="mt-5 text-xl font-semibold text-base-content">
+            Your cart is empty
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-base-content/60">
+            Add a few tours first, then come back here to review your booking
+            details.
+          </p>
+          <div className="mt-6">
+            <Link href="/items" className="btn btn-primary h-12 px-6 text-base">
+              Continue Browsing
+            </Link>
+          </div>
+        </div>
       ) : (
-        <>
-          {/* Select-all controls */}
-          <div className="flex items-center justify-between border-b pb-2 mb-4 mt-2 ml-1">
-            <label
-              htmlFor="cart-toggle-all"
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              <input
-                id="cart-toggle-all"
-                type="checkbox"
-                checked={allSelected}
-                onChange={handleToggleAll}
-                className="checkbox"
-              />
-              <span className="text-sm text-gray-700 ml-2">
-                Select all ({selectedCount})
-              </span>
-            </label>
+        <div className="space-y-4">
+          <div className="rounded-[24px] border border-base-300 bg-base-100 p-4 shadow-sm sm:p-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <label
+                  htmlFor="cart-toggle-all"
+                  className="flex cursor-pointer items-center gap-3"
+                >
+                  <input
+                    id="cart-toggle-all"
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={handleToggleAll}
+                    className="checkbox checkbox-primary"
+                  />
+                  <span className="text-sm font-medium text-base-content/80">
+                    Select all items
+                  </span>
+                </label>
+                <p className="mt-2 text-sm text-base-content/60">
+                  {selectedCount} of {cart.length} line items selected for
+                  checkout.
+                </p>
+              </div>
 
-            <button
-              onClick={handleRemoveSelected}
-              disabled={selectedCount === 0}
-              className="btn btn-sm btn-outline btn-error disabled:opacity-50 rounded-lg"
-            >
-              Remove ({selectedCount})
-            </button>
+              <button
+                type="button"
+                className="btn btn-outline btn-error h-11 px-4"
+                disabled={selectedCount === 0}
+                onClick={handleRemoveSelected}
+              >
+                Remove Selected
+              </button>
+            </div>
           </div>
 
-          {/* Cart items */}
-          {cart.map((entry, index) => (
-            <CartItem
-              key={entry.cartItemId || `${entry.id}-${index}`} // Fallback if missing.
-              item={entry}
-              onRemove={handleRemove}
-              onView={onView ? onView : () => {}}
-              onToggle={handleToggle}
-            />
-          ))}
-        </>
+          <div className="space-y-4">
+            {cart.map((entry, index) => (
+              <CartItem
+                key={entry.cartItemId || `${entry.id}-${index}`}
+                item={entry}
+                onRemove={handleRemove}
+                onView={onView ?? (() => undefined)}
+                onToggle={handleToggle}
+              />
+            ))}
+          </div>
+        </div>
       )}
-    </div>
+    </section>
   );
-};
-
-export default CartItemSection;
+}

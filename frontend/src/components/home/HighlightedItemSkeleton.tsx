@@ -2,12 +2,12 @@
 
 export default function HighlightedItemSkeleton() {
   return (
-    <div className="card bg-base-100 shadow-xl border overflow-hidden rounded-xl lg:flex lg:flex-row animate-pulse">
+    <div className="card animate-pulse overflow-hidden rounded-xl border bg-base-100 shadow-xl">
       {/* Image placeholder */}
-      <div className="relative w-full lg:w-1/2 h-64 lg:h-auto min-h-[300px] bg-gray-300"></div>
+      <div className="relative h-56 w-full bg-gray-300 sm:h-64 lg:h-[24.375rem]"></div>
 
       {/* Content */}
-      <div className="w-full lg:w-1/2 p-6 flex flex-col h-full">
+      <div className="flex h-full w-full flex-col p-6">
         {/* Title + location + description */}
         <div className="space-y-3 mb-6">
           <div className="h-7 w-2/3 bg-gray-300 rounded"></div> {/* title */}
@@ -26,7 +26,7 @@ export default function HighlightedItemSkeleton() {
         </div>
 
         {/* Price + CTA */}
-        <div className="flex items-center gap-6 mt-auto self-start lg:self-end">
+        <div className="mt-auto flex items-center gap-6 self-start">
           <div className="h-6 w-20 bg-gray-300 rounded"></div> {/* price */}
           <div className="h-10 w-28 bg-gray-300 rounded"></div> {/* button */}
         </div>

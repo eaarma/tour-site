@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Modal from "@/components/common/Modal";
 import { ShopUserDto } from "@/types";
-import { ShopUserService } from "@/lib/shopUserService";
-import { TourSessionService } from "@/lib/tourSessionService";
+import { ShopUserService } from "@/lib/shops/shopUserService";
+import { TourSessionService } from "@/lib/tours/tourSessionService";
 import { TourSessionDto } from "@/types/tourSession";
 import toast from "react-hot-toast";
 
@@ -135,3 +135,4 @@ export default function SessionOwnershipModal({
     </Modal>
   );
 }
+

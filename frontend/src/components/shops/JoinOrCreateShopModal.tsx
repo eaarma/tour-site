@@ -4,8 +4,8 @@ import { useState } from "react";
 import { Search, PlusCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import Modal from "../common/Modal";
-import { ShopService } from "@/lib/shopService";
-import { ShopUserService } from "@/lib/shopUserService";
+import { ShopService } from "@/lib/shops/shopService";
+import { ShopUserService } from "@/lib/shops/shopUserService";
 import { ShopDto } from "@/types/shop";
 
 interface JoinOrCreateShopModalProps {
@@ -219,3 +219,4 @@ export default function JoinOrCreateShopModal({
     </Modal>
   );
 }
+

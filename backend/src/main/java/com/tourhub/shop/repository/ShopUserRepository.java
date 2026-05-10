@@ -1,0 +1,56 @@
+package com.tourhub.shop.repository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import com.tourhub.shop.model.ShopUser;
+import com.tourhub.shop.model.ShopUserRole;
+import com.tourhub.shop.model.ShopUserStatus;
+
+@Repository
+public interface ShopUserRepository extends JpaRepository<ShopUser, Long> {
+
+    List<ShopUser> findByShopId(Long shopId);
+
+    List<ShopUser> findByUserId(UUID userId);
+
+    Optional<ShopUser> findByShopIdAndUserId(Long shopId, UUID userId);
+
+    List<ShopUser> findByShopIdAndStatus(Long shopId, ShopUserStatus status);
+
+    boolean existsByUserIdAndShopId(UUID userId, Long shopId);
+
+    boolean existsByUserIdAndShopIdAndRole(
+            UUID userId,
+            Long shopId,
+            ShopUserRole role);
+
+    @Query("""
+                SELECT su.role
+                FROM ShopUser su
+                WHERE su.user.id = :userId
+                  AND su.shop.id = :shopId
+            """)
+    Optional<ShopUserRole> findRole(
+            @Param("userId") UUID userId,
+            @Param("shopId") Long shopId);
+
+    @Query("""
+                SELECT su
+                FROM ShopUser su
+                JOIN FETCH su.user
+                WHERE su.shop.id = :shopId
+            """)
+    List<ShopUser> findByShopIdWithUser(@Param("shopId") Long shopId);
+
+    boolean existsByShopIdAndUserIdAndStatus(
+            Long shopId,
+            UUID userId,
+            ShopUserStatus status);
+}

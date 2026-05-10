@@ -1,126 +1,92 @@
-"use client";
+import type { Metadata } from "next";
 
-import { useState } from "react";
-import toast from "react-hot-toast";
+import ContactPageContent from "@/components/contact/ContactPageContent";
+import { getPublicStorePageOrFallback } from "@/lib/storefront/publicStorePage";
+import { resolveStorePageTokens } from "@/lib/storefront/storePageDefaults";
+import { getPublicStorefrontOrFallback } from "@/lib/storefront/publicStorefront";
+import { buildStoreMetadata } from "@/lib/storefront/storeSeo";
+import type { ContactPageContentDto } from "@/types/storePage";
 
-export default function ContactPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+export async function generateMetadata(): Promise<Metadata> {
+  const [storefront, contactPage] = await Promise.all([
+    getPublicStorefrontOrFallback(),
+    getPublicStorePageOrFallback("contact"),
+  ]);
+  const page = resolveStorePageTokens(
+    contactPage,
+    storefront.contactEmail,
+    storefront.siteName,
+  );
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setErrorMessage("");
+  return buildStoreMetadata({
+    storefront,
+    pageTitle: page.title,
+    description: page.description,
+  });
+}
 
-    if (!name || !email || !message) {
-      toast.error("Please fill all required fields.");
-      setIsSubmitting(false);
-      return;
-    }
+export default async function ContactPage() {
+  const [storefront, contactPage] = await Promise.all([
+    getPublicStorefrontOrFallback(),
+    getPublicStorePageOrFallback("contact"),
+  ]);
+  const page = resolveStorePageTokens(
+    contactPage,
+    storefront.contactEmail,
+    storefront.siteName,
+  );
+  const content = page.contentJson as ContactPageContentDto;
+  const locality = [storefront.city?.trim(), storefront.postalCode?.trim()]
+    .filter((value): value is string => Boolean(value))
+    .join(", ");
+  const addressLines = storefront.showAddress
+    ? [
+        storefront.addressLine1?.trim() || null,
+        storefront.addressLine2?.trim() || null,
+        locality || null,
+        storefront.country?.trim() || null,
+      ].filter((value): value is string => Boolean(value))
+    : [];
 
-    try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          email,
-          subject,
-          message,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = (await response.json().catch(() => null)) as
-          | { error?: string }
-          | null;
-
-        throw new Error(data?.error || "Failed to send message");
-      }
-
-      toast.success("Message sent successfully!");
-      setName("");
-      setEmail("");
-      setSubject("");
-      setMessage("");
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Failed to send message";
-      setErrorMessage(message);
-      toast.error(message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
   return (
-    <div className="max-w-4xl mx-auto p-6 min-h-screen mt-4 sm:mt-6">
-      <section className="text-center mb-10">
-        <h1 className="text-3xl font-bold mb-4">Get in Touch</h1>
-        <p className="text-base text-gray-600">
-          We’d love to hear from you! Whether you have a question about our
-          tours, feedback, or just want to say hi, feel free to reach out.
-        </p>
-      </section>
-
-      <div className="text-center mb-6">
-        <h2 className="text-lg font-semibold">Message</h2>
-        <p className="text-sm text-gray-500">
-          {process.env.NEXT_PUBLIC_SITE_EMAIL}
-        </p>
-      </div>
-
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-col gap-4 max-w-xl mx-auto"
-      >
-        <input
-          type="text"
-          placeholder="Name"
-          className="input input-bordered w-full rounded-xl"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          className="input input-bordered w-full rounded-xl"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="text"
-          placeholder="Subject"
-          className="input input-bordered w-full rounded-xl"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-        />
-        <textarea
-          className="textarea textarea-bordered w-full rounded-xl"
-          placeholder="Message"
-          rows={4}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          required
-        ></textarea>
-
-        <button
-          className="btn btn-primary self-center mt-2 rounded-xl"
-          type="submit"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? "Sending..." : "Send"}
-        </button>
-
-        {errorMessage && (
-          <div className="text-error text-sm text-center">{errorMessage}</div>
-        )}
-      </form>
-    </div>
+    <ContactPageContent
+      eyebrow={page.eyebrow}
+      title={page.title}
+      description={page.description}
+      contactEmail={
+        storefront.showContactEmail ? storefront.contactEmail?.trim() || null : null
+      }
+      supportPhone={
+        storefront.showSupportPhone ? storefront.supportPhone?.trim() || null : null
+      }
+      addressLines={addressLines}
+      businessHours={
+        storefront.showBusinessHours
+          ? storefront.businessHours?.trim() || null
+          : null
+      }
+      detailsTitle={content.detailsTitle?.trim() || "Contact details"}
+      detailsDescription={
+        content.detailsDescription?.trim() ||
+        "Use the information below for direct support or send us a message through the form."
+      }
+      bestForTitle={content.bestForTitle?.trim() || "Best for"}
+      bestForDescription={
+        content.bestForDescription?.trim() ||
+        "Questions about tours, booking guidance, availability, or help choosing between experiences."
+      }
+      emptyDetailsMessage={
+        content.emptyDetailsMessage?.trim() ||
+        "Contact details have not been configured yet. You can still use the form and the message will be sent through the site contact route."
+      }
+      closingNote={page.closingNote}
+      messageTitle={content.messageTitle?.trim() || "Message"}
+      messageDescription={
+        content.messageDescription?.trim() ||
+        "Send a note and we'll get back to you as soon as we can."
+      }
+      submitButtonLabel={content.submitButtonLabel?.trim() || "Send"}
+    />
   );
 }
+

@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { ShopDto } from "@/types/shop";
 import { ShopUserDto } from "@/types";
-import { ShopService } from "@/lib/shopService";
-import { ShopUserService } from "@/lib/shopUserService";
+import { ShopService } from "@/lib/shops/shopService";
+import { ShopUserService } from "@/lib/shops/shopUserService";
 import ManagerShopUsersModal from "./ManagerShopUsersModal";
 import ManagerShopSettingsModal from "./ManagerShopSettingsModal";
 import { Settings } from "lucide-react";
@@ -184,3 +184,4 @@ export default function ManagerShopSection({ shopId }: Props) {
     </div>
   );
 }
+

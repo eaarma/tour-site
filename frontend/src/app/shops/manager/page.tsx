@@ -6,7 +6,7 @@ import ManagerShopSection from "@/components/manager/shop/ManagerShopSection";
 import ManagerItemList from "@/components/manager/item/ManagerItemList";
 import ManagerStatisticsSection from "@/components/manager/statistics/ManagerStatisticsSection";
 import { Tour } from "@/types";
-import { TourService } from "@/lib/tourService";
+import { TourService } from "@/lib/tours/tourService";
 import { useShopAccess } from "@/hooks/useShopAccess";
 import Unauthorized from "@/components/common/Unauthorized";
 import {
@@ -27,7 +27,7 @@ import ManagerScheduleSection from "@/components/manager/schedule/ManagerSchedul
 import ManagerOrderSection from "@/components/manager/order/ManagerOrderSection";
 import ManagerAssignmentSection from "@/components/manager/assignment/ManagerAssignmentSection";
 import { useSessionManager } from "@/hooks/useSessionManager";
-import { ShopUserService } from "@/lib/shopUserService";
+import { ShopUserService } from "@/lib/shops/shopUserService";
 
 const MANAGER_LEVEL_ROLES = new Set(["MANAGER", "OWNER", "ADMIN"]);
 const TOUR_EDITOR_ROLES = new Set(["GUIDE", "MANAGER", "OWNER", "ADMIN"]);
@@ -445,3 +445,4 @@ export default function ShopManagerPage() {
     </div>
   );
 }
+

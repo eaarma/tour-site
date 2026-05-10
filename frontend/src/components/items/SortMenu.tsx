@@ -1,21 +1,16 @@
 "use client";
 
-import { Listbox } from "@headlessui/react";
-import {
-  ChevronUpDownIcon,
-  CheckIcon,
-  XMarkIcon,
-} from "@heroicons/react/20/solid";
+import { ArrowDownUp } from "lucide-react";
 
 const DEFAULT_SORT = "title,asc";
 
 const SORT_OPTIONS = [
-  { key: "title,asc", label: "A–Z (Title)" },
-  { key: "title,desc", label: "Z–A (Title)" },
-  { key: "price,asc", label: "Price (Low → High)" },
-  { key: "price,desc", label: "Price (High → Low)" },
-  { key: "timeRequired,asc", label: "Duration (Low → High)" },
-  { key: "timeRequired,desc", label: "Duration (High → Low)" },
+  { key: "title,asc", label: "Name A-Z" },
+  { key: "title,desc", label: "Name Z-A" },
+  { key: "price,asc", label: "Price low to high" },
+  { key: "price,desc", label: "Price high to low" },
+  { key: "timeRequired,asc", label: "Duration low to high" },
+  { key: "timeRequired,desc", label: "Duration high to low" },
 ];
 
 interface SortMenuProps {
@@ -23,84 +18,41 @@ interface SortMenuProps {
   onSortChange: (newSortKey: string) => void;
 }
 
-const SortMenu: React.FC<SortMenuProps> = ({ sortKey, onSortChange }) => {
-  const handleChange = (key: string) => {
-    onSortChange(key);
-  };
-
-  const reset = () => onSortChange(DEFAULT_SORT);
-
-  const activeLabel =
-    SORT_OPTIONS.find((o) => o.key === sortKey)?.label || "Sort";
-
+export default function SortMenu({ sortKey, onSortChange }: SortMenuProps) {
   return (
-    <div className="flex flex-col items-end gap-2 mt-4 w-full">
-      <h2 className="text-lg font-semibold mb-2">Sort</h2>
+    <section className="w-full sm:w-auto">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <label
+          htmlFor="tour-sort"
+          className="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.18em] text-base-content/60"
+        >
+          <ArrowDownUp className="h-4 w-4 text-primary" />
+          Sort
+        </label>
 
-      <Listbox value={sortKey} onChange={handleChange}>
-        {({ open }) => (
-          <div className="relative w-full sm:w-48">
-            <Listbox.Button
-              className={`
-          w-full rounded-xl px-3 py-2 text-left text-sm shadow
-          flex justify-between items-center
-          bg-base-100
-          border transition-colors
-          hover:border-border hover:outline-none hover:ring-2 hover:ring-ring/20 hover:ring-primary/30
-          ${open ? "border-primary ring-2 ring-primary" : "border-base-300"}
-
-          hover:border-primary
-        `}
-            >
-              <span className="font-semibold truncate">{activeLabel}</span>
-
-              <ChevronUpDownIcon
-                className={`h-4 w-4 ml-2 transition-colors ${
-                  open ? "text-primary" : "text-neutral"
-                }`}
-              />
-            </Listbox.Button>
-
-            <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto bg-white shadow-lg border text-sm rounded-xl">
-              {SORT_OPTIONS.map((opt) => (
-                <Listbox.Option
-                  key={opt.key}
-                  value={opt.key}
-                  className={({ active }) =>
-                    `
-                    cursor-pointer select-none relative px-4 py-2 flex items-center gap-2
-                    ${active ? "bg-blue-400 text-white" : ""}
-                  `
-                  }
-                >
-                  {({ selected }) => (
-                    <>
-                      <div className="w-4 h-4 flex items-center justify-center">
-                        {selected && <CheckIcon className="h-4 w-4" />}
-                      </div>
-                      <span>{opt.label}</span>
-                    </>
-                  )}
-                </Listbox.Option>
-              ))}
-            </Listbox.Options>
-          </div>
-        )}
-      </Listbox>
-
-      {sortKey !== DEFAULT_SORT && (
-        <div className="inline-flex items-center bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full mt-2">
-          Sorted by: {activeLabel}
+        {sortKey !== DEFAULT_SORT ? (
           <button
-            onClick={reset}
-            className="ml-2 text-blue-600 hover:text-blue-900 focus:outline-none"
+            type="button"
+            onClick={() => onSortChange(DEFAULT_SORT)}
+            className="text-sm font-medium text-primary transition hover:text-primary/80"
           >
-            <XMarkIcon className="h-4 w-4" />
+            Reset
           </button>
-        </div>
-      )}
-    </div>
-  );
-};
+        ) : null}
+      </div>
 
-export default SortMenu;
+      <select
+        id="tour-sort"
+        value={sortKey}
+        onChange={(event) => onSortChange(event.target.value)}
+        className="select select-bordered w-full min-w-[220px] rounded-2xl border-base-300 shadow-sm focus:border-primary"
+      >
+        {SORT_OPTIONS.map((option) => (
+          <option key={option.key} value={option.key}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </section>
+  );
+}

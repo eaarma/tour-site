@@ -4,13 +4,13 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { ShopDto } from "@/types/shop";
 import { PublicShopUserDto, Tour } from "@/types";
-import { ShopUserService } from "@/lib/shopUserService";
-import { ShopService } from "@/lib/shopService";
+import { ShopUserService } from "@/lib/shops/shopUserService";
+import { ShopService } from "@/lib/shops/shopService";
 import ShopHeaderSection from "@/components/publicShops/ShopHeaderSection";
 import ShopGuidesSection from "@/components/publicShops/ShopGuidesSection";
 import ShopToursSection from "@/components/publicShops/ShopToursSection";
-import { TourService } from "@/lib/tourService";
-import { TourSessionService } from "@/lib/tourSessionService";
+import { TourService } from "@/lib/tours/tourService";
+import { TourSessionService } from "@/lib/tours/tourSessionService";
 
 export default function PublicShopPage() {
   const params = useParams();
@@ -68,3 +68,4 @@ export default function PublicShopPage() {
     </div>
   );
 }
+

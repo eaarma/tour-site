@@ -1,0 +1,29 @@
+package com.tourhub.user.dto;
+
+import java.time.Instant;
+import java.util.UUID;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class UserResponseDto {
+    private UUID id;
+    private String name;
+    private String email;
+    private String role;
+
+    private String phone;
+    private String nationality;
+    private String bio;
+    private String experience;
+    private String languages;
+    private Instant createdAt;
+    private String profileImageUrl;
+    private String status;
+}
