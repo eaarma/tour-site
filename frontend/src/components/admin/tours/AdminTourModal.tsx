@@ -56,11 +56,6 @@ function getStatusBadgeClass(status?: TourStatus | string) {
   return "badge-error";
 }
 
-function formatCategories(categories?: string[]) {
-  if (!categories?.length) return "-";
-  return categories.map((category) => category.replace(/_/g, " ")).join(", ");
-}
-
 export default function AdminTourModal({
   tour,
   editedStatus,
