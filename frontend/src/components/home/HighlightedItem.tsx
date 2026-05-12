@@ -135,7 +135,7 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ title, item }) => {
         onKeyDown={handleKeyboardNavigate}
       >
         <article className="overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg">
-          <div className="relative h-72 overflow-hidden bg-muted sm:h-80 lg:h-[24rem]">
+          <div className="relative h-72 overflow-hidden bg-muted sm:h-80 lg:h-[22rem]">
             <img
               src={mainImage}
               alt={item.title || "Tour image"}
