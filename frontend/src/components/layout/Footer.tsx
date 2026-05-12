@@ -31,6 +31,9 @@ const Footer: React.FC<FooterProps> = ({ storefront }) => {
             <Link href="/legal/refund" className="link link-hover">
               Cancellation & Refund Policy
             </Link>
+            <Link href="/about" className="link link-hover">
+              About
+            </Link>
           </div>
 
           {/* TitleText centered */}

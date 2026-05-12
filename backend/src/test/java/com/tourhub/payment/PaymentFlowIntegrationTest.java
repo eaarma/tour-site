@@ -31,6 +31,7 @@ import com.tourhub.order.model.OrderStatus;
 import com.tourhub.payment.model.Payment;
 import com.tourhub.payment.model.PaymentStatus;
 import com.tourhub.shop.model.Shop;
+import com.tourhub.shop.model.ShopStatus;
 import com.tourhub.tour.model.Tour;
 import com.tourhub.tour.model.TourCategory;
 import com.tourhub.tour.model.TourSchedule;
@@ -54,175 +55,176 @@ import jakarta.transaction.Transactional;
 
 class PaymentFlowIntegrationTest {
 
-  @Autowired
-  private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-  @Autowired
-  private OrderRepository orderRepository;
+    @Autowired
+    private OrderRepository orderRepository;
 
-  @Autowired
-  private PaymentRepository paymentRepository;
+    @Autowired
+    private PaymentRepository paymentRepository;
 
-  @Autowired
-  private StripeEventRepository stripeEventRepository;
+    @Autowired
+    private StripeEventRepository stripeEventRepository;
 
-  @Autowired
-  private TourRepository tourRepository;
+    @Autowired
+    private TourRepository tourRepository;
 
-  @Autowired
-  private TourScheduleRepository tourScheduleRepository;
+    @Autowired
+    private TourScheduleRepository tourScheduleRepository;
 
-  @Autowired
-  private ShopRepository shopRepository;
+    @Autowired
+    private ShopRepository shopRepository;
 
-  @Autowired
-  private ObjectMapper objectMapper;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-  @MockitoBean
-  StripeWebhookVerifier webhookVerifier;
+    @MockitoBean
+    StripeWebhookVerifier webhookVerifier;
 
-  @MockitoBean
-  private EmailService emailService;
+    @MockitoBean
+    private EmailService emailService;
 
-  @Test
-  void webhook_succeeds_payment_and_updates_order() throws Exception {
+    @Test
+    void webhook_succeeds_payment_and_updates_order() throws Exception {
 
-    // 1️⃣ Create Shop
-    Shop shop = Shop.builder()
-        .name("Test Shop")
-        .build();
+        // 1️⃣ Create Shop
+        Shop shop = Shop.builder()
+                .name("Test Shop")
+                .status(ShopStatus.ACTIVE)
+                .build();
 
-    shopRepository.save(shop);
+        shopRepository.save(shop);
 
-    // 2️⃣ Create Tour
-    Tour tour = Tour.builder()
-        .title("Test Tour")
-        .description("Test description")
-        .price(BigDecimal.valueOf(100))
-        .timeRequired(60)
-        .intensity("EASY")
-        .participants(10)
-        .categories(Set.of(TourCategory.WALKING))
-        .language(Set.of("EN"))
-        .type("PUBLIC")
-        .location("Test City")
-        .status("ACTIVE")
-        .madeBy("SYSTEM")
-        .shop(shop) // ✅ REQUIRED
-        .build();
+        // 2️⃣ Create Tour
+        Tour tour = Tour.builder()
+                .title("Test Tour")
+                .description("Test description")
+                .price(BigDecimal.valueOf(100))
+                .timeRequired(60)
+                .intensity("EASY")
+                .participants(10)
+                .categories(Set.of(TourCategory.WALKING))
+                .language(Set.of("EN"))
+                .type("PUBLIC")
+                .location("Test City")
+                .status("ACTIVE")
+                .madeBy("SYSTEM")
+                .shop(shop) // ✅ REQUIRED
+                .build();
 
-    tourRepository.save(tour);
+        tourRepository.save(tour);
 
-    // 3️⃣ Create Schedule
-    TourSchedule schedule = TourSchedule.builder()
-        .tour(tour)
-        .date(LocalDate.now().plusDays(1))
-        .time(LocalTime.of(10, 0))
-        .maxParticipants(20)
-        .bookedParticipants(0)
-        .reservedParticipants(0)
-        .status("ACTIVE")
-        .build();
+        // 3️⃣ Create Schedule
+        TourSchedule schedule = TourSchedule.builder()
+                .tour(tour)
+                .date(LocalDate.now().plusDays(1))
+                .time(LocalTime.of(10, 0))
+                .maxParticipants(20)
+                .bookedParticipants(0)
+                .reservedParticipants(0)
+                .status("ACTIVE")
+                .build();
 
-    tourScheduleRepository.save(schedule);
+        tourScheduleRepository.save(schedule);
 
-    // 4️⃣ Create Order
-    Order order = Order.builder()
-        .status(OrderStatus.FINALIZED)
-        .paymentMethod("CARD")
-        .totalPrice(BigDecimal.valueOf(100))
-        .build();
+        // 4️⃣ Create Order
+        Order order = Order.builder()
+                .status(OrderStatus.FINALIZED)
+                .paymentMethod("CARD")
+                .totalPrice(BigDecimal.valueOf(100))
+                .build();
 
-    // 5️⃣ Create OrderItem
-    OrderItem item = OrderItem.builder()
-        .order(order)
-        .tour(tour)
-        .schedule(schedule)
-        .tourTitle("Test Tour")
-        .participants(2)
-        .pricePaid(BigDecimal.valueOf(100))
-        .scheduledAt(LocalDateTime.now().plusDays(1))
-        .email("test@test.com")
-        .name("John")
-        .phone("12345678")
-        .shopId(shop.getId())
-        .tourSnapshot("{\"title\":\"Test Tour\",\"price\":100}") // ✅ REQUIRED
-        .status(OrderStatus.FINALIZED)
-        .build();
+        // 5️⃣ Create OrderItem
+        OrderItem item = OrderItem.builder()
+                .order(order)
+                .tour(tour)
+                .schedule(schedule)
+                .tourTitle("Test Tour")
+                .participants(2)
+                .pricePaid(BigDecimal.valueOf(100))
+                .scheduledAt(LocalDateTime.now().plusDays(1))
+                .email("test@test.com")
+                .name("John")
+                .phone("12345678")
+                .shopId(shop.getId())
+                .tourSnapshot("{\"title\":\"Test Tour\",\"price\":100}") // ✅ REQUIRED
+                .status(OrderStatus.FINALIZED)
+                .build();
 
-    order.setOrderItems(List.of(item));
+        order.setOrderItems(List.of(item));
 
-    orderRepository.save(order);
+        orderRepository.save(order);
 
-    // 2️⃣ Create Payment
-    Payment payment = Payment.builder()
-        .order(order)
-        .amountTotal(BigDecimal.valueOf(100))
-        .platformFee(BigDecimal.ZERO)
-        .currency("EUR")
-        .status(PaymentStatus.PENDING)
-        .build();
+        // 2️⃣ Create Payment
+        Payment payment = Payment.builder()
+                .order(order)
+                .amountTotal(BigDecimal.valueOf(100))
+                .platformFee(BigDecimal.ZERO)
+                .currency("EUR")
+                .status(PaymentStatus.PENDING)
+                .build();
 
-    paymentRepository.save(payment);
+        paymentRepository.save(payment);
 
-    // 3️⃣ Build fake Stripe webhook JSON
-    String webhookJson = """
-        {
-          "id": "evt_test_123",
-          "object": "event",
-          "type": "payment_intent.succeeded",
-          "data": {
-            "object": {
-              "id": "pi_test_123",
-              "object": "payment_intent",
-              "metadata": {
-                "paymentId": "%d"
-              }
-            }
-          }
-        }
-        """.formatted(payment.getId());
+        // 3️⃣ Build fake Stripe webhook JSON
+        String webhookJson = """
+                {
+                  "id": "evt_test_123",
+                  "object": "event",
+                  "type": "payment_intent.succeeded",
+                  "data": {
+                    "object": {
+                      "id": "pi_test_123",
+                      "object": "payment_intent",
+                      "metadata": {
+                        "paymentId": "%d"
+                      }
+                    }
+                  }
+                }
+                """.formatted(payment.getId());
 
-    // Build Stripe Event object
-    Event event = new Event();
-    event.setId("evt_test_123");
-    event.setType("payment_intent.succeeded");
+        // Build Stripe Event object
+        Event event = new Event();
+        event.setId("evt_test_123");
+        event.setType("payment_intent.succeeded");
 
-    JsonObject piJson = new JsonObject();
-    piJson.addProperty("id", "pi_test_123");
-    piJson.addProperty("object", "payment_intent");
+        JsonObject piJson = new JsonObject();
+        piJson.addProperty("id", "pi_test_123");
+        piJson.addProperty("object", "payment_intent");
 
-    JsonObject metadata = new JsonObject();
-    metadata.addProperty("paymentId", payment.getId().toString());
-    piJson.add("metadata", metadata);
+        JsonObject metadata = new JsonObject();
+        metadata.addProperty("paymentId", payment.getId().toString());
+        piJson.add("metadata", metadata);
 
-    Event.Data data = new Event.Data();
-    data.setObject(piJson);
-    event.setData(data);
+        Event.Data data = new Event.Data();
+        data.setObject(piJson);
+        event.setData(data);
 
-    when(webhookVerifier.verify(anyString(), anyString())).thenReturn(event);
+        when(webhookVerifier.verify(anyString(), anyString())).thenReturn(event);
 
-    // 4️⃣ Call webhook endpoint
-    mockMvc.perform(post("/stripe/webhook")
-        .header("Stripe-Signature", "test-signature")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(webhookJson))
-        .andExpect(status().isOk());
+        // 4️⃣ Call webhook endpoint
+        mockMvc.perform(post("/stripe/webhook")
+                .header("Stripe-Signature", "test-signature")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(webhookJson))
+                .andExpect(status().isOk());
 
-    // 5️⃣ Reload entities
-    Payment updatedPayment = paymentRepository.findById(payment.getId()).orElseThrow();
+        // 5️⃣ Reload entities
+        Payment updatedPayment = paymentRepository.findById(payment.getId()).orElseThrow();
 
-    Order updatedOrder = orderRepository.findByIdWithItems(order.getId()).orElseThrow();
+        Order updatedOrder = orderRepository.findByIdWithItems(order.getId()).orElseThrow();
 
-    // 6️⃣ Assertions
-    assertEquals(PaymentStatus.SUCCEEDED, updatedPayment.getStatus());
-    assertEquals(OrderStatus.PAID, updatedOrder.getStatus());
+        // 6️⃣ Assertions
+        assertEquals(PaymentStatus.SUCCEEDED, updatedPayment.getStatus());
+        assertEquals(OrderStatus.PAID, updatedOrder.getStatus());
 
-    updatedOrder.getOrderItems()
-        .forEach(i -> assertEquals(OrderStatus.PAID, i.getStatus()));
+        updatedOrder.getOrderItems()
+                .forEach(i -> assertEquals(OrderStatus.PAID, i.getStatus()));
 
-    assertTrue(
-        stripeEventRepository
-            .existsByStripeEventId("evt_test_123"));
-  }
+        assertTrue(
+                stripeEventRepository
+                        .existsByStripeEventId("evt_test_123"));
+    }
 }
