@@ -73,7 +73,7 @@ const Header: React.FC<HeaderProps> = ({ storefront }) => {
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 bg-base-100 border-b shadow-md page-container">
+    <header className="sticky top-0 z-50 bg-base-100 border-b p-1 shadow-md page-container">
       <div className="flex items-center justify-between py-1 px-2 md:p-2">
         <button
           className="md:hidden btn btn-ghost btn-sm"
@@ -272,7 +272,7 @@ const Header: React.FC<HeaderProps> = ({ storefront }) => {
           onClick={() => setMobileMenuOpen(false)}
         >
           <div
-            className="fixed inset-x-0 top-[58px] z-30 bg-base-100 border-t shadow-lg"
+            className="fixed inset-x-0 top-[52px] z-30 bg-base-100 border-t shadow-lg"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="page-container py-4 space-y-3">
