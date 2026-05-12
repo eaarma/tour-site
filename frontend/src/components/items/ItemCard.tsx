@@ -175,7 +175,7 @@ export default function ItemCard({
               <Clock className="size-4 text-muted-foreground" />
             </div>
             <div className="min-w-0">
-              <p className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground/75">
+              <p className="text-[11px] text-base-content/50 tracking-[0.12em] text-muted-foreground/75">
                 Duration
               </p>
               <p className="font-medium text-sm text-card-foreground truncate">
@@ -189,7 +189,7 @@ export default function ItemCard({
               <Users className="size-4 text-muted-foreground" />
             </div>
             <div className="min-w-0">
-              <p className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground/75">
+              <p className="text-[11px] text-base-content/50 tracking-[0.12em] text-muted-foreground/75">
                 Group
               </p>
               <p className="font-medium text-sm text-card-foreground truncate">
@@ -203,8 +203,8 @@ export default function ItemCard({
               <Flame className="size-4 text-muted-foreground" />
             </div>
             <div className="min-w-0">
-              <p className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground/75">
-                Intensity
+              <p className="text-[11px] text-base-content/50 tracking-[0.12em] text-muted-foreground/75">
+                Pace
               </p>
               <Badge
                 variant="outline"
@@ -222,7 +222,7 @@ export default function ItemCard({
               <Globe className="size-4 text-muted-foreground" />
             </div>
             <div className="min-w-0">
-              <p className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground/75">
+              <p className="text-[11px] text-base-content/50 tracking-[0.12em] text-muted-foreground/75">
                 Language
               </p>
               <p className="font-medium text-sm text-card-foreground truncate">
@@ -272,15 +272,15 @@ export default function ItemCard({
 
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} className="block h-full w-full text-left">
+      <button
+        type="button"
+        onClick={onClick}
+        className="block h-full w-full text-left"
+      >
         {CardContent}
       </button>
     );
   }
 
-  return (
-    <div className="h-full">
-      {CardContent}
-    </div>
-  );
+  return <div className="h-full">{CardContent}</div>;
 }

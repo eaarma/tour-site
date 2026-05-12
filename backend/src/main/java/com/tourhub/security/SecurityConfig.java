@@ -123,7 +123,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/shops/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/shops/**").hasAnyRole(STAFF)
                         .requestMatchers(HttpMethod.PUT, "/shops/**").authenticated()
-                        .requestMatchers(HttpMethod.PATCH, "/shops/**").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/shops/**").hasAnyRole(STAFF)
 
                         .requestMatchers(HttpMethod.GET, "/api/shop-users/shop/*/active/public").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/shop-users/shop/*/request").hasAnyRole(STAFF)
@@ -226,4 +226,3 @@ public class SecurityConfig {
     }
 
 }
-

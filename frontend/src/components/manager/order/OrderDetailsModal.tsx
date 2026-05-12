@@ -32,31 +32,25 @@ export default function OrderDetailsModal({
     <Modal isOpen={isOpen} onClose={onClose}>
       {/* ===== HEADER ===== */}
       <div className="mb-5">
-        <h2 className="text-xl font-semibold text-gray-800">
-          Booking #{orderItem.id}
-        </h2>
+        <h2 className="text-xl font-semibold">Booking #{orderItem.id}</h2>
 
         <div className="mt-1 inline-flex items-center gap-2 text-sm">
           <BadgeCheck className="w-4 h-4 text-primary" />
-          <span className="font-medium text-gray-700">{orderItem.status}</span>
+          <span className="font-medium ">{orderItem.status}</span>
         </div>
       </div>
 
       {/* ===== TOUR PREVIEW ===== */}
       {orderItem.tourImages?.length ? (
         <div className="mb-5">
-          <h3 className="text-lg font-semibold text-gray-800">
-            {orderItem.tourTitle}
-          </h3>
+          <h3 className="text-lg font-semibold ">{orderItem.tourTitle}</h3>
 
           {orderItem.tourLocation && (
-            <p className="text-sm text-gray-500">{orderItem.tourLocation}</p>
+            <p className="text-sm ">{orderItem.tourLocation}</p>
           )}
         </div>
       ) : (
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
-          {orderItem.tourTitle}
-        </h3>
+        <h3 className="text-lg font-semibold  mb-4">{orderItem.tourTitle}</h3>
       )}
 
       {/* ===== BOOKING DETAILS ===== */}
@@ -105,7 +99,7 @@ export default function OrderDetailsModal({
 
       {/* ===== CUSTOMER INFO ===== */}
       <div className="border-t pt-4 space-y-2 text-sm">
-        <p className="font-semibold text-gray-700 mb-2">Customer Information</p>
+        <p className="font-semibold text-gray-400 mb-2">Customer Information</p>
 
         <div className="flex items-center gap-2">
           <User className="w-4 h-4 text-gray-500" />

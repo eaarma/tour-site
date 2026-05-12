@@ -3,6 +3,12 @@ import { ShopDto, ShopCreateRequestDto } from "@/types/shop";
 
 const BASE_URL = "/shops";
 
+type ShopStatus = "ACTIVE" | "DISABLED" | "REMOVED";
+
+type ShopStatusUpdatePayload = {
+  status: ShopStatus;
+  statusReason?: string;
+};
 export interface PageResponse<T> {
   content: T[];
   totalPages: number;
@@ -16,7 +22,7 @@ export interface PageResponse<T> {
 export const ShopService = {
   getAll: async (params?: {
     query?: string;
-    status?: "ACTIVE" | "REMOVED";
+    status?: "ACTIVE" | "REMOVED" | "DISABLED";
     page?: number;
     size?: number;
   }): Promise<PageResponse<ShopDto>> => {
@@ -42,8 +48,10 @@ export const ShopService = {
     return res.data;
   },
 
-  remove: async (id: number): Promise<void> => {
-    await api.patch(`${BASE_URL}/${id}/remove`);
+  setStatus: async (
+    id: number,
+    payload: ShopStatusUpdatePayload,
+  ): Promise<void> => {
+    await api.patch(`${BASE_URL}/${id}/status`, payload);
   },
 };
-

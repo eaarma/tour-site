@@ -2,13 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import toast from "react-hot-toast";
 import { PaymentLineService } from "@/lib/payments/paymentLineService";
-import {
-  PaymentLineResponseDto,
-  PaymentStatus,
-} from "@/types/paymentLine";
+import { PaymentLineResponseDto, PaymentStatus } from "@/types/paymentLine";
 import CustomDateInput from "../../common/CustomDateInput";
 import Pagination from "../../common/Pagination";
 import AdminTransactionModal from "./AdminTransactionModal";
@@ -62,13 +58,18 @@ const toDateParam = (value: Date | null) => {
   return `${year}-${month}-${day}`;
 };
 
-const getReference = (line: PaymentLineResponseDto) => {
+const renderReference = (line: PaymentLineResponseDto) => {
   if (line.orderItemId) {
-    return `Order #${line.orderId ?? "-"} / Item #${line.orderItemId}`;
+    return (
+      <div>
+        <div>Order #{line.orderId ?? "-"}</div>
+        <div className="text-xs opacity-60">Item #{line.orderItemId}</div>
+      </div>
+    );
   }
 
   if (line.sessionId) {
-    return `Session #${line.sessionId}`;
+    return <>Session #{line.sessionId}</>;
   }
 
   return "-";
@@ -241,15 +242,13 @@ export default function AdminTransactions() {
       </div>
 
       <div className="max-w-full overflow-x-auto">
-        <table className="table min-w-max">
+        <table className="table">
           <thead>
             <tr>
               <th>Status</th>
-              <th>ID</th>
-              <th>Shop ID</th>
               <th>Type</th>
-              <th>Reference</th>
-              <th>Tour</th>
+              <th className="min-w-[150px]">Reference</th>
+              <th className="min-w-[170px]">Tour</th>
               <th>Created</th>
               <th>Gross</th>
               <th>Shop Amount</th>
@@ -260,7 +259,10 @@ export default function AdminTransactions() {
           <tbody>
             {transactions.length === 0 ? (
               <tr>
-                <td colSpan={10} className="py-6 text-center opacity-70">
+                <td
+                  colSpan={8}
+                  className="py-10 text-center text-base-content/60"
+                >
                   No transactions found.
                 </td>
               </tr>
@@ -275,11 +277,11 @@ export default function AdminTransactions() {
                       title={transaction.status}
                     />
                   </td>
-                  <td>{transaction.id}</td>
-                  <td>{transaction.shopId}</td>
                   <td>{transaction.type}</td>
-                  <td>{getReference(transaction)}</td>
-                  <td>{transaction.tourTitle || "-"}</td>
+                  <td>{renderReference(transaction)}</td>
+                  <td className="min-w-[170px]">
+                    {transaction.tourTitle || "-"}
+                  </td>
                   <td>{formatDateTime(transaction.createdAt)}</td>
                   <td>
                     {formatCurrency(
@@ -295,7 +297,8 @@ export default function AdminTransactions() {
                   </td>
                   <td className="text-right">
                     <button
-                      className="btn btn-sm"
+                      type="button"
+                      className="btn btn-sm btn-outline"
                       onClick={() => setSelectedTransaction(transaction)}
                     >
                       View
@@ -308,11 +311,7 @@ export default function AdminTransactions() {
         </table>
       </div>
 
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        onPageChange={setPage}
-      />
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       {selectedTransaction && (
         <AdminTransactionModal
@@ -323,4 +322,3 @@ export default function AdminTransactions() {
     </div>
   );
 }
-

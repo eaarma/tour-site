@@ -10,6 +10,7 @@ interface Props {
   onClose: () => void;
   pendingRequests: ShopUserDto[];
   shopId: number;
+  isReadOnly?: boolean;
   onStatusChange: (userId: string, newStatus: string) => void;
 }
 
@@ -18,6 +19,7 @@ export default function ManagerPendingRequestsModal({
   onClose,
   pendingRequests,
   shopId,
+  isReadOnly = false,
   onStatusChange,
 }: Props) {
   const handleAction = async (
@@ -29,7 +31,9 @@ export default function ManagerPendingRequestsModal({
       onStatusChange(userId, status);
 
       toast.success(
-        status === "ACTIVE" ? "User confirmed and activated" : "Request declined",
+        status === "ACTIVE"
+          ? "User confirmed and activated"
+          : "Request declined",
       );
     } catch (err) {
       console.error("Failed to update status", err);
@@ -46,7 +50,12 @@ export default function ManagerPendingRequestsModal({
           </h3>
         </div>
 
-        {pendingRequests.length === 0 ? (
+        {isReadOnly ? (
+          <p className="text-gray-500">
+            This shop is removed. Pending requests can be viewed but not
+            approved or declined.
+          </p>
+        ) : pendingRequests.length === 0 ? (
           <p className="text-gray-500">No pending requests.</p>
         ) : (
           <table className="table table-zebra w-full text-sm">
@@ -89,4 +98,3 @@ export default function ManagerPendingRequestsModal({
     </Modal>
   );
 }
-

@@ -77,7 +77,7 @@ export default function SessionStatusModal({
       <div className="p-4">
         <h3 className="text-lg font-semibold mb-4">Change Session Status</h3>
 
-        <p className="mb-3 text-sm text-gray-700">
+        <p className="mb-3 text-sm text-gray-400">
           Current status: <strong>{currentStatus}</strong>
         </p>
 
@@ -114,4 +114,3 @@ export default function SessionStatusModal({
     </Modal>
   );
 }
-

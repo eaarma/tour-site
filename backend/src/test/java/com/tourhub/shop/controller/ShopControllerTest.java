@@ -23,6 +23,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.tourhub.shop.dto.ShopCreateRequestDto;
 import com.tourhub.shop.dto.ShopDto;
+import com.tourhub.shop.dto.ShopStatusUpdateRequestDto;
+import com.tourhub.shop.model.ShopStatus;
 import com.tourhub.security.CurrentUserService;
 import com.tourhub.security.CustomUserDetailsService;
 import com.tourhub.security.JwtAuthenticationFilter;
@@ -138,20 +140,35 @@ class ShopControllerTest {
         }
 
         @Test
-        void removeShop_returnsOk_whenSuccess() throws Exception {
-                when(shopService.removeShop(1L))
+        void setStatus_returnsOk_whenSuccess() throws Exception {
+                ShopStatusUpdateRequestDto dto = ShopStatusUpdateRequestDto.builder()
+                                .status(ShopStatus.DISABLED)
+                                .statusReason("Policy violation")
+                                .build();
+
+                when(shopService.setStatus(eq(1L), any(ShopStatusUpdateRequestDto.class)))
                                 .thenReturn(Result.ok());
 
-                mockMvc.perform(patch("/shops/{id}/remove", 1L))
+                mockMvc.perform(patch("/shops/{id}/status", 1L)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(dto)))
                                 .andExpect(status().isOk());
         }
 
         @Test
-        void removeShop_returnsForbidden_whenServiceRejects() throws Exception {
-                when(shopService.removeShop(1L))
-                                .thenReturn(Result.fail(ApiError.forbidden("Only admins or shop owners can remove shops")));
+        void setStatus_returnsForbidden_whenServiceRejects() throws Exception {
+                ShopStatusUpdateRequestDto dto = ShopStatusUpdateRequestDto.builder()
+                                .status(ShopStatus.DISABLED)
+                                .statusReason("Policy violation")
+                                .build();
 
-                mockMvc.perform(patch("/shops/{id}/remove", 1L))
+                when(shopService.setStatus(eq(1L), any(ShopStatusUpdateRequestDto.class)))
+                                .thenReturn(Result.fail(
+                                                ApiError.forbidden("Only admins or shop owners can disable shops")));
+
+                mockMvc.perform(patch("/shops/{id}/status", 1L)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(dto)))
                                 .andExpect(status().isForbidden());
         }
 
@@ -175,5 +192,3 @@ class ShopControllerTest {
         }
 
 }
-
-

@@ -6,6 +6,12 @@ import axios, {
 import toast from "react-hot-toast";
 import qs from "qs";
 
+declare module "axios" {
+  interface AxiosRequestConfig {
+    suppressErrorToast?: boolean;
+  }
+}
+
 import { store } from "@/store/store";
 import { clearUser, setAccessToken } from "@/store/authSlice";
 import { markExpired } from "@/store/sessionSlice";
@@ -152,24 +158,34 @@ api.interceptors.response.use(
       throw new ApiError(status, response.data);
     }
 
+    const shouldToast = !originalRequest.suppressErrorToast;
+
     switch (status) {
       case 400: {
         const data = response.data as ApiErrorData | undefined;
-        toast.error(data?.message || "Bad request.");
+        if (shouldToast) {
+          toast.error(data?.message || "Bad request.");
+        }
         break;
       }
 
       case 403:
-        toast.error("You do not have permission to do that.");
+        if (shouldToast) {
+          toast.error("You do not have permission to do that.");
+        }
         break;
       case 404:
-        toast.error("Resource not found.");
+        if (shouldToast) {
+          toast.error("Resource not found.");
+        }
         break;
       case 500:
-        toast.error("Server error. Please try again later.");
+        if (shouldToast) {
+          toast.error("Server error. Please try again later.");
+        }
         break;
       default:
-        if (status !== 401) {
+        if (status !== 401 && shouldToast) {
           toast.error("Unexpected error occurred.");
         }
         break;

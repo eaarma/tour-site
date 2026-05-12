@@ -41,6 +41,10 @@ export const UserService = {
     await api.patch(`${BASE_URL}/${id}/remove`);
   },
 
+  reinstate: async (id: string): Promise<void> => {
+    await api.patch(`${BASE_URL}/${id}/reinstate`);
+  },
+
   updateRole: async (id: string, role: string): Promise<void> => {
     await api.patch(`${BASE_URL}/${id}/role`, null, {
       params: { role },

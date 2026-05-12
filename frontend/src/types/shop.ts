@@ -13,9 +13,10 @@ export interface ShopDto {
   description?: string;
   bankAccountName?: string;
   bankAccountIban?: string;
-  status: "ACTIVE" | "REMOVED";
+  status: "ACTIVE" | "REMOVED" | "DISABLED";
   createdAt: string; // ISO string
   shopName?: string; // Optional, for cases where we want to include it in responses
+  statusReason?: string; // Optional, reason for current status
 }
 
 // For user requesting to join a shop

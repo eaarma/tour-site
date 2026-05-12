@@ -9,6 +9,7 @@ interface Props {
   onEdit: (schedule: TourScheduleResponseDto) => void;
   onDelete: (id: number) => void;
   onViewSession?: (schedule: TourScheduleResponseDto) => void;
+  readOnly?: boolean;
 }
 
 function formatDate(iso: string) {
@@ -22,6 +23,7 @@ export default function ScheduleRow({
   onEdit,
   onDelete,
   onViewSession,
+  readOnly = false,
 }: Props) {
   const isExpired = schedule.status === "EXPIRED";
 
@@ -31,9 +33,9 @@ export default function ScheduleRow({
   const hasBookings = booked > 0;
 
   // Can modify only if active AND no bookings
-  const canEdit = !isExpired && !hasBookings;
+  const canEdit = !isExpired && !hasBookings && !readOnly;
 
-  const canDelete = !hasBookings;
+  const canDelete = !hasBookings && !readOnly;
   // Can view only if there are bookings
   const canViewSession = hasBookings;
 

@@ -14,6 +14,7 @@ import {
 
 type Props = {
   shopId: number;
+  isReadOnly?: boolean;
 };
 
 const PAYOUT_STATUS_OPTIONS = [
@@ -123,7 +124,10 @@ const groupSessionsByMonth = (sessions: PayoutSessionSummaryDto[]) => {
   return Array.from(groups.values());
 };
 
-export default function ManagerPayoutSection({ shopId }: Props) {
+export default function ManagerPayoutSection({
+  shopId,
+  isReadOnly = false,
+}: Props) {
   const [selectedYear, setSelectedYear] = useState<number>(CURRENT_YEAR);
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<PayoutStatusFilter>("");
@@ -234,7 +238,9 @@ export default function ManagerPayoutSection({ shopId }: Props) {
   };
 
   if (loading) {
-    return <div className="card bg-base-100 p-6">Loading payout overview...</div>;
+    return (
+      <div className="card bg-base-100 p-6">Loading payout overview...</div>
+    );
   }
 
   return (
@@ -317,8 +323,8 @@ export default function ManagerPayoutSection({ shopId }: Props) {
       </div>
 
       {sessions.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-base-300 p-4 text-sm opacity-70">
-          No payout sessions found for the selected filters.
+        <div className="rounded-xl border border-base-300 bg-base-100 p-16 text-center">
+          <p className="text-muted-foreground">No payouts to display.</p>
         </div>
       ) : showMonthGroups ? (
         <div className="space-y-3">
@@ -420,6 +426,8 @@ export default function ManagerPayoutSection({ shopId }: Props) {
           session={selectedSession}
           details={selectedSessionDetails}
           loading={detailsLoading}
+          shopId={shopId}
+          isReadOnly={isReadOnly}
           onClose={() => {
             setSelectedSession(null);
             setSelectedSessionDetails(null);
@@ -429,4 +437,3 @@ export default function ManagerPayoutSection({ shopId }: Props) {
     </div>
   );
 }
-

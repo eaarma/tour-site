@@ -1,5 +1,6 @@
 package com.tourhub.shop.service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,6 +20,7 @@ import com.tourhub.common.result.ApiError;
 import com.tourhub.common.result.Result;
 import com.tourhub.shop.dto.ShopCreateRequestDto;
 import com.tourhub.shop.dto.ShopDto;
+import com.tourhub.shop.dto.ShopStatusUpdateRequestDto;
 import com.tourhub.shop.mapper.ShopMapper;
 import com.tourhub.shop.model.Shop;
 import com.tourhub.shop.model.ShopStatus;
@@ -142,7 +144,7 @@ public class ShopService {
         }
 
         @Transactional
-        public Result<Void> removeShop(Long shopId) {
+        public Result<Void> setStatus(Long shopId, ShopStatusUpdateRequestDto dto) {
 
                 Shop shop = shopRepository.findById(shopId)
                                 .orElse(null);
@@ -152,18 +154,24 @@ public class ShopService {
                 }
 
                 try {
-                        assertCanRemoveShop(shopId);
+                        assertCanDisableShop(shopId);
                 } catch (AccessDeniedException ex) {
                         return Result.fail(ApiError.forbidden(ex.getMessage()));
                 }
 
-                shop.setStatus(ShopStatus.REMOVED);
+                UUID currentUserId = currentUserService.getCurrentUserId();
+
+                shop.setStatus(dto.getStatus());
+                shop.setStatusReason(dto.getStatusReason());
+                shop.setStatusChangedAt(Instant.now());
+                shop.setStatusChangedBy(currentUserId);
+
                 shopRepository.save(shop);
 
                 return Result.ok();
         }
 
-        private void assertCanRemoveShop(Long shopId) {
+        private void assertCanDisableShop(Long shopId) {
                 UUID currentUserId = currentUserService.getCurrentUserId();
 
                 if (currentUserId == null) {
@@ -175,10 +183,11 @@ public class ShopService {
                 }
 
                 ShopUser membership = shopUserRepository.findByShopIdAndUserId(shopId, currentUserId)
-                                .orElseThrow(() -> new AccessDeniedException("Only admins or shop owners can remove shops"));
+                                .orElseThrow(() -> new AccessDeniedException(
+                                                "Only admins or shop owners can disable shops"));
 
                 if (membership.getStatus() != ShopUserStatus.ACTIVE || membership.getRole() != ShopUserRole.OWNER) {
-                        throw new AccessDeniedException("Only admins or shop owners can remove shops");
+                        throw new AccessDeniedException("Only admins or shop owners can disable shops");
                 }
         }
 
@@ -186,7 +195,6 @@ public class ShopService {
                 if (currentUserService.hasRole("ADMIN") || currentUserService.hasRole("MANAGER")) {
                         return;
                 }
-
                 throw new AccessDeniedException("Only managers or admins can create shops");
         }
 
@@ -199,9 +207,6 @@ public class ShopService {
                 if (trimmedQuery.isEmpty()) {
                         return null;
                 }
-
                 return trimmedQuery.toLowerCase();
         }
 }
-
-

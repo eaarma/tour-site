@@ -27,62 +27,67 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserService userService;
-    private final CurrentUserService currentUserService;
+        private final UserService userService;
+        private final CurrentUserService currentUserService;
 
-    @GetMapping("/me")
-    public ResponseEntity<?> getProfile() {
-        UUID userId = currentUserService.getCurrentUserId();
+        @GetMapping("/me")
+        public ResponseEntity<?> getProfile() {
+                UUID userId = currentUserService.getCurrentUserId();
 
-        return ResultResponseMapper.toResponse(
-                userService.getUserProfile(userId));
-    }
+                return ResultResponseMapper.toResponse(
+                                userService.getUserProfile(userId));
+        }
 
-    @PutMapping("/me")
-    public ResponseEntity<?> updateProfile(
-            @RequestBody UserUpdateDto dto) {
+        @PutMapping("/me")
+        public ResponseEntity<?> updateProfile(
+                        @RequestBody UserUpdateDto dto) {
 
-        UUID userId = currentUserService.getCurrentUserId();
+                UUID userId = currentUserService.getCurrentUserId();
 
-        return ResultResponseMapper.toResponse(
-                userService.updateProfile(userId, dto));
-    }
+                return ResultResponseMapper.toResponse(
+                                userService.updateProfile(userId, dto));
+        }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getUserById(@PathVariable("id") UUID id) {
-        return ResultResponseMapper.toResponse(
-                userService.getUserProfileForCurrentUserOrAdmin(id));
-    }
+        @GetMapping("/{id}")
+        public ResponseEntity<?> getUserById(@PathVariable("id") UUID id) {
+                return ResultResponseMapper.toResponse(
+                                userService.getUserProfileForCurrentUserOrAdmin(id));
+        }
 
-    @PatchMapping("/{id}/remove")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> removeUser(@PathVariable("id") UUID id) {
-        return ResultResponseMapper.toResponse(
-                userService.removeUser(id));
-    }
+        @PatchMapping("/{id}/remove")
+        @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<?> removeUser(@PathVariable("id") UUID id) {
+                return ResultResponseMapper.toResponse(
+                                userService.removeUser(id));
+        }
 
-    @PatchMapping("/{id}/role")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> updateUserRole(
-            @PathVariable("id") UUID id,
-            @RequestParam("role") Role role) {
+        @PatchMapping("/{id}/reinstate")
+        @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<?> reinstateUser(@PathVariable("id") UUID id) {
+                return ResultResponseMapper.toResponse(
+                                userService.reinstateUser(id));
+        }
 
-        return ResultResponseMapper.toResponse(
-                userService.updateUserRole(id, role));
-    }
+        @PatchMapping("/{id}/role")
+        @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<?> updateUserRole(
+                        @PathVariable("id") UUID id,
+                        @RequestParam("role") Role role) {
 
-    @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> getUsers(
-            @RequestParam(name = "query", required = false) String query,
-            @RequestParam(name = "status", required = false) UserStatus status,
-            @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "10") int size) {
+                return ResultResponseMapper.toResponse(
+                                userService.updateUserRole(id, role));
+        }
 
-        return ResultResponseMapper.toResponse(
-                userService.searchUsers(query, status, page, size));
-    }
+        @GetMapping
+        @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<?> getUsers(
+                        @RequestParam(name = "query", required = false) String query,
+                        @RequestParam(name = "status", required = false) UserStatus status,
+                        @RequestParam(name = "page", defaultValue = "0") int page,
+                        @RequestParam(name = "size", defaultValue = "10") int size) {
+
+                return ResultResponseMapper.toResponse(
+                                userService.searchUsers(query, status, page, size));
+        }
 
 }
-
-

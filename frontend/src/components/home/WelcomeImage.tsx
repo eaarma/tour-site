@@ -2,7 +2,7 @@
 
 import { ReactNode } from "react";
 
-import { getBackgroundImageValue } from "./homeVisuals";
+import Image from "next/image";
 
 interface WelcomeImageProps {
   imageUrl: string;
@@ -47,10 +47,12 @@ const WelcomeImage: React.FC<WelcomeImageProps> = ({
   return (
     <div className="full-bleed relative z-30 w-full">
       <div className="relative h-64 w-full overflow-hidden sm:h-72 sm:rounded-xl md:h-80 lg:h-[24rem]">
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-cover bg-[center_62%] shadow-md sm:rounded-xl"
-          style={{ backgroundImage: getBackgroundImageValue(imageUrl) }}
+        <Image
+          src={imageUrl}
+          alt="Guided hiking tours in Croatia"
+          fill
+          priority
+          className="object-cover object-[center_62%]"
         />
         <div className="absolute inset-0" style={overlayStyle} />
 

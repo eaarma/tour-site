@@ -82,10 +82,10 @@ function Stat({
     <div className="rounded-xl border border-base-300 bg-base-100 shadow-sm p-2 space-y-8">
       <div className="card-body p-4 flex-row items-center justify-between">
         <div>
-          <h3 className="text-sm text-gray-600 mb-1">{title}</h3>
+          <h3 className="text-sm text-gray-400 mb-1">{title}</h3>
           <p className="text-2xl font-bold">{value}</p>
         </div>
-        <div className="text-gray-500">{icon}</div>
+        <div className="text-gray-400">{icon}</div>
       </div>
     </div>
   );

@@ -50,6 +50,10 @@ public class ShopAccessAspect {
             throw new AccessDeniedException("Unauthorized");
         }
 
+        if ("ADMIN".equals(user.getRole())) {
+            return;
+        }
+
         ShopUser membership = shopUserRepository
                 .findByShopIdAndUserId(shopId, user.getId())
                 .orElseThrow(() -> new AccessDeniedException("Not a shop member"));
@@ -117,4 +121,3 @@ public class ShopAccessAspect {
         };
     }
 }
-

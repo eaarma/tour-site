@@ -10,9 +10,11 @@ interface Props {
   onClick: () => void;
   onConfirmSession: (sessionId: number) => void;
   onCompleteSession: (sessionId: number) => void;
+  readOnly?: boolean;
 }
 
 export default function SessionCard({
+  readOnly = false,
   session,
   tour,
   onClick,
@@ -55,10 +57,10 @@ export default function SessionCard({
         {/* === ROW 1: Title + Right column === */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
           <div>
-            <h3 className="text-lg font-semibold tracking-wide text-gray-800">
+            <h3 className="text-lg font-semibold tracking-wide">
               {tour?.title ?? "Unknown Tour"}
             </h3>
-            <div className="text-xs text-gray-500">Session #{session.id}</div>
+            <div className="text-xs text-gray-400">Session #{session.id}</div>
           </div>
 
           {/* RIGHT COLUMN */}
@@ -74,7 +76,7 @@ export default function SessionCard({
 
             {/* Location / Date / Time */}
             <div
-              className="flex items-center gap-3 text-sm text-gray-600
+              className="flex items-center gap-3 text-sm
                   self-start sm:self-auto"
             >
               {tour?.location && (
@@ -101,7 +103,7 @@ export default function SessionCard({
         </div>
 
         {/* === ROW 3: Assigned + Actions === */}
-        <div className="flex justify-between items-center text-sm text-gray-600">
+        <div className="flex justify-between items-center text-sm">
           <span>
             Assigned to:{" "}
             <span className="font-medium">
@@ -110,7 +112,7 @@ export default function SessionCard({
           </span>
 
           <div className="flex gap-2">
-            {session.status === "PLANNED" && (
+            {!readOnly && session.status === "PLANNED" && (
               <button
                 className="btn btn-sm btn-primary"
                 onClick={(e) => {
@@ -122,7 +124,7 @@ export default function SessionCard({
               </button>
             )}
 
-            {session.status === "CONFIRMED" && (
+            {!readOnly && session.status === "CONFIRMED" && (
               <button
                 className="btn btn-sm btn-success"
                 onClick={(e) => {

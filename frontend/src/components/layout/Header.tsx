@@ -119,7 +119,7 @@ const Header: React.FC<HeaderProps> = ({ storefront }) => {
               </button>
 
               {open && (
-                <div className="absolute right-0 mt-2 w-44 bg-base-100 border border-gray-700 rounded shadow-lg z-50 text-neutral">
+                <div className="absolute right-0 mt-2 w-44 bg-base-100 border border-gray-700 rounded shadow-lg z-50 ">
                   {/* ADMIN */}
                   {user.role === "ADMIN" && (
                     <button

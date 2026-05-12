@@ -31,10 +31,15 @@ export const ShopUserService = {
     return res.data;
   },
 
+  getShopsForUser: async (userId: string): Promise<ShopUserStatusDto[]> => {
+    const res = await api.get(`${BASE_URL}/user/${userId}/shops`);
+    return res.data;
+  },
+
   addUserToShop: async (
     shopId: number,
     userId: string,
-    role: string
+    role: string,
   ): Promise<void> => {
     await api.post(`${BASE_URL}/${shopId}/${userId}?role=${role}`);
   },
@@ -42,7 +47,7 @@ export const ShopUserService = {
   updateStatus: async (
     shopId: number,
     userId: string,
-    status: string
+    status: string,
   ): Promise<void> => {
     await api.patch(`${BASE_URL}/${shopId}/${userId}/status?status=${status}`);
   },
@@ -51,7 +56,7 @@ export const ShopUserService = {
   updateRole: async (
     shopId: number,
     userId: string,
-    role: string
+    role: string,
   ): Promise<void> => {
     await api.patch(`${BASE_URL}/${shopId}/${userId}/role?role=${role}`);
   },
@@ -65,4 +70,3 @@ export const ShopUserService = {
     return res.data;
   },
 };
-

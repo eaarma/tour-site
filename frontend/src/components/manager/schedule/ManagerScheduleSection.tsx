@@ -15,10 +15,12 @@ import SessionDetailsModal from "../session/SessionDetailsModal";
 
 interface ManagerScheduleSectionProps {
   shopId: number;
+  isReadOnly?: boolean;
 }
 
 export default function ManagerScheduleSection({
   shopId,
+  isReadOnly = false,
 }: ManagerScheduleSectionProps) {
   const [viewMode, setViewMode] = useState<"DATE" | "TOUR">("DATE");
   const [schedules, setSchedules] = useState<TourScheduleResponseDto[]>([]);
@@ -266,13 +268,15 @@ export default function ManagerScheduleSection({
         </div>
       </div>
 
-      <button
-        className="btn btn-sm btn-primary rounded-lg"
-        onClick={() => setAddModalOpen(true)}
-      >
-        <Plus />
-        Add Schedule
-      </button>
+      {!isReadOnly && (
+        <button
+          className="btn btn-sm btn-primary rounded-lg"
+          onClick={() => setAddModalOpen(true)}
+        >
+          <Plus />
+          Add Schedule
+        </button>
+      )}
 
       {/* ================= VIEW CONTENT ================= */}
       <div>
@@ -281,7 +285,7 @@ export default function ManagerScheduleSection({
             <p className="text-muted-foreground">Loading schedules...</p>
           </div>
         ) : filteredSchedules.length === 0 ? (
-          <div className="rounded-xl border border-base-300 bg-base-100 p-8 text-center">
+          <div className="rounded-xl border border-base-300 bg-base-100 p-16 text-center">
             <p className="text-muted-foreground">No schedules created yet.</p>
           </div>
         ) : viewMode === "DATE" ? (
@@ -290,6 +294,7 @@ export default function ManagerScheduleSection({
             onEdit={openEditModal}
             onDelete={handleDelete}
             onViewSession={handleViewSession}
+            readOnly={isReadOnly}
           />
         ) : (
           <ScheduleTourView
@@ -297,6 +302,7 @@ export default function ManagerScheduleSection({
             onEdit={openEditModal}
             onDelete={handleDelete}
             onViewSession={handleViewSession}
+            readOnly={isReadOnly}
           />
         )}
       </div>
@@ -319,9 +325,9 @@ export default function ManagerScheduleSection({
           onConfirmSession={confirmSession}
           onCompleteSession={completeSession}
           onSessionUpdated={updateLocalSession}
+          readOnly={isReadOnly}
         />
       )}
     </div>
   );
 }
-

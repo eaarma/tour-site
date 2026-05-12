@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.CreatedDate;
@@ -43,6 +44,16 @@ public class Shop {
     private String bankAccountIban;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private ShopStatus status;
+
+    @Column(name = "status_reason", length = 1000)
+    private String statusReason;
+
+    @Column(name = "status_changed_at")
+    private Instant statusChangedAt;
+
+    @Column(name = "status_changed_by")
+    private UUID statusChangedBy;
 
 }

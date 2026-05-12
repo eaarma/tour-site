@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import CustomDateInput from "@/components/common/CustomDateInput";
 import { Tour } from "@/types";
 import { TourSessionDto } from "@/types/tourSession";
@@ -30,9 +29,14 @@ interface Props {
   sessions: TourSessionDto[];
   tours: Tour[];
   shopId: number;
+  isReadOnly?: boolean;
 }
 
-export default function ManagerSessionSection({ tours, shopId }: Props) {
+export default function ManagerSessionSection({
+  tours,
+  shopId,
+  isReadOnly = false,
+}: Props) {
   const [activeTab, setActiveTab] = useState<"today" | "active" | "past">(
     "today",
   );
@@ -323,7 +327,7 @@ export default function ManagerSessionSection({ tours, shopId }: Props) {
       {/* ================= LIST ================= */}
       <div>
         {filtered.length === 0 ? (
-          <div className="rounded-xl border border-base-300 bg-base-100 p-8 text-center">
+          <div className="rounded-xl border border-base-300 bg-base-100 p-16 text-center">
             <p className="text-muted-foreground">No sessions to display.</p>
           </div>
         ) : (
@@ -336,6 +340,7 @@ export default function ManagerSessionSection({ tours, shopId }: Props) {
                 onClick={() => setSelectedSessionId(session.id!)}
                 onConfirmSession={confirmSession}
                 onCompleteSession={completeSession}
+                readOnly={isReadOnly}
               />
             ))}
           </div>
@@ -350,6 +355,7 @@ export default function ManagerSessionSection({ tours, shopId }: Props) {
           onConfirmSession={confirmSession}
           onCompleteSession={completeSession}
           onSessionUpdated={updateLocalSession}
+          readOnly={isReadOnly}
         />
       )}
     </div>

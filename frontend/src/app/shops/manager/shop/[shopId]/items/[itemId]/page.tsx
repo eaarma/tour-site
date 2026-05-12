@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ShopService } from "@/lib/shops/shopService";
 import { TourService } from "@/lib/tours/tourService";
 import { Tour, TourCreateDto } from "@/types";
 import EditableSchedules from "@/components/manager/item/EditableSchedules";
@@ -39,6 +40,9 @@ export default function ManagerItemPage() {
   const [item, setItem] = useState<Tour | null>(null);
   const [loading, setLoading] = useState(!isNew);
   const [isEditing, setIsEditing] = useState(isNew); // in add mode, editing by default
+  const [shopStatus, setShopStatus] = useState<
+    "ACTIVE" | "REMOVED" | "DISABLED" | null
+  >(null);
   const [form, setForm] = useState<TourFormDto>(
     isNew
       ? {
@@ -75,6 +79,27 @@ export default function ManagerItemPage() {
     };
     fetchItem();
   }, [isNew, itemId]);
+
+  useEffect(() => {
+    if (!shopId || access !== true) return;
+
+    const loadShop = async () => {
+      try {
+        const shop = await ShopService.getById(shopId);
+        setShopStatus(shop.status);
+      } catch (err) {
+        console.error("Failed to load shop status", err);
+      }
+    };
+
+    loadShop();
+  }, [shopId, access]);
+
+  useEffect(() => {
+    if (shopStatus === "REMOVED" || shopStatus === "DISABLED") {
+      setIsEditing(false);
+    }
+  }, [shopStatus]);
 
   // Load images only for existing tours
   useEffect(() => {
@@ -196,8 +221,30 @@ export default function ManagerItemPage() {
     }
   };
 
+  const isRemoved = shopStatus === "REMOVED";
+  const showEditing = !isRemoved && isEditing;
+
   if (access === false) {
     return <Unauthorized />;
+  }
+
+  if (isNew && isRemoved) {
+    return (
+      <div className="bg-base-100 min-h-screen p-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-2xl font-bold mb-4">Cannot add tours</h1>
+          <p className="text-gray-600 mb-6">
+            This shop has been removed and no new tours can be created.
+          </p>
+          <button
+            className="btn btn-primary"
+            onClick={() => router.push(`/shops/manager?shopId=${shopId}`)}
+          >
+            Back to shop manager
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (loading) {
@@ -211,9 +258,20 @@ export default function ManagerItemPage() {
   return (
     <div className="bg-base-100 min-h-screen p-6">
       <div className="max-w-5xl mx-auto mb-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">
-          {isNew ? "Add Tour" : isEditing ? "Edit Tour" : "Tour Details"}
-        </h1>
+        <div>
+          <h1 className="text-2xl font-bold">
+            {isNew
+              ? "Add Tour"
+              : isRemoved
+                ? "Tour Details"
+                : isEditing
+                  ? "Edit Tour"
+                  : "Tour Details"}
+          </h1>
+          {isRemoved && !isNew && (
+            <span className="badge badge-warning mt-2">Read-only shop</span>
+          )}
+        </div>
 
         <div className="flex gap-2">
           {/* Back button */}
@@ -226,7 +284,7 @@ export default function ManagerItemPage() {
           </button>
 
           {/* Edit / Cancel */}
-          {!isNew && (
+          {!isNew && !isRemoved && (
             <button
               className="btn btn-md btn-primary"
               onClick={() => setIsEditing(!isEditing)}
@@ -236,7 +294,7 @@ export default function ManagerItemPage() {
           )}
 
           {/* Save */}
-          {isEditing && (
+          {showEditing && (
             <button className="btn btn-md btn-success" onClick={handleSave}>
               Save
             </button>
@@ -244,52 +302,110 @@ export default function ManagerItemPage() {
         </div>
       </div>
 
-      {/* Main card */}
-      <div className="max-w-5xl mx-auto card bg-base-100 shadow-lg p-6">
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Tour images section */}
-          <div className="lg:w-1/2 flex flex-col gap-4">
+      {/* Main content */}
+      <div className="mx-auto max-w-6xl space-y-6">
+        {/* Header card */}
+        <section className="rounded-3xl border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6">
+          {isEditing ? (
+            <div className="space-y-3">
+              <label className="block">
+                <span className="text-sm font-medium text-base-content/70">
+                  Tour title
+                </span>
+                <input
+                  className="input input-bordered mt-2 w-full text-2xl font-bold sm:text-3xl"
+                  value={form.title || ""}
+                  placeholder="Title"
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                />
+              </label>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-2xl font-bold text-base-content sm:text-3xl">
+                    {item?.title}
+                  </h1>
+
+                  {item?.status ? (
+                    <span
+                      className={`badge ${
+                        item.status === "ACTIVE"
+                          ? "badge-success"
+                          : item.status === "ON_HOLD"
+                            ? "badge-warning"
+                            : "badge-error"
+                      }`}
+                    >
+                      {item.status}
+                    </span>
+                  ) : null}
+                </div>
+
+                <p className="mt-2 text-sm text-base-content/55">
+                  Tour ID: <span className="font-medium">{item?.id}</span>
+                </p>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* Media + main details */}
+        <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          {/* Tour media */}
+          <div className="rounded-3xl border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6">
+            <div className="mb-5">
+              <h2 className="text-lg font-semibold text-base-content">
+                Tour media
+              </h2>
+              <p className="mt-1 text-sm text-base-content/60">
+                Manage the images customers see when browsing and booking this
+                tour.
+              </p>
+            </div>
+
             {isNew ? (
-              <div className="border border-base-300 rounded-xl p-6 text-sm text-muted-foreground bg-base-200">
-                <p className="font-medium text-foreground mb-1">
+              <div className="rounded-2xl border border-dashed border-base-300 bg-base-200/50 p-6 text-sm text-base-content/65">
+                <p className="font-medium text-base-content">
                   Images unavailable
                 </p>
-                <p>Add images after the tour has been created.</p>
+                <p className="mt-1">
+                  Add images after the tour has been created.
+                </p>
               </div>
             ) : (
               <TourImagesManager
                 tourId={Number(itemId)}
-                isEditing={isEditing}
+                isEditing={!isRemoved && isEditing}
                 tourImages={tourImages}
                 setTourImages={setTourImages}
               />
             )}
           </div>
-          {/* Details */}
-          <div className="lg:w-1/2 flex flex-col justify-between gap-4">
-            <div>
-              {/* title */}
-              {isEditing ? (
-                <input
-                  className="input input-bordered w-full text-3xl font-bold"
-                  value={form.title || ""}
-                  placeholder="Title"
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                />
-              ) : (
-                <div>
-                  <h1 className="text-3xl font-bold mb-2">{item?.title}</h1>
-                  <p>ID: {item?.id}</p>
-                </div>
-              )}
 
+          {/* Core details */}
+          <div className="rounded-3xl border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6">
+            <div className="mb-5">
+              <h2 className="text-lg font-semibold text-base-content">
+                Core details
+              </h2>
+              <p className="mt-1 text-sm text-base-content/60">
+                Define the main customer-facing information for this tour.
+              </p>
+            </div>
+
+            <div className="space-y-5">
               {/* Description */}
-              <div className="col-span-2">
-                <span className="font-semibold">Description:</span>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-base-content/50">
+                  Description
+                </p>
+
                 {isEditing ? (
-                  <div>
+                  <div className="mt-2">
                     <textarea
-                      className={`textarea textarea-bordered w-full ${
+                      className={`textarea textarea-bordered min-h-32 w-full ${
                         errors.description ? "textarea-error" : ""
                       }`}
                       placeholder="Description (min 10 characters)"
@@ -298,23 +414,28 @@ export default function ManagerItemPage() {
                         setForm({ ...form, description: e.target.value })
                       }
                     />
-                    {errors.description && (
-                      <p className="text-red-500 text-sm mt-1">
+                    {errors.description ? (
+                      <p className="mt-1 text-sm text-error">
                         {errors.description}
                       </p>
-                    )}
+                    ) : null}
                   </div>
                 ) : (
-                  <p className="text-gray-600">{item?.description}</p>
+                  <p className="mt-2 leading-7 text-base-content/75">
+                    {item?.description || "No description set"}
+                  </p>
                 )}
               </div>
 
               {/* Status */}
-              <div className="mb-2 mt-3">
-                <span className="font-semibold mr-2">Status: </span>
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-base-content/50">
+                  Status
+                </p>
+
                 {isEditing || isNew ? (
                   <select
-                    className="select select-bordered"
+                    className="select select-bordered mt-2 w-full sm:max-w-xs"
                     value={form.status || "ACTIVE"}
                     onChange={(e) =>
                       setForm({ ...form, status: e.target.value })
@@ -328,7 +449,7 @@ export default function ManagerItemPage() {
                   </select>
                 ) : (
                   <span
-                    className={`badge ${
+                    className={`badge mt-2 ${
                       item?.status === "ACTIVE"
                         ? "badge-success"
                         : item?.status === "ON_HOLD"
@@ -340,261 +461,337 @@ export default function ManagerItemPage() {
                   </span>
                 )}
               </div>
-              {/* Grid */}
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                {/* Price */}
-                <div>
-                  <span className="font-semibold">Price: </span>
-                  {isEditing ? (
-                    <div>
-                      <input
-                        type="number"
-                        className={`input input-bordered w-full ${
-                          errors.price ? "input-error" : ""
-                        }`}
-                        value={form.price || ""}
-                        onChange={(e) =>
-                          setForm({ ...form, price: Number(e.target.value) })
-                        }
-                      />
-                      {errors.price && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.price}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    item?.price + " €"
-                  )}
-                </div>
-
-                {/* Intensity */}
-                <div>
-                  <span className="font-semibold">Intensity:</span>{" "}
-                  {isEditing ? (
-                    <select
-                      className="select select-bordered w-full"
-                      value={form.intensity || ""}
-                      onChange={(e) =>
-                        setForm({ ...form, intensity: e.target.value })
-                      }
-                    >
-                      {INTENSITY_OPTIONS.map((opt) => (
-                        <option key={opt}>{opt}</option>
-                      ))}
-                    </select>
-                  ) : (
-                    item?.intensity
-                  )}
-                </div>
-
-                {/* Type */}
-                <div>
-                  <span className="font-semibold">Type:</span>{" "}
-                  {isEditing ? (
-                    <select
-                      className="select select-bordered w-full"
-                      value={form.type || TYPE_OPTIONS[0]}
-                      onChange={(e) =>
-                        setForm({ ...form, type: e.target.value })
-                      }
-                    >
-                      {TYPE_OPTIONS.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    item?.type
-                  )}
-                </div>
-
-                {/* Duration */}
-
-                <div>
-                  <span className="font-semibold">Duration:</span>
-                  {isEditing ? (
-                    <select
-                      className="select select-bordered w-full"
-                      value={form.timeRequired ?? ""}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          timeRequired: Number(e.target.value),
-                        })
-                      }
-                    >
-                      {DURATION_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    " " + formatDuration(item?.timeRequired)
-                  )}
-                </div>
-
-                {/* Participants */}
-                <div>
-                  <span className="font-semibold">Max Participants: </span>
-                  {isEditing ? (
-                    <div>
-                      <select
-                        className={`select select-bordered w-full ${
-                          errors.participants ? "select-error" : ""
-                        }`}
-                        value={form.participants || ""}
-                        onChange={(e) =>
-                          setForm({
-                            ...form,
-                            participants: Number(e.target.value),
-                          })
-                        }
-                      >
-                        <option value="">Select...</option>
-                        {Array.from({ length: 30 }, (_, i) => i + 1).map(
-                          (num) => (
-                            <option key={num} value={num}>
-                              {num}
-                            </option>
-                          ),
-                        )}
-                      </select>
-                      {errors.participants && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.participants}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    item?.participants
-                  )}
-                </div>
-
-                {/* Location */}
-                <div className="col-span-2">
-                  <span className="font-semibold">Location: </span>
-                  {isEditing ? (
-                    <div>
-                      <input
-                        className={`input input-bordered w-full ${
-                          errors.location ? "input-error" : ""
-                        }`}
-                        placeholder="Location (required)"
-                        value={form.location || ""}
-                        onChange={(e) =>
-                          setForm({ ...form, location: e.target.value })
-                        }
-                      />
-                      {errors.location && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.location}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    item?.location || (
-                      <span className="text-gray-500">No location set</span>
-                    )
-                  )}
-                </div>
-
-                {/* Meeting point */}
-                <div className="col-span-2">
-                  <span className="font-semibold">Meeting point: </span>
-                  {isEditing ? (
-                    <div>
-                      <input
-                        className={`input input-bordered w-full ${
-                          errors.meetingPoint ? "input-error" : ""
-                        }`}
-                        placeholder="Meeting point (required)"
-                        value={form.meetingPoint || ""}
-                        onChange={(e) =>
-                          setForm({ ...form, meetingPoint: e.target.value })
-                        }
-                      />
-                      {errors.meetingPoint && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {errors.meetingPoint}
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    item?.meetingPoint || (
-                      <span className="text-gray-500">
-                        No meeting point set
-                      </span>
-                    )
-                  )}
-                </div>
-
-                {/* Languages */}
-                <div className="col-span-2">
-                  <span className="font-semibold">Languages:</span>
-                  {isEditing ? (
-                    <EditableLanguages
-                      value={Array.isArray(form.language) ? form.language : []}
-                      onChange={(langs) =>
-                        setForm({ ...form, language: langs })
-                      }
-                      isEditing={isEditing}
-                    />
-                  ) : (
-                    " " + item?.language?.join(", ")
-                  )}
-
-                  {errors.language && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.language}
-                    </p>
-                  )}
-                </div>
-
-                {/* Category */}
-                <div className="col-span-2">
-                  <span className="font-semibold">Categories</span>
-
-                  {isEditing ? (
-                    <CategorySelector
-                      selected={form.categories ?? []}
-                      onChange={(newList: TourCategory[]) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          categories: newList,
-                        }))
-                      }
-                    />
-                  ) : (
-                    item && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {item.categories.map((cat) => (
-                          <span
-                            key={cat}
-                            className="px-3 py-1 bg-gray-200 rounded-full text-sm"
-                          >
-                            {cat.replace(/_/g, " ")}
-                          </span>
-                        ))}
-                      </div>
-                    )
-                  )}
-                </div>
-
-                {/* Schedules */}
-                {item && (
-                  <div className="col-span-2 mt-4">
-                    <EditableSchedules tourId={item!.id} isEditing={true} />
-                  </div>
-                )}
-              </div>
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* Pricing and logistics */}
+        <section className="rounded-3xl border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6">
+          <div className="mb-5">
+            <h2 className="text-lg font-semibold text-base-content">
+              Pricing & logistics
+            </h2>
+            <p className="mt-1 text-sm text-base-content/60">
+              Configure price, format, duration, capacity, and meeting details.
+            </p>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2">
+            {/* Price */}
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-base-content/50">
+                Price
+              </p>
+
+              {isEditing ? (
+                <div className="mt-2">
+                  <input
+                    type="number"
+                    className={`input input-bordered w-full ${
+                      errors.price ? "input-error" : ""
+                    }`}
+                    value={form.price || ""}
+                    onChange={(e) =>
+                      setForm({ ...form, price: Number(e.target.value) })
+                    }
+                  />
+                  {errors.price ? (
+                    <p className="mt-1 text-sm text-error">{errors.price}</p>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="mt-2 text-base font-medium text-base-content">
+                  €{item?.price}
+                </p>
+              )}
+            </div>
+
+            {/* Type */}
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-base-content/50">
+                Type
+              </p>
+
+              {isEditing ? (
+                <select
+                  className="select select-bordered mt-2 w-full"
+                  value={form.type || TYPE_OPTIONS[0]}
+                  onChange={(e) => setForm({ ...form, type: e.target.value })}
+                >
+                  {TYPE_OPTIONS.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <p className="mt-2 font-medium text-base-content">
+                  {item?.type || "-"}
+                </p>
+              )}
+            </div>
+
+            {/* Intensity */}
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-base-content/50">
+                Intensity
+              </p>
+
+              {isEditing ? (
+                <select
+                  className="select select-bordered mt-2 w-full"
+                  value={form.intensity || ""}
+                  onChange={(e) =>
+                    setForm({ ...form, intensity: e.target.value })
+                  }
+                >
+                  {INTENSITY_OPTIONS.map((opt) => (
+                    <option key={opt}>{opt}</option>
+                  ))}
+                </select>
+              ) : (
+                <p className="mt-2 font-medium text-base-content">
+                  {item?.intensity || "-"}
+                </p>
+              )}
+            </div>
+
+            {/* Duration */}
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-base-content/50">
+                Duration
+              </p>
+
+              {isEditing ? (
+                <select
+                  className="select select-bordered mt-2 w-full"
+                  value={form.timeRequired ?? ""}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      timeRequired: Number(e.target.value),
+                    })
+                  }
+                >
+                  {DURATION_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <p className="mt-2 font-medium text-base-content">
+                  {formatDuration(item?.timeRequired)}
+                </p>
+              )}
+            </div>
+
+            {/* Participants */}
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-base-content/50">
+                Max participants
+              </p>
+
+              {isEditing ? (
+                <div className="mt-2">
+                  <select
+                    className={`select select-bordered w-full ${
+                      errors.participants ? "select-error" : ""
+                    }`}
+                    value={form.participants || ""}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        participants: Number(e.target.value),
+                      })
+                    }
+                  >
+                    <option value="">Select...</option>
+                    {Array.from({ length: 30 }, (_, i) => i + 1).map((num) => (
+                      <option key={num} value={num}>
+                        {num}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.participants ? (
+                    <p className="mt-1 text-sm text-error">
+                      {errors.participants}
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="mt-2 font-medium text-base-content">
+                  {item?.participants || "-"}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-5 md:grid-cols-2">
+            {/* Location */}
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-base-content/50">
+                Location
+              </p>
+
+              {isEditing ? (
+                <div className="mt-2">
+                  <input
+                    className={`input input-bordered w-full ${
+                      errors.location ? "input-error" : ""
+                    }`}
+                    placeholder="Location (required)"
+                    value={form.location || ""}
+                    onChange={(e) =>
+                      setForm({ ...form, location: e.target.value })
+                    }
+                  />
+                  {errors.location ? (
+                    <p className="mt-1 text-sm text-error">{errors.location}</p>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="mt-2 font-medium text-base-content">
+                  {item?.location || (
+                    <span className="text-base-content/45">
+                      No location set
+                    </span>
+                  )}
+                </p>
+              )}
+            </div>
+
+            {/* Meeting point */}
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-base-content/50">
+                Meeting point
+              </p>
+
+              {isEditing ? (
+                <div className="mt-2">
+                  <input
+                    className={`input input-bordered w-full ${
+                      errors.meetingPoint ? "input-error" : ""
+                    }`}
+                    placeholder="Meeting point (required)"
+                    value={form.meetingPoint || ""}
+                    onChange={(e) =>
+                      setForm({ ...form, meetingPoint: e.target.value })
+                    }
+                  />
+                  {errors.meetingPoint ? (
+                    <p className="mt-1 text-sm text-error">
+                      {errors.meetingPoint}
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="mt-2 font-medium text-base-content">
+                  {item?.meetingPoint || (
+                    <span className="text-base-content/45">
+                      No meeting point set
+                    </span>
+                  )}
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Languages and categories */}
+        <section className="rounded-3xl border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6">
+          <div className="mb-5">
+            <h2 className="text-lg font-semibold text-base-content">
+              Languages & categories
+            </h2>
+            <p className="mt-1 text-sm text-base-content/60">
+              Help customers understand the tour format and discover it through
+              browsing filters.
+            </p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Languages */}
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-base-content/50">
+                Languages
+              </p>
+
+              {isEditing ? (
+                <div className="mt-2">
+                  <EditableLanguages
+                    value={Array.isArray(form.language) ? form.language : []}
+                    onChange={(langs) => setForm({ ...form, language: langs })}
+                    isEditing={isEditing}
+                  />
+                </div>
+              ) : (
+                <p className="mt-2 font-medium text-base-content">
+                  {item?.language?.length ? item.language.join(", ") : "-"}
+                </p>
+              )}
+
+              {errors.language ? (
+                <p className="mt-1 text-sm text-error">{errors.language}</p>
+              ) : null}
+            </div>
+
+            {/* Categories */}
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-base-content/50">
+                Categories
+              </p>
+
+              {isEditing ? (
+                <div className="mt-2">
+                  <CategorySelector
+                    selected={form.categories ?? []}
+                    onChange={(newList: TourCategory[]) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        categories: newList,
+                      }))
+                    }
+                  />
+                </div>
+              ) : item?.categories?.length ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {item.categories.map((cat) => (
+                    <span
+                      key={cat}
+                      className="rounded-full border border-base-300 bg-base-200/60 px-3 py-1 text-sm text-base-content"
+                    >
+                      {cat.replace(/_/g, " ")}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-2 text-base-content/45">No categories set</p>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Schedules */}
+        {item ? (
+          <section className="rounded-3xl border border-base-300 bg-base-100 p-5 shadow-sm sm:p-6">
+            <div className="mb-5">
+              <h2 className="text-lg font-semibold text-base-content">
+                Schedules
+              </h2>
+              <p className="mt-1 text-sm text-base-content/60">
+                Manage when this tour can be booked and how availability is
+                exposed to customers.
+              </p>
+            </div>
+
+            <EditableSchedules
+              tourId={item.id}
+              isEditing={!isRemoved && isEditing}
+            />
+          </section>
+        ) : null}
       </div>
     </div>
   );
 }
-

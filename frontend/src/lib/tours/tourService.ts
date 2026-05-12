@@ -38,8 +38,14 @@ export const TourService = {
     return res.data;
   },
 
-  getById: async (id: number): Promise<Tour> => {
-    const res = await api.get(`${BASE_URL}/${id}`, { withCredentials: false });
+  getById: async (
+    id: number,
+    options?: { suppressErrorToast?: boolean },
+  ): Promise<Tour> => {
+    const res = await api.get(`${BASE_URL}/${id}`, {
+      withCredentials: false,
+      suppressErrorToast: options?.suppressErrorToast,
+    });
     return res.data;
   },
 
@@ -64,7 +70,9 @@ export const TourService = {
     return res.data;
   },
 
-  getAdminPage: async (params?: AdminTourParams): Promise<PageResponse<Tour>> => {
+  getAdminPage: async (
+    params?: AdminTourParams,
+  ): Promise<PageResponse<Tour>> => {
     const res = await api.get(`${BASE_URL}/admin`, {
       params,
       withCredentials: true,
@@ -88,10 +96,14 @@ export const TourService = {
   },
 
   // Fetch random tours for the horizontal list.
-  async getRandom(count: number = 8): Promise<Tour[]> {
+  async getRandom(
+    count: number = 8,
+    options?: { suppressErrorToast?: boolean },
+  ): Promise<Tour[]> {
     const res = await api.get(`${BASE_URL}/random`, {
       params: { count },
       withCredentials: false,
+      suppressErrorToast: options?.suppressErrorToast,
     });
     return res.data;
   },
@@ -100,20 +112,24 @@ export const TourService = {
   async getRandomByCategory(
     category: string,
     count: number = 4,
+    options?: { suppressErrorToast?: boolean },
   ): Promise<Tour[]> {
     const res = await api.get(`${BASE_URL}/category/random`, {
       params: { category, count },
       withCredentials: false,
+      suppressErrorToast: options?.suppressErrorToast,
     });
     return res.data;
   },
 
   // Fetch a single highlighted tour.
-  async getHighlighted(): Promise<Tour> {
+  async getHighlighted(options?: {
+    suppressErrorToast?: boolean;
+  }): Promise<Tour> {
     const res = await api.get(`${BASE_URL}/highlighted`, {
       withCredentials: false,
+      suppressErrorToast: options?.suppressErrorToast,
     });
     return res.data;
   },
 };
-

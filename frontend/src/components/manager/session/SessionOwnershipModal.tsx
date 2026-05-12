@@ -32,7 +32,7 @@ export default function SessionOwnershipModal({
 }: Props) {
   const [shopMembers, setShopMembers] = useState<ShopUserDto[]>([]);
   const [selectedManagerId, setSelectedManagerId] = useState<string>(
-    currentManagerId ?? ""
+    currentManagerId ?? "",
   );
   const [loadingMembers, setLoadingMembers] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -67,7 +67,7 @@ export default function SessionOwnershipModal({
 
       const updated = await TourSessionService.assignManager(
         sessionId,
-        managerIdToSend
+        managerIdToSend,
       );
 
       toast.success("Session ownership updated");
@@ -86,7 +86,7 @@ export default function SessionOwnershipModal({
       <div className="p-4">
         <h3 className="text-lg font-semibold mb-4">Assign Session Manager</h3>
 
-        <p className="mb-3 text-sm text-gray-700">
+        <p className="mb-3 text-sm text-gray-400">
           Current manager: <strong>{currentManagerName ?? "Unassigned"}</strong>
         </p>
 
@@ -135,4 +135,3 @@ export default function SessionOwnershipModal({
     </Modal>
   );
 }
-

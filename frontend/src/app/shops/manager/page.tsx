@@ -7,6 +7,7 @@ import ManagerItemList from "@/components/manager/item/ManagerItemList";
 import ManagerStatisticsSection from "@/components/manager/statistics/ManagerStatisticsSection";
 import { Tour } from "@/types";
 import { TourService } from "@/lib/tours/tourService";
+import { ShopService } from "@/lib/shops/shopService";
 import { useShopAccess } from "@/hooks/useShopAccess";
 import Unauthorized from "@/components/common/Unauthorized";
 import {
@@ -28,6 +29,7 @@ import ManagerOrderSection from "@/components/manager/order/ManagerOrderSection"
 import ManagerAssignmentSection from "@/components/manager/assignment/ManagerAssignmentSection";
 import { useSessionManager } from "@/hooks/useSessionManager";
 import { ShopUserService } from "@/lib/shops/shopUserService";
+import ManagerSectionContainer from "@/components/manager/common/ManagerSectionContainer";
 
 const MANAGER_LEVEL_ROLES = new Set(["MANAGER", "OWNER", "ADMIN"]);
 const TOUR_EDITOR_ROLES = new Set(["GUIDE", "MANAGER", "OWNER", "ADMIN"]);
@@ -45,6 +47,12 @@ export default function ShopManagerPage() {
 
   const [tours, setTours] = useState<Tour[]>([]);
   const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
+  const [shopStatus, setShopStatus] = useState<
+    "ACTIVE" | "DISABLED" | "REMOVED" | null
+  >(null);
+
+  const [shopStatusReason, setShopStatusReason] = useState<string | null>(null);
+  const [showStatusDialog, setShowStatusDialog] = useState(false);
 
   const [activeTab, setActiveTab] = useState<
     | "sessions"
@@ -71,10 +79,19 @@ export default function ShopManagerPage() {
   useEffect(() => {
     if (!shopId || access !== true) return;
 
-    const load = async () => {
+    const loadData = async () => {
       try {
-        const shopTours = await TourService.getByShopId(shopId);
+        const [shopTours, shop] = await Promise.all([
+          TourService.getByShopId(shopId),
+          ShopService.getById(shopId),
+        ]);
         setTours(shopTours);
+        setShopStatus(shop.status);
+        setShopStatusReason(shop.statusReason ?? null);
+
+        if (shop.status === "DISABLED" || shop.status === "REMOVED") {
+          setShowStatusDialog(true);
+        }
 
         const now = new Date();
 
@@ -136,7 +153,7 @@ export default function ShopManagerPage() {
       }
     };
 
-    load();
+    loadData();
   }, [shopId, access, sessionList]);
 
   useEffect(() => {
@@ -158,6 +175,7 @@ export default function ShopManagerPage() {
     loadMembership();
   }, [shopId, access]);
 
+  const isRestricted = shopStatus === "DISABLED" || shopStatus === "REMOVED";
   const canAccessManagerFinancials =
     currentUserRole !== null && MANAGER_LEVEL_ROLES.has(currentUserRole);
   const canManageTours =
@@ -170,6 +188,11 @@ export default function ShopManagerPage() {
       );
     }
   }, [canAccessManagerFinancials]);
+
+  const isShopRestricted =
+    shopStatus === "DISABLED" || shopStatus === "REMOVED";
+
+  const shopStatusLabel = shopStatus?.toLowerCase();
 
   // ============================
   // 🌀 Loading state (auth + access)
@@ -207,8 +230,55 @@ export default function ShopManagerPage() {
   // ============================
   return (
     <div className="p-6 space-y-8">
+      {isShopRestricted && showStatusDialog && (
+        <div className="modal modal-open">
+          <div className="modal-box max-w-lg">
+            <h3 className="text-lg font-semibold">Shop {shopStatusLabel}</h3>
+
+            <p className="mt-3 text-sm text-base-content/75">
+              This shop has been{" "}
+              <span className="font-semibold">{shopStatusLabel}</span>
+              {shopStatusReason ? (
+                <>
+                  {" "}
+                  because of{" "}
+                  <span className="font-semibold">{shopStatusReason}</span>.
+                </>
+              ) : (
+                "."
+              )}{" "}
+              Contact support for further questions.
+            </p>
+
+            <div className="modal-action">
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => setShowStatusDialog(false)}
+              >
+                Close
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => router.push("/contact")}
+              >
+                Contact support
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="modal-backdrop"
+            onClick={() => setShowStatusDialog(false)}
+            aria-label="Close shop status dialog"
+          />
+        </div>
+      )}
       {/* 🏪 Shop Section */}
-      <ManagerShopSection shopId={shopId} />
+      <ManagerShopSection shopId={shopId} isRestricted={isRestricted} />
 
       {/* 📊 Statistics */}
       <ManagerStatisticsSection
@@ -238,7 +308,7 @@ export default function ShopManagerPage() {
         ${
           activeTab === "sessions"
             ? "text-primary border-b-2 border-primary"
-            : "text-gray-600 hover:text-primary/80"
+            : "text-gray-400 hover:text-primary/80"
         }
       `}
               >
@@ -263,7 +333,7 @@ export default function ShopManagerPage() {
         ${
           activeTab === "tours"
             ? "text-primary border-b-2 border-primary"
-            : "text-gray-600 hover:text-primary/80"
+            : "text-gray-400 hover:text-primary/80"
         }
       `}
               >
@@ -288,7 +358,7 @@ export default function ShopManagerPage() {
           ${
             activeTab === "schedules"
               ? "text-primary border-b-2 border-primary"
-              : "text-gray-600 hover:text-primary/80"
+              : "text-gray-400 hover:text-primary/80"
           }
         `}
               >
@@ -313,7 +383,7 @@ export default function ShopManagerPage() {
           ${
             activeTab === "orders"
               ? "text-primary border-b-2 border-primary"
-              : "text-gray-600 hover:text-primary/80"
+              : "text-gray-400   hover:text-primary/80"
           }
         `}
               >
@@ -339,7 +409,7 @@ export default function ShopManagerPage() {
         ${
           activeTab === "payments"
             ? "text-primary border-b-2 border-primary"
-            : "text-gray-600 hover:text-primary/80"
+            : "text-gray-400 hover:text-primary/80"
         }
       `}
                 >
@@ -366,7 +436,7 @@ export default function ShopManagerPage() {
         ${
           activeTab === "payouts"
             ? "text-primary border-b-2 border-primary"
-            : "text-gray-600 hover:text-primary/80"
+            : "text-gray-400 hover:text-primary/80"
         }
       `}
                 >
@@ -392,7 +462,7 @@ export default function ShopManagerPage() {
     ${
       activeTab === "assignments"
         ? "text-primary border-b-2 border-primary"
-        : "text-gray-600 hover:text-primary/80"
+        : "text-gray-400 hover:text-primary/80"
     }
   `}
               >
@@ -409,40 +479,60 @@ export default function ShopManagerPage() {
 
         {/* Tab panels */}
         {activeTab === "sessions" && (
-          <ManagerSessionSection
-            sessions={sessionList}
-            tours={tours}
-            shopId={shopId}
-          />
+          <ManagerSectionContainer>
+            <ManagerSessionSection
+              sessions={sessionList}
+              tours={tours}
+              shopId={shopId}
+              isReadOnly={isRestricted}
+            />
+          </ManagerSectionContainer>
         )}
 
         {activeTab === "tours" && (
-          <ManagerItemList
-            items={tours}
-            shopId={shopId}
-            canManageTours={canManageTours}
-          />
+          <ManagerSectionContainer>
+            <ManagerItemList
+              items={tours}
+              shopId={shopId}
+              canManageTours={canManageTours && !isRestricted}
+              isReadOnly={isRestricted}
+            />
+          </ManagerSectionContainer>
         )}
 
         {activeTab === "schedules" && (
-          <ManagerScheduleSection shopId={shopId} />
+          <ManagerSectionContainer>
+            <ManagerScheduleSection shopId={shopId} isReadOnly={isRestricted} />
+          </ManagerSectionContainer>
         )}
 
-        {activeTab === "orders" && <ManagerOrderSection shopId={shopId} />}
+        {activeTab === "orders" && (
+          <ManagerSectionContainer>
+            <ManagerOrderSection shopId={shopId} isReadOnly={isRestricted} />
+          </ManagerSectionContainer>
+        )}
 
         {activeTab === "payments" && canAccessManagerFinancials && (
-          <ShopManagerPaymentSection shopId={shopId} />
+          <ManagerSectionContainer>
+            <ShopManagerPaymentSection shopId={shopId} />
+          </ManagerSectionContainer>
         )}
 
         {activeTab === "payouts" && canAccessManagerFinancials && (
-          <ManagerPayoutSection shopId={shopId} />
+          <ManagerSectionContainer>
+            <ManagerPayoutSection shopId={shopId} isReadOnly={isRestricted} />
+          </ManagerSectionContainer>
         )}
 
         {activeTab === "assignments" && (
-          <ManagerAssignmentSection shopId={shopId} />
+          <ManagerSectionContainer>
+            <ManagerAssignmentSection
+              shopId={shopId}
+              isReadOnly={isRestricted}
+            />
+          </ManagerSectionContainer>
         )}
       </div>
     </div>
   );
 }
-

@@ -8,12 +8,14 @@ interface ManagerItemListProps {
   items: Tour[];
   shopId: number;
   canManageTours?: boolean;
+  isReadOnly?: boolean;
 }
 
 export default function ManagerItemList({
   items,
   shopId,
   canManageTours = true,
+  isReadOnly = false,
 }: ManagerItemListProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"active" | "inactive" | "all">(
@@ -36,6 +38,7 @@ export default function ManagerItemList({
     <div className="sm:p-4">
       <h2 className="text-2xl font-bold mb-4">
         {canManageTours ? "Manage Tours" : "Tours"}
+        {isReadOnly && !canManageTours ? " (read-only)" : ""}
       </h2>
 
       {/* Tabs + Add Tour Button */}
@@ -77,7 +80,7 @@ export default function ManagerItemList({
           </div>
         </div>
 
-        {canManageTours && (
+        {canManageTours && !isReadOnly && (
           <button
             className="btn btn-outline btn-primary flex items-center gap-2"
             onClick={() =>
@@ -91,8 +94,8 @@ export default function ManagerItemList({
 
       {/* Scrollable grid container */}
       {filteredItems.length === 0 ? (
-        <div className="text-center text-gray-500 m-14">
-          No items found for this tab.
+        <div className="rounded-xl border border-base-300 bg-base-100 p-16 text-center">
+          <p className="text-muted-foreground">No tours to display.</p>
         </div>
       ) : (
         <div className="overflow-y-auto pr-2" style={{ maxHeight: "740px" }}>
@@ -102,13 +105,8 @@ export default function ManagerItemList({
                 key={item.id}
                 item={item}
                 showStatus={true}
-                onClick={
-                  canManageTours
-                    ? () =>
-                        router.push(
-                          `/shops/manager/shop/${shopId}/items/${item.id}`,
-                        )
-                    : undefined
+                onClick={() =>
+                  router.push(`/shops/manager/shop/${shopId}/items/${item.id}`)
                 }
               />
             ))}

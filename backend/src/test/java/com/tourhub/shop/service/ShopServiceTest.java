@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.tourhub.shop.dto.ShopCreateRequestDto;
 import com.tourhub.shop.dto.ShopDto;
+import com.tourhub.shop.dto.ShopStatusUpdateRequestDto;
 import com.tourhub.shop.mapper.ShopMapper;
 import com.tourhub.shop.model.Shop;
 import com.tourhub.shop.model.ShopStatus;
@@ -215,7 +216,7 @@ class ShopServiceTest {
     }
 
     @Test
-    void removeShop_returnsOk_whenAdminRemovesShop() {
+    void setStatusForShop_returnsOk_whenAdminSetsStatus() {
         UUID adminId = UUID.randomUUID();
         Shop shop = Shop.builder().id(1L).status(ShopStatus.ACTIVE).build();
 
@@ -223,16 +224,22 @@ class ShopServiceTest {
         when(currentUserService.getCurrentUserId()).thenReturn(adminId);
         when(currentUserService.hasRole("ADMIN")).thenReturn(true);
 
-        Result<Void> result = shopService.removeShop(1L);
+        Result<Void> result = shopService.setStatus(
+                1L,
+                statusDto(ShopStatus.DISABLED, "Policy violation"));
 
         assertTrue(result.isOk());
-        assertEquals(ShopStatus.REMOVED, shop.getStatus());
+        assertEquals(ShopStatus.DISABLED, shop.getStatus());
+        assertEquals("Policy violation", shop.getStatusReason());
+        assertEquals(adminId, shop.getStatusChangedBy());
+        assertNotNull(shop.getStatusChangedAt());
+
         verify(shopRepository).save(shop);
         verify(shopUserRepository, never()).findByShopIdAndUserId(anyLong(), any());
     }
 
     @Test
-    void removeShop_returnsOk_whenActiveOwnerRemovesShop() {
+    void setStatusForShop_returnsOk_whenActiveOwnerSetsStatus() {
         UUID ownerId = UUID.randomUUID();
         Shop shop = Shop.builder().id(1L).status(ShopStatus.ACTIVE).build();
         ShopUser membership = ShopUser.builder()
@@ -245,15 +252,15 @@ class ShopServiceTest {
         when(currentUserService.hasRole("ADMIN")).thenReturn(false);
         when(shopUserRepository.findByShopIdAndUserId(1L, ownerId)).thenReturn(Optional.of(membership));
 
-        Result<Void> result = shopService.removeShop(1L);
+        Result<Void> result = shopService.setStatus(1L, statusDto(ShopStatus.DISABLED, "Policy violation"));
 
         assertTrue(result.isOk());
-        assertEquals(ShopStatus.REMOVED, shop.getStatus());
+        assertEquals(ShopStatus.DISABLED, shop.getStatus());
         verify(shopRepository).save(shop);
     }
 
     @Test
-    void removeShop_returnsForbidden_whenUserIsNotOwnerOrAdmin() {
+    void setStatusForShop_returnsForbidden_whenUserIsNotOwnerOrAdmin() {
         UUID managerId = UUID.randomUUID();
         Shop shop = Shop.builder().id(1L).status(ShopStatus.ACTIVE).build();
         ShopUser membership = ShopUser.builder()
@@ -266,7 +273,7 @@ class ShopServiceTest {
         when(currentUserService.hasRole("ADMIN")).thenReturn(false);
         when(shopUserRepository.findByShopIdAndUserId(1L, managerId)).thenReturn(Optional.of(membership));
 
-        Result<Void> result = shopService.removeShop(1L);
+        Result<Void> result = shopService.setStatus(1L, statusDto(ShopStatus.DISABLED, "Policy violation"));
 
         assertTrue(result.isFail());
         assertEquals("FORBIDDEN", result.error().code());
@@ -274,7 +281,7 @@ class ShopServiceTest {
     }
 
     @Test
-    void removeShop_returnsForbidden_whenOwnerMembershipIsInactive() {
+    void setStatusForShop_returnsForbidden_whenOwnerMembershipIsInactive() {
         UUID ownerId = UUID.randomUUID();
         Shop shop = Shop.builder().id(1L).status(ShopStatus.ACTIVE).build();
         ShopUser membership = ShopUser.builder()
@@ -287,7 +294,7 @@ class ShopServiceTest {
         when(currentUserService.hasRole("ADMIN")).thenReturn(false);
         when(shopUserRepository.findByShopIdAndUserId(1L, ownerId)).thenReturn(Optional.of(membership));
 
-        Result<Void> result = shopService.removeShop(1L);
+        Result<Void> result = shopService.setStatus(1L, statusDto(ShopStatus.DISABLED, "Policy violation"));
 
         assertTrue(result.isFail());
         assertEquals("FORBIDDEN", result.error().code());
@@ -295,14 +302,20 @@ class ShopServiceTest {
     }
 
     @Test
-    void removeShop_returnsFail_whenShopNotFound() {
+    void setStatusForShop_returnsFail_whenShopNotFound() {
         when(shopRepository.findById(99L)).thenReturn(Optional.empty());
 
-        Result<Void> result = shopService.removeShop(99L);
+        Result<Void> result = shopService.setStatus(99L, statusDto(ShopStatus.DISABLED, "Policy violation"));
 
         assertTrue(result.isFail());
         assertEquals("NOT_FOUND", result.error().code());
         verify(shopRepository, never()).save(any());
     }
-}
 
+    private ShopStatusUpdateRequestDto statusDto(ShopStatus status, String reason) {
+        return ShopStatusUpdateRequestDto.builder()
+                .status(status)
+                .statusReason(reason)
+                .build();
+    }
+}

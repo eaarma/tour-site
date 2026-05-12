@@ -204,8 +204,14 @@ class SecurityIntegrationTest {
         }
 
         @Test
-        void removeShopWithoutAuth_returns401() throws Exception {
-                mockMvc.perform(patch("/shops/{shopId}/remove", 1L))
+        void patchShopStatusWithoutAuth_returns401() throws Exception {
+                mockMvc.perform(patch("/shops/{shopId}/status", 1L)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                                {
+                                                  "status": "DISABLED"
+                                                }
+                                                """))
                                 .andExpect(status().isUnauthorized());
         }
 

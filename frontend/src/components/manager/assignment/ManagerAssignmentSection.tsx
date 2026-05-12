@@ -14,9 +14,13 @@ const isActiveOrder = (status: string) =>
 
 interface Props {
   shopId: number;
+  isReadOnly?: boolean;
 }
 
-export default function ManagerAssignmentSection({ shopId }: Props) {
+export default function ManagerAssignmentSection({
+  shopId,
+  isReadOnly = false,
+}: Props) {
   const [fromDate, setFromDate] = useState<Date | null>(null);
   const [toDate, setToDate] = useState<Date | null>(null);
   const [statusFilter, setStatusFilter] =
@@ -367,7 +371,7 @@ export default function ManagerAssignmentSection({ shopId }: Props) {
                     return (
                       <button
                         key={s.id}
-                        className="w-full text-left border border-base-200 p-4 
+                        className="w-full text-left border-t border-base-200 p-4 
              hover:border-primary/60 hover:shadow-sm transition"
                         onClick={() => setSelectedSessionId(s.id)}
                       >
@@ -442,6 +446,7 @@ export default function ManagerAssignmentSection({ shopId }: Props) {
           onConfirmSession={confirmSession}
           onCompleteSession={completeSession}
           onSessionUpdated={updateLocalSession}
+          readOnly={isReadOnly}
         />
       )}
     </div>

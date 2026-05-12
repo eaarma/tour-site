@@ -16,9 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tourhub.security.CurrentUserService;
 import com.tourhub.common.result.ResultResponseMapper;
 import com.tourhub.shop.dto.ShopCreateRequestDto;
+import com.tourhub.shop.dto.ShopStatusUpdateRequestDto;
 import com.tourhub.shop.model.ShopStatus;
 import com.tourhub.shop.service.ShopService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -63,12 +65,13 @@ public class ShopController {
                 shopService.searchShops(query, status, page, size));
     }
 
-    @PatchMapping("/{shopId}/remove")
-    public ResponseEntity<?> removeShop(@PathVariable("shopId") Long shopId) {
+    @PatchMapping("/{shopId}/status")
+    public ResponseEntity<?> setStatus(
+            @PathVariable("shopId") Long shopId,
+            @Valid @RequestBody ShopStatusUpdateRequestDto dto) {
+
         return ResultResponseMapper.toResponse(
-                shopService.removeShop(shopId));
+                shopService.setStatus(shopId, dto));
     }
 
 }
-
-

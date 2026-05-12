@@ -21,8 +21,6 @@ const ItemListHorizontal: React.FC<ItemListHorizontalProps> = ({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
-
   const updateScrollButtons = () => {
     const container = containerRef.current;
     if (!container) return;
@@ -81,15 +79,7 @@ const ItemListHorizontal: React.FC<ItemListHorizontalProps> = ({
           {items.map((item) => (
             <div
               key={item.id}
-              className="
-    snap-start flex-shrink-0 h-full
-    w-[260px] sm:w-auto
-  "
-              style={
-                isMobile
-                  ? { width: 260 }
-                  : { flex: `0 0 calc((100% - ${4 * 16}px) / ${visibleCount})` }
-              }
+              className="snap-start h-full w-[260px] flex-shrink-0 sm:w-[calc((100%-3*16px)/4)]"
             >
               <ItemCard item={item} href={`/items/${item.id}`} />
             </div>

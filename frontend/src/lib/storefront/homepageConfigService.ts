@@ -7,8 +7,13 @@ import type {
 const BASE_URL = "/storefront/homepage";
 
 export const HomepageConfigService = {
-  get: async (): Promise<HomepageConfigDto> => {
-    const response = await api.get(BASE_URL, { withCredentials: false });
+  get: async (options?: {
+    suppressErrorToast?: boolean;
+  }): Promise<HomepageConfigDto> => {
+    const response = await api.get(BASE_URL, {
+      withCredentials: false,
+      suppressErrorToast: options?.suppressErrorToast,
+    });
     return response.data;
   },
 

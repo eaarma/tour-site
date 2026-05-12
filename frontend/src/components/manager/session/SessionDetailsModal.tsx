@@ -26,6 +26,7 @@ interface Props {
   onConfirmSession: (sessionId: number) => void;
   onCompleteSession: (sessionId: number) => void;
   onSessionUpdated: (updated: TourSessionDto) => void;
+  readOnly?: boolean;
 }
 
 export default function SessionDetailsModal({
@@ -34,6 +35,7 @@ export default function SessionDetailsModal({
   onConfirmSession,
   onCompleteSession,
   onSessionUpdated,
+  readOnly = false,
 }: Props) {
   const [selectedItem, setSelectedItem] = useState<OrderItemResponseDto | null>(
     null,
@@ -262,23 +264,22 @@ export default function SessionDetailsModal({
             {bookedCount} / {session.maxParticipants} booked
           </div>
 
-          <div className="text-gray-700 font-medium">
-            {remaining} spaces available
-          </div>
+          <div className="font-medium">{remaining} spaces available</div>
         </div>
 
         {/* PARTICIPANT LIST HEADER */}
-        <h3 className="text-lg font-semibold text-gray-700 mb-2 flex items-center gap-2">
-          <CircleUserRound className="w-5 h-5 text-gray-500" />
+        <h3 className="text-lg font-semibold  mb-2 flex items-center gap-2">
+          <CircleUserRound className="w-5 h-5 " />
           Bookings
         </h3>
 
         {/* PARTICIPANT LIST */}
         <div className="space-y-3 max-h-[290px] sm:max-h-[330px] overflow-y-auto pr-2">
-          {visibleParticipants.map((item) => (
+          {visibleParticipants.map((item, index) => (
             <OrderItemCard
               key={item.id}
               item={item}
+              index={index + 1}
               onClick={() => setSelectedItem(item)}
             />
           ))}
@@ -286,7 +287,7 @@ export default function SessionDetailsModal({
 
         {/* FOOTER BUTTONS */}
         <div className="mt-6 flex justify-end gap-3 relative">
-          {sessionData.status === "PLANNED" && (
+          {!readOnly && sessionData.status === "PLANNED" && (
             <button
               className="btn btn-primary"
               onClick={() => onConfirmSession(sessionData.id)}
@@ -295,7 +296,7 @@ export default function SessionDetailsModal({
             </button>
           )}
 
-          {session.status === "CONFIRMED" && (
+          {!readOnly && session.status === "CONFIRMED" && (
             <button
               className="btn btn-success"
               onClick={() => onCompleteSession(session.id)}
@@ -304,76 +305,84 @@ export default function SessionDetailsModal({
             </button>
           )}
 
-          {/* OPTIONS BUTTON WRAPPER (relative) */}
-          <div className="relative">
+          {!readOnly ? (
+            <div className="relative">
+              <button
+                className="btn btn-outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOptionsOpen((x) => !x);
+                }}
+              >
+                Options
+              </button>
+
+              {optionsOpen && (
+                <div
+                  className="absolute right-0 bottom-full mb-2 w-48 bg-base-100 border border-base-300 shadow-lg rounded-lg z-50"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* VIEW TOUR */}
+                  <button
+                    className="block w-full text-left px-4 py-2 hover:bg-base-200"
+                    onClick={() => {
+                      setOptionsOpen(false);
+                      window.open(`/items/${session?.tourId}`, "_blank");
+                    }}
+                  >
+                    View Tour
+                  </button>
+
+                  {/* ASSIGN MANAGER */}
+                  {sessionData.status !== "CANCELLED" &&
+                    sessionData.status !== "COMPLETED" &&
+                    sessionData.status !== "CANCELLED_CONFIRMED" && (
+                      <>
+                        <button
+                          className="block w-full text-left px-4 py-2 hover:bg-base-200"
+                          onClick={() => {
+                            setOptionsOpen(false);
+                            setIsOwnershipModalOpen(true);
+                          }}
+                        >
+                          Assign Manager
+                        </button>
+
+                        {/* UPDATE STATUS */}
+                        <button
+                          className="block w-full text-left px-4 py-2 hover:bg-base-200"
+                          onClick={() => {
+                            setOptionsOpen(false);
+                            setIsStatusModalOpen(true);
+                          }}
+                        >
+                          Set Session Status
+                        </button>
+
+                        {/* CANCEL SESSION */}
+                        <div className="border-t border-base-300 my-1" />
+                        <button
+                          className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                          onClick={() => {
+                            setOptionsOpen(false);
+                            setIsCancelModalOpen(true);
+                          }}
+                        >
+                          Cancel Session
+                        </button>
+                      </>
+                    )}
+                </div>
+              )}
+            </div>
+          ) : (
             <button
               className="btn btn-outline"
-              onClick={(e) => {
-                e.stopPropagation();
-                setOptionsOpen((x) => !x);
-              }}
+              onClick={() => window.open(`/items/${session?.tourId}`, "_blank")}
             >
-              Options
+              View Tour
             </button>
-
-            {optionsOpen && (
-              <div
-                className="absolute right-0 bottom-full mb-2 w-48 bg-base-100 border border-base-300 shadow-lg rounded-lg z-50"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* VIEW TOUR */}
-                <button
-                  className="block w-full text-left px-4 py-2 hover:bg-base-200"
-                  onClick={() => {
-                    setOptionsOpen(false);
-                    window.open(`/items/${session?.tourId}`, "_blank");
-                  }}
-                >
-                  View Tour
-                </button>
-
-                {/* ASSIGN MANAGER */}
-                {sessionData.status !== "CANCELLED" &&
-                  sessionData.status !== "COMPLETED" &&
-                  sessionData.status !== "CANCELLED_CONFIRMED" && (
-                    <>
-                      <button
-                        className="block w-full text-left px-4 py-2 hover:bg-base-200"
-                        onClick={() => {
-                          setOptionsOpen(false);
-                          setIsOwnershipModalOpen(true);
-                        }}
-                      >
-                        Assign Manager
-                      </button>
-
-                      {/* UPDATE STATUS */}
-                      <button
-                        className="block w-full text-left px-4 py-2 hover:bg-base-200"
-                        onClick={() => {
-                          setOptionsOpen(false);
-                          setIsStatusModalOpen(true);
-                        }}
-                      >
-                        Set Session Status
-                      </button>
-
-                      {/* CANCEL SESSION */}
-                      <div className="border-t border-base-300 my-1" />
-                      <button
-                        className="block w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
-                        onClick={() => {
-                          setOptionsOpen(false);
-                          setIsCancelModalOpen(true);
-                        }}
-                      >
-                        Cancel Session
-                      </button>
-                    </>
-                  )}
-              </div>
-            )}
-          </div>
+          )}
 
           <button className="btn" onClick={onClose}>
             Close

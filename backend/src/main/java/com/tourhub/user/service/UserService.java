@@ -119,6 +119,25 @@ public class UserService {
     }
 
     @Transactional
+    public Result<Void> reinstateUser(UUID userId) {
+
+        User user = userRepository.findById(userId).orElse(null);
+
+        if (user == null) {
+            return Result.fail(ApiError.notFound("User not found"));
+        }
+
+        if (user.getStatus() != UserStatus.REMOVED) {
+            return Result.ok();
+        }
+
+        user.setStatus(UserStatus.ACTIVE);
+        userRepository.save(user);
+
+        return Result.ok();
+    }
+
+    @Transactional
     public Result<Void> updateUserRole(UUID userId, Role role) {
 
         User user = userRepository.findById(userId).orElse(null);
@@ -188,5 +207,3 @@ public class UserService {
     }
 
 }
-
-

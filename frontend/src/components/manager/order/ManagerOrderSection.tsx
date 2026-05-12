@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import CustomDateInput from "@/components/common/CustomDateInput";
 import {
   OrderItemCardDto,
@@ -41,9 +40,13 @@ type SortOption = "DATE" | "STATUS";
 
 interface Props {
   shopId: number;
+  isReadOnly?: boolean;
 }
 
-export default function ManagerOrderSection({ shopId }: Props) {
+export default function ManagerOrderSection({
+  shopId,
+  isReadOnly = false,
+}: Props) {
   const [orderItems, setOrderItems] = useState<OrderItemResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -292,7 +295,7 @@ export default function ManagerOrderSection({ shopId }: Props) {
       {/* ================= LIST ================= */}
       <div>
         {filtered.length === 0 ? (
-          <div className="rounded-xl border border-base-300 bg-base-100 p-8 text-center">
+          <div className="rounded-xl border border-base-300 bg-base-100 p-16 text-center">
             <p className="text-muted-foreground">No orders to display.</p>
           </div>
         ) : (
@@ -325,9 +328,9 @@ export default function ManagerOrderSection({ shopId }: Props) {
           onConfirmSession={confirmSession}
           onCompleteSession={completeSession}
           onSessionUpdated={updateLocalSession}
+          readOnly={isReadOnly}
         />
       )}
     </div>
   );
 }
-

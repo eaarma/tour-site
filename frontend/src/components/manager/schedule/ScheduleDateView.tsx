@@ -9,6 +9,7 @@ interface Props {
   onEdit: (schedule: TourScheduleResponseDto) => void;
   onDelete: (id: number) => void;
   onViewSession?: (schedule: TourScheduleResponseDto) => void;
+  readOnly?: boolean;
 }
 function formatDate(iso: string) {
   const [y, m, d] = iso.split("-");
@@ -20,6 +21,7 @@ export default function ScheduleDateView({
   onEdit,
   onDelete,
   onViewSession,
+  readOnly,
 }: Props) {
   // Group schedules by date
   const grouped = useMemo(() => {
@@ -77,6 +79,7 @@ export default function ScheduleDateView({
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onViewSession={onViewSession}
+                readOnly={readOnly}
               />
             ))}
           </div>

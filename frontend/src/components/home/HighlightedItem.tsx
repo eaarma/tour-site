@@ -3,18 +3,19 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import {
+  ArrowRight,
   Clock,
+  Flame,
   Globe,
   MapPin,
-  Users,
-  Flame,
   Tag,
-  ArrowRight,
+  Users,
 } from "lucide-react";
-import { formatDuration } from "@/utils/formatDuration";
-import { Tour } from "@/types";
+
 import Badge from "../common/Badge";
 import HomeSectionHeading from "./HomeSectionHeading";
+import { Tour } from "@/types";
+import { formatDuration } from "@/utils/formatDuration";
 
 interface HighlightedItemProps {
   title: string;
@@ -35,39 +36,89 @@ function formatTypeLabel(type: string) {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function getIntensityColor(intensity: string) {
-  const level = intensity?.toLowerCase();
-  if (level === "easy" || level === "low")
-    return "bg-emerald-500/10 text-emerald-700 border-emerald-500/20";
-  if (level === "moderate" || level === "medium")
-    return "bg-amber-500/10 text-amber-700 border-amber-500/20";
-  if (level === "hard" || level === "high" || level === "extreme")
-    return "bg-red-500/10 text-red-700 border-red-500/20";
-  return "bg-muted text-muted-foreground";
-}
-
 function getTypeBadgeClassName(type: string) {
   switch (type?.toUpperCase()) {
     case "PUBLIC":
-      return "border-white/10 bg-slate-950/38 text-white/90";
+      return "border-white/15 bg-slate-950/45 text-white/90";
     case "PRIVATE":
-      return "border-white/10 bg-slate-950/30 text-white/88";
+      return "border-white/15 bg-slate-950/40 text-white/90";
     default:
-      return "border-white/10 bg-slate-950/34 text-white/88";
+      return "border-white/15 bg-slate-950/42 text-white/90";
   }
+}
+
+function getIntensityColor(intensity: string) {
+  const level = intensity?.toLowerCase();
+
+  if (level === "easy" || level === "low") {
+    return "border-success/25 bg-success/10 text-success";
+  }
+
+  if (level === "moderate" || level === "medium") {
+    return "border-warning/30 bg-warning/10 text-warning";
+  }
+
+  if (level === "hard" || level === "high" || level === "extreme") {
+    return "border-error/30 bg-error/10 text-error";
+  }
+
+  return "border-base-300 bg-base-200/50 text-base-content/70";
+}
+
+function formatPriceUnit(type?: string) {
+  return type?.toUpperCase() === "PRIVATE" ? "/tour" : "/person";
+}
+
+function InfoPill({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-w-0 items-center gap-2.5">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-base-200/70 text-base-content/65">
+        {icon}
+      </span>
+
+      <div className="min-w-0">
+        <p className="text-[11px] text-base-content/50 font-medium tracking-wide">
+          {label}
+        </p>
+        <div className="mt-0.5 truncate text-sm font-semibold text-base-content">
+          {value}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 const HighlightedItem: React.FC<HighlightedItemProps> = ({ title, item }) => {
   const router = useRouter();
+
   if (!item) return null;
 
   const placeholderPath = "/images/item_placeholder.jpg";
-
   const mainImage = item.images?.[0] || placeholderPath;
-
   const isPlaceholder = mainImage === placeholderPath;
 
-  const handleNavigate = () => router.push(`/items/${item.id}`);
+  const priceUnit = formatPriceUnit(item.type);
+
+  const handleNavigate = () => {
+    router.push(`/items/${item.id}`);
+  };
+
+  const handleKeyboardNavigate = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+  ) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleNavigate();
+    }
+  };
 
   return (
     <section>
@@ -81,201 +132,180 @@ const HighlightedItem: React.FC<HighlightedItemProps> = ({ title, item }) => {
         tabIndex={0}
         aria-label={`View ${item.title}`}
         onClick={handleNavigate}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") handleNavigate();
-        }}
+        onKeyDown={handleKeyboardNavigate}
       >
-        <div className="relative flex flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-sm transition-shadow duration-300 hover:shadow-lg">
-          {/* Image section */}
-          <div className="relative h-56 w-full shrink-0 overflow-hidden bg-muted sm:h-64 lg:h-[24.375rem]">
+        <article className="overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg">
+          <div className="relative h-72 overflow-hidden bg-muted sm:h-80 lg:h-[24rem]">
             <img
               src={mainImage}
               alt={item.title || "Tour image"}
-              className={`
-    w-full h-full object-cover transition-transform duration-500
-    group-hover:scale-105
-    ${isPlaceholder ? "opacity-70 grayscale blur-[1px]" : ""}
-  `}
-              onError={(e) => {
-                e.currentTarget.src = placeholderPath;
-                e.currentTarget.classList.add(
+              className={`h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.035] ${
+                isPlaceholder ? "opacity-70 grayscale blur-[1px]" : ""
+              }`}
+              onError={(event) => {
+                event.currentTarget.src = placeholderPath;
+                event.currentTarget.classList.add(
                   "opacity-70",
                   "grayscale",
                   "blur-[1px]",
                 );
-                e.currentTarget.classList.remove("group-hover:scale-105");
+                event.currentTarget.classList.remove(
+                  "group-hover:scale-[1.035]",
+                );
               }}
             />
 
-            {/* Gradient overlay on image bottom */}
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/45 to-transparent" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/18 to-transparent" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-slate-950/18 via-transparent to-transparent" />
 
-            {/* Type badge */}
-            {item.type && (
+            {item.type ? (
               <Badge
-                className={`absolute top-3 left-3 rounded-full border px-2.5 py-1 text-[11px] font-medium shadow-sm backdrop-blur-md ${getTypeBadgeClassName(
+                className={`absolute left-4 top-4 rounded-full border px-3 py-1 text-xs font-medium shadow-sm backdrop-blur-md ${getTypeBadgeClassName(
                   item.type,
                 )}`}
               >
                 {formatTypeLabel(item.type)}
               </Badge>
-            )}
+            ) : null}
+
+            <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between gap-4">
+              <div className="min-w-0 text-white">
+                <p className="text-xs font-medium uppercase tracking-[0.22em] text-white/70">
+                  Featured route
+                </p>
+
+                <h3 className="mt-2 line-clamp-2 text-2xl font-bold leading-tight text-white sm:text-3xl">
+                  {item.title}
+                </h3>
+
+                {item.location ? (
+                  <div className="mt-2 flex items-center gap-1.5 text-sm text-white/80">
+                    <MapPin className="size-4 shrink-0" />
+                    <span className="truncate">{item.location}</span>
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="hidden shrink-0 rounded-2xl border border-white/15 bg-slate-950/55 px-4 py-3 text-right text-white shadow-sm backdrop-blur-md sm:block">
+                <p className="text-[10px] font-medium uppercase tracking-wide text-white/55">
+                  From
+                </p>
+                <div className="mt-0.5 flex items-baseline gap-1">
+                  <span className="text-2xl font-bold">
+                    {item.price != null ? `€${item.price}` : "—"}
+                  </span>
+                  <span className="text-sm text-white/70">{priceUnit}</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Content section */}
-          <div className="flex min-w-0 flex-1 flex-col gap-4 p-5 sm:p-6 lg:p-7">
-            {/* Header */}
-            <div className="flex flex-col gap-1.5">
-              <h3 className="text-lg sm:text-2xl font-bold leading-tight text-card-foreground line-clamp-2 text-balance">
-                {item.title}
-              </h3>
-              {item.location && (
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <MapPin className="size-4 shrink-0" />
-                  <span className="truncate">{item.location}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Description */}
-            {item.description && (
-              <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+          <div className="p-5 sm:p-6">
+            {item.description ? (
+              <p className="line-clamp-2 text-sm leading-7 text-card-foreground/75">
                 {item.description}
               </p>
-            )}
+            ) : null}
 
-            {/* Stats row */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="flex min-w-0 items-center gap-2">
-                <div className="flex items-center justify-center size-8 rounded-lg bg-muted shrink-0">
-                  <Clock className="size-4 text-muted-foreground" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none mb-0.5">
-                    Duration
-                  </p>
-                  <p className="font-medium text-sm text-card-foreground">
-                    {formatDuration(item.timeRequired)}
-                  </p>
-                </div>
-              </div>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <InfoPill
+                icon={<Clock className="size-4" />}
+                label="Duration"
+                value={formatDuration(item.timeRequired)}
+              />
 
-              <div className="flex min-w-0 items-center gap-2">
-                <div className="flex items-center justify-center size-8 rounded-lg bg-muted shrink-0">
-                  <Users className="size-4 text-muted-foreground" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none mb-0.5">
-                    Group
-                  </p>
-                  <p className="font-medium text-sm text-card-foreground">
-                    Up to {item.participants}
-                  </p>
-                </div>
-              </div>
+              <InfoPill
+                icon={<Users className="size-4" />}
+                label="Group"
+                value={`Up to ${item.participants}`}
+              />
 
-              <div className="flex min-w-0 items-center gap-2">
-                <div className="flex items-center justify-center size-8 rounded-lg bg-muted shrink-0">
-                  <Flame className="size-4 text-muted-foreground" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none mb-0.5">
-                    Intensity
-                  </p>
-                  <Badge
-                    variant="outline"
-                    className={`text-[10px] px-1.5 py-0 font-medium ${getIntensityColor(item.intensity)}`}
-                  >
-                    {item.intensity}
-                  </Badge>
-                </div>
-              </div>
+              <InfoPill
+                icon={<Flame className="size-4" />}
+                label="Pace"
+                value={
+                  item.intensity ? (
+                    <Badge
+                      variant="outline"
+                      className={`px-2 py-0.5 text-[11px] font-medium ${getIntensityColor(
+                        item.intensity,
+                      )}`}
+                    >
+                      {item.intensity}
+                    </Badge>
+                  ) : (
+                    "-"
+                  )
+                }
+              />
 
+              <InfoPill
+                icon={<Globe className="size-4" />}
+                label="Language"
+                value={
+                  item.language?.length
+                    ? item.language.length > 2
+                      ? `${item.language[0]}, ${item.language[1]} +${
+                          item.language.length - 2
+                        }`
+                      : item.language.join(", ")
+                    : "-"
+                }
+              />
             </div>
 
-            {item.language && item.language.length > 0 && (
-              <div className="hidden sm:flex items-center gap-2">
-                <div className="flex items-center justify-center size-8 rounded-lg bg-muted shrink-0">
-                  <Globe className="size-4 text-muted-foreground" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground leading-none mb-0.5">
-                    Language
-                  </p>
-                  <p className="font-medium text-sm text-card-foreground">
-                    {item.language.length > 2
-                      ? `${item.language[0]}, ${item.language[1]} +${item.language.length - 2}`
-                      : item.language.join(", ")}
-                  </p>
-                </div>
-              </div>
-            )}
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              {item.categories?.length ? (
+                <>
+                  <Tag className="size-4 text-base-content/45" />
+                  {item.categories.slice(0, 3).map((cat) => (
+                    <Badge
+                      key={cat}
+                      variant="outline"
+                      className="border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
+                    >
+                      {formatCategory(cat)}
+                    </Badge>
+                  ))}
 
-            {/* Categories */}
-            {item.categories && item.categories.length > 0 && (
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <Tag className="size-3 text-muted-foreground shrink-0" />
+                  {item.categories.length > 3 ? (
+                    <span className="text-xs text-base-content/50">
+                      +{item.categories.length - 3} more
+                    </span>
+                  ) : null}
+                </>
+              ) : null}
+            </div>
 
-                {item.categories.slice(0, 3).map((cat) => (
-                  <Badge
-                    key={cat}
-                    variant="secondary"
-                    className="text-[10px] px-1.5 py-0 text-white"
-                  >
-                    {formatCategory(cat)}
-                  </Badge>
-                ))}
-
-                {item.categories.length > 3 && (
-                  <span className="text-[10px] text-muted-foreground">
-                    +{item.categories.length - 3} more
+            <div className="mt-6 flex items-center justify-between gap-4 border-t border-border/70 pt-5">
+              <div className="sm:hidden">
+                <p className="text-xs text-base-content/55">From</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-bold text-base-content">
+                    {item.price != null ? `€${item.price}` : "—"}
                   </span>
-                )}
-              </div>
-            )}
-
-            {/* Price + CTA pinned to bottom */}
-            <div className="flex items-center justify-between mt-auto pt-2 border-t border-border">
-              {/* Price (desktop) */}
-              <div className="hidden lg:block">
-                <span className="ml-1 text-xs text-muted-foreground">From</span>
-                <div className="flex items-baseline gap-0.5">
-                  <span className=" ml-1 text-2xl font-bold text-card-foreground">
-                    {"\u20AC"}
-                    {item.price}
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    {item.type === "PUBLIC" ? "/person" : "/tour"}
+                  <span className="text-sm text-base-content/55">
+                    {priceUnit}
                   </span>
                 </div>
               </div>
 
-              {/* Price (mobile -- smaller) */}
-              <div className="lg:hidden">
-                <span className="text-xs text-muted-foreground">From</span>
-                <div className="flex items-baseline gap-0.5">
-                  <span className="text-xl font-bold text-card-foreground">
-                    {"\u20AC"}
-                    {item.price}
-                  </span>
-                  <span className="text-xs text-muted-foreground">/person</span>
-                </div>
-              </div>
+              <div />
 
               <button
                 type="button"
-                className="inline-flex items-center gap-2 rounded-lg bg-primary mt-1 px-5 py-2.5 text-white text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                onClick={(e) => {
-                  e.stopPropagation();
+                className="btn btn-primary shrink-0 justify-end"
+                onClick={(event) => {
+                  event.stopPropagation();
                   handleNavigate();
                 }}
               >
-                Book Now
+                Book now
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
               </button>
             </div>
           </div>
-        </div>
+        </article>
       </div>
     </section>
   );

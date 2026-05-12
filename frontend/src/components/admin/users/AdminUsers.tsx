@@ -32,33 +32,36 @@ export default function AdminUsers() {
     let isActive = true;
     const isInitialLoad = !hasLoadedOnce.current;
 
-    const timeout = setTimeout(async () => {
-      try {
-        if (isInitialLoad) setLoading(true);
-        else setRefreshing(true);
+    const timeout = setTimeout(
+      async () => {
+        try {
+          if (isInitialLoad) setLoading(true);
+          else setRefreshing(true);
 
-        const data = await UserService.getAll({
-          query,
-          status,
-          page,
-          size: 10,
-        });
+          const data = await UserService.getAll({
+            query,
+            status,
+            page,
+            size: 10,
+          });
 
-        if (!isActive) return;
+          if (!isActive) return;
 
-        setUsers(data.content);
-        setTotalPages(data.totalPages);
-      } catch (err) {
-        if (!isActive) return;
-        console.error(err);
-        toast.error("Failed to load users");
-      } finally {
-        if (!isActive) return;
-        hasLoadedOnce.current = true;
-        setLoading(false);
-        setRefreshing(false);
-      }
-    }, isInitialLoad ? 0 : 300);
+          setUsers(data.content);
+          setTotalPages(data.totalPages);
+        } catch (err) {
+          if (!isActive) return;
+          console.error(err);
+          toast.error("Failed to load users");
+        } finally {
+          if (!isActive) return;
+          hasLoadedOnce.current = true;
+          setLoading(false);
+          setRefreshing(false);
+        }
+      },
+      isInitialLoad ? 0 : 300,
+    );
 
     return () => {
       isActive = false;
@@ -116,6 +119,26 @@ export default function AdminUsers() {
       toast.success("User removed");
     } catch {
       toast.error("Failed to remove user");
+    }
+  };
+
+  const handleReinstate = async () => {
+    if (!selectedUser) return;
+    if (!confirm("Are you sure you want to reinstate this user?")) return;
+
+    try {
+      await UserService.reinstate(selectedUser.id);
+
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === selectedUser.id ? { ...u, status: "ACTIVE" } : u,
+        ),
+      );
+
+      setSelectedUser(null);
+      toast.success("User reinstated");
+    } catch {
+      toast.error("Failed to reinstate user");
     }
   };
 
@@ -199,9 +222,9 @@ export default function AdminUsers() {
           onClose={() => setSelectedUser(null)}
           onSaveRole={handleSaveRole}
           onRemove={handleRemove}
+          onReinstate={handleReinstate}
         />
       )}
     </div>
   );
 }
-

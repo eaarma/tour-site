@@ -12,6 +12,7 @@ interface Props {
   members: ShopUserDto[];
   currentUserRole?: string;
   shopId: number;
+  isReadOnly?: boolean;
   onUserUpdated: (user: ShopUserDto) => void;
 }
 
@@ -21,6 +22,7 @@ export default function ManagerShopUsersModal({
   members,
   currentUserRole,
   shopId,
+  isReadOnly = false,
   onUserUpdated,
 }: Props) {
   const [selectedUser, setSelectedUser] = useState<ShopUserDto | null>(null);
@@ -28,7 +30,7 @@ export default function ManagerShopUsersModal({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const canEdit =
-    currentUserRole === "OWNER" || currentUserRole === "ADMIN";
+    !isReadOnly && (currentUserRole === "OWNER" || currentUserRole === "ADMIN");
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>

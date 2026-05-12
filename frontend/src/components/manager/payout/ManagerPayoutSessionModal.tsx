@@ -1,13 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import Modal from "@/components/common/Modal";
-import { PayoutLineRowDto, PayoutSessionDetailsDto, PayoutSessionSummaryDto } from "@/types/payout";
+import SessionDetailsModal from "@/components/manager/session/SessionDetailsModal";
+import { useSessionManager } from "@/hooks/useSessionManager";
+import {
+  PayoutLineRowDto,
+  PayoutSessionDetailsDto,
+  PayoutSessionSummaryDto,
+} from "@/types/payout";
 
 type Props = {
   session: PayoutSessionSummaryDto | null;
   details: PayoutSessionDetailsDto | null;
   loading: boolean;
   onClose: () => void;
+  shopId: number;
+  isReadOnly?: boolean;
 };
 
 const formatDateTime = (value?: string | null) => {
@@ -67,7 +76,9 @@ const getAmountClass = (value: number) => {
 };
 
 const getStatusLabel = (
-  status: PayoutSessionSummaryDto["payoutStatus"] | PayoutSessionSummaryDto["status"],
+  status:
+    | PayoutSessionSummaryDto["payoutStatus"]
+    | PayoutSessionSummaryDto["status"],
   payoutId: number | null | undefined,
 ) => {
   if (status === "PENDING" && !payoutId) return "Ready for payout";
@@ -77,7 +88,9 @@ const getStatusLabel = (
 };
 
 const getStatusClass = (
-  status: PayoutSessionSummaryDto["payoutStatus"] | PayoutSessionSummaryDto["status"],
+  status:
+    | PayoutSessionSummaryDto["payoutStatus"]
+    | PayoutSessionSummaryDto["status"],
   payoutId: number | null | undefined,
 ) => {
   if (status === "COMPLETED") return "bg-green-100 text-green-700";
@@ -100,155 +113,186 @@ export default function ManagerPayoutSessionModal({
   details,
   loading,
   onClose,
+  shopId,
+  isReadOnly = false,
 }: Props) {
+  const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
+  const { sessionList } = useSessionManager(shopId);
+
   if (!session) return null;
 
   const resolvedDetails = details ?? session;
   const resolvedCurrency = details?.currency ?? session.currency ?? "EUR";
+  const tourSession = session.sessionId
+    ? (sessionList.find((s) => s.id === session.sessionId) ?? null)
+    : null;
 
   return (
-    <Modal isOpen={!!session} onClose={onClose}>
-      <div className="space-y-4 sm:space-y-6">
-        <div>
-          <h3 className="text-lg font-bold">{session.sessionTitle}</h3>
-          <p className="mt-1 text-sm opacity-70">
-            {session.sessionId
-              ? `Session #${session.sessionId}`
-              : "Sessionless entries"}
-          </p>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-lg border border-base-300 p-3 text-sm space-y-2 sm:p-4">
-            <h4 className="font-semibold text-base">Summary</h4>
-            <p>
-              <strong>Scheduled:</strong>{" "}
-              {formatDateTime(resolvedDetails.scheduledAt)}
-            </p>
-            <p>
-              <strong>Manager:</strong> {resolvedDetails.managerName || "-"}
-            </p>
-            <p>
-              <strong>Viewed Period:</strong>{" "}
-              {formatPeriodRange(
-                resolvedDetails.periodStart,
-                resolvedDetails.periodEnd,
-              )}
-            </p>
-            <p>
-              <strong>Transactions:</strong>{" "}
-              {resolvedDetails.transactionCount ?? 0}
-            </p>
-            <p className="text-base font-semibold">
-              <strong>Total Amount:</strong>{" "}
-              {formatCurrency(resolvedDetails.totalAmount, resolvedCurrency)}
+    <>
+      <Modal isOpen={!!session} onClose={onClose}>
+        <div className="space-y-4 sm:space-y-6">
+          <div>
+            <h3 className="text-lg font-bold">{session.sessionTitle}</h3>
+            <p className="mt-1 text-sm opacity-70">
+              {session.sessionId
+                ? `Session #${session.sessionId}`
+                : "Sessionless entries"}
             </p>
           </div>
 
-          <div className="rounded-lg border border-base-300 p-3 text-sm space-y-2 sm:p-4">
-            <h4 className="font-semibold text-base">Payout State</h4>
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusClass(
-                  resolvedDetails.payoutStatus ?? resolvedDetails.status,
-                  resolvedDetails.payoutId,
-                )}`}
-              >
-                {getStatusLabel(
-                  resolvedDetails.payoutStatus ?? resolvedDetails.status,
-                  resolvedDetails.payoutId,
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-base-300 p-3 text-sm space-y-2 sm:p-4">
+              <h4 className="font-semibold text-base">Summary</h4>
+              <p>
+                <strong>Scheduled:</strong>{" "}
+                {formatDateTime(resolvedDetails.scheduledAt)}
+              </p>
+              <p>
+                <strong>Manager:</strong> {resolvedDetails.managerName || "-"}
+              </p>
+              <p>
+                <strong>Viewed Period:</strong>{" "}
+                {formatPeriodRange(
+                  resolvedDetails.periodStart,
+                  resolvedDetails.periodEnd,
                 )}
-              </span>
-              {resolvedDetails.payoutId && (
-                <span className="text-xs opacity-70">
-                  Payout #{resolvedDetails.payoutId}
-                </span>
-              )}
-            </div>
-            <p>
-              <strong>Payout Amount:</strong>{" "}
-              {formatCurrency(
-                resolvedDetails.payoutAmount ?? undefined,
-                resolvedCurrency,
-              )}
-            </p>
-            <p>
-              <strong>Payout Period:</strong>{" "}
-              {formatPeriodRange(
-                resolvedDetails.payoutPeriodStart,
-                resolvedDetails.payoutPeriodEnd,
-              )}
-            </p>
-            <p>
-              <strong>Paid At:</strong> {formatDateTime(resolvedDetails.paidAt)}
-            </p>
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="rounded-lg border border-base-300 p-4 text-sm opacity-70">
-            Loading session transactions...
-          </div>
-        ) : !details || details.rows.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-base-300 p-4 text-sm opacity-70">
-            No payout transactions found for this session in the selected period.
-          </div>
-        ) : (
-          <div className="rounded-lg border border-base-300 bg-base-100">
-            <div className="border-b border-base-300 px-3 py-2 sm:px-4">
-              <h4 className="font-semibold text-base">Transactions</h4>
+              </p>
+              <p>
+                <strong>Transactions:</strong>{" "}
+                {resolvedDetails.transactionCount ?? 0}
+              </p>
+              <p className="text-base font-semibold">
+                <strong>Total Amount:</strong>{" "}
+                {formatCurrency(resolvedDetails.totalAmount, resolvedCurrency)}
+              </p>
             </div>
 
-            <div className="px-3 sm:px-4">
-              {details.rows.map((row, index) => (
-                <div
-                  key={row.paymentLineId}
-                  className={`py-3 ${
-                    index < details.rows.length - 1 ? "border-b border-base-200" : ""
-                  }`}
+            <div className="rounded-lg border border-base-300 p-3 text-sm space-y-2 sm:p-4">
+              <h4 className="font-semibold text-base">Payout State</h4>
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${getStatusClass(
+                    resolvedDetails.payoutStatus ?? resolvedDetails.status,
+                    resolvedDetails.payoutId,
+                  )}`}
                 >
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0 space-y-1">
-                      <p className="font-medium">{row.label}</p>
-                      <p className="text-sm opacity-80">{getRowMeta(row)}</p>
-                      <p className="text-sm opacity-80">
-                        Tour: {row.tourTitle || "-"}
-                      </p>
-                      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs opacity-70">
-                        <span>
-                          Scheduled: {formatDateTime(row.scheduledAt)}
-                        </span>
-                        <span>Participants: {row.participants ?? "-"}</span>
-                        <span>Created: {formatDateTime(row.createdAt)}</span>
+                  {getStatusLabel(
+                    resolvedDetails.payoutStatus ?? resolvedDetails.status,
+                    resolvedDetails.payoutId,
+                  )}
+                </span>
+                {resolvedDetails.payoutId && (
+                  <span className="text-xs opacity-70">
+                    Payout #{resolvedDetails.payoutId}
+                  </span>
+                )}
+              </div>
+              <p>
+                <strong>Payout Amount:</strong>{" "}
+                {formatCurrency(
+                  resolvedDetails.payoutAmount ?? undefined,
+                  resolvedCurrency,
+                )}
+              </p>
+              <p>
+                <strong>Payout Period:</strong>{" "}
+                {formatPeriodRange(
+                  resolvedDetails.payoutPeriodStart,
+                  resolvedDetails.payoutPeriodEnd,
+                )}
+              </p>
+              <p>
+                <strong>Paid At:</strong>{" "}
+                {formatDateTime(resolvedDetails.paidAt)}
+              </p>
+            </div>
+          </div>
+
+          {loading ? (
+            <div className="rounded-lg border border-base-300 p-4 text-sm opacity-70">
+              Loading session transactions...
+            </div>
+          ) : !details || details.rows.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-base-300 p-4 text-sm opacity-70">
+              No payout transactions found for this session in the selected
+              period.
+            </div>
+          ) : (
+            <div className="rounded-lg border border-base-300 bg-base-100">
+              <div className="border-b border-base-300 px-3 py-2 sm:px-4">
+                <h4 className="font-semibold text-base">Transactions</h4>
+              </div>
+
+              <div className="px-3 sm:px-4">
+                {details.rows.map((row, index) => (
+                  <div
+                    key={row.paymentLineId}
+                    className={`py-3 ${
+                      index < details.rows.length - 1
+                        ? "border-b border-base-200"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 space-y-1">
+                        <p className="font-medium">{row.label}</p>
+                        <p className="text-sm opacity-80">{getRowMeta(row)}</p>
+                        <p className="text-sm opacity-80">
+                          Tour: {row.tourTitle || "-"}
+                        </p>
+                        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs opacity-70">
+                          <span>
+                            Scheduled: {formatDateTime(row.scheduledAt)}
+                          </span>
+                          <span>Participants: {row.participants ?? "-"}</span>
+                          <span>Created: {formatDateTime(row.createdAt)}</span>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 space-y-1 sm:text-right">
+                        <p
+                          className={`text-base font-semibold ${getAmountClass(row.shopAmount)}`}
+                        >
+                          {formatCurrency(row.shopAmount, row.currency)}
+                        </p>
+                        <p className="text-xs opacity-70">
+                          Gross: {formatCurrency(row.grossAmount, row.currency)}{" "}
+                          | Fee: {formatCurrency(row.platformFee, row.currency)}
+                        </p>
                       </div>
                     </div>
-
-                    <div className="shrink-0 space-y-1 sm:text-right">
-                      <p
-                        className={`text-base font-semibold ${getAmountClass(
-                          row.shopAmount,
-                        )}`}
-                      >
-                        {formatCurrency(row.shopAmount, row.currency)}
-                      </p>
-                      <p className="text-xs opacity-70">
-                        Gross: {formatCurrency(row.grossAmount, row.currency)} |
-                        Fee: {formatCurrency(row.platformFee, row.currency)}
-                      </p>
-                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="flex justify-end">
-          <button className="btn btn-sm" onClick={onClose}>
-            Close
-          </button>
+          <div className="flex justify-between items-center gap-2">
+            {session.sessionId && tourSession && (
+              <button
+                className="btn btn-sm btn-outline"
+                onClick={() => setIsSessionModalOpen(true)}
+              >
+                View Session
+              </button>
+            )}
+            <button className="btn btn-sm" onClick={onClose}>
+              Close
+            </button>
+          </div>
         </div>
-      </div>
-    </Modal>
+      </Modal>
+
+      {isSessionModalOpen && tourSession && (
+        <SessionDetailsModal
+          session={tourSession}
+          onClose={() => setIsSessionModalOpen(false)}
+          onConfirmSession={() => {}}
+          onCompleteSession={() => {}}
+          onSessionUpdated={() => {}}
+          readOnly={isReadOnly}
+        />
+      )}
+    </>
   );
 }

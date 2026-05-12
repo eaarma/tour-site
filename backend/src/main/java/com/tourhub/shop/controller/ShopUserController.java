@@ -2,6 +2,7 @@ package com.tourhub.shop.controller;
 
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -50,6 +51,18 @@ public class ShopUserController {
                                 shopUserService.getShopsForUser(currentUserId));
         }
 
+        @GetMapping("/user/{userId}/shops")
+        public ResponseEntity<?> getShopsForUser(@PathVariable("userId") UUID userId) {
+                UUID currentUserId = currentUserService.getCurrentUserId();
+
+                if (!currentUserService.hasRole("ADMIN") && !currentUserId.equals(userId)) {
+                        throw new AccessDeniedException("Forbidden");
+                }
+
+                return ResultResponseMapper.toResponse(
+                                shopUserService.getShopsForUser(userId));
+        }
+
         @PostMapping("/{shopId}/{userId}")
         public ResponseEntity<?> addUserToShop(
                         @PathVariable("shopId") Long shopId,
@@ -96,5 +109,3 @@ public class ShopUserController {
                                 shopUserService.getMembership(shopId, currentUserId));
         }
 }
-
-

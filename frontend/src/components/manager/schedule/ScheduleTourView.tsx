@@ -9,6 +9,7 @@ interface Props {
   onEdit: (schedule: TourScheduleResponseDto) => void;
   onDelete: (id: number) => void;
   onViewSession?: (schedule: TourScheduleResponseDto) => void;
+  readOnly?: boolean;
 }
 
 export default function ScheduleTourView({
@@ -16,6 +17,7 @@ export default function ScheduleTourView({
   onEdit,
   onDelete,
   onViewSession,
+  readOnly,
 }: Props) {
   // Group schedules by tour title
   const grouped = useMemo(() => {
@@ -78,6 +80,7 @@ export default function ScheduleTourView({
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onViewSession={onViewSession}
+                readOnly={readOnly}
               />
             ))}
           </div>

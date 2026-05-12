@@ -157,7 +157,7 @@ export default function FilterMenu({
               </button>
 
               {isOpen ? (
-                <div className="absolute left-0 top-[calc(100%+0.75rem)] z-30 w-[min(22rem,calc(100vw-3rem))] rounded-[24px] border border-base-300 bg-white p-4 shadow-[0_20px_55px_rgba(15,23,42,0.12)]">
+                <div className="absolute left-0 top-[calc(100%+0.75rem)] z-30 w-[min(22rem,calc(100vw-3rem))] rounded-[24px] border border-base-300 bg-base-100 p-4 shadow-[0_20px_55px_rgba(15,23,42,0.12)]">
                   <div className="flex items-center justify-between gap-4">
                     <div>
                       <p className="text-sm font-semibold text-base-content">
