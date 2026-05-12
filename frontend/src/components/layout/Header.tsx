@@ -106,38 +106,64 @@ const Header: React.FC<HeaderProps> = ({ storefront }) => {
         </nav>
 
         {/* Right: Avatar + Cart */}
-        <div className="flex items-center gap-4 relative">
+        <div className="flex items-center gap-3 relative">
           {user ? (
             <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
-                className="flex items-center justify-center p-1 gap-2 text-primary hover:bg-primary/10 active:bg-primary/20 rounded-full w-10 h-10 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 transition-colors duration-150"
                 onClick={() => setOpen((prev) => !prev)}
+                className="
+          group flex items-center gap-2 rounded-full
+          border border-base-300/70 bg-base-100/70
+          px-2.5 py-1.5
+          text-sm font-medium text-base-content/80
+          shadow-sm backdrop-blur-sm
+          transition-all duration-200
+          hover:-translate-y-[1px]
+          hover:border-primary/40
+          hover:bg-base-100
+          hover:text-primary
+        "
               >
-                <FaUserCircle className="text-2xl" />
-                <span className="hidden sm:inline mb-0.5">{user.name}</span>
+                <FaUserCircle className="text-[22px] transition-transform duration-200 group-hover:scale-105" />
+
+                <span className="hidden max-w-[120px] truncate sm:inline">
+                  {user.name}
+                </span>
               </button>
 
               {open && (
-                <div className="absolute right-0 mt-2 w-44 bg-base-100 border border-gray-700 rounded shadow-lg z-50 ">
-                  {/* ADMIN */}
+                <div
+                  className="
+            absolute right-0 mt-3 w-52 overflow-hidden
+            rounded-2xl border border-base-300/70
+            bg-base-100/95 p-1.5
+            shadow-[0_12px_40px_rgba(0,0,0,0.14)]
+            backdrop-blur-xl z-50
+          "
+                >
                   {user.role === "ADMIN" && (
                     <button
-                      className="block w-full text-left px-4 py-2 hover:bg-base-200 hover:text-primary transition-colors"
+                      className="
+                w-full rounded-xl px-4 py-2.5 text-left text-sm
+                transition-colors hover:bg-base-200 hover:text-primary
+              "
                       onClick={() => {
                         router.push("/admin");
                         setOpen(false);
                       }}
                     >
-                      Admin Page
+                      Admin Panel
                     </button>
                   )}
 
-                  {/* MANAGER */}
                   {user.role === "MANAGER" && (
                     <>
                       <button
-                        className="block w-full text-left px-4 py-2 hover:bg-base-200 hover:text-primary transition-colors"
+                        className="
+                  w-full rounded-xl px-4 py-2.5 text-left text-sm
+                  transition-colors hover:bg-base-200 hover:text-primary
+                "
                         onClick={() => {
                           router.push("/user");
                           setOpen(false);
@@ -147,7 +173,10 @@ const Header: React.FC<HeaderProps> = ({ storefront }) => {
                       </button>
 
                       <button
-                        className="block w-full text-left px-4 py-2 hover:bg-base-200 hover:text-primary transition-colors"
+                        className="
+                  w-full rounded-xl px-4 py-2.5 text-left text-sm
+                  transition-colors hover:bg-base-200 hover:text-primary
+                "
                         onClick={() => {
                           router.push("/shops");
                           setOpen(false);
@@ -158,10 +187,12 @@ const Header: React.FC<HeaderProps> = ({ storefront }) => {
                     </>
                   )}
 
-                  {/* USER */}
                   {user.role === "USER" && (
                     <button
-                      className="block w-full text-left px-4 py-2 hover:bg-base-200 hover:text-primary transition-colors"
+                      className="
+                w-full rounded-xl px-4 py-2.5 text-left text-sm
+                transition-colors hover:bg-base-200 hover:text-primary
+              "
                       onClick={() => {
                         router.push("/user");
                         setOpen(false);
@@ -170,9 +201,15 @@ const Header: React.FC<HeaderProps> = ({ storefront }) => {
                       View Profile
                     </button>
                   )}
-                  {/* Logout */}
+
+                  <div className="my-1 border-t border-base-300/70" />
+
                   <button
-                    className="block w-full text-left px-4 py-2 hover:bg-base-100 hover:text-red-700 transition-colors text-red-500"
+                    className="
+              w-full rounded-xl px-4 py-2.5 text-left text-sm font-medium
+              text-red-500 transition-colors
+              hover:bg-red-500/10 hover:text-red-600
+            "
                     onClick={handleLogout}
                   >
                     Logout
@@ -183,22 +220,46 @@ const Header: React.FC<HeaderProps> = ({ storefront }) => {
           ) : (
             <Link
               href="/auth/login"
-              className="flex items-center justify-center text-primary hover:text-primary-focus hover:bg-base-200 active:bg-primary/20 rounded-full w-10 h-10 transition-colors duration-150"
+              className="
+        group flex h-9 w-9 items-center justify-center rounded-full
+        border border-base-300/70 bg-base-100/70
+        text-primary shadow-sm backdrop-blur-sm
+        transition-all duration-200
+        hover:-translate-y-[1px]
+        hover:border-primary/40
+        hover:bg-base-100
+      "
             >
-              <FaUserCircle className="text-2xl" />
+              <FaUserCircle className="text-[22px] transition-transform duration-200 group-hover:scale-105" />
             </Link>
           )}
 
           <Link
             href="/cart"
-            className="btn btn-sm btn-outline flex items-center hover:bg-base-200 hover:text-primary rounded-lg transition-colors relative"
+            className="
+               group relative inline-flex h-9 items-center gap-2 rounded-full
+             border border-base-300/70 bg-base-100/70 px-3.5
+             text-sm font-medium text-base-content/80
+              shadow-sm backdrop-blur-sm transition-all duration-200
+             hover:-translate-y-[1px] hover:border-primary/40 hover:bg-base-100 hover:text-primary
+             focus:outline-none focus:ring-2 focus:ring-primary/25
+  "
+            aria-label={`Cart with ${cartCount} item${cartCount === 1 ? "" : "s"}`}
           >
-            <FaShoppingCart className="text-lg md:mr-2 hover:bg-primary/10" />
+            <FaShoppingCart className="text-base transition-transform duration-200 group-hover:scale-110" />
+
             <span className="hidden md:inline">Cart</span>
 
             {cartCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-primary text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
-                {cartCount}
+              <span
+                className="
+        absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center
+        rounded-full bg-gradient-to-r from-primary to-secondary
+        px-1 text-[11px] font-bold leading-none text-white
+        shadow-[0_4px_10px_rgba(0,0,0,0.18)] ring-2 ring-base-100
+      "
+              >
+                {cartCount > 99 ? "99+" : cartCount}
               </span>
             )}
           </Link>
